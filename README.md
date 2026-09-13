@@ -108,12 +108,18 @@ What each provider needs signed in, and what it reads, is in
 ```bash
 git clone https://github.com/Muddyblack/kde-ai-usage.git
 cd kde-ai-usage
+./translate/build.sh   # compile the translations (needs gettext); skip for English only
 kpackagetool6 -t Plasma/Applet -i package
 # or to update an existing install:
 kpackagetool6 -t Plasma/Applet -u package
 ```
 
 Then right-click your panel → *Add Widgets* → search **"AI Usage"**.
+
+A release `.plasmoid` or the KDE Store version already has the translations
+built in. Installing from a clone like this compiles them with `gettext`; the
+full list of tools for working on the source is in
+[CONTRIBUTING.md](CONTRIBUTING.md#dependencies).
 
 To remove:
 

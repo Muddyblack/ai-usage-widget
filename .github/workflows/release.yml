@@ -22,6 +22,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      # make pack compiles the translations (msgfmt) before zipping.
+      - name: Install gettext
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext
+
       - name: Build .plasmoid
         run: make pack
 
@@ -32,6 +36,13 @@ jobs:
           NAME="$(basename "$PWD")"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "artifact=${NAME}-${VERSION}.plasmoid" >> "$GITHUB_OUTPUT"
+
+      # The .mo files are not in git, so a pack that skipped build.sh would ship
+      # an English-only widget without failing.
+      - name: Check the translations are in the archive
+        env:
+          ARTIFACT: ${{ steps.info.outputs.artifact }}
+        run: unzip -l "$ARTIFACT" | grep -qE 'contents/locale/[^/]+/LC_MESSAGES/[^ ]+\.mo$'
 
       - name: Generate release notes
         id: notes

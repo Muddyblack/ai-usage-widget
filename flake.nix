@@ -14,18 +14,28 @@
           default = pkgs.stdenvNoCC.mkDerivation {
             pname = "ai-usage-widget";
             version = metadata.KPlugin.Version;
-            src = ./package;
+            # translate/ comes along so the .mo catalogs (git-ignored) can be compiled.
+            src = pkgs.lib.fileset.toSource {
+              root = ./.;
+              fileset = pkgs.lib.fileset.unions [ ./package ./translate ];
+            };
+            nativeBuildInputs = [ pkgs.gettext ];
 
             dontConfigure = true;
-            dontBuild = true;
+
+            buildPhase = ''
+              runHook preBuild
+              bash translate/build.sh
+              runHook postBuild
+            '';
 
             installPhase = ''
               runHook preInstall
-              
+
               # Install plasmoid package
               root=$out/share/plasma/plasmoids/org.muddyblack.aiUsageWidget
               mkdir -p "$root"
-              cp -r . "$root/"
+              cp -r package/. "$root/"
 
               # The shell tools resolve Python from PATH, but plasmashell inherits the
               # systemd user session's PATH, which on NixOS has no Python at all — the
@@ -41,7 +51,7 @@
 
               # Register icon in hicolor theme so Plasma Widget Explorer picks it up
               mkdir -p "$out/share/icons/hicolor/scalable/apps"
-              cp contents/icons/org.muddyblack.aiUsageWidget.svg "$out/share/icons/hicolor/scalable/apps/org.muddyblack.aiUsageWidget.svg"
+              cp package/contents/icons/org.muddyblack.aiUsageWidget.svg "$out/share/icons/hicolor/scalable/apps/org.muddyblack.aiUsageWidget.svg"
 
               runHook postInstall
             '';
@@ -87,7 +97,8 @@
                 echo "  'nix run .#view' previews your working copy, so run it from the repo root." >&2
                 exit 1
               fi
-              export PATH=${pkgs.lib.makeBinPath [ pkgs.kdePackages.plasma-sdk pkgs.kdePackages.plasma-desktop ]}:"$PATH"
+              export PATH=${pkgs.lib.makeBinPath [ pkgs.kdePackages.plasma-sdk pkgs.kdePackages.plasma-desktop pkgs.gettext ]}:"$PATH"
+              "$PWD/translate/build.sh"
               exec plasmoidviewer \
                 -a "$PWD/package" -f "''${1:-planar}"
             '');
@@ -101,6 +112,7 @@
               name="$(basename "$here")"
               out="$here/$name-$ver.plasmoid"
               rm -f "$out"
+              PATH=${pkgs.gettext}/bin:"$PATH" "$here/translate/build.sh"
               (cd "$here/package" && ${pkgs.zip}/bin/zip -r "$out" . -x '*.swp' '*~')
               echo "wrote $out"
             '');
@@ -155,6 +167,8 @@
               zip
               python3
               ruff
+              jq
+              nodejs
             ];
             shellHook = ''
               pre-commit install -f --install-hooks

@@ -31,7 +31,6 @@ jobs:
             qml:
               - 'package/contents/**/*.qml'
               - 'package/contents/**/*.js'
-              - 'package/contents/locale/**'
               - 'package/metadata.json'
               - 'translate/**'
               - 'flake.nix'
@@ -68,8 +67,11 @@ jobs:
       - name: i18n catalogs in sync with sources
         run: |
           nix develop --command ./translate/Messages.sh
-          nix develop --command ./translate/build.sh
-          git diff --exit-code -- package/contents/locale translate/fr.po
+          git diff --exit-code -- 'translate/*.po'
+
+      # The .mo files are not committed; this only proves every catalog compiles.
+      - name: i18n catalogs compile
+        run: nix develop --command ./translate/build.sh
 
   backend:
     needs: changes

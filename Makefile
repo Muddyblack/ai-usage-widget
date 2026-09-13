@@ -8,14 +8,14 @@ view: ## preview widget (planar)
 	@if command -v nix >/dev/null 2>&1 && [ -f flake.nix ]; then \
 	  nix run .#view; \
 	else \
-	  plasmoidviewer -a package -f planar; \
+	  ./translate/build.sh && plasmoidviewer -a package -f planar; \
 	fi
 
 view-h: ## preview widget (horizontal)
 	@if command -v nix >/dev/null 2>&1 && [ -f flake.nix ]; then \
 	  nix run .#view -- horizontal; \
 	else \
-	  plasmoidviewer -a package -f horizontal; \
+	  ./translate/build.sh && plasmoidviewer -a package -f horizontal; \
 	fi
 
 install: ## install test copy to local Plasma session
@@ -73,6 +73,7 @@ pack: ## build .plasmoid archive
 	  name=$$(basename "$$PWD"); \
 	  out="$$PWD/$$name-$$ver.plasmoid"; \
 	  rm -f "$$out"; \
+	  ./translate/build.sh && \
 	  (cd package && zip -r "$$out" . -x '*.swp' '*~'); \
 	  echo "wrote $$out"; \
 	fi

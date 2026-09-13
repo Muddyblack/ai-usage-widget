@@ -6,7 +6,7 @@
 # The widget ships its own translations inside the .plasmoid archive, in
 # package/contents/locale/<lang>/LC_MESSAGES/plasma_applet_<Id>.mo. This script
 # only produces the sources of truth: translate/template.pot and translate/*.po.
-# Run build.sh afterwards to compile the .mo files.
+# build.sh compiles the .mo files; they are git-ignored build output.
 #
 # Requires gettext (xgettext, msgmerge). Everything is self-contained — no CMake
 # or KF6 tree needed, so the Nix build and a plain checkout behave the same.

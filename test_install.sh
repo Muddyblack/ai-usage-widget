@@ -21,6 +21,9 @@ NAME="$(grep -oE '"Name":[[:space:]]*"[^"]+"' "$METADATA" | head -1 | sed -E 's/
 TEST_ID="${ID}Test"
 TEMP_DIR="/tmp/$(basename "$HERE")-test"
 
+# The .mo catalogs are build output (git-ignored); compile them before copying.
+"$HERE/translate/build.sh"
+
 rm -rf "$TEMP_DIR"
 cp -r "$HERE/package" "$TEMP_DIR"
 
