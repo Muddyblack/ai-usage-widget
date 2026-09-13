@@ -205,6 +205,33 @@ def _number(value, default):
     return value if isinstance(value, (int, float)) and not isinstance(value, bool) else default
 
 
+# ── Translations ─────────────────────────────────────────────────────────────
+
+
+def catalog_text(language=""):
+    """translate/<lang>.po for `language`, the settings page's choice; with ""
+    for $LANGUAGE, read the way gettext reads it, and then the system's UI
+    languages. "" when none has a catalog, which leaves English ("en" included).
+    Picking the file is all this does — Main.qml parses it (I18n.js)."""
+    if language:
+        languages = [language]
+    else:
+        languages = [lang for lang in os.environ.get("LANGUAGE", "").split(":") if lang]
+        languages += QLocale.system().uiLanguages()
+    for lang in languages:
+        tag = lang.split(".")[0].split("@")[0].replace("-", "_")
+        for name in (tag, tag.split("_")[0]):
+            path = ROOT / "translate" / f"{name}.po"
+            if re.fullmatch(r"[A-Za-z]{2,3}(_[A-Za-z0-9]+)?", name) and path.is_file():
+                return path.read_text(encoding="utf-8")
+    return ""
+
+
+def catalog_languages():
+    """The language codes translate/ has a catalog for, for the language picker."""
+    return sorted(path.stem for path in (ROOT / "translate").glob("*.po"))
+
+
 # Qt is the one dependency beyond the backend's standard library; say how to
 # get it rather than failing with a bare traceback.
 try:
@@ -218,6 +245,7 @@ except ImportError:
 
 from PySide6.QtCore import (  # noqa: E402
     Property,
+    QLocale,
     QObject,
     QRect,
     QRectF,
@@ -268,6 +296,7 @@ class Backend(QObject):
     # A setting changed from the tray menu: key, JSON-encoded value.
     settingRequested = Signal(str, str)
     popupToggleRequested = Signal()
+    trayLabelsChanged = Signal()
 
     def __init__(self, first_run=False):
         super().__init__()
@@ -275,6 +304,7 @@ class Backend(QObject):
         self._busy = False
         self._autostart = autostart_enabled()
         self._first_run = first_run
+        self._tray_labels = {}
 
     # ── Data ──
     def _get_busy(self):
@@ -327,6 +357,28 @@ class Backend(QObject):
     @Property(str, constant=True)
     def defaultTrayStyle(self):
         return DEFAULT_TRAY_STYLE
+
+    # ── Translations ──
+    @Slot(str, result=str)
+    def catalogFor(self, language):
+        """The .po for `language` ("" follows the system), or "" for English;
+        Main.qml parses it with I18n.js — the catalog the Plasma widget compiles."""
+        return catalog_text(language)
+
+    @Property(str, constant=True)
+    def languagesJson(self):
+        """The catalogs present, as a JSON list, for the language picker."""
+        return json.dumps(catalog_languages())
+
+    @Slot(str)
+    def setTrayLabels(self, text):
+        """The tray menu's words, translated on the QML side: before the menu is
+        built, and again whenever the language setting changes."""
+        self._tray_labels = json.loads(text)
+        self.trayLabelsChanged.emit()
+
+    def tray_label(self, key, english):
+        return self._tray_labels.get(key) or english
 
     @Slot(str)
     def saveSettings(self, text):
@@ -589,13 +641,23 @@ class TrayApp:
         self.menus = []
         self._shown = None
         self._anchor = None
+        self.style_menus = []
         backend.trayStateChanged.connect(self._on_tray_state)
+        backend.trayLabelsChanged.connect(self._retranslate)
 
         # The actions are made once and shared. Each icon gets a menu of its own
         # around them: one QMenu under several icons leaves KDE's DBus menu
-        # exporter without ids for its entries.
-        def action(text, slot):
-            item = QAction(text)
+        # exporter without ids for its entries. Their words come from Main.qml
+        # and follow its language setting; _worded keeps (action, key, English).
+        self._worded = []
+
+        def worded(key, english):
+            item = QAction(backend.tray_label(key, english))
+            self._worded.append((item, key, english))
+            return item
+
+        def action(key, english, slot):
+            item = worded(key, english)
             item.triggered.connect(lambda _checked=False: slot())
             return item
 
@@ -603,26 +665,26 @@ class TrayApp:
             backend.settingRequested.emit(key, json.dumps(value))
 
         self.actions = [
-            action("Open AI Usage", self.toggle),
-            action("Refresh", backend.refresh),
-            action("Settings", self.open_settings),
+            action("open", "Open AI Usage", self.toggle),
+            action("refresh", "Refresh", backend.refresh),
+            action("settings", "Settings", self.open_settings),
         ]
         # Tray style: exclusive choices, in a "Tray style" submenu of each menu.
         self.style_group = QActionGroup(app)
         self.style_actions = {}
-        for key, label in TRAY_STYLES:
-            item = QAction(label)
+        for key, english in TRAY_STYLES:
+            item = worded(key, english)
             item.setCheckable(True)
             item.setActionGroup(self.style_group)
             item.triggered.connect(lambda _checked=False, key=key: request("trayStyle", key))
             self.style_actions[key] = item
         self.style_actions[DEFAULT_TRAY_STYLE].setChecked(True)
-        self.pill_action = QAction("Floating pill")
+        self.pill_action = worded("floatingPill", "Floating pill")
         self.pill_action.setCheckable(True)
         self.pill_action.toggled.connect(lambda on: request("floatingPill", on))
         self.tail_actions = [self.pill_action]
         if backend.autostartAvailable:
-            autostart = QAction("Start with Windows")
+            autostart = worded("startWithWindows", "Start with Windows")
             autostart.setCheckable(True)
             autostart.setChecked(backend.autostart)
             autostart.toggled.connect(backend.setAutostart)
@@ -630,7 +692,7 @@ class TrayApp:
             self.tail_actions.append(autostart)
         separator = QAction()
         separator.setSeparator(True)
-        self.tail_actions += [separator, action("Quit", app.quit)]
+        self.tail_actions += [separator, action("quit", "Quit", app.quit)]
 
         # The floating pill is a window of Main.qml's; placing it is done here,
         # where the screens' taskbar-free areas are known.
@@ -663,13 +725,21 @@ class TrayApp:
         icon.setIcon(picture)
         menu = QMenu()
         menu.addActions(self.actions)
-        menu.addMenu("Tray style").addActions(list(self.style_actions.values()))
+        styles = menu.addMenu(self.backend.tray_label("trayStyle", "Tray style"))
+        styles.addActions(list(self.style_actions.values()))
         menu.addActions(self.tail_actions)
         icon.setContextMenu(menu)
         icon.activated.connect(lambda reason, icon=icon: self._on_activated(icon, reason))
         icon.show()
         self.icons.append(icon)
         self.menus.append(menu)
+        self.style_menus.append(styles)
+
+    def _retranslate(self):
+        for item, key, english in self._worded:
+            item.setText(self.backend.tray_label(key, english))
+        for styles in self.style_menus:
+            styles.setTitle(self.backend.tray_label("trayStyle", "Tray style"))
 
     def _show_entries(self, entries):
         """Show `entries` in the tray.
@@ -688,6 +758,7 @@ class TrayApp:
         if len(entries) != len(self.icons):
             while self.icons:
                 icon, menu = self.icons.pop(), self.menus.pop()
+                self.style_menus.pop()
                 if self._anchor is icon:
                     self._anchor = None
                 icon.hide()

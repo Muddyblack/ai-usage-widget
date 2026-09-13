@@ -61,5 +61,25 @@ class ServerNameTest(unittest.TestCase):
             self.assertEqual(app._server_name(), "ai-usage-widget-tray")
 
 
+@unittest.skipUnless(HAS_PYSIDE, "PySide6 not installed")
+class CatalogTest(unittest.TestCase):
+    """Which translate/*.po Main.qml gets to parse."""
+
+    def test_the_setting_wins_over_the_environment(self):
+        with mock.patch.dict(os.environ, {"LANGUAGE": "en"}):
+            self.assertIn('msgstr "Paramètres"', app.catalog_text("fr"))
+
+    def test_follows_language_when_nothing_is_chosen(self):
+        with mock.patch.dict(os.environ, {"LANGUAGE": "fr_FR:en"}):
+            self.assertIn("Language: fr", app.catalog_text(""))
+
+    def test_english_and_odd_names_have_no_catalog(self):
+        self.assertEqual(app.catalog_text("en"), "")
+        self.assertEqual(app.catalog_text("../fr"), "")
+
+    def test_lists_the_catalogs_present(self):
+        self.assertIn("fr", app.catalog_languages())
+
+
 if __name__ == "__main__":
     unittest.main()

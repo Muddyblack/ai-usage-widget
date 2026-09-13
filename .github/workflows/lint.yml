@@ -33,6 +33,9 @@ jobs:
               - 'package/contents/**/*.js'
               - 'package/metadata.json'
               - 'translate/**'
+              # Their shell.i18n(…) strings are extracted into translate/*.po too.
+              - 'hyprland/**'
+              - 'windows/qml/**'
               - 'flake.nix'
               - 'flake.lock'
               - '.github/workflows/lint.yml'
@@ -43,6 +46,9 @@ jobs:
               - 'tests/fixtures/**'
               - 'tests/*.test.sh'
               - 'tests/*.test.js'
+              # What the node tests exercise: the shared JS and the French catalog.
+              - 'package/contents/code/**'
+              - 'translate/**'
               - 'pyproject.toml'
               - '.github/workflows/lint.yml'
 

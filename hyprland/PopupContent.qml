@@ -87,9 +87,9 @@ ColumnLayout {
             Text {
                 text: {
                     if (shell.showSettings)
-                        return "Settings";
+                        return shell.i18n("Settings");
                     var p = shell.activeProvider();
-                    return (p ? p.label : "AI") + " Usage";
+                    return shell.i18n("%1 Usage", p ? p.label : "AI");
                 }
                 font.bold: true
                 font.pixelSize: 15
@@ -102,15 +102,15 @@ ColumnLayout {
                 // what the page is.
                 text: {
                     if (settingsPage.section === "panel")
-                        return shell.pillControls ? "Pill, position and chart" : "Usage chart";
+                        return shell.pillControls ? shell.i18n("Language, pill, position and chart") : shell.i18n("Language and usage chart");
 
                     if (settingsPage.section === "data")
-                        return "Refresh interval and usage history";
+                        return shell.i18n("Refresh interval and usage history");
 
                     if (settingsPage.section === "advanced")
-                        return shell.interpreterControls ? "Python interpreter and terminal tool" : "Start at login";
+                        return shell.interpreterControls ? shell.i18n("Python interpreter and terminal tool") : shell.i18n("Start at login");
 
-                    return "Turn providers on and set their keys";
+                    return shell.i18n("Turn providers on and set their keys");
                 }
                 font.pixelSize: 10
                 opacity: 0.5
@@ -126,6 +126,7 @@ ColumnLayout {
         // when the provider has no status page at all.
         StatusChip {
             Layout.alignment: Qt.AlignVCenter
+            shell: content.shell
             status: {
                 var p = shell.activeProvider();
                 return !shell.showSettings && p && p.details ? (p.details.status || ({})) : ({});
@@ -364,11 +365,11 @@ ColumnLayout {
                 model: [
                     {
                         id: "usage",
-                        label: "Usage"
+                        label: shell.i18n("Usage")
                     },
                     {
                         id: "stats",
-                        label: "Stats"
+                        label: shell.i18n("Stats")
                     }
                 ]
 
@@ -435,15 +436,15 @@ ColumnLayout {
             visible: shell.activeId === "muse" && quotaError !== ""
             text: {
                 if (quotaError === "disabled")
-                    return "Plan quota is off: Meta reports it only on a billed model call. Everything above is read from Muse's own local files.";
+                    return shell.i18n("Plan quota is off: Meta reports it only on a billed model call. Everything above is read from Muse's own local files.");
                 if (quotaError === "rejected")
-                    return "Plan quota: Meta refused the credential.";
+                    return shell.i18n("Plan quota: Meta refused the credential.");
                 if (quotaError === "unreachable")
-                    return "Plan quota: could not reach Meta — the local numbers above are unaffected.";
+                    return shell.i18n("Plan quota: could not reach Meta — the local numbers above are unaffected.");
                 if (quotaError === "no-credential")
-                    return "Plan quota needs a Meta API key, or a `muse login` that stored one.";
+                    return shell.i18n("Plan quota needs a Meta API key, or a `muse login` that stored one.");
                 if (quotaError === "no-model")
-                    return "Plan quota needs a model: run Muse once so it caches its catalog.";
+                    return shell.i18n("Plan quota needs a model: run Muse once so it caches its catalog.");
                 return "";
             }
             font.pixelSize: 9
@@ -455,7 +456,7 @@ ColumnLayout {
         Text {
             Layout.fillWidth: true
             visible: shell.activeId === "muse" && shell.activeProvider() && (shell.activeProvider().details.quotaError || "") === "" && !(shell.activeProvider().details.current || {}).available && !(shell.activeProvider().details.weekly || {}).available
-            text: "No plan windows on this account — pay-as-you-go has none."
+            text: shell.i18n("No plan windows on this account — pay-as-you-go has none.")
             font.pixelSize: 9
             color: "#94a3b8"
             opacity: 0.8
@@ -469,12 +470,14 @@ ColumnLayout {
         stats: shell.activeProvider() ? (shell.activeProvider().details.stats || ({})) : ({})
         providerId: shell.activeId
         accent: shell.activeAccent
+        shell: content.shell
         currency: shell.activeProvider() ? (shell.activeProvider().details.currency || "USD") : "USD"
     }
 
     // ── Usage chart ─────────────────────────────────────────────
     UsageChart {
         extraVisible: !shell.showSettings && (!shell.activeHasStats || shell.activeSubTab === "usage") && shell.settings.showChart && shell.activeProvider() && (shell.activeProvider().error || "") === "" && shell.activeProvider().ok !== false && shell.activeProvider().summary.hasChart !== false
+        shell: content.shell
         usageHistory: shell.usageHistory
         windows: shell.windowsForProvider(shell.activeId)
         chartWindow: shell.chartWindow
@@ -515,7 +518,7 @@ ColumnLayout {
         }
         Text {
             visible: shell.updatedAt > 0 && shell.errorText === ""
-            text: "updated " + new Date(shell.updatedAt * 1000).toLocaleTimeString(Qt.locale(), Locale.ShortFormat)
+            text: shell.i18n("updated %1", new Date(shell.updatedAt * 1000).toLocaleTimeString(Qt.locale(), Locale.ShortFormat))
             color: "#f8fafc"
             opacity: 0.45
             font.pixelSize: 10

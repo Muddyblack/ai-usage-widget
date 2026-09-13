@@ -47,6 +47,29 @@ so they need gettext (`msgfmt`); `nix develop` has it. The compiled `.mo`
 files under `package/contents/locale/` are git-ignored build output: edit
 `translate/*.po` (regenerate with `make translations`), never commit a `.mo`.
 
+## Translations
+
+One catalog per language, `translate/<lang>.po`, serves every frontend. The
+Plasma widget loads it compiled (KDE's `i18n()`); the Hyprland panel and the
+Windows tray app parse the `.po` itself with `package/contents/code/I18n.js`,
+through `shell.i18n()` / `shell.i18nc()` / `shell.i18np()` — the same call shapes,
+so `translate/Messages.sh` extracts all three frontends into the same file.
+Wrap new UI text in those calls, as one full phrase with `%1` placeholders
+rather than pieces joined with `+`.
+
+Adding a language:
+
+```bash
+make translations                                   # refresh translate/template.pot
+msginit -i translate/template.pot -l de -o translate/de.po
+# translate de.po, then:
+make translations && make check-translations
+```
+
+Nothing else needs registering: the scripts, CI, packaging and all three
+frontends pick up every `translate/*.po`. `package/metadata.json` can carry a
+`"Name[de]"` / `"Description[de]"` for the widget list.
+
 To remove the test copy:
 
 ```bash

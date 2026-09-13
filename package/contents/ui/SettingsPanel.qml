@@ -76,6 +76,17 @@ ColumnLayout {
         spacing: 6
         visible: rootItem.settingsTab === "appearance"
 
+        // Plasma loads one translation per plasmashell process, so the widget
+        // cannot pick its own language the way the Hyprland and Windows apps do.
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            text: i18n("Language follows System Settings → Region & Language.")
+            font.pixelSize: 9
+            opacity: 0.45
+            color: Kirigami.Theme.textColor
+            wrapMode: Text.WordWrap
+        }
+
         RowLayout {
             Layout.fillWidth: true
             spacing: 6

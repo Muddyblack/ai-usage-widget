@@ -45,6 +45,10 @@ jobs:
               - 'windows/**'
               - 'package/contents/tools/aiusage/**'
               - 'tests/python/**'
+              # The app runs the Hyprland QML, the shared JS and the translations.
+              - 'hyprland/**'
+              - 'package/contents/code/**'
+              - 'translate/**'
               - '.github/workflows/windows.yml'
 
   test:

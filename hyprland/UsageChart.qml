@@ -8,6 +8,7 @@ Rectangle {
     id: chart
 
     // Full unified history: [{t, s?, w?, cp?, cw?, kr?, ag?, agg?, age?, or?, mv?, gr?, za?, gh?, ds?}]
+    property var shell
     property var usageHistory: []
     // Chart ranges for the active tab, straight from the provider contract:
     // [{id, key, label, size, granularity, raw, resets}] (size in ms)
@@ -347,12 +348,12 @@ Rectangle {
         readonly property var options: [
             {
                 id: "both",
-                label: "Both",
+                label: chart.shell.i18n("Both"),
                 dotColor: ""
             },
             {
                 id: "combined",
-                label: "Combined",
+                label: chart.shell.i18n("Combined"),
                 dotColor: ""
             },
             {
@@ -362,7 +363,7 @@ Rectangle {
             },
             {
                 id: "rest",
-                label: "Rest",
+                label: chart.shell.i18nc("quota model", "Rest"),
                 dotColor: chart.googleGreen
             }
         ]
@@ -508,7 +509,7 @@ Rectangle {
         Text {
             anchors.centerIn: parent
             visible: (!chartCanvas.isBoth && (!chartCanvas.history || chartCanvas.history.length === 0)) || (chartCanvas.isBoth && (!chartCanvas.geminiHistory || chartCanvas.geminiHistory.length === 0) && (!chartCanvas.restHistory || chartCanvas.restHistory.length === 0))
-            text: "No data in this range"
+            text: chart.shell.i18n("No data in this range")
             color: "#94a3b8"
             font.pixelSize: 11
             opacity: 0.7
@@ -686,7 +687,7 @@ Rectangle {
                 ctx.restore();
             }
             var resets = chart.resetTimestamps;
-            var resetLabel = chart.chartWindow.indexOf("weekly") >= 0 ? "week reset" : "5h reset";
+            var resetLabel = chart.chartWindow.indexOf("weekly") >= 0 ? chart.shell.i18nc("chart reset window", "week reset") : chart.shell.i18nc("chart reset window", "5h reset");
             var labelDrawn = false;
             for (var ri = resets.length - 1; ri >= 0; ri--) {
                 var rt = resets[ri];
@@ -897,7 +898,7 @@ Rectangle {
                             Layout.alignment: Qt.AlignVCenter
                         }
                         Text {
-                            text: chartCanvas.scrubGeminiPt ? "Gemini: " + Math.round(chartCanvas.scrubGeminiPt.v) + "%" : ""
+                            text: chartCanvas.scrubGeminiPt ? chart.shell.i18n("Gemini: %1%", Math.round(chartCanvas.scrubGeminiPt.v)) : ""
                             font.pixelSize: 11
                             font.bold: true
                             color: chart.googleBlue
@@ -923,7 +924,7 @@ Rectangle {
                             Layout.alignment: Qt.AlignVCenter
                         }
                         Text {
-                            text: chartCanvas.scrubRestPt ? "Rest: " + Math.round(chartCanvas.scrubRestPt.v) + "%" : ""
+                            text: chartCanvas.scrubRestPt ? chart.shell.i18n("Rest: %1%", Math.round(chartCanvas.scrubRestPt.v)) : ""
                             font.pixelSize: 11
                             font.bold: true
                             color: chart.googleGreen

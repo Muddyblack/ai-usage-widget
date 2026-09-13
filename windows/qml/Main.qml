@@ -4,6 +4,7 @@ import "../../hyprland"
 import "../../hyprland/ProviderRegistry.js" as ProviderRegistry
 import "../../package/contents/code/Format.js" as Format
 import "../../package/contents/code/UsageHistory.js" as UsageHistory
+import "../../package/contents/code/I18n.js" as I18n
 
 // The Windows tray popup (windows/app.py places, shows and hides it).
 //
@@ -28,6 +29,25 @@ Window {
     readonly property string iconDir: backend.iconDir
     readonly property string configPath: backend.configPath
     readonly property var allProviders: ProviderRegistry.providers
+
+    // Translations: translate/<lang>.po for the language chosen in settings (""
+    // follows the system), which app.py picks and reads, parsed by the same
+    // I18n.js as the Quickshell panel.
+    readonly property var catalog: I18n.parsePo(backend.catalogFor(root.settings.language || ""))
+    readonly property var availableLanguages: JSON.parse(backend.languagesJson)
+    onCatalogChanged: root.publishTrayLabels()
+    function i18n(text) {
+        return I18n.i18n.apply(null, [root.catalog].concat(Array.prototype.slice.call(arguments)));
+    }
+    function i18nc(context, text) {
+        return I18n.i18nc.apply(null, [root.catalog].concat(Array.prototype.slice.call(arguments)));
+    }
+    function i18np(singular, plural, n) {
+        return I18n.i18np.apply(null, [root.catalog].concat(Array.prototype.slice.call(arguments)));
+    }
+    function i18ncp(context, singular, plural, n) {
+        return I18n.i18ncp.apply(null, [root.catalog].concat(Array.prototype.slice.call(arguments)));
+    }
 
     // What this frontend does not have, so the settings page leaves it out: no
     // floating pill to place, no monitor to pin it to, and no interpreter to
@@ -63,7 +83,8 @@ Window {
             museQuota: false,
             antigravityChartFilter: "both",
             trayStyle: backend.defaultTrayStyle,
-            floatingPill: false
+            floatingPill: false,
+            language: ""
         })
     property bool showSettings: false
     onSettingsChanged: root.publishTray()
@@ -86,6 +107,7 @@ Window {
         s.trayStyle = d.trayStyle || (d.trayNumbers === false ? "ring" : d.trayNumbers === true ? "icons" : backend.defaultTrayStyle);
         delete s.trayNumbers;
         s.floatingPill = d.floatingPill === true;
+        s.language = d.language || "";
         root.settings = s;
     }
 
@@ -242,7 +264,7 @@ Window {
             root.recordHistory();
             root.publishTray();
         } catch (e) {
-            root.errorText = "usage backend returned no data";
+            root.errorText = root.i18n("usage backend returned no data");
         }
     }
 
@@ -373,9 +395,9 @@ Window {
             } else if (op === "export") {
                 try {
                     var x = JSON.parse(result);
-                    root.historyMsg = x.path ? "Saved to " + x.path : (x.error || "Export failed");
+                    root.historyMsg = x.path ? root.i18n("Saved to %1", x.path) : (x.error || root.i18n("Export failed"));
                 } catch (e) {
-                    root.historyMsg = "Export failed";
+                    root.historyMsg = root.i18n("Export failed");
                 }
                 historyMsgTimer.restart();
             } else {
@@ -384,8 +406,26 @@ Window {
         }
     }
 
+    // The tray menu is built in app.py, which takes its words from here — again
+    // whenever the language changes.
+    function publishTrayLabels() {
+        backend.setTrayLabels(JSON.stringify({
+            open: root.i18n("Open AI Usage"),
+            refresh: root.i18n("Refresh"),
+            settings: root.i18n("Settings"),
+            trayStyle: root.i18n("Tray style"),
+            icons: root.i18n("Logo and percent"),
+            numbers: root.i18n("Numbers"),
+            ring: root.i18n("Ring"),
+            floatingPill: root.i18n("Floating pill"),
+            startWithWindows: root.i18n("Start with Windows"),
+            quit: root.i18n("Quit")
+        }));
+    }
+
     Component.onCompleted: {
         root.loadSettings();
+        root.publishTrayLabels();
         // The first start (no settings file yet): write one now, so that what
         // app.py does for a first start — open the popup — happens only once.
         if (backend.firstRun)
@@ -448,7 +488,7 @@ Window {
                             pct: 0,
                             color: "#cc785c",
                             text: "…",
-                            tooltip: "Loading"
+                            tooltip: root.i18n("Loading")
                         }
                     ];
                 var raw = p && p.slots ? p.slots : [];
@@ -458,7 +498,7 @@ Window {
                             pct: 0,
                             color: "#cc785c",
                             text: "—",
-                            tooltip: "No data"
+                            tooltip: root.i18n("No data")
                         }
                     ];
                 // The backend sends text: null for "show the percentage", which a

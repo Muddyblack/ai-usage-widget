@@ -12,6 +12,7 @@ import Quickshell.Io
 import "../package/contents/code/Format.js" as Format
 import "../package/contents/code/UsageHistory.js" as UsageHistory
 import "ProviderRegistry.js" as ProviderRegistry
+import "../package/contents/code/I18n.js" as I18n
 
 // The popup's content is PopupContent.qml, shared with the Windows tray app
 // (windows/qml/Main.qml); this root implements the `shell` interface it and
@@ -24,6 +25,63 @@ ShellRoot {
     readonly property string backendCommand: baseDir + "/../package/contents/tools/sh/get-ai-usage"
     readonly property string iconSource: "file://" + baseDir + "/../package/contents/icons/org.muddyblack.aiUsageWidget.svg"
     readonly property string iconDir: "file://" + baseDir + "/../package/contents/icons/"
+
+    // Translations: the Plasma widget's translate/<lang>.po, parsed by I18n.js.
+    // The shared QML calls shell.i18n(…), which xgettext extracts into that
+    // catalog; those bindings re-run once catalogLoad below has read it.
+    property var catalog: I18n.empty()
+    function i18n(text) {
+        return I18n.i18n.apply(null, [root.catalog].concat(Array.prototype.slice.call(arguments)));
+    }
+    function i18nc(context, text) {
+        return I18n.i18nc.apply(null, [root.catalog].concat(Array.prototype.slice.call(arguments)));
+    }
+    function i18np(singular, plural, n) {
+        return I18n.i18np.apply(null, [root.catalog].concat(Array.prototype.slice.call(arguments)));
+    }
+    function i18ncp(context, singular, plural, n) {
+        return I18n.i18ncp.apply(null, [root.catalog].concat(Array.prototype.slice.call(arguments)));
+    }
+
+    // $LANGUAGE first, as gettext does, then the locale's own list.
+    function systemLanguages() {
+        var list = (Quickshell.env("LANGUAGE") || "").split(":");
+        var ui = Qt.locale().uiLanguages;
+        for (var i = 0; i < ui.length; i++)
+            list.push(ui[i]);
+        return I18n.languageCandidates(list);
+    }
+
+    // The settings page's choice: "" follows the system, "en" is the untranslated
+    // source, anything else names a translate/<lang>.po.
+    readonly property string language: root.settings.language || ""
+    onLanguageChanged: root.loadCatalog()
+    Component.onCompleted: root.loadCatalog()
+
+    function loadCatalog() {
+        catalogLoad.exec({
+            command: ["sh", "-c", "for l in \"$@\"; do [ -f \"$0/$l.po\" ] && exec cat \"$0/$l.po\"; done; true", root.baseDir + "/../translate"].concat(root.language !== "" ? [root.language] : root.systemLanguages())
+        });
+    }
+
+    Process {
+        id: catalogLoad
+        stdout: StdioCollector {
+            onStreamFinished: root.catalog = I18n.parsePo(this.text)
+        }
+    }
+
+    // The catalogs present, for the language picker.
+    property var availableLanguages: []
+    Process {
+        command: ["sh", "-c", "for f in \"$0\"/*.po; do [ -f \"$f\" ] && basename \"$f\" .po; done; true", root.baseDir + "/../translate"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: root.availableLanguages = this.text.split("\n").filter(function (l) {
+                return l !== "";
+            })
+        }
+    }
 
     // Brand logo for a provider, or "" when the backend ships no artwork for it
     // (callers fall back to the plain accent dot). The id→file mapping lives in
@@ -81,7 +139,8 @@ ShellRoot {
             pillMode: "always",
             position: "top-right",
             monitor: "focused",
-            pythonPath: ""
+            pythonPath: "",
+            language: ""
         })
     property bool showSettings: false
     // Tray-triggered reveal is legitimately global — one tray icon controls
@@ -184,6 +243,7 @@ ShellRoot {
                     s.position = d.position || "top-right";
                     s.monitor = d.monitor || "focused";
                     s.pythonPath = d.pythonPath || "";
+                    s.language = d.language || "";
                     root.settings = s;
                 } catch (e) {}
             }
@@ -234,9 +294,9 @@ ShellRoot {
             onStreamFinished: {
                 try {
                     var r = JSON.parse(this.text.trim());
-                    root.historyMsg = r.path ? "Saved to " + r.path : (r.error || "Export failed");
+                    root.historyMsg = r.path ? root.i18n("Saved to %1", r.path) : (r.error || root.i18n("Export failed"));
                 } catch (e) {
-                    root.historyMsg = "Export failed";
+                    root.historyMsg = root.i18n("Export failed");
                 }
                 historyMsgTimer.restart();
             }
@@ -486,7 +546,7 @@ ShellRoot {
             root.nowTick = new Date().getTime();
             root.recordHistory();
         } catch (e) {
-            root.errorText = "usage backend returned no data";
+            root.errorText = root.i18n("usage backend returned no data");
         }
     }
 
@@ -518,7 +578,7 @@ ShellRoot {
         onExited: function (exitCode) {
             root.loading = false;
             if (exitCode !== 0 && root.errorText === "")
-                root.errorText = "usage backend failed";
+                root.errorText = root.i18n("usage backend failed");
         }
     }
 
@@ -630,7 +690,7 @@ ShellRoot {
                                 pct: 0,
                                 color: "#cc785c",
                                 text: "…",
-                                tooltip: "Loading"
+                                tooltip: root.i18n("Loading")
                             }
                         ];
                     return p && p.slots ? p.slots : [
@@ -638,7 +698,7 @@ ShellRoot {
                             pct: 0,
                             color: "#cc785c",
                             text: "—",
-                            tooltip: "No data"
+                            tooltip: root.i18n("No data")
                         }
                     ];
                 }
