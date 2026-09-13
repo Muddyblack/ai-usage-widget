@@ -30,7 +30,7 @@ Write-Output "Using $iscc"
 
 # Inno Setup wants an .ico; the repository has the PNG (Pillow comes with the
 # PyInstaller build step).
-python -c "from PIL import Image; Image.open('readme/icon.png').convert('RGBA').save('dist/ai-usage.ico', sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])"
+python -c "from PIL import Image; Image.open('package/icon.png').convert('RGBA').save('dist/ai-usage.ico', sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 & $iscc "/DAppVersion=$Version" "windows\installer.iss"

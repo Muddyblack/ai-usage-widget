@@ -53,6 +53,6 @@ exe = EXE(  # noqa: F821
     exclude_binaries=True,
     name="AI Usage",
     console=False,
-    icon=os.path.join(ROOT, "readme", "icon.png"),
+    icon=os.path.join(ROOT, "package", "icon.png"),
 )
 coll = COLLECT(exe, a.binaries, a.datas, name="AI Usage")  # noqa: F821
