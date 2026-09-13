@@ -66,7 +66,7 @@ somebody who did set the key. Several providers additionally borrow a credential
 Mistral, the Copilot editor/CLI logins and `gh auth token` for Copilot, and —
 only on its opt-in quota path — the Muse login store for Muse. A borrowed
 credential always ranks last, so an explicit one wins.
-`tests/credentials.test.sh` pins the order.
+`tests/python/test_credentials.py` pins the order with an isolated home.
 
 ## Envelope
 
@@ -452,15 +452,19 @@ default 300 s poll that is 0.02% of one core, or ~17 s of CPU per day.
 
 ## Testing
 
-`tests/get-ai-usage.test.sh` replays `tests/fixtures/*.json` — raw envelopes for
+`tests/python/test_fixtures.py` replays `tests/fixtures/*.json` — raw envelopes for
 success, missing credentials, malformed responses, offline and rate-limited
-states — through `--normalize`, so the whole provider matrix is covered without
-network access. It also runs the real backend end to end against the providers'
-own fixture hooks (`*_RESPONSE_FILE`, honoured by `fetch_json` in
-`aiusage/http.py`) to check settings toggles, key plumbing and the outer
-envelope.
+states — through the in-process normalizers, so the whole provider matrix is
+covered without network access and runs on Windows.
 
-`tests/ai-usage-cli.test.sh` renders each of those fixtures through the terminal
+`test_provider_values.py` preserves the provider-specific expectations.
+`test_collect.py` and `test_muse.py` run the real collectors against the response
+hooks, local log files and SQLite stores. Recorded bodies formerly embedded in
+the shell suite live in `tests/fixtures/*-response.json`. Synthetic settings and
+session logs are created by the tests. The raw `muse-quota.json`
+response goes through the quota reader instead of the envelope normalizer.
+
+`tests/python/test_cli.py` renders each of those fixtures through the terminal
 frontend, asserting among other things that a provider which cannot report still
 produces a row — a state the graphical frontends show as a tab or a pill, and
 which a table could silently drop instead.

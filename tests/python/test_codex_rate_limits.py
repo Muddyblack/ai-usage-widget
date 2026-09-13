@@ -14,14 +14,38 @@ import _support  # noqa: F401  (sys.path)
 from aiusage.providers.codex_rate_limits import get_codex_rate_limits
 
 FAKE_SERVER = r"""
-import json, os, sys
+import json, os, sys, queue, threading
 pid_file = os.environ.get("FAKE_CODEX_PID")
 if pid_file:
     with open(pid_file, "w") as fh:
         fh.write(str(os.getpid()))
-sys.stdin.readline()
+def read_line():
+    line = b""
+    while not line.endswith(b"\n"):
+        chunk = os.read(sys.stdin.fileno(), 1)
+        if not chunk:
+            break
+        line += chunk
+    return line
+
+read_line()
+# The client must await initialize's response before sending the next RPC.
+# A thread works with anonymous pipes on Windows, where select() does not.
+pending = queue.Queue()
+reader = threading.Thread(target=lambda: pending.put(read_line()), daemon=True)
+reader.start()
+try:
+    pending.get(timeout=0.05)
+except queue.Empty:
+    pass
+else:
+    print(json.dumps({"id": 1, "result": {}}), flush=True)
+    sys.exit(0)
 print(json.dumps({"id": 1, "result": {"userAgent": "test"}}), flush=True)
-sys.stdin.readline()
+pending.get(timeout=10)
+reader.join()
+if os.environ.get("FAKE_CODEX_MODE") == "closed":
+    sys.exit(0)
 if os.environ.get("FAKE_CODEX_MODE") == "ok":
     limits = {"primary": {"usedPercent": 42, "windowDurationMins": 10080, "resetsAt": 200}}
     print(json.dumps({"id": 2, "result": {"rateLimits": limits}}), flush=True)
@@ -74,6 +98,9 @@ class CodexRateLimitsTest(unittest.TestCase):
     def test_no_codex_on_path(self):
         with mock.patch.dict(os.environ, {"PATH": tempfile.gettempdir()}):
             self.assertEqual(get_codex_rate_limits(), {})
+
+    def test_a_server_that_exits_without_limits_returns_empty(self):
+        self.assertEqual(self.call("closed"), {})
 
     @unittest.skipUnless(shutil.which("true") or os.name == "nt", "needs a shell")
     def test_the_server_does_not_outlive_the_call(self):

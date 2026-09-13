@@ -96,25 +96,14 @@ jobs:
         with:
           args: "format --check package/contents/tools/aiusage windows tests/python"
 
-      - name: provider contract tests
-        run: ./tests/get-ai-usage.test.sh
-
-      - name: terminal frontend tests
-        run: ./tests/ai-usage-cli.test.sh
-
-      - name: credential discovery tests
-        run: ./tests/credentials.test.sh
+      - name: portable backend tests
+        run: python3 -m unittest discover -s tests/python
 
       - name: interpreter resolution tests
         run: ./tests/python-interp.test.sh
 
       - name: shared history file tests
         run: ./tests/history-io.test.sh
-
-      - name: codex helper tests
-        run: |
-          ./tests/get-codex-stats.test.sh
-          ./tests/get-codex-rate-limits.test.sh
 
       - name: shared frontend code tests
         run: node --test tests/*.test.js

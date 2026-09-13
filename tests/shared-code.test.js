@@ -7,7 +7,7 @@ const { execFileSync } = require("node:child_process");
 
 // Both frontends import these modules, so a change here shows up in the Plasma
 // popup and the Quickshell panel at once. Provider parsing and the chart-range
-// table live in the backend; see tests/get-ai-usage.test.sh.
+// table live in the backend; see tests/python/test_fixtures.py.
 
 test("formats a countdown down to the minute", () => {
     const now = 1785000000000;

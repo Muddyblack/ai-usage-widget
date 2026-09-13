@@ -22,16 +22,11 @@ install: ## install test copy to local Plasma session
 	@./test_install.sh
 
 test: ## run the provider backend contract tests
-	@./tests/get-ai-usage.test.sh
-	@./tests/ai-usage-cli.test.sh
-	@./tests/credentials.test.sh
+	@$(MAKE) --no-print-directory test-py
 	@./tests/python-interp.test.sh
 	@./tests/history-io.test.sh
-	@./tests/get-codex-stats.test.sh
-	@./tests/get-codex-rate-limits.test.sh
 	@if command -v node >/dev/null 2>&1; then node --test tests/*.test.js; \
 	  else echo "skipping tests/shared-code.test.js (node not found)"; fi
-	@$(MAKE) --no-print-directory test-py
 
 test-py: ## run the portable unittest suites (also what CI runs on Windows)
 	@python3 -m unittest discover -s tests/python

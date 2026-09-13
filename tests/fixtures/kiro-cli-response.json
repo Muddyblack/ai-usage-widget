@@ -1,0 +1,11 @@
+{"daysUntilReset":0,"limits":[],"nextDateReset":1790812800.0,
+ "overageConfiguration":{"overageLimit":null,"overageStatus":"DISABLED"},
+ "subscriptionInfo":{"subscriptionTitle":"KIRO FREE"},
+ "usageBreakdownList":[{"bonuses":[],"currency":"USD","currentOverages":0,"currentOveragesWithPrecision":0.0,
+   "currentUsage":0,"currentUsageWithPrecision":0.13,"displayName":"Credit","displayNamePlural":"Credits",
+   "freeTrialInfo":{"currentUsage":23,"currentUsageWithPrecision":23.07,"freeTrialExpiry":1770928838.6,
+     "freeTrialStatus":"EXPIRED","usageLimit":500,"usageLimitWithPrecision":500.0},
+   "nextDateReset":1790812800.0,"overageCap":10000,"overageCapWithPrecision":10000.0,"overageCharges":0.0,
+   "overageCredits":[],"overageRate":0.04,"resourceType":"CREDIT","unit":"INVOCATIONS",
+   "usageLimit":50,"usageLimitWithPrecision":50.0}],
+ "userInfo":{"email":"test@example.com","userId":"test"}}

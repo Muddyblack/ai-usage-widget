@@ -1,0 +1,4 @@
+{"billingCycleStart":"1787817247821","billingCycleEnd":"1790495647821",
+ "planUsage":{"remainingBonus":false,"autoPercentUsed":0,"apiPercentUsed":0,"totalPercentUsed":0},
+ "spendLimitUsage":{"pooledLimit":0,"pooledRemaining":0,"individualLimit":0,"limitType":"user","overallLimit":0,"overallRemaining":0},
+ "displayMessage":"You've used 0% of your included usage","autoBucketModels":["default"]}

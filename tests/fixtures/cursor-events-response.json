@@ -1,0 +1,11 @@
+{"totalUsageEventsCount":2,"usageEventsDisplay":[
+ {"timestamp":"1789047292738","model":"default","kind":"USAGE_EVENT_KIND_CUSTOM_SUBSCRIPTION","customSubscriptionName":"free",
+  "requestsCosts":1.6,"usageBasedCosts":"-","isTokenBasedCall":true,
+  "tokenUsage":{"inputTokens":20000,"outputTokens":500,"cacheReadTokens":40000,"totalCents":3.925475},
+  "owningUser":"123456","userEmail":"test@example.com","isChargeable":true,"isHeadless":false,
+  "chargedCents":3.925475,"conversationId":"conv-secret-1","subscriptionProductId":"free"},
+ {"timestamp":"1789047269035","model":"default","kind":"USAGE_EVENT_KIND_CUSTOM_SUBSCRIPTION","customSubscriptionName":"free",
+  "requestsCosts":0.9,"usageBasedCosts":"-","isTokenBasedCall":true,
+  "tokenUsage":{"inputTokens":11047,"outputTokens":379,"cacheReadTokens":27072,"totalCents":2.1596},
+  "owningUser":"123456","userEmail":"test@example.com","isChargeable":true,"isHeadless":false,
+  "chargedCents":2.1596,"conversationId":"conv-secret-1","subscriptionProductId":"free"}]}

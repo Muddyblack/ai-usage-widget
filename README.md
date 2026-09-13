@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./readme/icon.svg?v=7" width="120" alt="AI Usage Widget Logo">
+  <img src="./package/icon.png" width="180" alt="AI Usage Widget Logo">
 </p>
 
 

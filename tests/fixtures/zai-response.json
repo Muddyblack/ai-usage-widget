@@ -1,0 +1,3 @@
+{"success":true,"data":{"level":"pro","limits":[
+  {"type":"TOKENS_LIMIT","percentage":25,"nextResetTime":3600000,"used":250,"limit":1000},
+  {"type":"TIME_LIMIT","percentage":40,"nextResetTime":7200000,"remaining":60,"usageDetails":[]}]}}

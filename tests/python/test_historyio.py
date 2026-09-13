@@ -13,7 +13,7 @@ import unittest
 from unittest import mock
 
 import _support  # noqa: F401  (sys.path)
-from aiusage import historyio
+from aiusage import history, historyio
 
 
 class HistoryIoTest(unittest.TestCase):
@@ -110,6 +110,67 @@ class HistoryIoTest(unittest.TestCase):
 
     def test_unknown_command(self):
         self.assertEqual(self.run_cmd("bogus"), '{"error":"unknown command"}')
+
+    def test_same_timestamp_merges_keys_and_autosave_overrides(self):
+        self.run_cmd("autosave", '[{"t":1,"w":40}]')
+        self.assertEqual(json.loads(self.run_cmd("autosave", '[{"t":1,"s":11}]'))["data"], [{"t": 1, "w": 40, "s": 11}])
+        before = self.on_disk()
+        self.run_cmd("seed", '[{"t":1,"w":99}]')
+        self.assertEqual(self.on_disk(), before)
+        self.assertEqual(json.loads(self.run_cmd("autosave", '[{"t":1,"w":12}]'))["data"], [{"t": 1, "w": 12, "s": 11}])
+
+    def test_sanitizes_payload_and_enforces_the_shared_cap(self):
+        result = json.loads(self.run_cmd("autosave", '[{"t":null,"w":1},{"t":"10","w":100},{"t":11,"w":null}]'))
+        self.assertEqual(result["data"], [{"t": 10, "w": 100}, {"t": 11}])
+        self.assertEqual(history.DEFAULT_LIMIT, 10000)
+        with open(self.latest, "w", encoding="utf-8") as fh:
+            json.dump([{"t": i, "w": i} for i in range(10005)], fh)
+        self.run_cmd("autosave", '[{"t":99999999,"w":1}]')
+        data = json.loads(self.on_disk())
+        self.assertEqual(len(data), 10000)
+        self.assertEqual(data[0]["t"], 6)
+
+    def test_atomic_save_and_failed_save_preserve_the_old_file(self):
+        self.run_cmd("autosave", '[{"t":1,"w":40}]')
+        before = self.on_disk()
+        replace = history.replace
+
+        def observe(tmp, destination):
+            self.assertEqual(self.on_disk(), before)
+            self.assertEqual(destination, self.latest)
+            with open(tmp, encoding="utf-8") as fh:
+                self.assertEqual(json.load(fh), [{"t": 1, "w": 40}, {"t": 2, "s": 12}])
+            return replace(tmp, destination)
+
+        with mock.patch.object(history, "replace", side_effect=observe) as publish:
+            self.assertTrue(json.loads(self.run_cmd("autosave", '[{"t":2,"s":12}]'))["ok"])
+        publish.assert_called_once()
+        before = self.on_disk()
+        with mock.patch.object(history, "replace", side_effect=OSError("write failed")):
+            self.assertIn("error", json.loads(self.run_cmd("autosave", '[{"t":3,"w":90}]')))
+        self.assertEqual(self.on_disk(), before)
+        self.assertEqual(glob.glob(os.path.join(self.dir, ".usage-history.tmp.*")), [])
+
+    def test_exports_are_invisible_until_complete_and_clean_up_on_failure(self):
+        self.run_cmd("autosave", '[{"t":7,"w":70}]')
+        before = self.on_disk()
+        self.run_cmd("export")
+        replace = history.replace
+
+        def observe(tmp, destination):
+            snapshots = glob.glob(os.path.join(self.dir, "usage-history-2*.json"))
+            self.assertEqual(len(snapshots), 1)
+            self.assertEqual(json.loads(self.run_cmd("autoload"))["data"], json.loads(before))
+            return replace(tmp, destination)
+
+        with mock.patch.object(history, "replace", side_effect=observe) as publish:
+            self.assertTrue(json.loads(self.run_cmd("export"))["ok"])
+        publish.assert_called_once()
+        with mock.patch.object(history, "replace", side_effect=OSError("write failed")):
+            self.assertIn("error", json.loads(self.run_cmd("export")))
+        self.assertEqual(len(glob.glob(os.path.join(self.dir, "usage-history-2*.json"))), 2)
+        self.assertEqual(glob.glob(os.path.join(self.dir, historyio.EXPORT_PREFIX + "*")), [])
+        self.assertEqual(self.on_disk(), before)
 
 
 if __name__ == "__main__":

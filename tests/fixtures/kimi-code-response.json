@@ -1,0 +1,5 @@
+{"usage":{"used":"450","limit":"1000","resetTime":"2026-09-14T00:00:00Z"},
+ "limits":[{"window":{"duration":300,"timeUnit":"TIME_UNIT_MINUTE"},
+            "detail":{"used":30,"limit":100,"resetTime":"2026-09-10T18:00:00.000Z"}}],
+ "boosterWallet":{"balance":{"type":"BOOSTER","amount":"1000000000","amountLeft":"250000000"},
+                  "monthlyUsed":{"priceInCents":750,"currency":"USD"}}}

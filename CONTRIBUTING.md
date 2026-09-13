@@ -89,20 +89,23 @@ make view-h    # horizontal
 make test
 ```
 
-`tests/get-ai-usage.test.sh` replays the fixtures in `tests/fixtures/` through
-the backend's `--normalize` mode — success, missing credentials, malformed
-responses, offline and rate-limited states for every provider — and then runs
-the real backend end to end against the fetch tools' fixture hooks. No network
-access is needed. `tests/ai-usage-cli.test.sh` renders those same fixtures
-through the terminal frontend, checking among other things that a provider which
-cannot report still gets a row instead of silently vanishing from the table.
+`tests/python/test_fixtures.py` replays the provider envelopes in `tests/fixtures/` through
+the in-process normalizers — success, missing credentials, malformed responses,
+offline and rate-limited states for every provider. `test_cli.py` renders those
+same fixtures through the terminal frontend. No network access is needed, and
+the same provider coverage runs on Windows CI.
+`test_provider_values.py` pins provider-specific calculations; `test_collect.py`
+and `test_muse.py` exercise real file/SQLite readers and response-file hooks.
+Recorded API bodies use `*-response.json` in `tests/fixtures/`; tests create
+synthetic configs, credentials and session logs in temporary directories.
 `tests/shared-code.test.js` covers the JavaScript both QML frontends share.
 
 `tests/python/` holds the portable suites — plain `unittest`, no shell — that
 CI also runs on Windows: platform paths, the shared history file and its lock,
 the Codex app-server client against a fake `codex.cmd`, finding Antigravity
-through `psutil`, and the tray app loading its QML headless with every settings
-section opened once (`make test-py`, or `python windows/app.py --selftest`).
+through `psutil`, credential discovery, and the tray app loading its QML headless
+with every settings section opened once (`make test-py`, or
+`python windows/app.py --selftest`).
 
 Linting the Python backend and tray app needs `ruff`:
 

@@ -1,0 +1,2 @@
+{"aggregations":[{"modelIntent":"default","inputTokens":"31047","outputTokens":"879","cacheReadTokens":"67072","totalCents":6.085075,"tier":0}],
+ "totalInputTokens":"31047","totalOutputTokens":"879","totalCacheReadTokens":"67072","totalCostCents":6.085075}
