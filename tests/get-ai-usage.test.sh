@@ -387,6 +387,8 @@ check kimi-code-success "shows the Kimi Code windows without a Moonshot key" '
     and .historyValues == {kc: 30, kcw: 45}
     and (.chartWindows | map(.label)) == ["5H", "24H", "7D", "30D"]
     and .details.codePlan.booster.balance == 2.5 and (.details.keyValid | not)'
+check kimi-code-success "sends the raw window length so frontends can word the label" '
+    [.details.codePlan.windows[] | {name, seconds}] == [{name: "", seconds: 18000}, {name: "", seconds: 604800}]'
 check kimi-code-exhausted "reports a used-up plan as full rather than as an error" '
     .ok and .summary.pct == 100 and .quotaWindows[0].detail == "Credits used up"
     and .summary.hasChart == false and .chartWindows == [] and .details.codePlan.exhausted'

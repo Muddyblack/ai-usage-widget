@@ -260,9 +260,11 @@ configured quota and a guessed first-of-next-month reset apply.
 
 **kimi** — `hasKey`, `keyValid`, `balanceError`, `availableBalance`,
 `voucherBalance`, `cashBalance`, `currency`, `codePlan` (`loggedIn`,
-`available`, `exhausted`, `message`, `error`, `windows[]` with `label`, `pct`,
-`used`, `limit`, `resetAt`, and `booster` — `balance`, `total`,
-`monthlyLimit`, `monthlyUsed`, `currency` — or null). The Moonshot balance
+`available`, `exhausted`, `message`, `error`, `windows[]` with `label`, `name`,
+`seconds`, `pct`, `used`, `limit`, `resetAt`, and `booster` — `balance`, `total`,
+`monthlyLimit`, `monthlyUsed`, `currency` — or null). `label` is the English
+wording; `name` (the vendor's own, when it sends one) and `seconds` let a
+translated frontend word the label itself. The Moonshot balance
 and the Kimi Code plan are independent; the provider is healthy when either
 answers, and a plan Kimi reports as used up (HTTP 429 `resource_exhausted`)
 is a full window, not an error.

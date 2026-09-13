@@ -49,6 +49,7 @@ xgettext \
     --language=JavaScript \
     --qt \
     --add-comments=TRANSLATORS \
+    --add-location=file \
     --keyword=i18n --keyword=i18nc:1c,2 --keyword=i18np:1,2 --keyword=i18ncp:1c,2,3 \
     --keyword=i18nd:2 --keyword=i18ndc:2c,3 --keyword=i18ndp:2,3 --keyword=i18ndcp:2c,3,4 \
     --keyword=ki18n --keyword=ki18nc:1c,2 --keyword=ki18np:1,2 --keyword=ki18ncp:1c,2,3 \
@@ -71,11 +72,13 @@ sed -i '/^"POT-Creation-Date:/d' "$pot"
 shopt -s nullglob
 for po in "$dir"/*.po; do
     echo "[i18n] merge $(basename "$po")"
-    msgmerge --quiet --update --backup=none --no-fuzzy-matching "$po" "$pot"
+    # File-only locations: line numbers would churn the catalog on every QML
+    # edit and trip the CI sync check without a single string changing.
+    msgmerge --quiet --update --backup=none --no-fuzzy-matching --add-location=file "$po" "$pot"
     sed -i '/^"POT-Creation-Date:/d' "$po"
     # Drop entries that are no longer in the sources (e.g. brand names unwrapped
     # from i18n()), so the catalog only ever holds live strings.
-    msgattrib --no-obsolete "$po" -o "$po"
+    msgattrib --no-obsolete --add-location=file "$po" -o "$po"
 done
 shopt -u nullglob
 

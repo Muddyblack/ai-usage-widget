@@ -39,12 +39,12 @@ ColumnLayout {
                     rootItem.countdownTick;
                     return rootItem.formatCountdown(rootItem.dateFromEpoch(modelData.resetAt));
                 }
-                label: modelData.label
+                label: rootItem.kimiWindowLabel(modelData)
                 countdownText: countdown === "resetting..." ? countdown : (countdown ? i18n("in %1", countdown) : "")
                 value: modelData.pct
                 barColor: rootItem.kimiBlue
                 tokenText: i18n("%1 / %2 used", modelData.used, modelData.limit)
-                tooltipText: i18n("Kimi Code %1", modelData.label.toLowerCase()) + "\n" + i18n("Used: %1 / %2", modelData.used, modelData.limit)
+                tooltipText: i18n("Kimi Code: %1", rootItem.kimiWindowLabel(modelData)) + "\n" + i18n("Used: %1 / %2", modelData.used, modelData.limit)
             }
         }
 
@@ -54,7 +54,7 @@ ColumnLayout {
             label: i18n("Kimi Code plan")
             value: 100
             barColor: rootItem.kimiBlue
-            tokenText: rootItem.kimiPlanMessage || i18n("Plan quota used up")
+            tokenText: rootItem.kimiPlanMessageText()
             tooltipText: i18n("Kimi Code reports the plan quota as used up for this billing cycle")
         }
 

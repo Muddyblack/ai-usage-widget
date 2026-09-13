@@ -34,7 +34,7 @@ ColumnLayout {
         accent: rootItem.clineWhite
         rows: rootItem.clinePeriods.map(function (p) {
             return {
-                label: p.label,
+                label: rootItem.clinePeriodLabel(p),
                 value: i18n("%1 tok", rootItem.formatTokens(p.tokens || 0)) + " · " + i18np("1 session", "%1 sessions", p.sessions) + ((p.cost || 0) > 0 ? " · " + rootItem.formatMoney(p.cost, "USD") : ""),
                 strong: p.key === "cline_30d"
             };

@@ -36,7 +36,8 @@ ColumnLayout {
         if (s < 86400)
             return i18n("%1h ago", Math.floor(s / 3600));
         if (s < 604800)
-            return i18n("%1 d ago", Math.floor(s / 86400));
+            // xgettext:no-javascript-format
+            return i18n("%1d ago", Math.floor(s / 86400));
         return i18n("%1w ago", Math.floor(s / 604800));
     }
 

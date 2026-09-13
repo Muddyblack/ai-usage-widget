@@ -1083,6 +1083,46 @@ PlasmoidItem {
         return label;
     }
 
+    // Kimi Code windows arrive as a length in seconds (or a vendor name); the
+    // backend's English label stays for the CLI.
+    function kimiWindowLabel(w) {
+        if (w.name)
+            return w.name;
+        var s = w.seconds || 0;
+        if (s === 604800)
+            return i18n("Weekly limit");
+        if (s === 86400)
+            return i18n("Daily limit");
+        if (s && s % 86400 === 0)
+            return i18np("%1-day limit", "%1-day limit", s / 86400);
+        if (s && s % 3600 === 0)
+            return i18np("%1-hour limit", "%1-hour limit", s / 3600);
+        if (s)
+            return i18np("%1-minute limit", "%1-minute limit", Math.floor(s / 60));
+        return i18n("Plan usage");
+    }
+
+    // Kimi's own wording when it sends one; the backend's fallback is English.
+    function kimiPlanMessageText() {
+        if (root.kimiPlanMessage === "" || root.kimiPlanMessage === "Plan quota used up")
+            return i18n("Plan quota used up");
+        return root.kimiPlanMessage;
+    }
+
+    function clinePeriodLabel(p) {
+        if (p.key === "cline_today")
+            return i18n("Today");
+        if (p.key === "cline_7d")
+            return i18n("Last 7 days");
+        if (p.key === "cline_30d")
+            return i18n("Last 30 days");
+        return p.label;
+    }
+
+    function grokQuotaWindowText() {
+        return root.grokQuotaWindow === "rolling 24h" ? i18n("rolling 24h") : root.grokQuotaWindow;
+    }
+
     function claudeTierLabel() {
         var raw = root.claudeRateLimitTier;
         if (!raw)
@@ -2000,10 +2040,10 @@ PlasmoidItem {
                 lines.push("⚠ " + root.errorText(root.deepseekError));
         } else if (tab === "kimi") {
             for (var k = 0; k < root.kimiPlanWindows.length; k++)
-                lines.push(root.kimiPlanWindows[k].label + ": " + Math.round(root.kimiPlanWindows[k].pct) + "%");
+                lines.push(root.kimiWindowLabel(root.kimiPlanWindows[k]) + ": " + Math.round(root.kimiPlanWindows[k].pct) + "%");
 
             if (root.kimiPlanExhausted)
-                lines.push(i18n("Kimi Code: %1", root.kimiPlanMessage || i18n("plan quota used up")));
+                lines.push(i18n("Kimi Code: %1", root.kimiPlanMessageText()));
 
             if (root.kimiKeyValid)
                 lines.push(i18n("Moonshot balance: %1", root.formatMoney(root.kimiAvailableBalance, "USD")));
@@ -2504,9 +2544,9 @@ PlasmoidItem {
                 tooltipText: {
                     var t = root.kimiPlanAvailable ? "Kimi Code" : "Kimi / Moonshot";
                     for (var i = 0; i < root.kimiPlanWindows.length; i++)
-                        t += "\n" + root.kimiPlanWindows[i].label + ": " + Math.round(root.kimiPlanWindows[i].pct) + "%";
+                        t += "\n" + root.kimiWindowLabel(root.kimiPlanWindows[i]) + ": " + Math.round(root.kimiPlanWindows[i].pct) + "%";
                     if (root.kimiPlanExhausted)
-                        t += "\n" + (root.kimiPlanMessage || i18n("Plan quota used up"));
+                        t += "\n" + root.kimiPlanMessageText();
                     if (root.kimiKeyValid)
                         t += "\n" + i18n("Balance: %1", root.formatMoney(root.kimiAvailableBalance, "USD")) + "\n" + i18n("Voucher: %1", root.formatMoney(root.kimiVoucherBalance, "USD")) + "\n" + i18n("Cash: %1", root.formatMoney(root.kimiCashBalance, "USD"));
                     else if (!root.kimiPlanAvailable)
@@ -2531,7 +2571,7 @@ PlasmoidItem {
                     var t = "Cline";
                     for (var i = 0; i < root.clinePeriods.length; i++) {
                         var p = root.clinePeriods[i];
-                        t += "\n" + p.label + ": " + i18n("%1 tokens", root.formatTokens(p.tokens || 0)) + " · " + i18np("%1 session", "%1 sessions", p.sessions);
+                        t += "\n" + root.clinePeriodLabel(p) + ": " + i18n("%1 tokens", root.formatTokens(p.tokens || 0)) + " · " + i18np("%1 session", "%1 sessions", p.sessions);
                     }
                     return t;
                 }

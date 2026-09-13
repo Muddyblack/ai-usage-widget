@@ -62,7 +62,7 @@ ColumnLayout {
         label: i18n("Credit usage")
         value: rootItem.grokPct
         barColor: rootItem.grokWhite
-        resetText: rootItem.grokQuotaKind === "free-tier" ? rootItem.grokQuotaWindow : (rootItem.grokBillingPeriodEnd ? i18n("resets %1", rootItem.grokBillingPeriodEnd) : "")
+        resetText: rootItem.grokQuotaKind === "free-tier" ? rootItem.grokQuotaWindowText() : (rootItem.grokBillingPeriodEnd ? i18n("resets %1", rootItem.grokBillingPeriodEnd) : "")
         tokenText: rootItem.grokMonthlyLimit > 0 ? rootItem.grokUsed.toFixed(2) + " / " + rootItem.grokMonthlyLimit.toFixed(2) : ""
         tooltipText: i18n("Grok CLI billing credits")
     }
