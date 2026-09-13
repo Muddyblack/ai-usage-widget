@@ -1,5 +1,38 @@
 # Contributing
 
+## Dependencies
+
+Installing a release `.plasmoid` (GitHub release or KDE Store) needs only the
+runtime [requirements in the README](README.md#requirements): its translations
+are already compiled in. Working from a clone of the source is different — the
+compiled translations are not in git, and the dev tooling below is on you.
+
+The easy route is `nix develop`, which provides all of it (and installs the git
+hooks); `nix develop .#windows` adds PySide6 for the Windows tray app. Without
+Nix, install:
+
+| Tool | Needed for |
+|---|---|
+| Plasma SDK (`kpackagetool6`, `plasmoidviewer`) | `./test_install.sh`, `make view` |
+| gettext (`msgfmt`, `xgettext`, `msgmerge`) | compiling translations in `./test_install.sh`, `make view`, `make pack`; `make translations` |
+| `zip` | `make pack` |
+| Python 3.8+ | the backend and every test suite |
+| `jq`, `flock`, `timeout` | `make test` (the shell contract tests) |
+| Node.js | `tests/shared-code.test.js` (skipped when `node` is missing) |
+| Qt 6 `qmllint`, `qmlformat` | QML lint and formatting |
+| `ruff` | `make lint-py` |
+| `pre-commit` + Nix | the git hooks — they run `qmlformat`/`qmllint` through `nix develop` |
+
+Only if you work on that part:
+
+- **Windows tray app** — PySide6 and psutil (`windows/requirements.txt`); building
+  the `.exe` also needs `windows/build-requirements.txt` (PyInstaller) and Inno
+  Setup on Windows. See [`docs/windows.md`](docs/windows.md).
+- **Hyprland / Quickshell** — Quickshell, plus CMake and Qt 6 for the tray helper;
+  `nix run .#hyprland` brings them. See [`docs/hyprland.md`](docs/hyprland.md).
+- **README artwork** — Perl for `readme/generate.pl`; `make opendesktop` needs
+  Inkscape.
+
 ## Development install
 
 ```bash
@@ -8,6 +41,34 @@
 
 Installs as `AI Usage (Test)` alongside the real widget so you can iterate
 without touching your live install.
+
+`test_install.sh`, `make view` and `make pack` compile the translations first,
+so they need gettext (`msgfmt`); `nix develop` has it. The compiled `.mo`
+files under `package/contents/locale/` are git-ignored build output: edit
+`translate/*.po` (regenerate with `make translations`), never commit a `.mo`.
+
+## Translations
+
+One catalog per language, `translate/<lang>.po`, serves every frontend. The
+Plasma widget loads it compiled (KDE's `i18n()`); the Hyprland panel and the
+Windows tray app parse the `.po` itself with `package/contents/code/I18n.js`,
+through `shell.i18n()` / `shell.i18nc()` / `shell.i18np()` — the same call shapes,
+so `translate/Messages.sh` extracts all three frontends into the same file.
+Wrap new UI text in those calls, as one full phrase with `%1` placeholders
+rather than pieces joined with `+`.
+
+Adding a language:
+
+```bash
+make translations                                   # refresh translate/template.pot
+msginit -i translate/template.pot -l de -o translate/de.po
+# translate de.po, then:
+make translations && make check-translations
+```
+
+Nothing else needs registering: the scripts, CI, packaging and all three
+frontends pick up every `translate/*.po`. `package/metadata.json` can carry a
+`"Name[de]"` / `"Description[de]"` for the widget list.
 
 To remove the test copy:
 
@@ -62,8 +123,8 @@ described in [`docs/providers.md`](docs/providers.md).
 ## Packaging
 
 ```bash
-./pack.sh
-# produces ai-usage-widget-<version>.plasmoid
+make pack
+# compiles the translations, then writes ai-usage-widget-<version>.plasmoid
 ```
 
 ## Releasing

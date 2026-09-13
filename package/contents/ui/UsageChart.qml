@@ -153,7 +153,7 @@ Rectangle {
                 PlasmaComponents.Label {
                     id: winLabel
                     anchors.centerIn: parent
-                    text: modelData.label
+                    text: rootItem.windowLabel(modelData.label)
                     font.pixelSize: 9
                     font.bold: rootItem.chartWindow === modelData.id
                     // Near-white accents (Grok, Cursor) would swallow white text.
@@ -191,12 +191,12 @@ Rectangle {
         readonly property var options: [
             {
                 id: "both",
-                label: "Both",
+                label: i18n("Both"),
                 dotColor: ""
             },
             {
                 id: "combined",
-                label: "Combined",
+                label: i18n("Combined"),
                 dotColor: ""
             },
             {
@@ -206,7 +206,7 @@ Rectangle {
             },
             {
                 id: "rest",
-                label: "Rest",
+                label: i18nc("quota model", "Rest"),
                 dotColor: rootItem.googleGreen
             }
         ]
@@ -238,7 +238,7 @@ Rectangle {
                         Layout.alignment: Qt.AlignVCenter
                     }
                     PlasmaComponents.Label {
-                        text: modelData.label
+                        text: rootItem.windowLabel(modelData.label)
                         font.pixelSize: 9
                         font.bold: rootItem.antigravityChartFilter === modelData.id
                         color: rootItem.antigravityChartFilter === modelData.id ? "#ffffff" : Kirigami.Theme.textColor
@@ -392,7 +392,7 @@ Rectangle {
         PlasmaComponents.Label {
             anchors.centerIn: parent
             visible: (!chartCanvas.isBoth && (!chartCanvas.history || chartCanvas.history.length === 0)) || (chartCanvas.isBoth && (!chartCanvas.geminiHistory || chartCanvas.geminiHistory.length === 0) && (!chartCanvas.restHistory || chartCanvas.restHistory.length === 0))
-            text: "No data in this range"
+            text: i18n("No data in this range")
             font.pixelSize: 11
             opacity: 0.5
             color: Kirigami.Theme.textColor
@@ -570,7 +570,7 @@ Rectangle {
                 ctx.restore();
             }
             var resets = usageChartContainer.resetTimestamps;
-            var resetLabel = rootItem.chartWindow === "weekly" || rootItem.chartWindow === "codex_weekly" ? "week reset" : "5h reset";
+            var resetLabel = rootItem.chartWindow === "weekly" || rootItem.chartWindow === "codex_weekly" ? i18nc("chart reset window", "week reset") : i18nc("chart reset window", "5h reset");
             var labelDrawn = false;
             for (var ri = resets.length - 1; ri >= 0; ri--) {
                 var rt = resets[ri];
@@ -782,7 +782,7 @@ Rectangle {
                             Layout.alignment: Qt.AlignVCenter
                         }
                         PlasmaComponents.Label {
-                            text: chartCanvas.scrubGeminiPt ? "Gemini: " + Math.round(chartCanvas.scrubGeminiPt.v) + "%" : ""
+                            text: chartCanvas.scrubGeminiPt ? i18n("Gemini: %1%", Math.round(chartCanvas.scrubGeminiPt.v)) : ""
                             font.pixelSize: 11
                             font.bold: true
                             color: rootItem.googleBlue
@@ -808,7 +808,7 @@ Rectangle {
                             Layout.alignment: Qt.AlignVCenter
                         }
                         PlasmaComponents.Label {
-                            text: chartCanvas.scrubRestPt ? "Rest: " + Math.round(chartCanvas.scrubRestPt.v) + "%" : ""
+                            text: chartCanvas.scrubRestPt ? i18n("Rest: %1%", Math.round(chartCanvas.scrubRestPt.v)) : ""
                             font.pixelSize: 11
                             font.bold: true
                             color: rootItem.googleGreen

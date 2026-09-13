@@ -11,7 +11,7 @@ ColumnLayout {
     id: spark
 
     property var series: []
-    property string unit: "tokens"
+    property string unit: i18n("tokens")
     property color barColor: Kirigami.Theme.highlightColor
     // rootItem.formatTokens, so the abbreviation matches every other number.
     property var formatValue: null
@@ -33,7 +33,7 @@ ColumnLayout {
     visible: series.length > 1
 
     PlasmaComponents.Label {
-        text: spark.unit.charAt(0).toUpperCase() + spark.unit.slice(1) + " / day"
+        text: i18n("%1 / day", spark.unit.charAt(0).toUpperCase() + spark.unit.slice(1))
         font.pixelSize: 9
         opacity: 0.45
         color: Kirigami.Theme.textColor

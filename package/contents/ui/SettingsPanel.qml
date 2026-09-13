@@ -22,19 +22,19 @@ ColumnLayout {
         tabs: [
             {
                 id: "providers",
-                label: "Providers"
+                label: i18n("Providers")
             },
             {
                 id: "appearance",
-                label: "Appearance"
+                label: i18n("Appearance")
             },
             {
                 id: "data",
-                label: "Data"
+                label: i18nc("settings tab", "Data")
             },
             {
                 id: "advanced",
-                label: "Advanced"
+                label: i18n("Advanced")
             }
         ]
         onSelected: id => rootItem.settingsTab = id
@@ -62,7 +62,7 @@ ColumnLayout {
         PlasmaComponents.Label {
             Layout.fillWidth: true
             Layout.topMargin: 4
-            text: "Expand a provider for its API key and options. Keys are optional wherever a local CLI login can be read instead."
+            text: i18n("Expand a provider for its API key and options. Keys are optional wherever a local CLI login can be read instead.")
             font.pixelSize: 9
             opacity: 0.4
             color: Kirigami.Theme.textColor
@@ -76,6 +76,17 @@ ColumnLayout {
         spacing: 6
         visible: rootItem.settingsTab === "appearance"
 
+        // Plasma loads one translation per plasmashell process, so the widget
+        // cannot pick its own language the way the Hyprland and Windows apps do.
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            text: i18n("Language follows System Settings → Region & Language.")
+            font.pixelSize: 9
+            opacity: 0.45
+            color: Kirigami.Theme.textColor
+            wrapMode: Text.WordWrap
+        }
+
         RowLayout {
             Layout.fillWidth: true
             spacing: 6
@@ -87,10 +98,11 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             PlasmaComponents.Label {
-                text: "Usage chart"
+                text: i18n("Usage chart")
                 font.pixelSize: 11
                 color: Kirigami.Theme.textColor
-                Layout.preferredWidth: 82
+                Layout.preferredWidth: 120
+                elide: Text.ElideRight
             }
             QQC2.Switch {
                 implicitHeight: 20
@@ -98,7 +110,7 @@ ColumnLayout {
                 onToggled: Plasmoid.configuration.showUsageChart = checked
             }
             PlasmaComponents.Label {
-                text: "History graph in the popup"
+                text: i18n("History graph in the popup")
                 font.pixelSize: 9
                 opacity: 0.45
                 color: Kirigami.Theme.textColor
@@ -118,10 +130,11 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             PlasmaComponents.Label {
-                text: "Theme accent"
+                text: i18n("Theme accent")
                 font.pixelSize: 11
                 color: Kirigami.Theme.textColor
-                Layout.preferredWidth: 82
+                Layout.preferredWidth: 120
+                elide: Text.ElideRight
             }
             QQC2.Switch {
                 implicitHeight: 20
@@ -132,7 +145,7 @@ ColumnLayout {
                 }
             }
             PlasmaComponents.Label {
-                text: "Use Plasma accent color"
+                text: i18n("Use Plasma accent color")
                 font.pixelSize: 9
                 opacity: 0.45
                 color: Kirigami.Theme.textColor
@@ -150,10 +163,11 @@ ColumnLayout {
 
             // Row 1: Popup Background Color & Opacity
             PlasmaComponents.Label {
-                text: "Popup BG"
+                text: i18n("Popup BG")
                 font.pixelSize: 11
                 color: Kirigami.Theme.textColor
-                Layout.preferredWidth: 82
+                Layout.preferredWidth: 120
+                elide: Text.ElideRight
             }
             RowLayout {
                 spacing: 4
@@ -175,7 +189,7 @@ ColumnLayout {
                         }
                         QQC2.ToolTip.delay: 400
                         QQC2.ToolTip.visible: containsMouse
-                        QQC2.ToolTip.text: "Click to open color picker"
+                        QQC2.ToolTip.text: i18n("Click to open color picker")
                     }
                 }
                 QQC2.TextField {
@@ -195,7 +209,7 @@ ColumnLayout {
             RowLayout {
                 spacing: 4
                 PlasmaComponents.Label {
-                    text: "Opacity:"
+                    text: i18n("Opacity:")
                     font.pixelSize: 10
                     opacity: 0.6
                 }
@@ -227,10 +241,11 @@ ColumnLayout {
 
             // Row 2: Card Background Color & Opacity
             PlasmaComponents.Label {
-                text: "Card BG"
+                text: i18n("Card BG")
                 font.pixelSize: 11
                 color: Kirigami.Theme.textColor
-                Layout.preferredWidth: 82
+                Layout.preferredWidth: 120
+                elide: Text.ElideRight
             }
             RowLayout {
                 spacing: 4
@@ -252,7 +267,7 @@ ColumnLayout {
                         }
                         QQC2.ToolTip.delay: 400
                         QQC2.ToolTip.visible: containsMouse
-                        QQC2.ToolTip.text: "Click to open color picker"
+                        QQC2.ToolTip.text: i18n("Click to open color picker")
                     }
                 }
                 QQC2.TextField {
@@ -272,7 +287,7 @@ ColumnLayout {
             RowLayout {
                 spacing: 4
                 PlasmaComponents.Label {
-                    text: "Opacity:"
+                    text: i18n("Opacity:")
                     font.pixelSize: 10
                     opacity: 0.6
                 }
@@ -303,17 +318,18 @@ ColumnLayout {
 
             // Row 3: Widget Background Style
             PlasmaComponents.Label {
-                text: "Bg Style"
+                text: i18n("Bg Style")
                 font.pixelSize: 11
                 color: Kirigami.Theme.textColor
-                Layout.preferredWidth: 82
+                Layout.preferredWidth: 120
+                elide: Text.ElideRight
             }
             QQC2.ComboBox {
                 Layout.columnSpan: 2
                 Layout.fillWidth: true
                 implicitHeight: 22
                 font.pixelSize: 10
-                model: ["Plasma Native", "Translucent (Flat)", "Glassmorphic (Shadow + Blur)"]
+                model: [i18n("Plasma Native"), i18n("Translucent (Flat)"), i18n("Glassmorphic (Shadow + Blur)")]
                 currentIndex: {
                     var val = rootItem.backgroundHints;
                     if (val === 0)
@@ -356,10 +372,11 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             PlasmaComponents.Label {
-                text: "Refresh"
+                text: i18n("Refresh")
                 font.pixelSize: 11
                 color: Kirigami.Theme.textColor
-                Layout.preferredWidth: 82
+                Layout.preferredWidth: 120
+                elide: Text.ElideRight
             }
             QQC2.ComboBox {
                 id: pollCombo
@@ -367,7 +384,7 @@ ColumnLayout {
                 Layout.preferredWidth: 120
                 font.pixelSize: 10
                 readonly property var secs: [60, 120, 300, 600, 900, 1800]
-                model: ["1 min", "2 min", "5 min", "10 min", "15 min", "30 min"]
+                model: [i18n("1 min"), i18n("2 min"), i18n("5 min"), i18n("10 min"), i18n("15 min"), i18n("30 min")]
                 currentIndex: Math.max(0, secs.indexOf(Plasmoid.configuration.pollIntervalSec || 300))
                 onActivated: {
                     var s = secs[currentIndex];
@@ -376,7 +393,7 @@ ColumnLayout {
                 }
             }
             PlasmaComponents.Label {
-                text: "How often usage is re-read"
+                text: i18n("How often usage is re-read")
                 font.pixelSize: 9
                 opacity: 0.45
                 color: Kirigami.Theme.textColor
@@ -396,20 +413,21 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             PlasmaComponents.Label {
-                text: "History"
+                text: i18n("History")
                 font.pixelSize: 11
                 color: Kirigami.Theme.textColor
-                Layout.preferredWidth: 82
+                Layout.preferredWidth: 120
+                elide: Text.ElideRight
             }
             PlasmaComponents.Button {
-                text: "Export"
+                text: i18n("Export")
                 icon.name: "document-export"
                 implicitHeight: 26
                 font.pixelSize: 10
                 onClicked: rootItem.exportHistory()
             }
             PlasmaComponents.Button {
-                text: "Import"
+                text: i18n("Import")
                 icon.name: "document-import"
                 implicitHeight: 26
                 font.pixelSize: 10
@@ -431,7 +449,7 @@ ColumnLayout {
         }
 
         PlasmaComponents.Label {
-            text: "The chart's recorded history, as JSON — for a backup, or to carry it to another machine."
+            text: i18n("The chart's recorded history, as JSON — for a backup, or to carry it to another machine.")
             font.pixelSize: 9
             opacity: 0.4
             color: Kirigami.Theme.textColor
@@ -455,7 +473,7 @@ ColumnLayout {
                 spacing: 4
 
                 PlasmaComponents.Label {
-                    text: "Python"
+                    text: i18n("Python")
                     font.pixelSize: 10
                     opacity: 0.6
                     color: Kirigami.Theme.textColor
@@ -466,7 +484,7 @@ ColumnLayout {
                     id: pythonPathField
 
                     text: Plasmoid.configuration.pythonPath || ""
-                    placeholderText: "auto-detect"
+                    placeholderText: i18n("auto-detect")
                     implicitHeight: 26
                     Layout.fillWidth: true
                     font.pixelSize: 10
@@ -486,7 +504,7 @@ ColumnLayout {
                 }
             }
             PlasmaComponents.Label {
-                text: "Interpreter for the backend — e.g. a venv's bin/python. Empty auto-detects from PATH."
+                text: i18n("Interpreter for the backend — e.g. a venv's bin/python. Empty auto-detects from PATH.")
                 font.pixelSize: 9
                 opacity: 0.45
                 color: Kirigami.Theme.textColor
@@ -504,7 +522,7 @@ ColumnLayout {
                 spacing: 4
 
                 PlasmaComponents.Label {
-                    text: "Terminal"
+                    text: i18n("Terminal")
                     font.pixelSize: 10
                     opacity: 0.6
                     color: Kirigami.Theme.textColor
@@ -523,7 +541,7 @@ ColumnLayout {
                     font.pixelSize: 10
                 }
                 PlasmaComponents.Button {
-                    text: "Copy"
+                    text: i18n("Copy")
                     icon.name: "edit-copy"
                     implicitHeight: 26
                     font.pixelSize: 10
@@ -537,7 +555,7 @@ ColumnLayout {
                 }
             }
             PlasmaComponents.Label {
-                text: "Same data as this popup, as a table in a shell. Link it into ~/.local/bin to run it as ai-usage-cli, or pass --compact for one status-bar line."
+                text: i18n("Same data as this popup, as a table in a shell. Link it into ~/.local/bin to run it as ai-usage-cli, or pass --compact for one status-bar line.")
                 font.pixelSize: 9
                 opacity: 0.45
                 color: Kirigami.Theme.textColor

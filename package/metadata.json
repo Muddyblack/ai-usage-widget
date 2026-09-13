@@ -3,7 +3,9 @@
   "KPlugin": {
     "Id": "org.muddyblack.aiUsageWidget",
     "Name": "AI Usage Monitor",
+    "Name[fr]": "Moniteur d'utilisation IA",
     "Description": "Multi-service AI quota tracker with cost breakdown (Claude, Antigravity, OpenAI, Grok, Kiro, OpenRouter & Mistral)",
+    "Description[fr]": "Suivi multi-services de quotas IA avec ventilation des coûts (Claude, Antigravity, OpenAI, Grok, Kiro, OpenRouter & Mistral)",
     "Icon": "org.muddyblack.aiUsageWidget",
     "Category": "Utilities",
     "Version": "2.3.1",

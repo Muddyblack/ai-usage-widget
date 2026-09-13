@@ -54,14 +54,14 @@ ColumnLayout {
 
     PopupRow {
         visible: rootItem.kiroUsageAvailable
-        label: rootItem.kiroDisplayNamePlural !== "" ? rootItem.kiroDisplayNamePlural : "Credits"
-        countdownText: rootItem.kiroCountdown === "resetting..." ? "resetting..." : (rootItem.kiroCountdown ? "in " + rootItem.kiroCountdown : "")
+        label: rootItem.kiroDisplayNamePlural !== "" ? rootItem.kiroDisplayNamePlural : i18n("Credits")
+        countdownText: rootItem.kiroCountdown === "resetting..." ? i18n("resetting...") : (rootItem.kiroCountdown ? i18n("in %1", rootItem.kiroCountdown) : "")
         value: rootItem.kiroPct
         barColor: rootItem.kiroPurple
         etaText: rootItem.usageHistory.length >= 0 ? rootItem.etaToFull("kr", rootItem.kiroPct) : ""
-        deltaText: rootItem.usageHistory.length >= 0 ? rootItem.periodDelta("kr", rootItem.kiroPct, 30 * 24 * 3600000, "last month") : ""
-        tokenText: rootItem.kiroUsageLimit > 0 ? rootItem.kiroCurrentUsage.toFixed(2) + " / " + rootItem.kiroUsageLimit.toFixed(0) + " used" : rootItem.kiroCurrentUsage.toFixed(2) + " used"
-        tooltipText: "Kiro monthly credit usage\nUsed: " + rootItem.kiroCurrentUsage.toFixed(2) + (rootItem.kiroUsageLimit > 0 ? " / " + rootItem.kiroUsageLimit.toFixed(0) : "") + (rootItem.kiroResetTime ? "\nResets: " + rootItem.kiroResetTime : "")
+        deltaText: rootItem.usageHistory.length >= 0 ? rootItem.periodDelta("kr", rootItem.kiroPct, 30 * 24 * 3600000, i18n("last month")) : ""
+        tokenText: rootItem.kiroUsageLimit > 0 ? i18n("%1 / %2 used", rootItem.kiroCurrentUsage.toFixed(2), rootItem.kiroUsageLimit.toFixed(0)) : i18n("%1 used", rootItem.kiroCurrentUsage.toFixed(2))
+        tooltipText: i18n("Kiro monthly credit usage\nUsed: %1", rootItem.kiroCurrentUsage.toFixed(2) + (rootItem.kiroUsageLimit > 0 ? " / " + rootItem.kiroUsageLimit.toFixed(0) : "")) + (rootItem.kiroResetTime ? "\n" + i18n("Resets: %1", rootItem.kiroResetTime) : "")
     }
 
     Rectangle {
@@ -87,14 +87,14 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 8
                 PlasmaComponents.Label {
-                    text: "Current Usage"
+                    text: i18n("Current Usage")
                     font.pixelSize: 11
                     opacity: 0.65
                     color: Kirigami.Theme.textColor
                     Layout.fillWidth: true
                 }
                 PlasmaComponents.Label {
-                    text: rootItem.kiroCurrentUsage.toFixed(2) + " " + (rootItem.kiroDisplayNamePlural || "credits").toLowerCase()
+                    text: rootItem.kiroCurrentUsage.toFixed(2) + " " + (rootItem.kiroDisplayNamePlural || i18n("credits")).toLowerCase()
                     font.bold: true
                     font.pixelSize: 13
                     color: rootItem.kiroPurple
@@ -106,7 +106,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 8
                 PlasmaComponents.Label {
-                    text: "Remaining"
+                    text: i18n("Remaining")
                     font.pixelSize: 11
                     opacity: 0.65
                     color: Kirigami.Theme.textColor
@@ -125,7 +125,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 8
                 PlasmaComponents.Label {
-                    text: "Overage"
+                    text: i18n("Overage")
                     font.pixelSize: 11
                     opacity: 0.65
                     color: Kirigami.Theme.textColor
@@ -144,14 +144,14 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 8
                 PlasmaComponents.Label {
-                    text: "Overage Rate"
+                    text: i18n("Overage Rate")
                     font.pixelSize: 11
                     opacity: 0.65
                     color: Kirigami.Theme.textColor
                     Layout.fillWidth: true
                 }
                 PlasmaComponents.Label {
-                    text: rootItem.kiroCurrencySymbol + rootItem.kiroOverageRate.toFixed(2) + "/" + (rootItem.kiroDisplayName || "credit").toLowerCase()
+                    text: rootItem.kiroCurrencySymbol + rootItem.kiroOverageRate.toFixed(2) + "/" + (rootItem.kiroDisplayName || i18n("credit")).toLowerCase()
                     font.bold: true
                     font.pixelSize: 12
                     color: Kirigami.Theme.textColor
@@ -163,7 +163,7 @@ ColumnLayout {
 
     PlasmaComponents.Label {
         visible: rootItem.kiroUsageAvailable
-        text: rootItem.kiroSource === "cli" ? "Read live with the kiro-cli login. No API key required." : "Read locally from Kiro app state. No API key or network request required."
+        text: rootItem.kiroSource === "cli" ? i18n("Read live with the kiro-cli login. No API key required.") : i18n("Read locally from Kiro app state. No API key or network request required.")
         font.pixelSize: 9
         opacity: 0.45
         color: Kirigami.Theme.textColor
@@ -177,7 +177,7 @@ ColumnLayout {
         spacing: 6
 
         PlasmaComponents.Label {
-            text: "No Kiro usage data found"
+            text: i18n("No Kiro usage data found")
             font.pixelSize: 12
             font.bold: true
             color: Kirigami.Theme.textColor
@@ -185,7 +185,7 @@ ColumnLayout {
         }
 
         PlasmaComponents.Label {
-            text: "Sign in to kiro-cli (kiro-cli login), or open the Kiro IDE and sign in once so the widget can read its usage snapshot. A kiro-cli login expires about an hour after the CLI last ran — start kiro-cli to renew it."
+            text: i18n("Sign in to kiro-cli (kiro-cli login), or open the Kiro IDE and sign in once so the widget can read its usage snapshot. A kiro-cli login expires about an hour after the CLI last ran — start kiro-cli to renew it.")
             font.pixelSize: 10
             opacity: 0.5
             color: Kirigami.Theme.textColor

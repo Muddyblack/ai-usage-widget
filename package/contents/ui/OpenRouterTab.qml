@@ -37,7 +37,7 @@ ColumnLayout {
             }
 
             PlasmaComponents.Label {
-                text: "OpenRouter support is in BETA and currently untested."
+                text: i18n("OpenRouter support is in BETA and currently untested.")
                 font.pixelSize: 10
                 font.bold: true
                 color: "#f97316"
@@ -80,7 +80,7 @@ ColumnLayout {
             PlasmaComponents.Label {
                 id: orPlanLabel
                 anchors.centerIn: parent
-                text: rootItem.openrouterIsFreeTier ? "FREE" : "PAID"
+                text: rootItem.openrouterIsFreeTier ? i18n("FREE") : i18n("PAID")
                 font.pixelSize: 9
                 font.bold: true
                 color: rootItem.openrouterIsFreeTier ? Kirigami.Theme.textColor : rootItem.openrouterPurple
@@ -98,14 +98,14 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 6
         PlasmaComponents.Label {
-            text: "Not connected"
+            text: i18n("Not connected")
             font.pixelSize: 12
             font.bold: true
             color: Kirigami.Theme.textColor
             opacity: 0.7
         }
         PlasmaComponents.Label {
-            text: "Set an OpenRouter API key in ⚙ settings or via\n$OPENROUTER_API_KEY / ~/.config/openrouter/api-key"
+            text: i18n("Set an OpenRouter API key in ⚙ settings or via\n$OPENROUTER_API_KEY / ~/.config/openrouter/api-key")
             font.pixelSize: 10
             opacity: 0.5
             color: Kirigami.Theme.textColor
@@ -123,13 +123,13 @@ ColumnLayout {
         // Usage bar (only when limit is set)
         PopupRow {
             visible: rootItem.openrouterLimitUSD !== null && rootItem.openrouterLimitUSD > 0
-            label: "Credit Usage"
+            label: i18n("Credit Usage")
             value: rootItem.openrouterLimitUSD !== null && rootItem.openrouterLimitUSD > 0 ? Math.min(100, (rootItem.openrouterUsageUSD / rootItem.openrouterLimitUSD) * 100) : 0
             barColor: rootItem.openrouterPurple
             etaText: rootItem.usageHistory.length >= 0 ? rootItem.etaToFull("or", value) : ""
-            deltaText: rootItem.usageHistory.length >= 0 ? rootItem.periodDelta("or", value, 30 * 24 * 3600000, "last month") : ""
-            tokenText: "$" + rootItem.openrouterUsageUSD.toFixed(4) + " / $" + (rootItem.openrouterLimitUSD !== null ? rootItem.openrouterLimitUSD.toFixed(2) : "∞") + " used"
-            tooltipText: "OpenRouter credit spend\n$" + rootItem.openrouterUsageUSD.toFixed(4) + " of $" + (rootItem.openrouterLimitUSD !== null ? rootItem.openrouterLimitUSD.toFixed(2) : "unlimited") + " limit"
+            deltaText: rootItem.usageHistory.length >= 0 ? rootItem.periodDelta("or", value, 30 * 24 * 3600000, i18n("last month")) : ""
+            tokenText: i18n("%1 used", "$" + rootItem.openrouterUsageUSD.toFixed(4) + " / $" + (rootItem.openrouterLimitUSD !== null ? rootItem.openrouterLimitUSD.toFixed(2) : "∞"))
+            tooltipText: i18n("OpenRouter credit spend\n$%1 of $%2 limit", rootItem.openrouterUsageUSD.toFixed(4), rootItem.openrouterLimitUSD !== null ? rootItem.openrouterLimitUSD.toFixed(2) : i18n("unlimited"))
         }
 
         // Usage summary card
@@ -155,7 +155,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
                     PlasmaComponents.Label {
-                        text: "All-time Spend"
+                        text: i18n("All-time Spend")
                         font.pixelSize: 11
                         opacity: 0.65
                         color: Kirigami.Theme.textColor
@@ -175,7 +175,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
                     PlasmaComponents.Label {
-                        text: "Credit Limit"
+                        text: i18n("Credit Limit")
                         font.pixelSize: 11
                         opacity: 0.65
                         color: Kirigami.Theme.textColor
@@ -196,7 +196,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
                     PlasmaComponents.Label {
-                        text: "Remaining"
+                        text: i18n("Remaining")
                         font.pixelSize: 11
                         opacity: 0.65
                         color: Kirigami.Theme.textColor
@@ -221,14 +221,14 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
                     PlasmaComponents.Label {
-                        text: "Rate Limit"
+                        text: i18n("Rate Limit")
                         font.pixelSize: 11
                         opacity: 0.65
                         color: Kirigami.Theme.textColor
                         Layout.fillWidth: true
                     }
                     PlasmaComponents.Label {
-                        text: rootItem.openrouterRateLimit.requests !== undefined ? rootItem.openrouterRateLimit.requests + " req / " + (rootItem.openrouterRateLimit.interval || "min") : ""
+                        text: rootItem.openrouterRateLimit.requests !== undefined ? i18n("%1 req / %2", rootItem.openrouterRateLimit.requests, rootItem.openrouterRateLimit.interval || i18n("min")) : ""
                         font.pixelSize: 10
                         opacity: 0.65
                         color: Kirigami.Theme.textColor
@@ -256,7 +256,7 @@ ColumnLayout {
                 }
                 spacing: 3
                 PlasmaComponents.Label {
-                    text: "Free tier active — rate limits apply"
+                    text: i18n("Free tier active — rate limits apply")
                     font.pixelSize: 10
                     opacity: 0.5
                     color: Kirigami.Theme.textColor

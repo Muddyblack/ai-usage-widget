@@ -10,6 +10,7 @@ Rectangle {
 
     // { indicator, description, components, incidents, latestUpdate, url }
     property var status: ({})
+    property var shell
 
     // "none" | "minor" | "major" | "critical" | "" (no live feed)
     readonly property string indicator: (status && status.indicator) || ""
@@ -40,23 +41,23 @@ Rectangle {
 
     readonly property string tooltipText: {
         var s = chip.status || {};
-        var lines = ["Status  ·  " + (s.description || "Unknown")];
+        var lines = [chip.shell.i18n("Status") + "  ·  " + (s.description || chip.shell.i18n("Unknown"))];
         var comps = s.components || [];
         if (comps.length > 0) {
-            lines.push("", "Affected:");
+            lines.push("", chip.shell.i18n("Affected:"));
             for (var c = 0; c < comps.length; c++)
                 lines.push("  · " + comps[c]);
         }
         var inc = s.incidents || [];
         if (inc.length > 0) {
-            lines.push("", inc.length === 1 ? "Incident:" : "Incidents:");
+            lines.push("", chip.shell.i18np("Incident:", "Incidents:", inc.length));
             for (var i = 0; i < inc.length; i++)
                 lines.push("  · " + inc[i]);
         }
         if (s.latestUpdate)
-            lines.push("", "Latest update:", s.latestUpdate);
+            lines.push("", chip.shell.i18n("Latest update:"), s.latestUpdate);
         if (chip.statusUrl !== "")
-            lines.push("", "Click to open status page");
+            lines.push("", chip.shell.i18n("Click to open status page"));
         return lines.join("\n");
     }
 
@@ -91,14 +92,14 @@ Rectangle {
         Text {
             text: {
                 if (chip.linkOnly)
-                    return "Status ↗";
+                    return chip.shell.i18n("Status ↗");
                 if (chip.indicator === "critical")
-                    return "Major Outage";
+                    return chip.shell.i18n("Major Outage");
                 if (chip.indicator === "major")
-                    return "Partial Outage";
+                    return chip.shell.i18n("Partial Outage");
                 if (chip.indicator === "minor")
-                    return "Minor Issues";
-                return "Operational";
+                    return chip.shell.i18n("Minor Issues");
+                return chip.shell.i18n("Operational");
             }
             font.pixelSize: 10
             font.bold: !chip.linkOnly && chip.indicator !== "none"

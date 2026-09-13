@@ -15,11 +15,11 @@ Rectangle {
     property var tabs: [
         {
             id: "usage",
-            label: "Usage"
+            label: i18n("Usage")
         },
         {
             id: "stats",
-            label: "Stats"
+            label: i18n("Stats")
         }
     ]
 

@@ -21,11 +21,16 @@ NAME="$(grep -oE '"Name":[[:space:]]*"[^"]+"' "$METADATA" | head -1 | sed -E 's/
 TEST_ID="${ID}Test"
 TEMP_DIR="/tmp/$(basename "$HERE")-test"
 
+# The .mo catalogs are build output (git-ignored); compile them before copying.
+"$HERE/translate/build.sh"
+
 rm -rf "$TEMP_DIR"
 cp -r "$HERE/package" "$TEMP_DIR"
 
 sed -i "s/$ID/$TEST_ID/g" "$TEMP_DIR/metadata.json"
 sed -i "s/\"Name\": \"$NAME\"/\"Name\": \"$NAME (Test)\"/g" "$TEMP_DIR/metadata.json"
+# Keep the localized display names distinguishable in the widget list too.
+sed -i -E 's/^(\s*"Name\[[a-zA-Z_]+\]": ")([^"]+)(")/\1\2 (Test)\3/' "$TEMP_DIR/metadata.json"
 
 ICON_SRC="$(find "$TEMP_DIR/contents/icons" -name "${ID}.svg" | head -1)"
 ICON_DST="$(dirname "$ICON_SRC")/${TEST_ID}.svg"
@@ -35,6 +40,15 @@ sed -i "s/${ID}/${TEST_ID}/g" "$TEMP_DIR/contents/ui/main.qml"
 ICON_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
 mkdir -p "$ICON_DIR"
 cp "$ICON_DST" "$ICON_DIR/$TEST_ID.svg"
+
+# The applet's translation domain is plasma_applet_<Id>, so the bundled
+# catalogs must be renamed alongside the id — otherwise the test copy silently
+# falls back to English. See translate/Messages.sh and translate/build.sh.
+if [ -d "$TEMP_DIR/contents/locale" ]; then
+    while IFS= read -r mo; do
+        mv "$mo" "${mo//$ID/$TEST_ID}"
+    done < <(find "$TEMP_DIR/contents/locale" -type f -name "*${ID}*.mo")
+fi
 
 echo "Installing test version of the widget..."
 if "$TOOL" -t Plasma/Applet -l 2>/dev/null | grep -q "$TEST_ID"; then

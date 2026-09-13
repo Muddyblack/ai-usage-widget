@@ -37,7 +37,7 @@ ColumnLayout {
         }
 
         PlasmaComponents.Label {
-            text: rootItem.zaiLevel !== "" ? "Z.AI · " + rootItem.zaiLevel : "Z.AI"
+            text: rootItem.zaiLevel !== "" ? i18n("Z.AI · %1", rootItem.zaiLevel) : "Z.AI"
             font.pixelSize: 10
             opacity: 0.65
             color: Kirigami.Theme.textColor
@@ -56,7 +56,7 @@ ColumnLayout {
             PlasmaComponents.Label {
                 id: zaiBadgeLabel
                 anchors.centerIn: parent
-                text: "CONNECTED"
+                text: i18n("CONNECTED")
                 font.pixelSize: 9
                 font.bold: true
                 color: rootItem.zaiBlue
@@ -70,7 +70,7 @@ ColumnLayout {
         spacing: 6
 
         PlasmaComponents.Label {
-            text: "Not connected"
+            text: i18n("Not connected")
             font.pixelSize: 12
             font.bold: true
             color: Kirigami.Theme.textColor
@@ -78,7 +78,7 @@ ColumnLayout {
         }
 
         PlasmaComponents.Label {
-            text: "Set a Z.AI token in settings or via\n$ZAI_TOKEN / $Z_AI_API_KEY / ~/.config/zai/token"
+            text: i18n("Set a Z.AI token in settings or via\n$ZAI_TOKEN / $Z_AI_API_KEY / ~/.config/zai/token")
             font.pixelSize: 10
             opacity: 0.5
             color: Kirigami.Theme.textColor
@@ -93,14 +93,14 @@ ColumnLayout {
         spacing: 6
 
         PlasmaComponents.Label {
-            text: "Z.AI error"
+            text: i18n("Z.AI error")
             font.pixelSize: 12
             font.bold: true
             color: "#ef4444"
         }
 
         PlasmaComponents.Label {
-            text: rootItem.zaiError
+            text: rootItem.errorText(rootItem.zaiError)
             font.pixelSize: 10
             opacity: 0.7
             color: Kirigami.Theme.textColor
@@ -115,21 +115,21 @@ ColumnLayout {
         spacing: 8
 
         PopupRow {
-            label: "5h Tokens"
+            label: i18n("5h Tokens")
             value: rootItem.zaiTokenPct
             barColor: rootItem.zaiBlue
-            countdownText: rootItem.zaiTokenCountdown !== "" ? "in " + rootItem.zaiTokenCountdown : ""
+            countdownText: rootItem.zaiTokenCountdown !== "" ? i18n("in %1", rootItem.zaiTokenCountdown) : ""
             tokenText: rootItem.zaiTokenUsed === null || rootItem.zaiTokenLimit === null ? "—" : zaiTabRoot.fmt(rootItem.zaiTokenUsed) + " / " + zaiTabRoot.fmt(rootItem.zaiTokenLimit)
-            tooltipText: "Z.AI token quota" + (rootItem.zaiTokenCountdown !== "" ? "\nResets in " + rootItem.zaiTokenCountdown : "")
+            tooltipText: i18n("Z.AI token quota") + (rootItem.zaiTokenCountdown !== "" ? "\n" + i18n("Resets in %1", rootItem.zaiTokenCountdown) : "")
         }
 
         PopupRow {
-            label: "Monthly Tools"
+            label: i18n("Monthly Tools")
             value: rootItem.zaiToolsPct
             barColor: rootItem.zaiBlue
-            countdownText: rootItem.zaiToolsCountdown !== "" ? "in " + rootItem.zaiToolsCountdown : ""
-            tokenText: rootItem.zaiToolsRemaining !== null ? zaiTabRoot.fmt(rootItem.zaiToolsRemaining) + " remaining" : "—"
-            tooltipText: "Z.AI monthly tool quota" + (rootItem.zaiToolsCountdown !== "" ? "\nResets in " + rootItem.zaiToolsCountdown : "")
+            countdownText: rootItem.zaiToolsCountdown !== "" ? i18n("in %1", rootItem.zaiToolsCountdown) : ""
+            tokenText: rootItem.zaiToolsRemaining !== null ? i18n("%1 remaining", zaiTabRoot.fmt(rootItem.zaiToolsRemaining)) : "—"
+            tooltipText: i18n("Z.AI monthly tool quota") + (rootItem.zaiToolsCountdown !== "" ? "\n" + i18n("Resets in %1", rootItem.zaiToolsCountdown) : "")
         }
 
         Rectangle {
@@ -152,7 +152,7 @@ ColumnLayout {
                 spacing: 6
 
                 PlasmaComponents.Label {
-                    text: "Model usage"
+                    text: i18n("Model usage")
                     font.pixelSize: 11
                     font.bold: true
                     opacity: 0.75
@@ -167,7 +167,7 @@ ColumnLayout {
                         spacing: 8
 
                         PlasmaComponents.Label {
-                            text: modelData.modelCode || "unknown"
+                            text: modelData.modelCode || i18n("unknown")
                             font.pixelSize: 10
                             color: Kirigami.Theme.textColor
                             opacity: 0.7

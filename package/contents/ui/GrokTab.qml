@@ -45,11 +45,11 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 6
         PlasmaComponents.Label {
-            text: "Not connected"
+            text: i18n("Not connected")
             font.bold: true
         }
         PlasmaComponents.Label {
-            text: "Run grok --oauth, or add an xAI API key in settings."
+            text: i18n("Run grok --oauth, or add an xAI API key in settings.")
             font.pixelSize: 10
             opacity: 0.55
             wrapMode: Text.WordWrap
@@ -59,17 +59,17 @@ ColumnLayout {
 
     PopupRow {
         visible: rootItem.grokHasBilling
-        label: "Credit usage"
+        label: i18n("Credit usage")
         value: rootItem.grokPct
         barColor: rootItem.grokWhite
-        resetText: rootItem.grokQuotaKind === "free-tier" ? rootItem.grokQuotaWindow : (rootItem.grokBillingPeriodEnd ? "resets " + rootItem.grokBillingPeriodEnd : "")
+        resetText: rootItem.grokQuotaKind === "free-tier" ? rootItem.grokQuotaWindowText() : (rootItem.grokBillingPeriodEnd ? i18n("resets %1", rootItem.grokBillingPeriodEnd) : "")
         tokenText: rootItem.grokMonthlyLimit > 0 ? rootItem.grokUsed.toFixed(2) + " / " + rootItem.grokMonthlyLimit.toFixed(2) : ""
-        tooltipText: "Grok CLI billing credits"
+        tooltipText: i18n("Grok CLI billing credits")
     }
 
     PlasmaComponents.Label {
         visible: (rootItem.grokLoggedIn || rootItem.grokHasKey) && !rootItem.grokHasBilling
-        text: "Billing quota is not exposed for this Grok account."
+        text: i18n("Billing quota is not exposed for this Grok account.")
         font.pixelSize: 10
         opacity: 0.55
         Layout.fillWidth: true
@@ -77,7 +77,7 @@ ColumnLayout {
 
     PlasmaComponents.Label {
         visible: rootItem.grokSessionCount > 0
-        text: rootItem.grokSessionCount + (rootItem.grokSessionCount === 1 ? " local session · " : " local sessions · ") + rootItem.formatTokens(rootItem.grokTotalTokens) + " tokens · " + rootItem.grokTotalToolCalls + " tool calls"
+        text: i18np("1 local session", "%1 local sessions", rootItem.grokSessionCount) + " · " + i18n("%1 tokens", rootItem.formatTokens(rootItem.grokTotalTokens)) + " · " + i18np("%1 tool call", "%1 tool calls", rootItem.grokTotalToolCalls)
         font.pixelSize: 10
         opacity: 0.55
         wrapMode: Text.WordWrap

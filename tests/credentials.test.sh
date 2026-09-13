@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# The backend is gettext-translated; pin the locale so English assertions hold.
+export LC_ALL=C.UTF-8
+export LANGUAGE=
 set -euo pipefail
 
 # Credential discovery decides whether a provider renders a number or the

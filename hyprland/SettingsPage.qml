@@ -83,20 +83,20 @@ ColumnLayout {
         tabs: [
             {
                 id: "providers",
-                label: "Providers"
+                label: page.shell.i18n("Providers")
             },
             {
                 id: "panel",
                 // Without a pill there is no panel to set up, only the chart.
-                label: page.shell.pillControls ? "Panel" : "Display"
+                label: page.shell.pillControls ? page.shell.i18n("Panel") : page.shell.i18n("Display")
             },
             {
                 id: "data",
-                label: "Data"
+                label: page.shell.i18nc("settings tab", "Data")
             },
             {
                 id: "advanced",
-                label: "Advanced"
+                label: page.shell.i18n("Advanced")
             }
         ]
         onSelected: id => page.section = id
@@ -123,7 +123,7 @@ ColumnLayout {
         Text {
             Layout.fillWidth: true
             Layout.topMargin: 6
-            text: "Expand a provider for its API key and options. Keys are stored in " + page.shell.configPath + "; leave one blank to use env vars or an existing CLI login."
+            text: page.shell.i18n("Expand a provider for its API key and options. Keys are stored in %1; leave one blank to use env vars or an existing CLI login.", page.shell.configPath)
             font.pixelSize: 9
             opacity: 0.4
             color: "#f8fafc"
@@ -140,6 +140,52 @@ ColumnLayout {
         RowLayout {
             Layout.fillWidth: true
             spacing: 6
+            Rectangle {
+                Layout.preferredWidth: 7
+                Layout.preferredHeight: 7
+                radius: 3.5
+                color: "#38bdf8"
+                Layout.alignment: Qt.AlignVCenter
+            }
+            Text {
+                text: page.shell.i18n("Language")
+                font.pixelSize: 11
+                color: "#f8fafc"
+                Layout.preferredWidth: 90
+            }
+            SettingCombo {
+                id: languageCombo
+                Layout.preferredWidth: 130
+                // "" follows the system and "en" is the untranslated source; the
+                // rest are whichever translate/*.po catalogs exist, so a new one
+                // shows up here without touching this file.
+                readonly property var values: {
+                    var v = ["", "en"];
+                    var langs = page.shell.availableLanguages || [];
+                    for (var i = 0; i < langs.length; i++)
+                        if (v.indexOf(langs[i]) === -1)
+                            v.push(langs[i]);
+                    return v;
+                }
+                model: values.map(function (code) {
+                    if (code === "")
+                        return page.shell.i18n("System default");
+                    if (code === "en")
+                        return "English";
+                    var name = Qt.locale(code).nativeLanguageName;
+                    return name ? name.charAt(0).toUpperCase() + name.slice(1) : code;
+                })
+                currentIndex: Math.max(0, values.indexOf(page.shell.settings.language || ""))
+                onActivated: page.shell.setSetting2("language", values[currentIndex])
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
             visible: page.shell.pillControls
             Rectangle {
                 Layout.preferredWidth: 7
@@ -149,7 +195,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             Text {
-                text: "Pill"
+                text: page.shell.i18n("Pill")
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
@@ -157,7 +203,7 @@ ColumnLayout {
             SettingCombo {
                 Layout.preferredWidth: 130
                 readonly property var values: ["always", "hover", "tray"]
-                model: ["Always", "Edge hover", "Tray only"]
+                model: [page.shell.i18n("Always"), page.shell.i18n("Edge hover"), page.shell.i18n("Tray only")]
                 currentIndex: Math.max(0, values.indexOf(page.shell.settings.pillMode || "always"))
                 onActivated: page.shell.setSetting2("pillMode", values[currentIndex])
             }
@@ -178,7 +224,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             Text {
-                text: "Position"
+                text: page.shell.i18n("Position")
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
@@ -186,7 +232,7 @@ ColumnLayout {
             SettingCombo {
                 Layout.preferredWidth: 130
                 readonly property var values: ["top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right"]
-                model: ["Top left", "Top center", "Top right", "Bottom left", "Bottom center", "Bottom right"]
+                model: [page.shell.i18n("Top left"), page.shell.i18n("Top center"), page.shell.i18n("Top right"), page.shell.i18n("Bottom left"), page.shell.i18n("Bottom center"), page.shell.i18n("Bottom right")]
                 currentIndex: Math.max(0, values.indexOf(page.shell.settings.position || "top-right"))
                 onActivated: page.shell.setSetting2("position", values[currentIndex])
             }
@@ -207,7 +253,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             Text {
-                text: "Monitor"
+                text: page.shell.i18n("Monitor")
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
@@ -228,7 +274,7 @@ ColumnLayout {
                     return v;
                 }
                 model: {
-                    var m = ["Follow focus", "All monitors"];
+                    var m = [page.shell.i18n("Follow focus"), page.shell.i18n("All monitors")];
                     for (var i = 2; i < monitorCombo.values.length; i++)
                         m.push(monitorCombo.values[i]);
                     return m;
@@ -252,7 +298,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             Text {
-                text: "Usage chart"
+                text: page.shell.i18n("Usage chart")
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
@@ -280,7 +326,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             Text {
-                text: "Tray"
+                text: page.shell.i18n("Tray")
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
@@ -288,7 +334,7 @@ ColumnLayout {
             SettingCombo {
                 Layout.preferredWidth: 130
                 readonly property var values: ["icons", "numbers", "ring"]
-                model: ["Logo and percent", "Numbers", "Ring"]
+                model: [page.shell.i18n("Logo and percent"), page.shell.i18n("Numbers"), page.shell.i18n("Ring")]
                 currentIndex: Math.max(0, values.indexOf(page.shell.settings.trayStyle || "icons"))
                 onActivated: page.shell.setSetting2("trayStyle", values[currentIndex])
             }
@@ -309,7 +355,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             Text {
-                text: "Floating pill"
+                text: page.shell.i18n("Floating pill")
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
@@ -326,7 +372,7 @@ ColumnLayout {
         Text {
             visible: page.shell.trayOptions === true
             Layout.fillWidth: true
-            text: "Logo and percent reads like the panel pill; the tray gives every icon the same square, so each value is two icons. The floating pill is the panel's own pill in a small window: drag it anywhere, click it for this popup."
+            text: page.shell.i18n("Logo and percent reads like the panel pill; the tray gives every icon the same square, so each value is two icons. The floating pill is the panel's own pill in a small window: drag it anywhere, click it for this popup.")
             font.pixelSize: 9
             opacity: 0.4
             color: "#f8fafc"
@@ -351,7 +397,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             Text {
-                text: "Refresh"
+                text: page.shell.i18n("Refresh")
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
@@ -362,7 +408,7 @@ ColumnLayout {
                 Layout.preferredWidth: 120
                 font.pixelSize: 10
                 readonly property var secs: [60, 120, 300, 600, 900, 1800]
-                model: ["1 min", "2 min", "5 min", "10 min", "15 min", "30 min"]
+                model: [page.shell.i18n("1 min"), page.shell.i18n("2 min"), page.shell.i18n("5 min"), page.shell.i18n("10 min"), page.shell.i18n("15 min"), page.shell.i18n("30 min")]
                 currentIndex: Math.max(0, secs.indexOf(page.shell.settings.pollSec || 300))
                 onActivated: page.shell.setSetting2("pollSec", secs[currentIndex])
 
@@ -426,20 +472,20 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             Text {
-                text: "History"
+                text: page.shell.i18n("History")
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
             }
             SettingsButton {
-                text: "Export"
+                text: page.shell.i18n("Export")
                 onClicked: page.shell.exportHistory()
             }
             Item {
                 Layout.fillWidth: true
             }
             Text {
-                text: page.shell.usageHistory.length + " points"
+                text: page.shell.i18np("%1 point", "%1 points", page.shell.usageHistory.length)
                 font.pixelSize: 9
                 opacity: 0.5
                 color: "#f8fafc"
@@ -458,7 +504,7 @@ ColumnLayout {
 
         Text {
             Layout.fillWidth: true
-            text: "The chart's recorded history, as JSON — for a backup, or to carry it to another machine."
+            text: page.shell.i18n("The chart's recorded history, as JSON — for a backup, or to carry it to another machine.")
             font.pixelSize: 9
             opacity: 0.4
             color: "#f8fafc"
@@ -480,7 +526,7 @@ ColumnLayout {
             visible: page.shell.autostartAvailable === true
 
             Text {
-                text: "Start at login"
+                text: page.shell.i18n("Start at login")
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
@@ -497,7 +543,7 @@ ColumnLayout {
         Text {
             visible: page.shell.autostartAvailable === true
             Layout.fillWidth: true
-            text: "Starts AI Usage in the tray when you sign in. The same switch is in the tray icon's menu."
+            text: page.shell.i18n("Starts AI Usage in the tray when you sign in. The same switch is in the tray icon's menu.")
             font.pixelSize: 9
             opacity: 0.4
             color: "#f8fafc"
@@ -513,7 +559,7 @@ ColumnLayout {
             visible: page.shell.interpreterControls
 
             Text {
-                text: "Python"
+                text: page.shell.i18n("Python")
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
@@ -535,7 +581,7 @@ ColumnLayout {
                     text: page.shell.settings.pythonPath || ""
                     font.pixelSize: 10
                     color: "#f8fafc"
-                    placeholderText: "auto-detect"
+                    placeholderText: page.shell.i18n("auto-detect")
                     placeholderTextColor: Qt.rgba(1, 1, 1, 0.3)
                     verticalAlignment: TextInput.AlignVCenter
                     background: null
@@ -551,7 +597,7 @@ ColumnLayout {
         Text {
             visible: page.shell.interpreterControls
             Layout.fillWidth: true
-            text: "Interpreter for the backend — e.g. a venv's bin/python. Empty auto-detects from PATH (python3 → python3.x → python). The tray helper picks this up on its next refresh."
+            text: page.shell.i18n("Interpreter for the backend — e.g. a venv's bin/python. Empty auto-detects from PATH (python3 → python3.x → python). The tray helper picks this up on its next refresh.")
             font.pixelSize: 9
             opacity: 0.4
             color: "#f8fafc"
@@ -573,7 +619,7 @@ ColumnLayout {
             visible: page.shell.interpreterControls
 
             Text {
-                text: "Terminal"
+                text: page.shell.i18n("Terminal")
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
@@ -603,7 +649,7 @@ ColumnLayout {
             }
 
             SettingsButton {
-                text: "Copy"
+                text: page.shell.i18n("Copy")
                 // QML has no clipboard API without a C++ helper; selecting the
                 // read-only field and copying it is the portable way.
                 onClicked: {
@@ -617,7 +663,7 @@ ColumnLayout {
         Text {
             visible: page.shell.interpreterControls
             Layout.fillWidth: true
-            text: "Same data as this popup, as a table in a shell. Link it into ~/.local/bin to run it as ai-usage-cli, or pass --compact for one status-bar line."
+            text: page.shell.i18n("Same data as this popup, as a table in a shell. Link it into ~/.local/bin to run it as ai-usage-cli, or pass --compact for one status-bar line.")
             font.pixelSize: 9
             opacity: 0.4
             color: "#f8fafc"

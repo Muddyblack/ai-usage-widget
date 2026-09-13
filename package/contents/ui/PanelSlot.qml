@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
@@ -34,12 +33,22 @@ RowLayout {
     opacity: stale ? 0.55 : 1
 
     MouseArea {
+        id: slotHover
+
         anchors.fill: parent
         hoverEnabled: true
         propagateComposedEvents: true
-        QQC2.ToolTip.visible: containsMouse && slot.tooltipText !== ""
-        QQC2.ToolTip.text: slot.tooltipText
-        QQC2.ToolTip.delay: 500
+
+        // Plasma's tooltip rather than QQC2's: it is anchored above the item and
+        // sizes its wrapped label itself, so a multi-line tooltip next to a
+        // panel edge is no longer clipped at the bottom. QQC2's popped up at the
+        // cursor and let the panel cover its last lines.
+        PlasmaComponents.ToolTip {
+            visible: slotHover.containsMouse && slot.tooltipText !== ""
+            text: slot.tooltipText
+            delay: 500
+            timeout: -1
+        }
     }
 
     Item {

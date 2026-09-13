@@ -63,15 +63,15 @@ ColumnLayout {
             tabs: [
                 {
                     id: "off",
-                    label: "Off"
+                    label: i18n("Off")
                 },
                 {
                     id: "local",
-                    label: "Local"
+                    label: i18n("Local")
                 },
                 {
                     id: "live",
-                    label: "Live"
+                    label: i18n("Live")
                 }
             ]
             currentId: !prow.serviceOn ? "off" : (Plasmoid.configuration.museQuotaEnabled === true ? "live" : "local")
@@ -99,7 +99,7 @@ ColumnLayout {
         // Says, without unfolding the row, that a key was already entered.
         PlasmaComponents.Label {
             visible: prow.keySet && !prow.expanded
-            text: "key set"
+            text: i18n("key set")
             font.pixelSize: 9
             opacity: 0.4
             color: Kirigami.Theme.textColor
@@ -115,7 +115,7 @@ ColumnLayout {
             onClicked: prow.expanded = !prow.expanded
             QQC2.ToolTip.delay: 400
             QQC2.ToolTip.visible: hovered
-            QQC2.ToolTip.text: prow.expanded ? "Hide options" : "Key and options"
+            QQC2.ToolTip.text: prow.expanded ? i18n("Hide options") : i18n("Key and options")
         }
     }
 
@@ -127,7 +127,7 @@ ColumnLayout {
         visible: prow.expanded && prow.serviceOn
 
         KeyRow {
-            label: "API key"
+            label: i18n("API key")
             placeholder: prow.provider && prow.provider.keyPlaceholder ? prow.provider.keyPlaceholder : ""
             configKey: prow.keyConfig
             rowVisible: prow.keyConfig !== ""
@@ -138,7 +138,7 @@ ColumnLayout {
         PlasmaComponents.Label {
             Layout.fillWidth: true
             visible: prow.tristate
-            text: Plasmoid.configuration.museQuotaEnabled === true ? "Live: plan windows come from a billed model call (~130 tokens per refresh, cached 30 min)." : "Local: read from Muse's own files, free. Meta reports plan windows only on a billed call — that is what Live buys."
+            text: Plasmoid.configuration.museQuotaEnabled === true ? i18n("Live: plan windows come from a billed model call (~130 tokens per refresh, cached 30 min).") : i18n("Local: read from Muse's own files, free. Meta reports plan windows only on a billed call — that is what Live buys.")
             font.pixelSize: 9
             opacity: 0.5
             color: Kirigami.Theme.textColor
@@ -151,7 +151,7 @@ ColumnLayout {
             visible: prow.providerId === "copilot"
 
             PlasmaComponents.Label {
-                text: "Quota"
+                text: i18n("Quota")
                 font.pixelSize: 10
                 opacity: 0.6
                 color: Kirigami.Theme.textColor
@@ -176,7 +176,7 @@ ColumnLayout {
                 }
             }
             PlasmaComponents.Label {
-                text: "fallback if the plan reports none"
+                text: i18n("fallback if the plan reports none")
                 font.pixelSize: 9
                 opacity: 0.45
                 color: Kirigami.Theme.textColor

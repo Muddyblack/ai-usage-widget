@@ -30,14 +30,15 @@ ColumnLayout {
             return "";
         var s = Math.max(0, (new Date().getTime() - then) / 1000);
         if (s < 60)
-            return "just now";
+            return i18n("just now");
         if (s < 3600)
-            return Math.floor(s / 60) + "m ago";
+            return i18n("%1m ago", Math.floor(s / 60));
         if (s < 86400)
-            return Math.floor(s / 3600) + "h ago";
+            return i18n("%1h ago", Math.floor(s / 3600));
         if (s < 604800)
-            return Math.floor(s / 86400) + "d ago";
-        return Math.floor(s / 604800) + "w ago";
+            // xgettext:no-javascript-format
+            return i18n("%1d ago", Math.floor(s / 86400));
+        return i18n("%1w ago", Math.floor(s / 604800));
     }
 
     // ── Header: model pill + status ───────────────────────────────────────────
@@ -70,7 +71,7 @@ ColumnLayout {
             PlasmaComponents.Label {
                 id: mistralBadgeLabel
                 anchors.centerIn: parent
-                text: rootItem.mistralKeyValid ? "CONNECTED" : (rootItem.mistralHasKey ? "INVALID KEY" : "NO KEY")
+                text: rootItem.mistralKeyValid ? i18n("CONNECTED") : (rootItem.mistralHasKey ? i18n("INVALID KEY") : i18n("NO KEY"))
                 font.pixelSize: 9
                 font.bold: true
                 color: rootItem.mistralKeyValid ? rootItem.mistralOrange : Kirigami.Theme.textColor
@@ -88,14 +89,14 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 6
         PlasmaComponents.Label {
-            text: "Not connected"
+            text: i18n("Not connected")
             font.pixelSize: 12
             font.bold: true
             color: Kirigami.Theme.textColor
             opacity: 0.7
         }
         PlasmaComponents.Label {
-            text: "Run the vibe CLI, or set a Mistral API key via\n$MISTRAL_API_KEY · ~/.vibe/.env · ⚙ settings"
+            text: i18n("Run the vibe CLI, or set a Mistral API key via\n$MISTRAL_API_KEY · ~/.vibe/.env · ⚙ settings")
             font.pixelSize: 10
             opacity: 0.5
             color: Kirigami.Theme.textColor
@@ -135,7 +136,7 @@ ColumnLayout {
             spacing: 2
 
             PlasmaComponents.Label {
-                text: "TOTAL SPEND · VIBE CLI"
+                text: i18n("TOTAL SPEND · VIBE CLI")
                 font.pixelSize: 9
                 font.bold: true
                 opacity: 0.55
@@ -157,14 +158,14 @@ ColumnLayout {
                     spacing: 0
                     Layout.alignment: Qt.AlignBottom
                     PlasmaComponents.Label {
-                        text: rootItem.mistralVibeSessionCount + (rootItem.mistralVibeSessionCount === 1 ? " session" : " sessions")
+                        text: i18np("1 session", "%1 sessions", rootItem.mistralVibeSessionCount)
                         font.pixelSize: 11
                         opacity: 0.7
                         color: Kirigami.Theme.textColor
                         Layout.alignment: Qt.AlignRight
                     }
                     PlasmaComponents.Label {
-                        text: mistralTabRoot.fmtTokens(rootItem.mistralVibeTotalTokens) + " tokens"
+                        text: i18n("%1 tokens", mistralTabRoot.fmtTokens(rootItem.mistralVibeTotalTokens))
                         font.pixelSize: 11
                         opacity: 0.7
                         color: Kirigami.Theme.textColor
@@ -199,7 +200,7 @@ ColumnLayout {
                 ColumnLayout {
                     spacing: 0
                     PlasmaComponents.Label {
-                        text: "Input"
+                        text: i18nc("stat label", "Input")
                         font.pixelSize: 9
                         opacity: 0.5
                         color: Kirigami.Theme.textColor
@@ -239,7 +240,7 @@ ColumnLayout {
                 ColumnLayout {
                     spacing: 0
                     PlasmaComponents.Label {
-                        text: "Output"
+                        text: i18nc("stat label", "Output")
                         font.pixelSize: 9
                         opacity: 0.5
                         color: Kirigami.Theme.textColor
@@ -279,7 +280,7 @@ ColumnLayout {
                 spacing: 0
                 Layout.alignment: Qt.AlignVCenter
                 PlasmaComponents.Label {
-                    text: "Steps"
+                    text: i18nc("stat label", "Steps")
                     font.pixelSize: 9
                     opacity: 0.5
                     color: Kirigami.Theme.textColor
@@ -309,7 +310,7 @@ ColumnLayout {
                 spacing: 0
                 Layout.alignment: Qt.AlignVCenter
                 PlasmaComponents.Label {
-                    text: "Tool calls"
+                    text: i18n("Tool calls")
                     font.pixelSize: 9
                     opacity: 0.5
                     color: Kirigami.Theme.textColor
@@ -324,7 +325,7 @@ ColumnLayout {
                     }
                     PlasmaComponents.Label {
                         visible: rootItem.mistralVibeToolFail > 0
-                        text: "· " + rootItem.mistralVibeToolFail + " failed"
+                        text: "· " + i18n("%1 failed", rootItem.mistralVibeToolFail)
                         font.pixelSize: 10
                         color: "#ff6b6b"
                         opacity: 0.8
@@ -352,7 +353,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             PlasmaComponents.Label {
-                text: "RECENT SESSIONS"
+                text: i18n("RECENT SESSIONS")
                 font.pixelSize: 9
                 font.bold: true
                 opacity: 0.5
@@ -360,7 +361,7 @@ ColumnLayout {
                 Layout.fillWidth: true
             }
             PlasmaComponents.Label {
-                text: rootItem.mistralVibeRecent.length + " of " + rootItem.mistralVibeSessionCount
+                text: i18n("%1 of %2", rootItem.mistralVibeRecent.length, rootItem.mistralVibeSessionCount)
                 font.pixelSize: 9
                 opacity: 0.4
                 color: Kirigami.Theme.textColor
@@ -412,7 +413,7 @@ ColumnLayout {
                                 hoverEnabled: true
                                 QQC2.ToolTip.visible: containsMouse
                                 QQC2.ToolTip.delay: 400
-                                QQC2.ToolTip.text: (modelData.title || "untitled") + "\n" + mistralTabRoot.fmtTokens(modelData.tokens || 0) + " tokens" + "  ·  $" + (modelData.cost || 0).toFixed(4) + (modelData.project ? "\n" + modelData.project : "") + (modelData.branch ? " ⎇ " + modelData.branch : "") + (modelData.start ? "\n" + Qt.formatDateTime(new Date(modelData.start), "MMM d, hh:mm") : "")
+                                QQC2.ToolTip.text: (modelData.title || i18n("untitled")) + "\n" + i18n("%1 tokens", mistralTabRoot.fmtTokens(modelData.tokens || 0)) + "  ·  $" + (modelData.cost || 0).toFixed(4) + (modelData.project ? "\n" + modelData.project : "") + (modelData.branch ? " ⎇ " + modelData.branch : "") + (modelData.start ? "\n" + Qt.formatDateTime(new Date(modelData.start), "MMM d, hh:mm") : "")
                             }
 
                             RowLayout {
@@ -425,7 +426,7 @@ ColumnLayout {
                                     Layout.fillWidth: true
                                     spacing: 1
                                     PlasmaComponents.Label {
-                                        text: modelData.title || "untitled"
+                                        text: modelData.title || i18n("untitled")
                                         font.pixelSize: 11
                                         color: Kirigami.Theme.textColor
                                         opacity: 0.9
@@ -483,7 +484,7 @@ ColumnLayout {
     // ── Footnote ──────────────────────────────────────────────────────────────
     PlasmaComponents.Label {
         visible: mistralTabRoot.hasVibe
-        text: "Mistral has no billing API — figures come from local vibe CLI logs."
+        text: i18n("Mistral has no billing API — figures come from local vibe CLI logs.")
         font.pixelSize: 9
         opacity: 0.35
         color: Kirigami.Theme.textColor

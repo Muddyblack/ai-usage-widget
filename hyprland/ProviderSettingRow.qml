@@ -59,15 +59,15 @@ ColumnLayout {
             tabs: [
                 {
                     id: "off",
-                    label: "Off"
+                    label: prow.shell.i18n("Off")
                 },
                 {
                     id: "local",
-                    label: "Local"
+                    label: prow.shell.i18n("Local")
                 },
                 {
                     id: "live",
-                    label: "Live"
+                    label: prow.shell.i18n("Live")
                 }
             ]
             currentId: !prow.serviceOn ? "off" : (prow.shell.settings.museQuota === true ? "live" : "local")
@@ -98,7 +98,7 @@ ColumnLayout {
         // Says, without unfolding the row, that a key was already entered.
         Text {
             visible: prow.keySet && !prow.expanded
-            text: "key set"
+            text: prow.shell.i18n("key set")
             font.pixelSize: 9
             color: "#94a3b8"
         }
@@ -132,7 +132,7 @@ ColumnLayout {
         KeyField {
             visible: prow.keySetting !== ""
             shell: prow.shell
-            label: "API key"
+            label: prow.shell.i18n("API key")
             placeholder: prow.provider && prow.provider.keyPlaceholder ? prow.provider.keyPlaceholder : ""
             settingKey: prow.keySetting
         }
@@ -142,7 +142,7 @@ ColumnLayout {
         Text {
             Layout.fillWidth: true
             visible: prow.tristate
-            text: prow.shell.settings.museQuota === true ? "Live: plan windows come from a billed model call (~130 tokens per refresh, cached 30 min)." : "Local: read from Muse's own files, free. Meta reports plan windows only on a billed call — that is what Live buys."
+            text: prow.shell.settings.museQuota === true ? prow.shell.i18n("Live: plan windows come from a billed model call (~130 tokens per refresh, cached 30 min).") : prow.shell.i18n("Local: read from Muse's own files, free. Meta reports plan windows only on a billed call — that is what Live buys.")
             font.pixelSize: 9
             color: "#94a3b8"
             wrapMode: Text.WordWrap
@@ -151,8 +151,8 @@ ColumnLayout {
         KeyField {
             visible: prow.providerId === "copilot"
             shell: prow.shell
-            label: "Quota"
-            placeholder: "fallback if the plan reports none"
+            label: prow.shell.i18n("Quota")
+            placeholder: prow.shell.i18n("fallback if the plan reports none")
             settingKey: "copilotQuota"
             secret: false
         }

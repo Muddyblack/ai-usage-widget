@@ -27,7 +27,7 @@ ColumnLayout {
         }
 
         PlasmaComponents.Label {
-            text: rootItem.museFullName !== "" ? "Muse Code · " + rootItem.museFullName : "Muse Code"
+            text: rootItem.museFullName !== "" ? i18n("Muse Code · %1", rootItem.museFullName) : "Muse Code"
             font.pixelSize: 10
             opacity: 0.65
             color: Kirigami.Theme.textColor
@@ -63,7 +63,7 @@ ColumnLayout {
         spacing: 6
 
         PlasmaComponents.Label {
-            text: rootItem.museHasLogin ? "No Muse activity yet" : "Not connected"
+            text: rootItem.museHasLogin ? i18n("No Muse activity yet") : i18n("Not connected")
             font.pixelSize: 12
             font.bold: true
             color: Kirigami.Theme.textColor
@@ -71,7 +71,7 @@ ColumnLayout {
         }
 
         PlasmaComponents.Label {
-            text: rootItem.museHasLogin ? "Run a Muse Code session and its local logs\nwill appear here." : "Sign in with `muse login`. Nothing to paste:\nthis tab only reads Muse's own local files."
+            text: rootItem.museHasLogin ? i18n("Run a Muse Code session and its local logs\nwill appear here.") : i18n("Sign in with `muse login`. Nothing to paste:\nthis tab only reads Muse's own local files.")
             font.pixelSize: 10
             opacity: 0.5
             color: Kirigami.Theme.textColor
@@ -95,20 +95,20 @@ ColumnLayout {
 
         PopupRow {
             visible: rootItem.museCurrentAvailable
-            label: "Current"
+            label: i18n("Current")
             value: rootItem.museCurrentPct
             barColor: rootItem.museBlue
-            countdownText: rootItem.museCurrentCountdown !== "" ? "in " + rootItem.museCurrentCountdown : ""
-            tooltipText: "Muse current window" + (rootItem.museCurrentCountdown !== "" ? "\nResets in " + rootItem.museCurrentCountdown : "")
+            countdownText: rootItem.museCurrentCountdown !== "" ? i18n("in %1", rootItem.museCurrentCountdown) : ""
+            tooltipText: i18n("Muse current window") + (rootItem.museCurrentCountdown !== "" ? "\n" + i18n("Resets in %1", rootItem.museCurrentCountdown) : "")
         }
 
         PopupRow {
             visible: rootItem.museWeeklyAvailable
-            label: "Weekly"
+            label: i18n("Weekly")
             value: rootItem.museWeeklyPct
             barColor: rootItem.museBlue
-            countdownText: rootItem.museWeeklyCountdown !== "" ? "in " + rootItem.museWeeklyCountdown : ""
-            tooltipText: "Muse weekly window" + (rootItem.museWeeklyCountdown !== "" ? "\nResets in " + rootItem.museWeeklyCountdown : "")
+            countdownText: rootItem.museWeeklyCountdown !== "" ? i18n("in %1", rootItem.museWeeklyCountdown) : ""
+            tooltipText: i18n("Muse weekly window") + (rootItem.museWeeklyCountdown !== "" ? "\n" + i18n("Resets in %1", rootItem.museWeeklyCountdown) : "")
         }
 
         StatValueCard {
@@ -116,22 +116,22 @@ ColumnLayout {
             rows: {
                 var out = [
                     {
-                        label: "Tokens",
+                        label: i18nc("stat label", "Tokens"),
                         value: rootItem.formatTokens(rootItem.museTotalTokens),
                         strong: true
                     },
                     {
-                        label: "Output",
+                        label: i18nc("stat label", "Output"),
                         value: rootItem.formatTokens(rootItem.museOutputTokens)
                     }
                 ];
                 if (rootItem.museCostUSD > 0)
                     out.push({
-                        label: "Spend (est.)",
+                        label: i18nc("stat label", "Spend (est.)"),
                         value: rootItem.formatMoney(rootItem.museCostUSD, rootItem.museCurrency)
                     });
                 out.push({
-                    label: "Model calls",
+                    label: i18n("Model calls"),
                     value: Math.round(rootItem.museModelCalls).toString()
                 });
                 return out;
@@ -144,7 +144,7 @@ ColumnLayout {
         PlasmaComponents.Label {
             Layout.fillWidth: true
             visible: !rootItem.museQuotaOn
-            text: "Plan quota is off: Meta reports it only on a billed model call.\nEverything above is read from Muse's own local files.\nSettings › Providers › Muse › Live turns it on."
+            text: i18n("Plan quota is off: Meta reports it only on a billed model call.\nEverything above is read from Muse's own local files.\nSettings › Providers › Muse › Live turns it on.")
             font.pixelSize: 9
             opacity: 0.45
             color: Kirigami.Theme.textColor
@@ -156,13 +156,13 @@ ColumnLayout {
             visible: rootItem.museQuotaOn && rootItem.museQuotaError !== ""
             text: {
                 if (rootItem.museQuotaError === "rejected")
-                    return "Plan quota: Meta refused the credential.";
+                    return i18n("Plan quota: Meta refused the credential.");
                 if (rootItem.museQuotaError === "unreachable")
-                    return "Plan quota: could not reach Meta — the local numbers above are unaffected.";
+                    return i18n("Plan quota: could not reach Meta — the local numbers above are unaffected.");
                 if (rootItem.museQuotaError === "no-credential")
-                    return "Plan quota needs a Meta API key, or a `muse login` that stored one.";
+                    return i18n("Plan quota needs a Meta API key, or a `muse login` that stored one.");
                 if (rootItem.museQuotaError === "no-model")
-                    return "Plan quota needs a model: run Muse once so it caches its catalog.";
+                    return i18n("Plan quota needs a model: run Muse once so it caches its catalog.");
                 return "";
             }
             font.pixelSize: 9
@@ -174,7 +174,7 @@ ColumnLayout {
         PlasmaComponents.Label {
             Layout.fillWidth: true
             visible: rootItem.museQuotaOn && rootItem.museQuotaError === "" && !rootItem.museCurrentAvailable && !rootItem.museWeeklyAvailable
-            text: "No plan windows on this account — pay-as-you-go has none."
+            text: i18n("No plan windows on this account — pay-as-you-go has none.")
             font.pixelSize: 9
             opacity: 0.45
             color: Kirigami.Theme.textColor
@@ -192,7 +192,7 @@ ColumnLayout {
             Layout.fillWidth: true
             spacing: 8
             PlasmaComponents.Label {
-                text: "Activity Stats"
+                text: i18n("Activity Stats")
                 font.bold: true
                 font.pixelSize: 11
                 opacity: 0.7
@@ -202,7 +202,7 @@ ColumnLayout {
                 Layout.fillWidth: true
             }
             PlasmaComponents.Label {
-                text: "Muse Code CLI"
+                text: i18n("Muse Code CLI")
                 font.pixelSize: 9
                 opacity: 0.45
                 color: Kirigami.Theme.textColor
@@ -218,66 +218,68 @@ ColumnLayout {
             StatTile {
                 visible: rootItem.museTotalTokens > 0
                 tileValue: rootItem.formatTokens(rootItem.museTotalTokens)
-                tileLabel: "tokens"
-                tileTip: rootItem.formatTokens(rootItem.museOutputTokens) + " output · " + rootItem.formatTokens(rootItem.museInputTokens) + " input (context is resent each call)"
+                tileLabel: i18nc("stat label", "tokens")
+                tileTip: i18n("%1 output", rootItem.formatTokens(rootItem.museOutputTokens)) + " · " + i18n("%1 input (context is resent each call)", rootItem.formatTokens(rootItem.museInputTokens))
             }
             StatTile {
                 visible: rootItem.museCostUSD > 0
                 tileValue: rootItem.formatMoney(rootItem.museCostUSD, rootItem.museCurrency)
-                tileLabel: "spend (est.)"
-                tileTip: "Tokens priced with the model catalog Muse caches locally"
+                tileLabel: i18nc("stat label", "spend (est.)")
+                tileTip: i18n("Tokens priced with the model catalog Muse caches locally")
             }
             StatTile {
                 tileValue: Math.round(rootItem.museStatsTotalSessions).toString()
-                tileLabel: "sessions"
-                tileTip: rootItem.formatTokens(rootItem.museStatsTotalMessages) + " messages total"
+                tileLabel: i18nc("stat label", "sessions")
+                tileTip: i18n("%1 messages total", rootItem.formatTokens(rootItem.museStatsTotalMessages))
             }
             StatTile {
                 tileValue: Math.round(rootItem.museStatsActiveDays) + (rootItem.museStatsSpanDays > 0 ? "/" + Math.round(rootItem.museStatsSpanDays) : "")
-                tileLabel: "active days"
-                tileTip: rootItem.museStatsFirstDate ? "Since " + Qt.formatDate(new Date(rootItem.museStatsFirstDate), "MMM d, yyyy") : ""
+                tileLabel: i18n("active days")
+                tileTip: rootItem.museStatsFirstDate ? i18n("Since %1", Qt.formatDate(new Date(rootItem.museStatsFirstDate), "MMM d, yyyy")) : ""
             }
             StatTile {
-                tileValue: Math.round(rootItem.museStatsCurrentStreak) + "d"
-                tileLabel: "streak"
-                tileSub: "best " + Math.round(rootItem.museStatsLongestStreak) + "d"
-                tileTip: "Current consecutive-day streak\nLongest: " + Math.round(rootItem.museStatsLongestStreak) + " days"
+                // xgettext:no-javascript-format
+                tileValue: i18nc("streak length in days, abbreviated", "%1d", Math.round(rootItem.museStatsCurrentStreak))
+                tileLabel: i18nc("stat label", "streak")
+                // xgettext:no-javascript-format
+                tileSub: i18nc("longest streak in days, abbreviated", "best %1d", Math.round(rootItem.museStatsLongestStreak))
+                tileTip: i18np("Current consecutive-day streak\nLongest: %1 day", "Current consecutive-day streak\nLongest: %1 days", Math.round(rootItem.museStatsLongestStreak))
             }
             StatTile {
                 tileValue: rootItem.formatDuration(rootItem.museStatsLongestSessionMs)
-                tileLabel: "longest session"
-                tileSub: rootItem.museStatsLongestSessionMessages > 0 ? Math.round(rootItem.museStatsLongestSessionMessages) + " msgs" : ""
+                tileLabel: i18n("longest session")
+                tileSub: rootItem.museStatsLongestSessionMessages > 0 ? i18np("%1 msg", "%1 msgs", Math.round(rootItem.museStatsLongestSessionMessages)) : ""
             }
             StatTile {
                 visible: rootItem.museStatsPeakHour >= 0
                 tileValue: rootItem.museStatsPeakHour >= 0 ? (rootItem.museStatsPeakHour < 10 ? "0" : "") + rootItem.museStatsPeakHour + ":00" : "—"
-                tileLabel: "peak hour"
-                tileTip: "Hour of day with the most activity (UTC)"
+                tileLabel: i18n("peak hour")
+                tileTip: i18n("Hour of day with the most activity (UTC)")
             }
             StatTile {
                 visible: rootItem.museStatsTotalToolCalls > 0
                 tileValue: rootItem.formatTokens(rootItem.museStatsTotalToolCalls)
-                tileLabel: "tool calls"
-                tileTip: "Total tool invocations across all sessions"
+                tileLabel: i18n("tool calls")
+                tileTip: i18n("Total tool invocations across all sessions")
             }
             StatTile {
                 visible: rootItem.museStatsSubagentSessions > 0
                 tileValue: Math.round(rootItem.museStatsSubagentSessions).toString()
-                tileLabel: "subagents"
-                tileTip: "Delegated subagent sessions, logged separately by Muse"
+                tileLabel: i18nc("stat label", "subagents")
+                tileTip: i18n("Delegated subagent sessions, logged separately by Muse")
             }
         }
 
         StatsSparkline {
             series: rootItem.museStatsDailyTokens
-            unit: "tokens"
+            unit: i18n("tokens")
             barColor: rootItem.museBlue
             formatValue: rootItem.formatTokens
         }
 
         StatsTopList {
             entries: rootItem.museStatsTopWorkspaces
-            label: "Top workspaces"
+            label: i18n("Top workspaces")
             accent: rootItem.museBlue
         }
 
@@ -306,7 +308,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                 }
                 PlasmaComponents.Label {
-                    text: rootItem.formatTokens(parent.entry.output || 0) + " out"
+                    text: i18n("%1 out", rootItem.formatTokens(parent.entry.output || 0))
                     font.pixelSize: 10
                     opacity: 0.6
                     color: Kirigami.Theme.textColor

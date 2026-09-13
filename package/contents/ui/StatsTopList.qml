@@ -45,7 +45,7 @@ ColumnLayout {
             }
 
             PlasmaComponents.Label {
-                text: Math.round(parent.modelData.sessions) + (parent.modelData.sessions === 1 ? " session" : " sessions")
+                text: i18np("1 session", "%1 sessions", Math.round(parent.modelData.sessions))
                 font.pixelSize: 10
                 color: topList.accent
             }

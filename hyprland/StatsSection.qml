@@ -9,6 +9,7 @@ ColumnLayout {
     property string providerId: ""
     property color accent: "#38bdf8"
     property string currency: "USD"
+    property var shell
 
     readonly property bool hasStats: stats && stats.available === true
     // Every provider draws one per-day sparkline, but not every provider
@@ -16,12 +17,12 @@ ColumnLayout {
     // Where the sessions went: repositories for Copilot, workspace folders for
     // Muse. One list, named by whichever the provider reported.
     readonly property var topGroups: stats.topRepositories || stats.topWorkspaces || []
-    readonly property string topGroupsLabel: stats.topRepositories ? "Top repositories" : "Top workspaces"
+    readonly property string topGroupsLabel: stats.topRepositories ? shell.i18n("Top repositories") : shell.i18n("Top workspaces")
     readonly property var dailySeries: stats.dailySeries || stats.dailyTokens || []
     readonly property string dailyUnit: stats.dailyUnit || "tokens"
     // Cursor reports its dashboard figures for the billing cycle, not a lifetime
     // total like the local CLI logs.
-    readonly property string periodLabel: providerId === "cursor" ? "this billing cycle" : "all time"
+    readonly property bool billingCycle: providerId === "cursor"
 
     function formatTokens(n) {
         if (!n || n <= 0)
@@ -42,12 +43,13 @@ ColumnLayout {
         var m = totalMins % 60;
         var parts = [];
         if (d > 0)
-            parts.push(d + "d");
+            // xgettext:no-javascript-format
+            parts.push(shell.i18nc("duration in days, abbreviated", "%1d", d));
         if (h > 0)
-            parts.push(h + "h");
+            parts.push(shell.i18nc("duration in hours, abbreviated", "%1h", h));
         if (d === 0 && m > 0)
-            parts.push(m + "m");
-        return parts.length ? parts.join(" ") : "<1m";
+            parts.push(shell.i18nc("duration in minutes, abbreviated", "%1m", m));
+        return parts.length ? parts.join(" ") : shell.i18n("<1m");
     }
 
     function shortenModelName(name) {
@@ -75,16 +77,16 @@ ColumnLayout {
             width: parent.width - 24
             text: {
                 if (statsSectionRoot.providerId === "openai")
-                    return "No Codex history yet.\nRun a Codex CLI session and stats will appear here.";
+                    return statsSectionRoot.shell.i18n("No Codex history yet") + "\n" + statsSectionRoot.shell.i18n("Run a Codex CLI session and stats will appear here.");
                 if (statsSectionRoot.providerId === "copilot")
-                    return "No local activity stats yet.\nRun the Copilot CLI to fill ~/.copilot/session-store.db";
+                    return statsSectionRoot.shell.i18n("No local activity stats yet.\nRun the Copilot CLI to fill ~/.copilot/session-store.db");
                 if (statsSectionRoot.providerId === "muse")
-                    return "No Muse sessions yet.\nRun Muse Code and its own logs will appear here.";
+                    return statsSectionRoot.shell.i18n("No Muse sessions yet.\nRun Muse Code and its own logs will appear here.");
                 if (statsSectionRoot.providerId === "cursor")
-                    return "No Cursor usage this billing cycle yet.\nRequests made with Cursor or cursor-agent will appear here.";
+                    return statsSectionRoot.shell.i18n("No Cursor usage this billing cycle yet.\nRequests made with Cursor or cursor-agent will appear here.");
                 if (statsSectionRoot.providerId === "cline")
-                    return "No Cline sessions yet.\nRun the Cline CLI and its session logs in ~/.cline will appear here.";
-                return "No local activity stats yet.\nRun Claude Code to generate ~/.claude/stats-cache.json";
+                    return statsSectionRoot.shell.i18n("No Cline sessions yet.\nRun the Cline CLI and its session logs in ~/.cline will appear here.");
+                return statsSectionRoot.shell.i18n("No local activity stats yet.\nRun Claude Code to generate ~/.claude/stats-cache.json");
             }
             font.pixelSize: 11
             horizontalAlignment: Text.AlignHCenter
@@ -105,7 +107,7 @@ ColumnLayout {
             spacing: 8
 
             Text {
-                text: "Activity Stats"
+                text: statsSectionRoot.shell.i18n("Activity Stats")
                 font.pixelSize: 11
                 font.bold: true
                 color: "#f8fafc"
@@ -147,41 +149,43 @@ ColumnLayout {
             StatTile {
                 visible: (statsSectionRoot.stats.totalTokens || 0) > 0
                 tileValue: statsSectionRoot.formatTokens(statsSectionRoot.stats.totalTokens || 0)
-                tileLabel: "tokens"
-                tileTip: "Total tokens across all models (" + statsSectionRoot.periodLabel + ")"
+                tileLabel: statsSectionRoot.shell.i18nc("stat label", "tokens")
+                tileTip: statsSectionRoot.billingCycle ? statsSectionRoot.shell.i18n("Total tokens across all models (this billing cycle)") : statsSectionRoot.shell.i18n("Total tokens across all models (all time)")
                 accentColor: statsSectionRoot.accent
             }
 
             // Sessions
             StatTile {
                 tileValue: Math.round(statsSectionRoot.stats.totalSessions || 0).toString()
-                tileLabel: "sessions"
-                tileTip: statsSectionRoot.formatTokens(statsSectionRoot.stats.totalMessages || 0) + " messages total"
+                tileLabel: statsSectionRoot.shell.i18nc("stat label", "sessions")
+                tileTip: statsSectionRoot.shell.i18n("%1 messages total", statsSectionRoot.formatTokens(statsSectionRoot.stats.totalMessages || 0))
                 accentColor: statsSectionRoot.accent
             }
 
             // Active Days
             StatTile {
                 tileValue: Math.round(statsSectionRoot.stats.activeDays || 0) + ((statsSectionRoot.stats.spanDays || 0) > 0 ? "/" + Math.round(statsSectionRoot.stats.spanDays) : "")
-                tileLabel: "active days"
-                tileTip: statsSectionRoot.stats.firstDate ? "Since " + statsSectionRoot.stats.firstDate : ""
+                tileLabel: statsSectionRoot.shell.i18n("active days")
+                tileTip: statsSectionRoot.stats.firstDate ? statsSectionRoot.shell.i18n("Since %1", statsSectionRoot.stats.firstDate) : ""
                 accentColor: statsSectionRoot.accent
             }
 
             // Streak
             StatTile {
-                tileValue: Math.round(statsSectionRoot.stats.currentStreak || 0) + "d"
-                tileLabel: "streak"
-                tileSub: "best " + Math.round(statsSectionRoot.stats.longestStreak || 0) + "d"
-                tileTip: "Current consecutive-day streak\nLongest: " + Math.round(statsSectionRoot.stats.longestStreak || 0) + " days"
+                // xgettext:no-javascript-format
+                tileValue: statsSectionRoot.shell.i18nc("streak length in days, abbreviated", "%1d", Math.round(statsSectionRoot.stats.currentStreak || 0))
+                tileLabel: statsSectionRoot.shell.i18nc("stat label", "streak")
+                // xgettext:no-javascript-format
+                tileSub: statsSectionRoot.shell.i18nc("longest streak in days, abbreviated", "best %1d", Math.round(statsSectionRoot.stats.longestStreak || 0))
+                tileTip: statsSectionRoot.shell.i18np("Current consecutive-day streak\nLongest: %1 day", "Current consecutive-day streak\nLongest: %1 days", Math.round(statsSectionRoot.stats.longestStreak || 0))
                 accentColor: statsSectionRoot.accent
             }
 
             // Longest Session
             StatTile {
                 tileValue: statsSectionRoot.formatDuration(statsSectionRoot.stats.longestSessionMs || 0)
-                tileLabel: "longest session"
-                tileSub: (statsSectionRoot.stats.longestSessionMessages || 0) > 0 ? Math.round(statsSectionRoot.stats.longestSessionMessages) + " msgs" : ""
+                tileLabel: statsSectionRoot.shell.i18n("longest session")
+                tileSub: (statsSectionRoot.stats.longestSessionMessages || 0) > 0 ? statsSectionRoot.shell.i18np("%1 msg", "%1 msgs", Math.round(statsSectionRoot.stats.longestSessionMessages)) : ""
                 accentColor: statsSectionRoot.accent
             }
 
@@ -189,8 +193,8 @@ ColumnLayout {
             StatTile {
                 visible: (statsSectionRoot.stats.peakHour !== undefined && statsSectionRoot.stats.peakHour >= 0)
                 tileValue: (statsSectionRoot.stats.peakHour !== undefined && statsSectionRoot.stats.peakHour >= 0) ? ((statsSectionRoot.stats.peakHour < 10 ? "0" : "") + statsSectionRoot.stats.peakHour + ":00") : "—"
-                tileLabel: "peak hour"
-                tileTip: "Hour of day with the most activity"
+                tileLabel: statsSectionRoot.shell.i18n("peak hour")
+                tileTip: statsSectionRoot.shell.i18n("Hour of day with the most activity")
                 accentColor: statsSectionRoot.accent
             }
 
@@ -198,8 +202,8 @@ ColumnLayout {
             StatTile {
                 visible: (statsSectionRoot.stats.totalToolCalls || 0) > 0
                 tileValue: statsSectionRoot.formatTokens(statsSectionRoot.stats.totalToolCalls || 0)
-                tileLabel: "tool calls"
-                tileTip: "Total tool invocations across all sessions"
+                tileLabel: statsSectionRoot.shell.i18n("tool calls")
+                tileTip: statsSectionRoot.shell.i18n("Total tool invocations across all sessions")
                 accentColor: statsSectionRoot.accent
             }
 
@@ -219,8 +223,8 @@ ColumnLayout {
 
                     return amount + " " + cur;
                 }
-                tileLabel: "spend"
-                tileTip: "Total cost across all models (" + statsSectionRoot.periodLabel + ")"
+                tileLabel: statsSectionRoot.shell.i18nc("stat label", "spend")
+                tileTip: statsSectionRoot.billingCycle ? statsSectionRoot.shell.i18n("Total cost across all models (this billing cycle)") : statsSectionRoot.shell.i18n("Total cost across all models (all time)")
                 accentColor: statsSectionRoot.accent
             }
 
@@ -228,8 +232,8 @@ ColumnLayout {
             StatTile {
                 visible: (statsSectionRoot.stats.totalWebSearches || 0) > 0
                 tileValue: statsSectionRoot.formatTokens(statsSectionRoot.stats.totalWebSearches || 0)
-                tileLabel: "web searches"
-                tileTip: "Total web search requests across all models"
+                tileLabel: statsSectionRoot.shell.i18n("web searches")
+                tileTip: statsSectionRoot.shell.i18n("Total web search requests across all models")
                 accentColor: statsSectionRoot.accent
             }
 
@@ -237,8 +241,8 @@ ColumnLayout {
             StatTile {
                 visible: (statsSectionRoot.stats.totalFiles || 0) > 0
                 tileValue: statsSectionRoot.formatTokens(statsSectionRoot.stats.totalFiles || 0)
-                tileLabel: "files touched"
-                tileTip: "Distinct files read or edited across all sessions"
+                tileLabel: statsSectionRoot.shell.i18n("files touched")
+                tileTip: statsSectionRoot.shell.i18n("Distinct files read or edited across all sessions")
                 accentColor: statsSectionRoot.accent
             }
 
@@ -246,8 +250,8 @@ ColumnLayout {
             StatTile {
                 visible: (statsSectionRoot.stats.totalRepositories || 0) > 0
                 tileValue: Math.round(statsSectionRoot.stats.totalRepositories || 0).toString()
-                tileLabel: "repos"
-                tileTip: "Repositories the CLI has been run in"
+                tileLabel: statsSectionRoot.shell.i18n("repos")
+                tileTip: statsSectionRoot.shell.i18n("Repositories the CLI has been run in")
                 accentColor: statsSectionRoot.accent
             }
         }
@@ -259,7 +263,7 @@ ColumnLayout {
             visible: statsSectionRoot.dailySeries.length > 1
 
             Text {
-                text: statsSectionRoot.dailyUnit === "tokens" ? "Tokens / day" : (statsSectionRoot.dailyUnit === "requests" ? "Requests / day" : "Messages / day")
+                text: statsSectionRoot.dailyUnit === "tokens" ? statsSectionRoot.shell.i18n("Tokens / day") : (statsSectionRoot.dailyUnit === "requests" ? statsSectionRoot.shell.i18n("Requests / day") : statsSectionRoot.shell.i18n("Messages / day"))
                 font.pixelSize: 9
                 color: "#94a3b8"
                 opacity: 0.8
@@ -293,7 +297,7 @@ ColumnLayout {
 
                         QQC2.ToolTip.visible: sparkMA.containsMouse
                         QQC2.ToolTip.delay: 200
-                        QQC2.ToolTip.text: modelData.date + "\n" + statsSectionRoot.formatTokens(modelData.total) + " " + statsSectionRoot.dailyUnit
+                        QQC2.ToolTip.text: modelData.date + "\n" + (statsSectionRoot.dailyUnit === "tokens" ? statsSectionRoot.shell.i18n("%1 tokens", statsSectionRoot.formatTokens(modelData.total)) : statsSectionRoot.dailyUnit === "requests" ? statsSectionRoot.shell.i18n("%1 requests", statsSectionRoot.formatTokens(modelData.total)) : statsSectionRoot.shell.i18n("%1 messages", statsSectionRoot.formatTokens(modelData.total)))
 
                         MouseArea {
                             id: sparkMA
@@ -345,7 +349,7 @@ ColumnLayout {
                     }
 
                     Text {
-                        text: Math.round(modelData.sessions) + (modelData.sessions === 1 ? " session" : " sessions")
+                        text: statsSectionRoot.shell.i18np("%1 session", "%1 sessions", Math.round(modelData.sessions))
                         font.pixelSize: 10
                         color: statsSectionRoot.accent
                     }
@@ -366,7 +370,7 @@ ColumnLayout {
             }
 
             Text {
-                text: "Models"
+                text: statsSectionRoot.shell.i18n("Models")
                 font.pixelSize: 11
                 font.bold: true
                 color: "#f8fafc"
@@ -409,7 +413,7 @@ ColumnLayout {
 
                         Text {
                             visible: (parent.parent.modelEntry.input !== undefined)
-                            text: statsSectionRoot.formatTokens(parent.parent.modelEntry.input || 0) + " in"
+                            text: statsSectionRoot.shell.i18n("%1 in", statsSectionRoot.formatTokens(parent.parent.modelEntry.input || 0))
                             font.pixelSize: 9
                             color: "#94a3b8"
                             opacity: 0.7
@@ -417,7 +421,7 @@ ColumnLayout {
 
                         Text {
                             visible: (parent.parent.modelEntry.output !== undefined)
-                            text: statsSectionRoot.formatTokens(parent.parent.modelEntry.output || 0) + " out"
+                            text: statsSectionRoot.shell.i18n("%1 out", statsSectionRoot.formatTokens(parent.parent.modelEntry.output || 0))
                             font.pixelSize: 9
                             color: "#94a3b8"
                             opacity: 0.7
@@ -425,7 +429,7 @@ ColumnLayout {
 
                         Text {
                             visible: (parent.parent.modelEntry.sessions !== undefined && parent.parent.modelEntry.input === undefined)
-                            text: (parent.parent.modelEntry.sessions || 0) + " sess"
+                            text: statsSectionRoot.shell.i18nc("abbreviated sessions", "%1 sess", parent.parent.modelEntry.sessions || 0)
                             font.pixelSize: 9
                             color: "#94a3b8"
                             opacity: 0.7
@@ -487,7 +491,7 @@ ColumnLayout {
 
             Text {
                 visible: (statsSectionRoot.stats.computedDate || "") !== ""
-                text: "computed " + (statsSectionRoot.stats.computedDate || "").substring(0, 10)
+                text: statsSectionRoot.shell.i18n("computed %1", (statsSectionRoot.stats.computedDate || "").substring(0, 10))
                 font.pixelSize: 8
                 color: "#94a3b8"
                 opacity: 0.6
@@ -499,14 +503,14 @@ ColumnLayout {
 
             Text {
                 visible: statsSectionRoot.providerId === "openai" || statsSectionRoot.providerId === "cursor"
-                text: statsSectionRoot.providerId === "cursor" ? "Cursor dashboard ↗" : "Codex analytics ↗"
+                text: statsSectionRoot.providerId === "cursor" ? statsSectionRoot.shell.i18n("Cursor dashboard ↗") : statsSectionRoot.shell.i18n("Codex analytics ↗")
                 font.pixelSize: 8
                 font.underline: analyticsMA.containsMouse
                 color: statsSectionRoot.accent
                 opacity: analyticsMA.containsMouse ? 1.0 : 0.7
 
                 QQC2.ToolTip.visible: analyticsMA.containsMouse
-                QQC2.ToolTip.text: statsSectionRoot.providerId === "cursor" ? "Open the cursor.com usage dashboard in your browser" : "Open chatgpt.com Codex usage analytics in your browser"
+                QQC2.ToolTip.text: statsSectionRoot.providerId === "cursor" ? statsSectionRoot.shell.i18n("Open the cursor.com usage dashboard in your browser") : statsSectionRoot.shell.i18n("Open chatgpt.com Codex usage analytics in your browser")
 
                 MouseArea {
                     id: analyticsMA

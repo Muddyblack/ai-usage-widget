@@ -36,13 +36,19 @@ class TrayAppTest(unittest.TestCase):
             XDG_CACHE_HOME=os.path.join(self.tmp, "cache"),
         )
 
-    def selftest(self, settings):
-        return subprocess.run([sys.executable, APP, "--selftest"], env=self.env(settings), capture_output=True, text=True, timeout=120)
+    def selftest(self, settings, **extra):
+        return subprocess.run([sys.executable, APP, "--selftest"], env=dict(self.env(settings), **extra), capture_output=True, text=True, timeout=120)
 
     def test_popup_and_every_settings_section_load_cleanly(self):
         # The selftest itself opens each settings section in turn. The
         # floating pill is on too, so its window loads and draws as well.
         result = self.selftest(dict(ALL_OFF, floatingPill=True))
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_loads_cleanly_translated(self):
+        # translate/fr.po parsed by I18n.js: a bad catalog or a shell.i18n call
+        # the QML cannot resolve shows up as a warning, which fails the selftest.
+        result = self.selftest(dict(ALL_OFF, floatingPill=True), LANGUAGE="fr")
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_runs_without_stdout_or_stderr(self):

@@ -49,7 +49,7 @@ ColumnLayout {
             PlasmaComponents.Label {
                 id: deepSeekBadgeLabel
                 anchors.centerIn: parent
-                text: rootItem.deepseekIsAvailable ? "AVAILABLE" : "LOW BALANCE"
+                text: rootItem.deepseekIsAvailable ? i18n("AVAILABLE") : i18n("LOW BALANCE")
                 font.pixelSize: 9
                 font.bold: true
                 color: rootItem.deepseekIsAvailable ? rootItem.deepseekBlue : Kirigami.Theme.textColor
@@ -67,14 +67,14 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 6
         PlasmaComponents.Label {
-            text: "Not connected"
+            text: i18n("Not connected")
             font.pixelSize: 12
             font.bold: true
             color: Kirigami.Theme.textColor
             opacity: 0.7
         }
         PlasmaComponents.Label {
-            text: "Set a DeepSeek API key in settings or via\n$DEEPSEEK_API_KEY / ~/.config/deepseek/api-key"
+            text: i18n("Set a DeepSeek API key in settings or via\n$DEEPSEEK_API_KEY / ~/.config/deepseek/api-key")
             font.pixelSize: 10
             opacity: 0.5
             color: Kirigami.Theme.textColor
@@ -88,13 +88,13 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 6
         PlasmaComponents.Label {
-            text: "DeepSeek error"
+            text: i18n("DeepSeek error")
             font.pixelSize: 12
             font.bold: true
             color: "#ef4444"
         }
         PlasmaComponents.Label {
-            text: rootItem.deepseekError
+            text: rootItem.errorText(rootItem.deepseekError)
             font.pixelSize: 10
             opacity: 0.7
             color: Kirigami.Theme.textColor
@@ -112,16 +112,16 @@ ColumnLayout {
             accent: rootItem.deepseekBlue
             rows: [
                 {
-                    label: "Total Balance",
+                    label: i18n("Total Balance"),
                     value: deepSeekTabRoot.money(rootItem.deepseekPrimaryTotal, rootItem.deepseekPrimaryCurrency),
                     strong: true
                 },
                 {
-                    label: "Granted",
+                    label: i18n("Granted"),
                     value: deepSeekTabRoot.money(rootItem.deepseekPrimaryGranted, rootItem.deepseekPrimaryCurrency)
                 },
                 {
-                    label: "Topped Up",
+                    label: i18n("Topped Up"),
                     value: deepSeekTabRoot.money(rootItem.deepseekPrimaryToppedUp, rootItem.deepseekPrimaryCurrency)
                 }
             ]
@@ -143,7 +143,7 @@ ColumnLayout {
                 spacing: 6
 
                 PlasmaComponents.Label {
-                    text: "Currencies"
+                    text: i18n("Currencies")
                     font.pixelSize: 11
                     font.bold: true
                     opacity: 0.75
@@ -156,7 +156,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 8
                         PlasmaComponents.Label {
-                            text: modelData.currency || "unknown"
+                            text: modelData.currency || i18n("unknown")
                             font.pixelSize: 10
                             color: Kirigami.Theme.textColor
                             Layout.fillWidth: true

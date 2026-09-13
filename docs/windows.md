@@ -35,6 +35,13 @@ once, or turn it on under *Settings → Personalization → Taskbar → Other sy
 tray icons*. Starting AI Usage again from the Start menu while it runs opens
 the popup too.
 
+*Settings → Display → Language* picks the language, and switches it on the spot.
+Its default follows the display language — `$LANGUAGE` when set, otherwise the
+system's — when there is a translation for it (French so far), and English
+otherwise. The list is every `translate/*.po` bundled with the app: the Plasma
+widget's own catalogs.
+Provider rows the backend words itself (limits, token counts) are still English.
+
 ## Where it keeps its files
 
 It reads the same logins as on Linux, which the CLIs keep under your profile on

@@ -30,6 +30,14 @@ jobs:
           filters: |
             qml:
               - 'package/contents/**/*.qml'
+              - 'package/contents/**/*.js'
+              - 'package/metadata.json'
+              - 'translate/**'
+              # Their shell.i18n(…) strings are extracted into translate/*.po too.
+              - 'hyprland/**'
+              - 'windows/qml/**'
+              - 'flake.nix'
+              - 'flake.lock'
               - '.github/workflows/lint.yml'
             backend:
               - 'package/contents/tools/aiusage/**'
@@ -38,6 +46,9 @@ jobs:
               - 'tests/fixtures/**'
               - 'tests/*.test.sh'
               - 'tests/*.test.js'
+              # What the node tests exercise: the shared JS and the French catalog.
+              - 'package/contents/code/**'
+              - 'translate/**'
               - 'pyproject.toml'
               - '.github/workflows/lint.yml'
 
@@ -55,6 +66,18 @@ jobs:
 
       - name: qmlformat check
         run: nix develop --command bash -c 'find package/contents -name "*.qml" | xargs qmlformat --dry-run 2>&1 | grep -q "would reformat" && echo "Files need formatting, run qmlformat -i" && exit 1 || true'
+
+      - name: i18n catalogs complete
+        run: nix develop --command ./translate/check.sh
+
+      - name: i18n catalogs in sync with sources
+        run: |
+          nix develop --command ./translate/Messages.sh
+          git diff --exit-code -- 'translate/*.po'
+
+      # The .mo files are not committed; this only proves every catalog compiles.
+      - name: i18n catalogs compile
+        run: nix develop --command ./translate/build.sh
 
   backend:
     needs: changes

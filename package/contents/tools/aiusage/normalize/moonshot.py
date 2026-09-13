@@ -52,7 +52,18 @@ def normalize_moonshot(raw):
         "exhausted": exhausted,
         "message": plan.get("message") or "",
         "error": plan.get("error") or "",
-        "windows": [{"label": w["label"], "pct": w["pct"], "used": w["used"], "limit": w["limit"], "resetAt": w["resetAt"]} for w in windows],
+        "windows": [
+            {
+                "label": w["label"],
+                "name": w.get("name") or "",
+                "seconds": w.get("seconds") or 0,
+                "pct": w["pct"],
+                "used": w["used"],
+                "limit": w["limit"],
+                "resetAt": w["resetAt"],
+            }
+            for w in windows
+        ],
         "booster": (
             {
                 "balance": booster["balanceCents"] / 100,
