@@ -73,7 +73,11 @@ jobs:
             plasmapkg2 -i ${{ steps.info.outputs.artifact }}
             ```
 
-            **Windows:** run `AI-Usage-Setup-${{ steps.info.outputs.version }}.exe` (no admin rights needed; it updates an existing install in place). Or unzip `ai-usage-windows-${{ steps.info.outputs.version }}.zip` anywhere and run `AI Usage.exe`. Either way it lives in the tray. Both are attached a few minutes after the release appears, once their build has passed.
+            **Windows:** run `AI-Usage-Setup-${{ steps.info.outputs.version }}.exe` (no admin rights needed; it updates an existing install in place). Or unzip `ai-usage-windows-${{ steps.info.outputs.version }}.zip` anywhere and run `AI Usage.exe`. Either way it lives in the tray.
+
+            **macOS:** unzip `ai-usage-macos-${{ steps.info.outputs.version }}.zip` and drag `AI Usage.app` to Applications. It lives in the menu bar. Unsigned, so the first launch needs right-click → Open (see [docs/macos.md](docs/macos.md)).
+
+            All platform assets are attached a few minutes after the release appears, once their build has passed.
           files: |
             ${{ steps.info.outputs.artifact }}
 
@@ -101,3 +105,26 @@ jobs:
           files: |
             ai-usage-windows-*.zip
             AI-Usage-Setup-*.exe
+
+  # The workflow every push runs, with the app job's version-stamped zip
+  # this time (macos.yml derives its version from package/metadata.json,
+  # so unlike windows.yml it needs no version input).
+  macos:
+    uses: ./.github/workflows/macos.yml
+
+  macos-assets:
+    needs: [release, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: ai-usage-macos
+
+      - name: Attach the macOS build to the release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            ai-usage-macos-*.zip
