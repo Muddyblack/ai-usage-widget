@@ -143,4 +143,3 @@ class PricingTest(IsolatedHomeTest):
             self.assertIn("claude-test", collect.collect_claude(1_800_000_000)["inputs"]["pricing"])
             self.assertIn("gpt-test", collect.collect_openai(1_800_000_000)["inputs"]["pricing"])
             self.assertEqual(self.fetch.call_count, 1)
-
