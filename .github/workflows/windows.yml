@@ -13,6 +13,11 @@ on:
       - master
   # A build from any branch by hand: Actions → Windows → Run workflow.
   workflow_dispatch:
+    inputs:
+      screenshots:
+        description: 'Generate demo screenshots as an artifact'
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       version:
@@ -50,6 +55,8 @@ jobs:
               - 'package/contents/code/**'
               - 'translate/**'
               - '.github/workflows/windows.yml'
+              # Shared demo data for frontend screenshots.
+              - 'scripts/demo-envelope.py'
 
   test:
     needs: changes
@@ -88,6 +95,27 @@ jobs:
 
       - name: tray app loads
         run: python windows/app.py --selftest
+
+      - name: Screenshots
+        if: runner.os == 'Windows' && github.event_name == 'workflow_dispatch' && inputs.screenshots
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QT_QPA_FONTDIR: C:\Windows\Fonts
+          # A throwaway config file so the run cannot read or write the
+          # runner's real settings.
+          AI_USAGE_CONFIG: ${{ runner.temp }}\settings.json
+        run: |
+          $screens = "$env:RUNNER_TEMP\screens"
+          python windows/app.py --screenshot $screens --demo
+          Get-ChildItem $screens
+
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Windows' && github.event_name == 'workflow_dispatch' && inputs.screenshots
+        with:
+          name: screenshots-windows
+          path: ${{ runner.temp }}\screens\*.png
+          if-no-files-found: error
 
   build:
     needs: test

@@ -29,8 +29,9 @@ import json
 import os
 
 from .. import config as _config
+from .. import keychain
 from ..contract import num
-from ..http import clean_credential, resolve_key
+from ..http import as_json, clean_credential, resolve_key
 from .muse import auth_meta, configured_model, model_catalog
 
 _QUOTA_URL = "https://api.meta.ai/v1/responses"
@@ -48,14 +49,40 @@ def _ttl():
         return 1800
 
 
+# Where the Muse CLI puts the key on macOS, which is not in auth.json: that
+# file keeps the identity and the Keychain keeps the secret.
+KEYCHAIN_SERVICE = "ai.meta.dev.credentials"
+KEYCHAIN_ACCOUNT = "meta"
+
+
+def _keychain_key():
+    """The stored key from the login Keychain on macOS, "" anywhere else.
+
+    The item holds either the key itself or the same JSON object auth.json
+    holds; both are accepted, because which one it is is not documented and a
+    guess that is wrong should cost nothing."""
+    secret = keychain.password(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT)
+    if not secret:
+        return ""
+    parsed = as_json(secret)
+    if isinstance(parsed, dict):
+        return clean_credential(parsed.get("api_key") or parsed.get("apiKey"))
+    return clean_credential(secret)
+
+
 def _api_key():
     """An explicit META_API_KEY (widget field or environment) wins over the
     login store's own api_key, mirroring the CLI's precedence. The OIDC
-    access_token in that store is not valid on the Model API and is never used."""
+    access_token in that store is not valid on the Model API and is never used.
+
+    On macOS the store usually has no api_key at all — the CLI keeps it in the
+    login Keychain — so that is read last rather than leaving Mac users with
+    nothing but the environment variable."""
     key = resolve_key("WIDGET_MUSE_API_KEY", "META_API_KEY")
     if key:
         return key
-    return clean_credential((auth_meta() or {}).get("api_key"))
+    stored = clean_credential((auth_meta() or {}).get("api_key"))
+    return stored or _keychain_key()
 
 
 def quota_model():

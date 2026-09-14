@@ -9,6 +9,13 @@ The XDG variables win whenever they are set, on every platform. That keeps the
 tests — which plant each file under a throwaway HOME and point XDG_* at it —
 independent of the platform they run on.
 
+macOS is the awkward one, because both conventions are genuinely in use there:
+a tool written against XDG keeps reading ~/.config and ~/.local/share on a Mac
+(Muse, glm-acp-agent), while one built on a cross-platform directories library
+lands in ~/Library/Application Support (the Electron IDEs, kiro-cli). Neither
+answer is right for all of them, so the *_dirs() functions hand back both, best
+first, and a caller picks the one that exists — see first_file().
+
 Dotfile homes such as ~/.claude, ~/.codex and ~/.gemini need nothing from this
 module: those CLIs use ``%USERPROFILE%\\.<name>`` on Windows as well, which is
 exactly what ``os.path.expanduser("~/.<name>")`` resolves to there.
@@ -72,6 +79,54 @@ def electron_app_data():
     if IS_MACOS and not os.environ.get("XDG_CONFIG_HOME"):
         return os.path.expanduser("~/Library/Application Support")
     return config_home()
+
+
+# The one directory on macOS that neither an XDG variable nor a platform
+# default can be relied on to name: programs written against a cross-platform
+# directories library put both their config and their data here.
+APPLE_APP_SUPPORT = "~/Library/Application Support"
+
+
+def _with_app_support(dirs):
+    """`dirs` plus ~/Library/Application Support on macOS, if not already there.
+
+    Second, not first, for two reasons: a path this module derived from an XDG
+    variable is something the user asked for explicitly, and the suites here
+    plant their files under a throwaway XDG home that has to keep winning."""
+    native = os.path.expanduser(APPLE_APP_SUPPORT)
+    if IS_MACOS and native not in dirs:
+        return dirs + [native]
+    return dirs
+
+
+def electron_app_data_dirs():
+    """Every directory a VS Code-family IDE's folder may be under, best first.
+
+    One entry everywhere but macOS. There, Electron ignores XDG_CONFIG_HOME —
+    but this module does not, so a Mac user whose dotfiles export that variable
+    would otherwise have Cursor and Kiro looked for somewhere the IDEs never
+    write."""
+    return _with_app_support([electron_app_data()])
+
+
+def data_home_dirs():
+    """Every directory a program may keep its private data under, best first.
+
+    Both conventions are in use on a Mac. A tool written against XDG keeps
+    using XDG there (Muse, glm-acp-agent); one built on a cross-platform
+    directories library follows the platform and lands in ~/Library/Application
+    Support (kiro-cli, through Rust's `dirs`). data_home() knows only the
+    first, so on macOS this offers the second after it."""
+    return _with_app_support([data_home()])
+
+
+def first_file(candidates):
+    """The first of `candidates` that is a file, else the first one — so a
+    caller that reports "not installed" still names a place it looked."""
+    for path in candidates:
+        if os.path.isfile(path):
+            return path
+    return candidates[0] if candidates else ""
 
 
 def history_dir():

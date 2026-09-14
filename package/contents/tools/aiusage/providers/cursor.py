@@ -17,7 +17,7 @@ import os
 import sqlite3
 import time
 
-from .. import paths
+from .. import keychain, paths
 from ..contract import num
 from ..http import as_json, clean_credential, fetch_json, http_error_text
 
@@ -28,9 +28,13 @@ def _config_home():
     return paths.config_home()
 
 
-def _agent_token():
-    path = os.environ.get("CURSOR_AUTH_PATH") or os.path.join(_config_home(), "cursor", "auth.json")
-    if not os.path.isfile(path):
+# What `cursor-agent login` writes into the macOS login Keychain.
+_AGENT_KEYCHAIN_SERVICE = "cursor-access-token"
+_AGENT_KEYCHAIN_ACCOUNT = "cursor-user"
+
+
+def _agent_token_from(path):
+    if not path or not os.path.isfile(path):
         return ""
     try:
         with open(path, encoding="utf-8") as f:
@@ -40,8 +44,34 @@ def _agent_token():
     return clean_credential(data.get("accessToken")) if isinstance(data, dict) else ""
 
 
+def _agent_token():
+    """cursor-agent's login.
+
+    The CLI writes $XDG_CONFIG_HOME/cursor/auth.json on Linux and Windows. On
+    macOS it puts the token in the login Keychain instead and leaves only
+    identity behind in ~/.cursor/, so the file lookup alone found nothing
+    there — unless AGENT_CLI_CREDENTIAL_STORE=file was set, which makes it
+    write ~/.cursor/auth.json as well. All three are read, the Keychain first
+    on macOS so a config directory shared with a Linux machine cannot answer
+    with that machine's stale token."""
+    explicit = os.environ.get("CURSOR_AUTH_PATH")
+    if explicit:
+        return _agent_token_from(explicit)
+
+    token = clean_credential(keychain.password(_AGENT_KEYCHAIN_SERVICE, _AGENT_KEYCHAIN_ACCOUNT))
+    if token:
+        return token
+    for path in (os.path.join(_config_home(), "cursor", "auth.json"), os.path.expanduser("~/.cursor/auth.json")):
+        token = _agent_token_from(path)
+        if token:
+            return token
+    return ""
+
+
 def _ide_token():
-    path = os.environ.get("CURSOR_IDE_DB") or os.path.join(paths.electron_app_data(), "Cursor", "User", "globalStorage", "state.vscdb")
+    path = os.environ.get("CURSOR_IDE_DB") or paths.first_file(
+        [os.path.join(base, "Cursor", "User", "globalStorage", "state.vscdb") for base in paths.electron_app_data_dirs()]
+    )
     if not os.path.isfile(path):
         return ""
     try:

@@ -15,6 +15,10 @@ brings PySide6 (or `make run-windows`), else `pip install -r windows/requirement
   python windows/app.py --screenshot F [--settings]
                                          render the popup (or the settings page)
                                          into F (PNG) and exit
+  python windows/app.py --screenshot DIR --demo
+                                         render popup.png and settings.png into
+                                         DIR using demo fixture data (no network,
+                                         no credentials) — used by CI
 """
 
 import getpass
@@ -61,8 +65,15 @@ MAIN_QML = ROOT / "windows" / "qml" / "Main.qml"
 # so one collection runs at a time and puts the environment back afterwards.
 _env_lock = threading.Lock()
 
+# Non-None when --demo is active: a pre-built envelope JSON string that stands
+# in for a real network call so screenshots can be produced in CI without any
+# credentials.
+_DEMO_ENVELOPE: str | None = None
+
 
 def collect_snapshot():
+    if _DEMO_ENVELOPE is not None:
+        return _DEMO_ENVELOPE
     with _env_lock:
         saved = dict(os.environ)
         try:
@@ -261,6 +272,7 @@ from PySide6.QtGui import (  # noqa: E402
     QActionGroup,
     QColor,
     QFont,
+    QFontDatabase,
     QFontMetricsF,
     QGuiApplication,
     QIcon,
@@ -1104,22 +1116,64 @@ def _run_headless(app, engine, backend, warnings, screenshot, settings):
         warnings.append("floatingPill window not found")
 
     if screenshot:
-        # The usage page is only worth a picture once the first snapshot is in;
-        # the settings page needs nothing from the network.
-        if settings:
-            window.setProperty("showSettings", True)
+        # screenshot can be:
+        #   - a file path (legacy single-shot form): one PNG, then exit.
+        #   - a directory path (CI / --demo form): popup.png then settings.png.
+        screenshot_path = Path(screenshot)
+        is_dir = screenshot_path.suffix == "" or screenshot_path.is_dir()
 
-        def grab():
-            window.grabWindow().save(screenshot)
-            app.quit()
+        if is_dir:
+            screenshot_path.mkdir(parents=True, exist_ok=True)
 
-        backend.snapshotReady.connect(lambda _text: QTimer.singleShot(800, grab))
-        QTimer.singleShot(1500 if settings else 30000, grab)
-        app.exec()
-        for warning in warnings:
-            print(warning, file=sys.stderr)
-        _flush_stdio()
-        os._exit(0)
+            # We take two shots in sequence, driven by a list of steps:
+            #   1. Wait for the first snapshot, grab popup.png.
+            #   2. Switch to settings, grab settings.png, quit.
+            shots_done = []
+
+            def grab_popup():
+                out = str(screenshot_path / "popup.png")
+                window.grabWindow().save(out)
+                print(f"  popup.png  ({Path(out).stat().st_size} bytes)")
+                shots_done.append(out)
+                # Now switch to settings and schedule the second shot.
+                window.setProperty("showSettings", True)
+                QTimer.singleShot(800, grab_settings)
+
+            def grab_settings():
+                out = str(screenshot_path / "settings.png")
+                window.grabWindow().save(out)
+                print(f"  settings.png  ({Path(out).stat().st_size} bytes)")
+                shots_done.append(out)
+                app.quit()
+
+            backend.snapshotReady.connect(lambda _text: QTimer.singleShot(800, grab_popup))
+            # Safety net: if the backend never fires (e.g. demo mode emits
+            # immediately), give up after 30 s.
+            QTimer.singleShot(30000, lambda: app.quit() if len(shots_done) < 2 else None)
+            app.exec()
+            for warning in warnings:
+                print(warning, file=sys.stderr)
+            _flush_stdio()
+            os._exit(0 if len(shots_done) == 2 else 1)
+
+        else:
+            # Single-file form: legacy behaviour unchanged.
+            # The usage page is only worth a picture once the first snapshot is in;
+            # the settings page needs nothing from the network.
+            if settings:
+                window.setProperty("showSettings", True)
+
+            def grab():
+                window.grabWindow().save(screenshot)
+                app.quit()
+
+            backend.snapshotReady.connect(lambda _text: QTimer.singleShot(800, grab))
+            QTimer.singleShot(1500 if settings else 30000, grab)
+            app.exec()
+            for warning in warnings:
+                print(warning, file=sys.stderr)
+            _flush_stdio()
+            os._exit(0)
 
     steps = []
     if page is not None:
@@ -1170,8 +1224,35 @@ def main(argv):
     # Windows style would fight it.
     os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
 
+    if "--demo" in argv:
+        # Use the same fixture-based envelope the macOS CI screenshots use.
+        # No credentials are read and nothing reaches the network.
+        global _DEMO_ENVELOPE
+        demo_script = ROOT / "scripts" / "demo-envelope.py"
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("demo_envelope", demo_script)
+        _demo_mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(_demo_mod)
+        _DEMO_ENVELOPE = json.dumps(_demo_mod.envelope(), separators=(",", ":"), ensure_ascii=False)
+
+    if paths.IS_WINDOWS and not os.environ.get("QT_QPA_FONTDIR"):
+        windir = os.environ.get("WINDIR", r"C:\Windows")
+        fonts_dir = Path(windir) / "Fonts"
+        if fonts_dir.is_dir():
+            os.environ["QT_QPA_FONTDIR"] = str(fonts_dir)
+
     app = QApplication(argv)
     app.setApplicationName(APP_NAME)
+    if paths.IS_WINDOWS:
+        windir = os.environ.get("WINDIR", r"C:\Windows")
+        fonts_dir = Path(windir) / "Fonts"
+        if fonts_dir.is_dir():
+            for name in ("segoeui.ttf", "segoeuib.ttf", "seguisb.ttf", "seguisym.ttf", "seguiemj.ttf", "arial.ttf"):
+                font_file = fonts_dir / name
+                if font_file.exists():
+                    QFontDatabase.addApplicationFont(str(font_file))
+        app.setFont(QFont("Segoe UI", 10))
     # Every window's icon, wherever the desktop shows one — on Linux, the pill
     # can get a taskbar entry (see docs/windows.md), which otherwise shows a
     # generic one.

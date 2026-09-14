@@ -36,12 +36,15 @@ jobs:
               # Their shell.i18n(…) strings are extracted into translate/*.po too.
               - 'hyprland/**'
               - 'windows/qml/**'
+              - 'macos/Sources/**'
               - 'flake.nix'
               - 'flake.lock'
               - '.github/workflows/lint.yml'
             backend:
               - 'package/contents/tools/aiusage/**'
               - 'windows/**'
+              - 'macos/**'
+              - 'scripts/**/*.py'
               - 'tests/python/**'
               - 'tests/fixtures/**'
               - 'tests/*.test.sh'
@@ -89,12 +92,12 @@ jobs:
       - name: ruff check
         uses: astral-sh/ruff-action@v4.1.0
         with:
-          args: "check package/contents/tools/aiusage windows tests/python"
+          args: "check package/contents/tools/aiusage windows macos scripts tests/python"
 
       - name: ruff format check
         uses: astral-sh/ruff-action@v4.1.0
         with:
-          args: "format --check package/contents/tools/aiusage windows tests/python"
+          args: "format --check package/contents/tools/aiusage windows macos scripts tests/python"
 
       - name: portable backend tests
         run: python3 -m unittest discover -s tests/python

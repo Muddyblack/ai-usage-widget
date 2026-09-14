@@ -44,6 +44,12 @@ def _first_present(*vals):
     return None
 
 
+def grok_home():
+    """``$GROK_HOME`` when set, else ``~/.grok`` — where the Grok CLI keeps its
+    login, settings, session logs and unified log, on every platform."""
+    return os.path.expanduser(os.environ.get("GROK_HOME") or "~/.grok")
+
+
 def _resolve_api_key():
     return resolve_key(
         ("WIDGET_XAI_API_KEY", "WIDGET_GROK_API_KEY"),
@@ -83,7 +89,7 @@ def _read_grok_auth(auth_file):
 
 def _grok_local_stats():
     default = {"sessionCount": 0, "totalToolCalls": 0, "totalTokens": 0, "models": [], "totalSessionSeconds": 0}
-    sessions_dir = os.path.expanduser("~/.grok/sessions")
+    sessions_dir = os.path.join(grok_home(), "sessions")
     if not os.path.isdir(sessions_dir):
         return default
     paths = []
@@ -348,7 +354,7 @@ def get_grok_usage():
     api_key = _resolve_api_key()
 
     default_model = ""
-    settings_path = os.path.expanduser("~/.grok/user-settings.json")
+    settings_path = os.path.join(grok_home(), "user-settings.json")
     if os.path.isfile(settings_path):
         try:
             with open(settings_path, encoding="utf-8") as f:
@@ -358,7 +364,7 @@ def get_grok_usage():
         if isinstance(s, dict):
             default_model = s.get("defaultModel") or ""
 
-    auth = _read_grok_auth(os.path.expanduser("~/.grok/auth.json"))
+    auth = _read_grok_auth(os.path.join(grok_home(), "auth.json"))
     access_token = auth.get("access_token", "")
     email = auth.get("email", "")
     user_id = auth.get("user_id", "")
@@ -377,7 +383,7 @@ def get_grok_usage():
         user_id, team_id, team_name, tier_id, team_blocked, blocked_reasons = _grok_account_meta(access_token, team_id, user_id, CLIENT_VER)
 
     free_usage, local_billing = {}, {}
-    unified_log = os.path.expanduser("~/.grok/logs/unified.jsonl")
+    unified_log = os.path.join(grok_home(), "logs", "unified.jsonl")
     if os.path.isfile(unified_log):
         lines = _tail_lines(unified_log, 5000)
         free_usage = _resolve_free_usage(_extract_free_usage(lines), now)

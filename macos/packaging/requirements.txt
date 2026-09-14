@@ -1,0 +1,5 @@
+# The backend is standard-library-only; psutil is the one optional extra, and
+# only Antigravity needs it — that provider finds the IDE's language server by
+# looking at the user's own processes, which /proc answers on Linux and nothing
+# answers on macOS. Bundled so the app never shows "needs the psutil package".
+psutil==6.1.1

@@ -28,6 +28,11 @@ def _codex_window(w):
     pct = w["usedPercent"] if w.get("usedPercent") is not None else w.get("used_percent")
     reset = w["resetsAt"] if w.get("resetsAt") is not None else w.get("reset_at")
     value = unavailable_window() if kind == "" else window_value(pct, reset, True)
+    # A duration alone is not evidence of an active session allowance. Treat
+    # zero usage without a reset as a placeholder; keep zero with a reset
+    # (including Spark), and keep nonzero usage even if its reset is missing.
+    if kind == "session" and value["pct"] == 0 and value["resetAt"] <= 0:
+        value = unavailable_window()
     return {"kind": kind, "value": value}
 
 

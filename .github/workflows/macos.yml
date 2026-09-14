@@ -1,0 +1,118 @@
+name: macOS
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+      # The macOS frontend cannot be run on the machine it is developed from,
+      # so its branches build here rather than only on a pull request.
+      - 'claude/**'
+      - 'macos/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # The providers' macOS paths and Keychain reads, on a real Mac. The suites
+  # themselves are the portable ones lint.yml already runs on Linux and
+  # Windows; what this adds is a platform where paths.IS_MACOS is true.
+  backend:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run the backend suites
+        run: python3 -m unittest discover -s tests/python -v
+
+      - name: The backend answers on this platform
+        run: |
+          ./package/contents/tools/sh/get-ai-usage --list
+          # --all with no credentials anywhere: every provider should come back
+          # as a readable error row, not a traceback.
+          ./package/contents/tools/sh/get-ai-usage --all > /tmp/envelope.json
+          python3 -c "
+          import json, sys
+          envelope = json.load(open('/tmp/envelope.json'))
+          assert envelope['schemaVersion'] == 1, envelope
+          print(f\"{len(envelope['providers'])} providers answered\")
+          for provider in envelope['providers']:
+              print(f\"  {provider['id']:12} ok={provider['ok']!s:5} {provider['error'] or provider['summary']['text']}\")
+          "
+
+  app:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install backend build dependencies
+        run: python3 -m pip install -r macos/packaging/build-requirements.txt
+
+      - name: Versions
+        run: swift --version && xcodebuild -version
+
+      - name: Build
+        run: |
+          # One architecture for CI: a universal build doubles the compile for
+          # nothing a test can see. The build script defaults to both for distribution.
+          swift build -c release --package-path macos --arch arm64 2>&1 | tee /tmp/build.log
+          ! grep -q "warning:" /tmp/build.log || echo "::warning::the build produced warnings"
+
+      - name: Test
+        run: swift test --package-path macos
+
+      - name: Assemble the app bundle
+        env:
+          AI_USAGE_TARGET_ARCH: arm64
+        run: macos/scripts/build-app.sh --arch arm64
+
+      - name: Smoke-test the bundled backend
+        env:
+          AI_USAGE_CONFIG: ${{ runner.temp }}/backend-smoke/settings.json
+          XDG_DATA_HOME: ${{ runner.temp }}/backend-smoke/data
+        run: |
+          backend="$PWD/macos/.build/AI Usage.app/Contents/Resources/backend/ai-usage-backend"
+          "$backend" --list > "$RUNNER_TEMP/providers.txt"
+          "$backend" --normalize < tests/fixtures/claude-success.json > "$RUNNER_TEMP/normalized.json"
+          "$backend" history autoload > "$RUNNER_TEMP/history.json"
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          assert "claude" in (root / "providers.txt").read_text().split()
+          provider = json.loads((root / "normalized.json").read_text())
+          assert provider["id"] == "claude", provider
+          assert provider["ok"] is True, provider
+          history = json.loads((root / "history.json").read_text())
+          assert history["ok"] is True, history
+          PY
+
+      - name: Self-test and screenshots
+        run: |
+          # Pointed at a fixture instead of the real backend: a CI runner has
+          # no AI subscriptions, and the screenshots have to be reproducible.
+          export AI_USAGE_BACKEND="$PWD/scripts/demo-envelope.py"
+          # A throwaway settings file, so the run cannot read or write anything
+          # of the runner's.
+          export AI_USAGE_CONFIG="$RUNNER_TEMP/settings.json"
+          "macos/.build/AI Usage.app/Contents/MacOS/AIUsage" --selftest
+          "macos/.build/AI Usage.app/Contents/MacOS/AIUsage" --screenshot "$RUNNER_TEMP/screens"
+          ls -la "$RUNNER_TEMP/screens"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: ${{ runner.temp }}/screens/*.png
+          if-no-files-found: error

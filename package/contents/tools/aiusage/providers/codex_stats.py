@@ -12,6 +12,7 @@ import re
 
 from .. import paths
 from ..contract import _parse_utc
+from .openai_credentials import codex_home
 
 _DATE_RE = re.compile(r".*/(\d{4})/(\d{2})/(\d{2})/[^/]*$")
 _TOML_KEY_RE_CACHE = {}
@@ -215,8 +216,8 @@ def _aggregate(records, cfg_model, cfg_effort):
 
 
 def get_codex_stats():
-    sessions = os.environ.get("CODEX_SESSIONS_DIR") or os.path.expanduser("~/.codex/sessions")
-    config_file = os.environ.get("CODEX_CONFIG_FILE") or os.path.expanduser("~/.codex/config.toml")
+    sessions = os.environ.get("CODEX_SESSIONS_DIR") or os.path.join(codex_home(), "sessions")
+    config_file = os.environ.get("CODEX_CONFIG_FILE") or os.path.join(codex_home(), "config.toml")
     cache_dir = os.path.join(paths.cache_home(), "kde-ai-usage")
     cache_path = os.path.join(cache_dir, "codex-stats.json")
 

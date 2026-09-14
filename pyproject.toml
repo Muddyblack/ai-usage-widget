@@ -12,7 +12,7 @@ search-path = ["package/contents/tools", "."]
 [tool.ruff]
 line-length = 150
 target-version = "py39"
-include = ["package/contents/tools/aiusage/**/*.py", "scripts/**/*.py", "windows/**/*.py", "tests/python/**/*.py"]
+include = ["package/contents/tools/aiusage/**/*.py", "scripts/**/*.py", "windows/**/*.py", "macos/**/*.py", "tests/python/**/*.py"]
 
 [tool.ruff.lint]
 select = [
