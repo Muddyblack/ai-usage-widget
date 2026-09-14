@@ -1,0 +1,69 @@
+"""Worker results must reach QML and its property bindings on the GUI thread."""
+
+import importlib.util
+import os
+import sys
+import threading
+import unittest
+from unittest import mock
+
+from _support import REPO
+
+HAS_PYSIDE = importlib.util.find_spec("PySide6") is not None
+if HAS_PYSIDE:
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    sys.path.insert(0, os.path.join(REPO, "windows"))
+    import app
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QGuiApplication
+
+
+@unittest.skipUnless(HAS_PYSIDE, "PySide6 not installed")
+class BackendThreadTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.qt_app = QGuiApplication.instance() or QGuiApplication([])
+
+    def setUp(self):
+        self.backend = app.Backend()
+        self.addCleanup(self.backend._pool.shutdown, wait=True)
+        self.events = []
+        self.gui_thread = threading.get_ident()
+        for name in ("busyChanged", "snapshotReady", "refreshFailed", "historyFinished"):
+            # A direct observer records the emission thread, without Qt
+            # concealing an unsafe emission by queueing the test callback.
+            getattr(self.backend, name).connect(
+                lambda *args, name=name: self.events.append((name, args, threading.get_ident())),
+                Qt.DirectConnection,
+            )
+
+    def check_refresh(self, error=None):
+        with mock.patch("app.collect_snapshot", return_value='{"providers":[]}', side_effect=error):
+            self.backend.refresh()
+            # Wait for the worker without pumping GUI events. The UI must
+            # remain busy until the queued completion has been handled.
+            self.backend._pool.shutdown(wait=True)
+            self.assertTrue(self.backend.busy)
+            self.assertEqual(self.events, [("busyChanged", (), self.gui_thread)])
+            self.qt_app.processEvents()
+            self.assertFalse(self.backend.busy)
+            expected = ("refreshFailed", ("usage backend failed: offline",)) if error else ("snapshotReady", ('{"providers":[]}',))
+            self.assertEqual(self.events[1:], [(*expected, self.gui_thread), ("busyChanged", (), self.gui_thread)])
+
+    def test_refresh_success_is_published_on_the_gui_thread(self):
+        self.check_refresh()
+
+    def test_refresh_failure_is_published_on_the_gui_thread(self):
+        self.check_refresh(RuntimeError("offline"))
+
+    def test_history_is_published_on_the_gui_thread(self):
+        with mock.patch("app.historyio.run", return_value='{"data":[]}'):
+            self.backend.history("autoload", "")
+            self.backend._pool.shutdown(wait=True)
+        self.assertEqual(self.events, [])
+        self.qt_app.processEvents()
+        self.assertEqual(self.events, [("historyFinished", ("autoload", '{"data":[]}'), self.gui_thread)])
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -309,6 +309,10 @@ class Backend(QObject):
     settingRequested = Signal(str, str)
     popupToggleRequested = Signal()
     trayLabelsChanged = Signal()
+    # Workers only emit these private signals. Public QML signals and property
+    # notifications are published by slots on this object's GUI thread.
+    _refreshCompleted = Signal(str, str)
+    _historyCompleted = Signal(str, str)
 
     def __init__(self, first_run=False):
         super().__init__()
@@ -317,6 +321,8 @@ class Backend(QObject):
         self._autostart = autostart_enabled()
         self._first_run = first_run
         self._tray_labels = {}
+        self._refreshCompleted.connect(self._finish_refresh, Qt.QueuedConnection)
+        self._historyCompleted.connect(self._finish_history, Qt.QueuedConnection)
 
     # ── Data ──
     def _get_busy(self):
@@ -334,9 +340,19 @@ class Backend(QObject):
 
     def _refresh(self):
         try:
-            self.snapshotReady.emit(collect_snapshot())
+            result = collect_snapshot()
         except Exception as exc:  # the popup shows it; nothing else would
-            self.refreshFailed.emit(f"usage backend failed: {exc}")
+            self._refreshCompleted.emit("", f"usage backend failed: {exc}")
+        else:
+            self._refreshCompleted.emit(result, "")
+
+    @Slot(str, str)
+    def _finish_refresh(self, result, error):
+        try:
+            if error:
+                self.refreshFailed.emit(error)
+            else:
+                self.snapshotReady.emit(result)
         finally:
             self._busy = False
             self.busyChanged.emit()
@@ -345,7 +361,11 @@ class Backend(QObject):
     @Slot(str, str)
     def history(self, op, payload):
         """Run one history-io command; the answer arrives as historyFinished."""
-        self._pool.submit(lambda: self.historyFinished.emit(op, historyio.run(op, payload)))
+        self._pool.submit(lambda: self._historyCompleted.emit(op, historyio.run(op, payload)))
+
+    @Slot(str, str)
+    def _finish_history(self, op, result):
+        self.historyFinished.emit(op, result)
 
     # ── Settings ──
     @Property(str, constant=True)

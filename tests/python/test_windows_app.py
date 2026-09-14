@@ -31,6 +31,7 @@ class TrayAppTest(unittest.TestCase):
         return dict(
             os.environ,
             QT_QPA_PLATFORM="offscreen",
+            PYTHONFAULTHANDLER="1",
             AI_USAGE_CONFIG=config,
             XDG_DATA_HOME=os.path.join(self.tmp, "data"),
             XDG_CACHE_HOME=os.path.join(self.tmp, "cache"),
