@@ -114,12 +114,30 @@ jobs:
           python windows/app.py --screenshot $screens --demo
           Get-ChildItem $screens
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
+        id: screenshots-upload
+        continue-on-error: true
         if: runner.os == 'Windows' && github.event_name == 'workflow_dispatch' && inputs.screenshots
         with:
           name: screenshots-windows
           path: ${{ runner.temp }}\screens\*.png
           if-no-files-found: error
+
+      # Artifact finalization can intermittently return an intermediary 403.
+      - name: Wait before retrying screenshot upload
+        if: steps.screenshots-upload.outcome == 'failure'
+        shell: pwsh
+        run: Start-Sleep -Seconds 10
+
+      - name: Retry screenshot upload
+        if: steps.screenshots-upload.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots-windows
+          path: ${{ runner.temp }}\screens\*.png
+          if-no-files-found: error
+          # Replace any artifact left by the failed finalization attempt.
+          overwrite: true
 
   build:
     needs: test
