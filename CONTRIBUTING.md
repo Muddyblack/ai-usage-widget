@@ -123,6 +123,11 @@ that a statistic must not cost the user money to read.
 Per-provider specifics (credential resolution, endpoints, API quirks) are
 described in [`docs/providers.md`](docs/providers.md).
 
+For behavior shared by frontends, add a case to
+[`tests/behavior/scenarios.json`](tests/behavior/scenarios.json). The
+[behavioral test guide](tests/behavior/README.md) explains how Python, Plasma,
+Hyprland/Windows and Swift consume the same scenarios and how to run the tests.
+
 ## Packaging
 
 ```bash

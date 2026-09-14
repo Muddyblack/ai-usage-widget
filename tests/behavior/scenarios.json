@@ -1,0 +1,297 @@
+[
+  {
+    "name": "weekly-only",
+    "raw": {
+      "id": "openai",
+      "now": 1785000000,
+      "inputs": {
+        "credentials": {
+          "codexLoggedIn": true
+        },
+        "codex": {
+          "rateLimits": {
+            "primary": {
+              "usedPercent": 45,
+              "windowDurationMins": 10080,
+              "resetsAt": 1785003600
+            },
+            "secondary": null
+          }
+        }
+      }
+    },
+    "expected": {
+      "rowKeys": [
+        "codex_weekly"
+      ],
+      "panelText": [
+        "45%"
+      ],
+      "history": {
+        "cw": 45
+      },
+      "rowValues": [
+        45
+      ]
+    }
+  },
+  {
+    "name": "empty-five-hour-placeholder",
+    "raw": {
+      "id": "openai",
+      "now": 1785000000,
+      "inputs": {
+        "credentials": {
+          "codexLoggedIn": true
+        },
+        "codex": {
+          "rateLimits": {
+            "primary": {
+              "usedPercent": 0,
+              "windowDurationMins": 300,
+              "resetsAt": 0
+            },
+            "secondary": {
+              "usedPercent": 45,
+              "windowDurationMins": 10080,
+              "resetsAt": 1785003600
+            }
+          }
+        }
+      }
+    },
+    "expected": {
+      "rowKeys": [
+        "codex_weekly"
+      ],
+      "panelText": [
+        "45%"
+      ],
+      "history": {
+        "cw": 45
+      },
+      "rowValues": [
+        45
+      ]
+    }
+  },
+  {
+    "name": "legacy-empty-five-hour-placeholder",
+    "raw": {
+      "id": "openai",
+      "now": 1785000000,
+      "inputs": {
+        "credentials": {
+          "codexLoggedIn": true
+        },
+        "codex": {
+          "rate_limit": {
+            "primary_window": {
+              "used_percent": 0,
+              "limit_window_seconds": 18000,
+              "reset_at": null
+            },
+            "secondary_window": {
+              "used_percent": 45,
+              "limit_window_seconds": 604800,
+              "reset_at": 1785003600
+            }
+          }
+        }
+      }
+    },
+    "expected": {
+      "rowKeys": [
+        "codex_weekly"
+      ],
+      "panelText": [
+        "45%"
+      ],
+      "history": {
+        "cw": 45
+      },
+      "rowValues": [
+        45
+      ]
+    }
+  },
+  {
+    "name": "real-zero-five-hour",
+    "raw": {
+      "id": "openai",
+      "now": 1785000000,
+      "inputs": {
+        "credentials": {
+          "codexLoggedIn": true
+        },
+        "codex": {
+          "rateLimits": {
+            "primary": {
+              "usedPercent": 0,
+              "windowDurationMins": 300,
+              "resetsAt": 1785003600
+            },
+            "secondary": {
+              "usedPercent": 45,
+              "windowDurationMins": 10080,
+              "resetsAt": 1785003600
+            }
+          }
+        }
+      }
+    },
+    "expected": {
+      "rowKeys": [
+        "codex_session",
+        "codex_weekly"
+      ],
+      "panelText": [
+        "0%",
+        "45%"
+      ],
+      "history": {
+        "cp": 0,
+        "cw": 45
+      },
+      "rowValues": [
+        0,
+        45
+      ]
+    }
+  },
+  {
+    "name": "used-session-without-reset",
+    "raw": {
+      "id": "openai",
+      "now": 1785000000,
+      "inputs": {
+        "credentials": {
+          "codexLoggedIn": true
+        },
+        "codex": {
+          "rateLimits": {
+            "primary": {
+              "usedPercent": 12,
+              "windowDurationMins": 300,
+              "resetsAt": null
+            },
+            "secondary": {
+              "usedPercent": 45,
+              "windowDurationMins": 10080,
+              "resetsAt": 1785003600
+            }
+          }
+        }
+      }
+    },
+    "expected": {
+      "rowKeys": [
+        "codex_session",
+        "codex_weekly"
+      ],
+      "panelText": [
+        "12%",
+        "45%"
+      ],
+      "history": {
+        "cp": 12,
+        "cw": 45
+      },
+      "rowValues": [
+        12,
+        45
+      ]
+    }
+  },
+  {
+    "name": "spark-zero-with-reset",
+    "raw": {
+      "id": "openai",
+      "now": 1785000000,
+      "inputs": {
+        "credentials": {
+          "codexLoggedIn": true
+        },
+        "codex": {
+          "rateLimits": {
+            "primary": {
+              "usedPercent": 0,
+              "windowDurationMins": 300,
+              "resetsAt": 0
+            },
+            "secondary": {
+              "usedPercent": 45,
+              "windowDurationMins": 10080,
+              "resetsAt": 1785003600
+            }
+          },
+          "rateLimitsByLimitId": {
+            "spark": {
+              "limitName": "Spark",
+              "primary": {
+                "usedPercent": 0,
+                "windowDurationMins": 300,
+                "resetsAt": 1785003600
+              }
+            }
+          }
+        }
+      }
+    },
+    "expected": {
+      "rowKeys": [
+        "codex_weekly",
+        "additional"
+      ],
+      "panelText": [
+        "45%"
+      ],
+      "history": {
+        "cw": 45
+      },
+      "rowValues": [
+        45,
+        0
+      ]
+    }
+  },
+  {
+    "name": "missing-optional-fields",
+    "envelope": {
+      "providers": [
+        {
+          "id": "openai"
+        }
+      ]
+    },
+    "expected": {
+      "rowKeys": [],
+      "panelText": [],
+      "history": {},
+      "rowValues": []
+    }
+  },
+  {
+    "name": "unavailable-row",
+    "envelope": {
+      "providers": [
+        {
+          "id": "openai",
+          "quotaWindows": [
+            {
+              "key": "absent",
+              "available": false,
+              "pct": 0
+            }
+          ]
+        }
+      ]
+    },
+    "expected": {
+      "rowKeys": [],
+      "panelText": [],
+      "history": {},
+      "rowValues": []
+    }
+  }
+]

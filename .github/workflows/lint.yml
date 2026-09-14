@@ -46,9 +46,12 @@ jobs:
               - 'macos/**'
               - 'scripts/**/*.py'
               - 'tests/python/**'
+              - 'tests/behavior/**'
               - 'tests/fixtures/**'
               - 'tests/*.test.sh'
               - 'tests/*.test.js'
+              - 'hyprland/**'
+              - 'package/contents/ui/**'
               # What the node tests exercise: the shared JS and the French catalog.
               - 'package/contents/code/**'
               - 'translate/**'

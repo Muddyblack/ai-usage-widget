@@ -129,7 +129,7 @@ struct UsageView: View {
     /// The rows worth drawing: a quota window the provider had no reading for
     /// is not an empty meter, it is nothing to say.
     private func rows(_ provider: Provider) -> [QuotaWindow] {
-        provider.quotaWindows.filter { $0.available }
+        provider.visibleQuotaWindows
     }
 
     @ViewBuilder

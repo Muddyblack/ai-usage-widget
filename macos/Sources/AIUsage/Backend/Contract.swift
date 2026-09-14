@@ -107,6 +107,8 @@ struct Provider: Decodable, Identifiable, Equatable {
     var hasChart: Bool { summary.hasChart && !chartWindows.isEmpty }
 
     var hasStats: Bool { stats.available }
+
+    var visibleQuotaWindows: [QuotaWindow] { quotaWindows.filter(\.available) }
 }
 
 struct Summary: Decodable, Equatable {

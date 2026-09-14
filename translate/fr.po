@@ -437,6 +437,8 @@ msgid ""
 "No Muse sessions yet.\n"
 "Run Muse Code and its own logs will appear here."
 msgstr ""
+"Aucune session Muse pour le moment.\n"
+"Lancez Muse Code : ses journaux apparaîtront ici."
 
 #: hyprland/StatsSection.qml package/contents/ui/CursorTab.qml
 msgid ""
@@ -2619,3 +2621,304 @@ msgid ""
 msgstr ""
 "Suivi multi-services de quotas IA avec ventilation des coûts (Claude, "
 "Antigravity, OpenAI, Grok, Kiro, OpenRouter & Mistral)"
+
+#: macos/Sources/AIUsage/App/SettingsWindow.swift
+msgid "AI Usage Settings"
+msgstr "Paramètres d'AI Usage"
+
+#: macos/Sources/AIUsage/Backend/SettingsStore.swift
+msgid "Monochrome"
+msgstr "Monochrome"
+
+#: macos/Sources/AIUsage/Backend/SettingsStore.swift
+msgid "One per value, tinted"
+msgstr "Un par valeur, teinté"
+
+#: macos/Sources/AIUsage/Backend/SettingsStore.swift
+msgid "One per value, brand colours"
+msgstr "Un par valeur, couleurs de la marque"
+
+#: macos/Sources/AIUsage/MenuBar/StatusItemController.swift
+#: macos/Sources/AIUsage/Views/UsageView.swift
+msgid "Quit AI Usage"
+msgstr "Quitter AI Usage"
+
+#: macos/Sources/AIUsage/Support/Formatters.swift
+msgid "resetting…"
+msgstr "réinitialisation…"
+
+#: macos/Sources/AIUsage/Views/HistoryChartView.swift
+msgid "Not enough history yet — it builds up as the widget polls."
+msgstr ""
+"Pas encore assez d'historique — il s'accumule au fil des actualisations du "
+"widget."
+
+#: macos/Sources/AIUsage/Views/HistoryChartView.swift
+msgid "Usage over the last %1"
+msgstr "Utilisation sur les derniers %1"
+
+#: macos/Sources/AIUsage/Views/QuotaRowView.swift
+msgid "Resets %1"
+msgstr "Réinitialisation %1"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Admin API key"
+msgstr "Clé API Admin"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Optional. Adds organisation-wide usage next to your own."
+msgstr ""
+"Optionnel. Ajoute l'utilisation à l'échelle de l'organisation à côté de la "
+"vôtre."
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Optional. Codex sign-in is read from ~/.codex."
+msgstr "Optionnel. La connexion Codex est lue depuis ~/.codex."
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Token"
+msgstr "Jeton"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "GitHub token"
+msgstr "Jeton GitHub"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Optional. `gh auth token` is used when this is empty."
+msgstr "Optionnel. `gh auth token` est utilisé lorsque ce champ est vide."
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "META_API_KEY"
+msgstr "META_API_KEY"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Optional. The CLI's own login is used when this is empty."
+msgstr ""
+"Optionnel. La connexion propre au CLI est utilisée lorsque ce champ est vide."
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Menu Bar"
+msgstr "Barre des menus"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "General"
+msgstr "Général"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Show"
+msgstr "Afficher"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Values"
+msgstr "Valeurs"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "One"
+msgstr "Une"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Two"
+msgstr "Deux"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Three"
+msgstr "Trois"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Icon"
+msgstr "Icône"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid ""
+"Monochrome is what macOS expects: it inverts with the menu bar and stays "
+"legible over any wallpaper. The other two show a logo beside every value, "
+"the way the Plasma panel does."
+msgstr ""
+"Le monochrome correspond aux attentes de macOS : il s'inverse avec la barre "
+"des menus et reste lisible sur tout fond d'écran. Les deux autres affichent "
+"un logo à côté de chaque valeur, comme sur le panneau Plasma."
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Colour every percentage"
+msgstr "Colorer chaque pourcentage"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid ""
+"Off, a percentage stays in the menu bar's own colour until it is worth a "
+"look — amber from 70 %, red from 90 %."
+msgstr ""
+"Désactivé, un pourcentage conserve la couleur de la barre des menus jusqu'à "
+"ce qu'il mérite attention — orange à partir de 70 %, rouge à partir de 90 %."
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Provider"
+msgstr "Fournisseur"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Refresh every"
+msgstr "Actualiser toutes les"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "1 minute"
+msgstr "1 minute"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "5 minutes"
+msgstr "5 minutes"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "15 minutes"
+msgstr "15 minutes"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "30 minutes"
+msgstr "30 minutes"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "1 hour"
+msgstr "1 heure"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Follow the system"
+msgstr "Suivre le système"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Translations come from the same catalogs the Linux frontends read."
+msgstr ""
+"Les traductions proviennent des mêmes catalogues que ceux lus par les "
+"interfaces Linux."
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Show the usage history chart"
+msgstr "Afficher le graphique d'historique d'utilisation"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Open at Login"
+msgstr "Ouvrir avec la session"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid ""
+"macOS is waiting for you to allow this in System Settings › General › Login "
+"Items."
+msgstr ""
+"macOS attend que vous l'autorisiez dans Réglages Système › Général › "
+"Ouverture."
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Available once the app is running from AI Usage.app."
+msgstr "Disponible dès que l'application est exécutée depuis AI Usage.app."
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Muse live quota"
+msgstr "Quota Muse en direct"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid ""
+"Meta publishes Muse's plan windows only on a billed model call, so reading "
+"them costs a few tokens per refresh. Everything else Muse shows is read from "
+"local files and costs nothing."
+msgstr ""
+"Meta ne publie les fenêtres de plan de Muse que lors d'un appel de modèle "
+"facturé, leur lecture coûte donc quelques jetons par actualisation. Tout le "
+"reste affiché par Muse est lu depuis des fichiers locaux et ne coûte rien."
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Settings file"
+msgstr "Fichier de paramètres"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid ""
+"Shared with `ai-usage-cli` and with this widget's Linux frontends, so a key "
+"pasted here is pasted once."
+msgstr ""
+"Partagé avec `ai-usage-cli` et avec les interfaces Linux de ce widget, pour "
+"qu'une clé collée ici ne soit collée qu'une seule fois."
+
+#: macos/Sources/AIUsage/Views/StatsView.swift
+msgid "Sessions"
+msgstr "Sessions"
+
+#: macos/Sources/AIUsage/Views/StatsView.swift
+msgid "Messages"
+msgstr "Messages"
+
+#: macos/Sources/AIUsage/Views/StatsView.swift
+msgid "Tokens"
+msgstr "Jetons"
+
+#: macos/Sources/AIUsage/Views/StatsView.swift
+msgid "Files"
+msgstr "Fichiers"
+
+#: macos/Sources/AIUsage/Views/StatsView.swift
+msgid "Web searches"
+msgstr "Recherches web"
+
+#: macos/Sources/AIUsage/Views/StatsView.swift
+msgid "Cost"
+msgstr "Coût"
+
+#: macos/Sources/AIUsage/Views/StatsView.swift
+msgid "Active days"
+msgstr "Jours actifs"
+
+#: macos/Sources/AIUsage/Views/StatsView.swift
+msgid "Streak"
+msgstr "Série"
+
+#: macos/Sources/AIUsage/Views/StatsView.swift
+msgid "Longest session"
+msgstr "Session la plus longue"
+
+#: macos/Sources/AIUsage/Views/StatsView.swift
+msgid "Peak hour"
+msgstr "Heure de pointe"
+
+#: macos/Sources/AIUsage/Views/StatsView.swift
+msgid "Top model"
+msgstr "Modèle principal"
+
+#: macos/Sources/AIUsage/Views/UsageView.swift
+msgid "AI Usage"
+msgstr "AI Usage"
+
+#: macos/Sources/AIUsage/Views/UsageView.swift
+msgid "Choose a provider"
+msgstr "Choisir un fournisseur"
+
+#: macos/Sources/AIUsage/Views/UsageView.swift
+msgid "More actions"
+msgstr "Plus d'actions"
+
+#: macos/Sources/AIUsage/Views/UsageView.swift
+msgid "The usage backend is missing"
+msgstr "Le backend d'utilisation est manquant"
+
+#: macos/Sources/AIUsage/Views/UsageView.swift
+msgid "This build has no copy of the Python backend to ask."
+msgstr ""
+"Cette version ne dispose d'aucune copie du backend Python à interroger."
+
+#: macos/Sources/AIUsage/Views/UsageView.swift
+msgid "Could not read usage"
+msgstr "Impossible de lire l'utilisation"
+
+#: macos/Sources/AIUsage/Views/UsageView.swift
+msgid "Reading usage…"
+msgstr "Lecture de l'utilisation…"
+
+#: macos/Sources/AIUsage/Views/UsageView.swift
+msgid "No providers are switched on"
+msgstr "Aucun fournisseur n'est activé"
+
+#: macos/Sources/AIUsage/Views/UsageView.swift
+msgid "Open Settings to choose the services to follow."
+msgstr "Ouvrez les Paramètres pour choisir les services à suivre."
+
+#: macos/Sources/AIUsage/Views/UsageView.swift
+msgid "Usage history"
+msgstr "Historique d'utilisation"
+
+#: macos/Sources/AIUsage/Views/UsageView.swift
+msgid "Not read yet"
+msgstr "Pas encore lu"
