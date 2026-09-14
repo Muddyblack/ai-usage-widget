@@ -1,11 +1,19 @@
 # Provider data contract (schema version 1)
 
-All four frontends — the KDE Plasma widget (`package/contents/ui`), the
-Hyprland/Quickshell shell (`hyprland/`), the Windows tray app (`windows/`) and
-the terminal frontend (`aiusage/render.py`) — get all of their provider data
-from a single backend. The Linux frontends run it through
-`package/contents/tools/sh/get-ai-usage`; the Windows app, which has no shell,
-calls it in-process.
+All five frontends — the KDE Plasma widget (`package/contents/ui`), the
+Hyprland/Quickshell shell (`hyprland/`), the Windows tray app (`windows/`), the
+macOS menu bar app (`macos/`) and the terminal frontend (`aiusage/render.py`) —
+get all of their provider data from a single backend. The Linux frontends run it
+through `package/contents/tools/sh/get-ai-usage`; the Windows app, which has no
+shell, calls it in-process; the macOS app runs a frozen copy of the same package
+as a subprocess.
+
+The macOS app is the one that reads only the **provider-agnostic** half of this
+document — `summary`, `quotaWindows`, `chartWindows`, `slots`, `historyValues`
+and the shared `details.status` — and nothing under `details` beyond those. That
+is deliberate, and it is what makes a third UI codebase affordable: a provider
+added to the backend appears there with no Swift change at all. Keep it that
+way; see `macos/README.md`.
 
 ```
 shared provider backend (Python, stdlib only)   package/contents/tools/aiusage
@@ -476,4 +484,5 @@ with `make test`.
 
 Adding a field is backwards compatible. Removing or repurposing one is not:
 bump `SCHEMA_VERSION` in `package/contents/tools/aiusage/contract.py`, update
-this document, and update all four frontends in the same change.
+this document, and update every frontend in the same change — except that
+the macOS app needs no change for a new provider, only for a new *field*.

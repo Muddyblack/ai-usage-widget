@@ -367,5 +367,5 @@ def get_antigravity_usage():
     if found_any_process:
         return {"error": "Antigravity language server found but could not connect to API"}
     if not _HAS_PROC and _psutil() is None:
-        return {"error": "Finding Antigravity on this platform needs the psutil package"}
+        return {"error": "Finding Antigravity on this platform needs the psutil package (pip install psutil)"}
     return {"error": "Antigravity is not running. Please open your IDE."}

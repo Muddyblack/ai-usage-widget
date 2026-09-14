@@ -65,7 +65,17 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across multiple serv
 - **History export / import** — Save and restore usage history as JSON; history is mirrored to disk so it survives reinstalls
 - **Robust refresh** — Poll interval from 1 to 30 minutes, respects `retry-after` headers, dims and shows the error inline when a fetch fails
 
-Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), and [in a terminal](docs/cli.md) — all four frontends share one backend.
+Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on macOS](docs/macos.md) and [in a terminal](docs/cli.md) — every frontend shares one backend.
+
+## macOS — native Swift menu bar app
+
+<p align="center">
+  <img src="./readme/macos/popover-expanded-light.png" alt="macOS usage, history and activity statistics in light mode" width="340" valign="top"/>
+  <img src="./readme/macos/popover-expanded-dark.png" alt="macOS usage, history and activity statistics in dark mode" width="340" valign="top"/>
+</p>
+
+Captured with demo data. See the [macOS guide](docs/macos.md) for usage history,
+settings, menu bar styles, and build instructions.
 
 ---
 
@@ -166,6 +176,7 @@ All configuration is done in the widget's settings panel (right-click the widget
 | [docs/cli.md](docs/cli.md) | `ai-usage-cli` — the terminal frontend, for SSH, status bars and non-Plasma desktops |
 | [docs/hyprland.md](docs/hyprland.md) | Running the Quickshell panel on Hyprland, Caelestia or Waybar |
 | [docs/windows.md](docs/windows.md) | The Windows tray app: installing, using and building it |
+| [docs/macos.md](docs/macos.md) | The macOS menu bar app: why it is native Swift, where each provider's data is on a Mac, and how to build it |
 | [docs/provider-contract.md](docs/provider-contract.md) | The JSON model every frontend reads, and the backend architecture behind it |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Development install, tests, packaging, releasing |
 

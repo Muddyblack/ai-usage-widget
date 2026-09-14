@@ -151,7 +151,9 @@ def _usage_record(breakdown, current, limit, percentage, reset, timestamp, sourc
 
 
 def _ide_db():
-    return os.environ.get("KIRO_IDE_DB") or os.path.join(paths.electron_app_data(), "Kiro", "User", "globalStorage", "state.vscdb")
+    return os.environ.get("KIRO_IDE_DB") or paths.first_file(
+        [os.path.join(base, "Kiro", "User", "globalStorage", "state.vscdb") for base in paths.electron_app_data_dirs()]
+    )
 
 
 def _ide_usage():
@@ -188,9 +190,15 @@ def _ide_usage():
 
 
 def _cli_db():
+    """kiro-cli's store.
+
+    kiro-cli is a fork of Amazon Q CLI and keeps its data through Rust's
+    `dirs`, whose local-data directory is ~/Library/Application Support on
+    macOS rather than the XDG path. Both are looked at, best first; off macOS
+    they are the same place."""
     if os.environ.get("KIRO_CLI_DB"):
         return os.environ["KIRO_CLI_DB"]
-    return os.path.join(paths.data_home(), "kiro-cli", "data.sqlite3")
+    return paths.first_file([os.path.join(base, "kiro-cli", "data.sqlite3") for base in paths.data_home_dirs()])
 
 
 def _cli_login(db_path):

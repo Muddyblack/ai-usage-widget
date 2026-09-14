@@ -31,6 +31,55 @@ class CodexWindowsTest(unittest.TestCase):
         self.assertEqual([s["pct"] for s in p["slots"]], [10, 40])
         self.assertEqual(p["summary"]["text"], "10%")
 
+    def test_empty_session_placeholder_does_not_create_rows_or_history(self):
+        for legacy in (False, True):
+            for reset in (None, 0):
+                with self.subTest(legacy=legacy, reset=reset):
+                    raw = envelope(("secondary", 45, 10080))
+                    if legacy:
+                        raw["inputs"]["codex"] = {
+                            "rate_limit": {
+                                "primary_window": {"used_percent": 0, "limit_window_seconds": 18000, "reset_at": reset},
+                                "secondary_window": {"used_percent": 45, "limit_window_seconds": 604800, "reset_at": raw["now"] + 3600},
+                            }
+                        }
+                    else:
+                        raw["inputs"]["codex"]["rateLimits"]["primary"] = {
+                            "usedPercent": 0,
+                            "windowDurationMins": 300,
+                            "resetsAt": reset,
+                        }
+                    p = normalize(raw)
+                    self.assertEqual([w["key"] for w in p["quotaWindows"]], ["codex_weekly"])
+                    self.assertEqual([s["pct"] for s in p["slots"]], [45])
+                    self.assertEqual(p["summary"]["text"], "45%")
+                    self.assertFalse(p["details"]["codex"]["session"]["available"])
+                    self.assertNotIn("cp", p["historyValues"])
+                    self.assertTrue(all(w["key"] == "cw" for w in p["chartWindows"]))
+
+    def test_zero_session_with_reset_is_kept_including_spark(self):
+        raw = envelope(("primary", 0, 300), ("secondary", 45, 10080))
+        raw["inputs"]["codex"]["rateLimitsByLimitId"] = {
+            "spark": {
+                "limitName": "Spark",
+                "primary": {
+                    "usedPercent": 0,
+                    "windowDurationMins": 300,
+                    "resetsAt": raw["now"] + 3600,
+                },
+            },
+        }
+        p = normalize(raw)
+        self.assertEqual(len(p["quotaWindows"]), 3)
+        self.assertTrue(all(w["available"] for w in p["quotaWindows"]))
+        self.assertEqual([s["pct"] for s in p["slots"]], [0, 45])
+
+    def test_session_with_usage_but_no_reset_is_kept(self):
+        raw = envelope(("primary", 12, 300), ("secondary", 45, 10080))
+        raw["inputs"]["codex"]["rateLimits"]["primary"].pop("resetsAt")
+        p = normalize(raw)
+        self.assertEqual([s["pct"] for s in p["slots"]], [12, 45])
+
 
 if __name__ == "__main__":
     unittest.main()

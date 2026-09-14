@@ -37,6 +37,12 @@ pot="$dir/template.pot"
 #
 # hyprland/ and windows/qml/ are the Quickshell panel and the Windows tray app:
 # their shell.i18n(…) calls land in this same catalog (see package/contents/code/I18n.js).
+#
+# macos/ is the third: Swift, but its i18n("…") calls are the same shape, and
+# xgettext has no Swift backend — so they are extracted in a second pass with
+# the C parser, which reads Swift's comments and string literals correctly, and
+# the two halves are merged. Nothing translatable in that app uses Swift string
+# interpolation; the placeholders are ki18n's %1, as everywhere else.
 cd "$root"
 mapfile -t sources < <(
     find package/contents/ui package/contents/config package/contents/code hyprland windows/qml \
@@ -62,6 +68,26 @@ xgettext \
     --msgid-bugs-address="$bug_url/issues" \
     --output="$pot" \
     "${sources[@]}"
+
+mapfile -t swift_sources < <(find macos/Sources -type f -name '*.swift' | LC_ALL=C sort)
+if [ ${#swift_sources[@]} -gt 0 ]; then
+    swift_pot="$(mktemp)"
+    xgettext \
+        --from-code=UTF-8 \
+        --language=C \
+        --add-comments=TRANSLATORS \
+        --add-location=file \
+        --keyword=i18n --keyword=i18nc:1c,2 --keyword=i18np:1,2 --keyword=i18nNoop \
+        --package-name="AI Usage Monitor" \
+        --package-version="$version" \
+        --msgid-bugs-address="$bug_url/issues" \
+        --output="$swift_pot" \
+        "${swift_sources[@]}"
+    # --use-first keeps the JavaScript pass's header, which carries the charset
+    # normalisation below; the Swift pass only contributes entries.
+    msgcat --use-first --add-location=file --output="$pot" "$pot" "$swift_pot"
+    rm -f "$swift_pot"
+fi
 
 # xgettext keys the catalog header on the charmap; normalise it so the .pot is
 # stable and the merge in a fresh checkout is a no-op.

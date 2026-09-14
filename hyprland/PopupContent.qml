@@ -408,22 +408,12 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 12
 
-        Repeater {
-            model: {
-                var p = shell.activeProvider();
-                return p ? p.quotaWindows : [];
-            }
-
-            UsageRow {
-                required property var modelData
-                label: modelData.label || ""
-                value: modelData.pct || 0
-                resetText: modelData.resetText || ""
-                countdownText: shell.countdownFor(modelData.resetAt || 0)
-                detail: modelData.detail || ""
-                barColor: modelData.color || (shell.activeId === "antigravity" && (modelData.key === "external" || modelData.key === "rest" || (modelData.label && modelData.label.indexOf("Claude") !== -1)) ? "#34a853" : shell.activeAccent)
-                showMeter: modelData.showMeter !== false
-            }
+        UsageRows {
+            Layout.fillWidth: true
+            provider: shell.activeProvider()
+            activeId: shell.activeId
+            accent: shell.activeAccent
+            countdown: shell.countdownFor
         }
 
         // Muse is the only provider whose plan bars cost

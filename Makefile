@@ -1,4 +1,4 @@
-.PHONY: help view view-h install pack tag test test-py translations check-translations lint-py check-pricing run-windows
+.PHONY: help view view-h install pack tag test test-py translations check-translations lint-py check-pricing run-windows macos macos-test
 .DEFAULT_GOAL := help
 
 help: ## list targets
@@ -38,6 +38,12 @@ run-windows: ## run the Windows tray app on this machine (PySide6 via 'nix devel
 	  python3 windows/app.py; \
 	fi
 
+macos: ## build AI Usage.app (macOS only; --arch arm64 for a fast local build)
+	@macos/scripts/build-app.sh $(ARGS)
+
+macos-test: ## run the macOS frontend's Swift suites (macOS only)
+	@swift test --package-path macos
+
 translations: ## regenerate template.pot from sources and compile the .mo catalogs
 	@./translate/Messages.sh
 	@./translate/build.sh
@@ -45,10 +51,10 @@ translations: ## regenerate template.pot from sources and compile the .mo catalo
 check-translations: ## fail if a locale catalog has untranslated/fuzzy entries
 	@./translate/check.sh
 
-lint-py: ## lint + format-check the Python backend and tray app (dev only, needs ruff)
+lint-py: ## lint + format-check the Python backend, frontends and helpers (dev only, needs ruff)
 	@if command -v ruff >/dev/null 2>&1; then \
-	  ruff check package/contents/tools/aiusage windows tests/python && \
-	  ruff format --check package/contents/tools/aiusage windows tests/python; \
+	  ruff check package/contents/tools/aiusage windows macos scripts tests/python && \
+	  ruff format --check package/contents/tools/aiusage windows macos scripts tests/python; \
 	else \
 	  echo "ruff not found — install it or run 'nix develop'"; exit 1; \
 	fi

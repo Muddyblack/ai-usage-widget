@@ -9,6 +9,11 @@ plan.md
 readme/opendesktop
 
 
+# Swift / the macOS app
+macos/.build/
+*.xcuserstate
+*.xcodeproj
+
 # Nix
 result
 .direnv/
@@ -50,6 +55,9 @@ MANIFEST
 # PyInstaller / Py2app
 *.manifest
 *.spec
+# …except the macOS backend's, which is source: it is what PyInstaller is told
+# to build, not something PyInstaller generated.
+!macos/packaging/ai-usage-backend.spec
 # ...except the Windows app's own, hand-written build spec.
 !windows/ai-usage.spec
 
