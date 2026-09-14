@@ -21,6 +21,12 @@
       ]
     },
     "stats": {},
-    "status": null
+    "status": null,
+    "pricing": {
+      "gpt-4o-mini": {
+        "input": 0.15,
+        "output": 0.6
+      }
+    }
   }
 }

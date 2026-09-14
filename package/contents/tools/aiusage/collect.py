@@ -12,6 +12,7 @@ import time
 from . import config
 from .contract import STATUS_FEEDS, STATUS_PAGES
 from .http import as_json, fetch_json, http_error_text
+from .pricing import get_pricing
 from .providers.antigravity import get_antigravity_usage
 from .providers.claude_credentials import get_claude_credentials
 from .providers.cline import get_cline_sessions
@@ -134,6 +135,7 @@ def collect_claude(now):
             "usage": usage,
             "usageError": usage_error,
             "orgUsage": org,
+            "pricing": get_pricing("anthropic") if isinstance(org, dict) and org.get("data") else {},
             "settings": settings or {},
             "stats": stats or {},
             "status": status,
@@ -190,6 +192,7 @@ def collect_openai(now):
             "codex": codex or {},
             "codexError": codex_error,
             "orgUsage": org,
+            "pricing": get_pricing("openai") if isinstance(org, dict) and org.get("data") else {},
             "stats": stats or {},
             "status": status,
         },

@@ -1,6 +1,8 @@
 # Recorded test inputs
 
 - Provider envelopes are used for normalization and rendering.
+- Claude/OpenAI envelopes with organization usage carry explicit `inputs.pricing`
+  rates so replay never depends on a live catalog or the machine's pricing cache.
 - `*-response.json` files contain recorded API responses for collector tests.
 - `muse-quota.json` is an HTTP response exercised by `test_muse.py`.
 

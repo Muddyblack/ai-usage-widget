@@ -126,6 +126,16 @@
         "11": 3
       }
     },
-    "status": null
+    "status": null,
+    "pricing": {
+      "gpt-4o": {
+        "input": 2.5,
+        "output": 10
+      },
+      "o3-mini": {
+        "input": 1.1,
+        "output": 4.4
+      }
+    }
   }
 }

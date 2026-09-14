@@ -1,4 +1,4 @@
-.PHONY: help view view-h install pack tag test test-py translations check-translations lint-py check-pricing run-windows macos macos-test
+.PHONY: help view view-h install pack tag test test-py translations check-translations lint-py run-windows macos macos-test
 .DEFAULT_GOAL := help
 
 help: ## list targets
@@ -58,9 +58,6 @@ lint-py: ## lint + format-check the Python backend, frontends and helpers (dev o
 	else \
 	  echo "ruff not found — install it or run 'nix develop'"; exit 1; \
 	fi
-
-check-pricing: ## report drift between billing.py and the live pricing pages (dev only)
-	@./scripts/check-pricing.py
 
 opendesktop: ## rasterize the readme SVGs to PNGs and JPGs in readme/opendesktop (needs `inkscape`)
 	@readme/export_opendesktop.sh

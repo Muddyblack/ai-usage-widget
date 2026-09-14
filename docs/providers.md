@@ -4,6 +4,27 @@ What each provider tab reads, where it looks for credentials, and what the
 underlying API does or does not expose. For the JSON model these all produce,
 see [`provider-contract.md`](provider-contract.md).
 
+## Claude and OpenAI cost estimates
+
+Organization token costs use the community-maintained
+[LiteLLM JSON pricing catalog](https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json).
+The widget downloads data only, with no LiteLLM package dependency. Direct
+Anthropic and OpenAI standard token rates are selected by exact model ID;
+reseller and regional rates are excluded. Prices refresh automatically once
+per day when organization usage needs pricing, and both providers share
+`pricing-litellm-v1.json` in the widget's cache directory (`AI_USAGE_CACHE_DIR`
+can override that location). No account credentials or usage are sent to the
+catalog host.
+
+A failed or malformed download retains the last good cache and retries after
+15 minutes. Before the first successful download, or for a model absent from
+the catalog, tokens remain visible with `priced: false`; cost totals include
+only priced models. These are standard-rate estimates, not invoices: contract
+discounts, batch rates, long-context tiers and other per-request charges cannot
+be reconstructed from the aggregate usage available here. Claude Code's local
+recorded costs and subscription limits continue to come from their existing
+sources.
+
 ## Setup per provider
 
 Enable only the services you use. Each one has its own setup requirement:

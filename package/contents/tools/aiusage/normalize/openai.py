@@ -1,4 +1,4 @@
-from ..billing import OPENAI_PRICING, empty_org_usage, price_models
+from ..billing import empty_org_usage, price_models
 from ..contract import (
     jround,
     money,
@@ -97,7 +97,7 @@ def normalize_openai(raw):
     stats = codex_stats(inp.get("stats"), now)
     if inp.get("orgUsage") is not None:
         entries = [item for r in (inp["orgUsage"].get("data") or []) for item in (r.get("results") or [])]
-        org = price_models(entries, OPENAI_PRICING)
+        org = price_models(entries, inp.get("pricing") or {})
     else:
         org = empty_org_usage()
     plan = codex.get("planType") or creds.get("planType") or ""

@@ -183,6 +183,12 @@
           ]
         }
       ]
+    },
+    "pricing": {
+      "claude-sonnet-4": {
+        "input": 3,
+        "output": 15
+      }
     }
   }
 }
