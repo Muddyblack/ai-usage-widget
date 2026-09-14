@@ -52,7 +52,7 @@ Credential notes: Z.AI uses the widget setting, [icode]$ZAI_TOKEN[/icode], or [i
 
 ---
 
-🐙 Source, setup details & issues → [link=https://github.com/Muddyblack/kde-ai-usage]github.com/Muddyblack/kde-ai-usage[/link]
+🐙 Source, setup details & issues → [link=https://github.com/Muddyblack/ai-usage-widget]github.com/Muddyblack/ai-usage-widget[/link]
 
 Built by [b]muddyblack[/b] • MIT licensed
 

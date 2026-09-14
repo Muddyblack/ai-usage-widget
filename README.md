@@ -17,7 +17,7 @@
   <a href="https://www.opendesktop.org/p/2361382/">
     <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.pling.com%2Focs%2Fv1%2Fcontent%2Fdata%2F%3Fformat%3Djson%26user%3DMuddyblack%26pagesize%3D20%26sortmode%3Dalpha&query=%24.data%5B0%5D.downloads&label=KDE%20Downloads&style=for-the-badge&color=1d99f3&logo=kde&logoColor=white" alt="KDE Store Downloads" />
   </a>
-  <img src="https://img.shields.io/github/downloads/Muddyblack/kde-ai-usage/total?style=for-the-badge&logo=github&logoColor=white&label=GitHub%20Downloads&color=blue" alt="GitHub Downloads" />
+  <img src="https://img.shields.io/github/downloads/Muddyblack/ai-usage-widget/total?style=for-the-badge&logo=github&logoColor=white&label=GitHub%20Downloads&color=blue" alt="GitHub Downloads" />
 </p>
 
 <p align="center">
@@ -116,8 +116,8 @@ What each provider needs signed in, and what it reads, is in
 ## Install
 
 ```bash
-git clone https://github.com/Muddyblack/kde-ai-usage.git
-cd kde-ai-usage
+git clone https://github.com/Muddyblack/ai-usage-widget.git
+cd ai-usage-widget
 ./translate/build.sh   # compile the translations (needs gettext); skip for English only
 kpackagetool6 -t Plasma/Applet -i package
 # or to update an existing install:
@@ -145,7 +145,7 @@ Or install it from the [KDE Store](https://www.opendesktop.org/p/2361382/).
 ```nix
 # flake.nix
 {
-  inputs.ai-usage.url = "github:Muddyblack/kde-ai-usage";
+  inputs.ai-usage.url = "github:Muddyblack/ai-usage-widget";
 
   outputs = { self, nixpkgs, ai-usage, ... }: {
     nixosConfigurations.mybox = nixpkgs.lib.nixosSystem {

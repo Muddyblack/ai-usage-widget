@@ -7,7 +7,7 @@ Run the Quickshell widget together with its standard StatusNotifier tray icon:
 nix run .#hyprland
 
 # Or run the current GitHub version directly
-nix run github:Muddyblack/kde-ai-usage#hyprland
+nix run github:Muddyblack/ai-usage-widget#hyprland
 ```
 
 During development, use `nix run path:.#hyprland` if newly created files have

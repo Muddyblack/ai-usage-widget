@@ -16,7 +16,7 @@ ln -s "$PWD/package/contents/tools/sh/ai-usage-cli" ~/.local/bin/ai-usage-cli
 
 # … or, on NixOS, run it straight from the flake without installing anything
 nix run .#cli
-nix run github:Muddyblack/kde-ai-usage#cli
+nix run github:Muddyblack/ai-usage-widget#cli
 ```
 
 If the widget is already installed, its settings page lists the path under

@@ -60,7 +60,7 @@
               description = "Multi-provider AI usage widget for KDE Plasma 6";
               license = licenses.mit;
               platforms = platforms.linux;
-              homepage = "https://github.com/Muddyblack/kde-ai-usage";
+              homepage = "https://github.com/Muddyblack/ai-usage-widget";
             };
           };
 

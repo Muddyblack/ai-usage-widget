@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: AI Usage Monitor 2.3.1\n"
-"Report-Msgid-Bugs-To: https://github.com/Muddyblack/kde-ai-usage/issues\n"
+"Report-Msgid-Bugs-To: https://github.com/Muddyblack/ai-usage-widget/issues\n"
 "PO-Revision-Date: 2026-09-12 09:06+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: French\n"
