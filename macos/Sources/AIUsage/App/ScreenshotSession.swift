@@ -220,7 +220,8 @@ final class ScreenshotSession {
     /// exports a theme-matched backdrop so light text/background contrast does
     /// not depend on the page displaying the PNG. Screen captures stay intact.
     private func flattenWindowPNG(at url: URL) -> Bool {
-        guard let source = NSBitmapImageRep(contentsOf: url)?.cgImage,
+        guard let data = try? Data(contentsOf: url),
+              let source = NSBitmapImageRep(data: data)?.cgImage,
               let context = CGContext(
                 data: nil, width: source.width, height: source.height,
                 bitsPerComponent: 8, bytesPerRow: 0,
@@ -237,7 +238,7 @@ final class ScreenshotSession {
               let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:])
         else { return false }
         do {
-            try png.write(to: url, options: .atomic)
+            try png.write(to: url, options: Data.WritingOptions.atomic)
             return true
         } catch {
             return false
