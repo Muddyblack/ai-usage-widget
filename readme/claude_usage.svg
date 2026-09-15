@@ -111,22 +111,22 @@
 <g transform="translate(16, 16)">
 <g transform="translate(0, 2) scale(0.7500)" opacity="1"><use href="#icon-claude"/></g>  <text x="28" y="15" font-family="system-ui,-apple-system,Segoe UI,Noto Sans,Roboto,sans-serif" font-size="15" font-weight="700" fill="#ffffff">Claude Usage</text>
 <g transform="translate(286, 2)"><rect width="22" height="22" rx="4" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/><path d="M4 3h11l3 3v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm1 1v4h9V4H5zm2 9v5h8v-5H7z" fill="#9ca3af"/></g><g transform="translate(316, 2)"><rect width="22" height="22" rx="4" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/><path d="M11 4a7 7 0 0 0-1.4.14l-.38 1.54a5.5 5.5 0 0 0-1.33.77l-1.46-.62-.99.99.62 1.46c-.32.41-.58.86-.77 1.33l-1.54.38v1.4l1.54.38c.19.47.45.92.77 1.33l-.62 1.46.99.99 1.46-.62c.41.32.86.58 1.33.77l.38 1.54h1.4l.38-1.54c.47-.19.92-.45 1.33-.77l1.46.62.99-.99-.62-1.46c.32-.41.58-.86.77-1.33l1.54-.38v-1.4l-1.54-.38a5.5 5.5 0 0 0-.77-1.33l.62-1.46-.99-.99-1.46.62a5.5 5.5 0 0 0-1.33-.77L12.4 4.14A7 7 0 0 0 11 4zm0 4.5A2.5 2.5 0 1 1 11 13.5 2.5 2.5 0 0 1 11 8.5z" fill="#9ca3af"/></g><g transform="translate(346, 2)"><rect width="22" height="22" rx="4" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/><path d="M14.65 4.35A6 6 0 1 0 17 9h-1.8a4.2 4.2 0 1 1-1.4-2.88L12 8h5V3l-2.35 2.35z" fill="#9ca3af"/></g></g>
-<!-- Tab Bar (7 providers, icon-only pills matching live QML) -->
+<!-- Tab Bar -->
 <g transform="translate(0, 0)">
-  <rect x="16.0" y="52" width="48.5" height="32" rx="6" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.20)" stroke-width="1"/>
-  <g transform="translate(32.2, 60.0) scale(0.6667)" opacity="1"><use href="#icon-claude"/></g>
-  <rect x="68.5" y="52" width="48.5" height="32" rx="6" fill="transparent" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-  <g transform="translate(84.8, 60.0) scale(0.6667)" opacity="0.5"><use href="#icon-antigravity"/></g>
-  <rect x="121.0" y="52" width="48.5" height="32" rx="6" fill="transparent" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-  <g transform="translate(137.2, 60.0) scale(0.6667)" opacity="0.5"><use href="#icon-openai"/></g>
-  <rect x="173.5" y="52" width="48.5" height="32" rx="6" fill="transparent" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-  <g transform="translate(189.8, 60.0) scale(0.6667)" opacity="0.5"><use href="#icon-kiro"/></g>
-  <rect x="226.0" y="52" width="48.5" height="32" rx="6" fill="transparent" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-  <g transform="translate(242.2, 60.0) scale(0.6667)" opacity="0.5"><use href="#icon-grok"/></g>
-  <rect x="278.5" y="52" width="48.5" height="32" rx="6" fill="transparent" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-  <g transform="translate(294.8, 60.0) scale(0.6667)" opacity="0.5"><use href="#icon-cursor"/></g>
-  <rect x="331.0" y="52" width="48.5" height="32" rx="6" fill="transparent" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-  <g transform="translate(347.2, 60.0) scale(0.6667)" opacity="0.5"><use href="#icon-cline"/></g>
+  <rect x="16.0" y="52" width="49.14" height="32" rx="6" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.20)" stroke-width="1"/>
+  <g transform="translate(32.6, 60.0) scale(0.6667)" opacity="1"><use href="#icon-claude"/></g>
+  <rect x="69.1" y="52" width="49.14" height="32" rx="6" fill="transparent" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <g transform="translate(85.7, 60.0) scale(0.6667)" opacity="0.5"><use href="#icon-antigravity"/></g>
+  <rect x="122.3" y="52" width="49.14" height="32" rx="6" fill="transparent" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <g transform="translate(138.9, 60.0) scale(0.6667)" opacity="0.5"><use href="#icon-openai"/></g>
+  <rect x="175.4" y="52" width="49.14" height="32" rx="6" fill="transparent" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <g transform="translate(192.0, 60.0) scale(0.6667)" opacity="0.5"><use href="#icon-kiro"/></g>
+  <rect x="228.6" y="52" width="49.14" height="32" rx="6" fill="transparent" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <g transform="translate(245.2, 60.0) scale(0.6667)" opacity="0.5"><use href="#icon-grok"/></g>
+  <rect x="281.7" y="52" width="49.14" height="32" rx="6" fill="transparent" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <g transform="translate(298.3, 60.0) scale(0.6667)" opacity="0.5"><use href="#icon-cursor"/></g>
+  <rect x="334.8" y="52" width="49.14" height="32" rx="6" fill="transparent" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <g transform="translate(351.4, 60.0) scale(0.6667)" opacity="0.5"><use href="#icon-cline"/></g>
 </g>
 <g transform="translate(16, 96)">
   <g transform="translate(0, 0)">

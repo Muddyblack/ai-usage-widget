@@ -35,10 +35,15 @@ Switch between tabs in the popup for each service:
 [*] [b]Countdown timers[/b] — ticks down to your next quota reset (refreshes every ~5 min to stay friendly to the APIs)
 [*] [b]Usage chart[/b] — a smooth, glowing trend graph with 5H / 24H / 7D toggle and hover-scrub (24H shows the whole day's session burn as a sawtooth)
 [*] [b]Period comparison[/b] — [i]"+12% vs last week"[/i] at the same point in the cycle
+[*] [b]Overview[/b] — see every enabled provider at a glance
+[*] [b]Usage & Spend[/b] — totals the API spend figures each provider already reports
+[*] [b]Sessions[/b] — recent local Claude Code, Codex, Grok CLI, Cline and Muse activity, with redacted titles and recency only, no paths or transcripts. Resume supported sessions in your terminal (Muse has no resume command)
 [*] [b]Theme-aware[/b] — follows your Plasma accent by default, or flip on per-service brand colors
 [*] [b]Glassmorphism popup[/b] — translucent, blurred, and honestly just nice to look at
 [*] [b]Pin a service[/b] — open straight to your most-used tab
 [/list]
+
+Enable the optional Overview, Usage & Spend and Sessions tabs in Settings → Views.
 
 [b]Panel modes[/b]
 

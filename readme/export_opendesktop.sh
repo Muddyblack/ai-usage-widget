@@ -14,7 +14,7 @@ OUT="$DIR/opendesktop"
 perl "$DIR/generate.pl"
 mkdir -p "$OUT"
 
-for svg in "$DIR"/claude_usage.svg "$DIR"/antigravity_usage.svg "$DIR"/openai_usage.svg "$DIR"/usage_chart.svg "$DIR"/claude_pill.svg "$DIR"/agy_pill.svg "$DIR"/settings.svg; do
+for svg in "$DIR"/*.svg; do
   [ -e "$svg" ] || continue
   name="$(basename "$svg" .svg)"
   inkscape "$svg" --export-type=png --export-filename="$OUT/$name.png" --export-dpi=192

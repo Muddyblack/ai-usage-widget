@@ -43,6 +43,9 @@ my %C = (
     muse         => "#0064e0",
     cursor       => "#e6e6e6",
     cline        => "#e6e6e6",
+    overview     => "#38bdf8",
+    spend        => "#34d399",
+    sessions     => "#a78bfa",
 );
 
 my $UI   = 'system-ui,-apple-system,Segoe UI,Noto Sans,Roboto,sans-serif';
@@ -219,6 +222,17 @@ sub header_row {
         $o .= qq{  <text x="26" y="24" font-family="$UI" font-size="9.5" fill="$C{faint}">$sub</text>\n};
         $o .= tool_button('back', 316, 2);
         $o .= tool_button('refresh', 346, 2);
+    } elsif ($brand && ($brand eq "overview" || $brand eq "spend" || $brand eq "sessions" || $brand eq "widget")) {
+        my $c = $col || $C{$brand} || "#38bdf8";
+        $o .= qq{  <g transform="translate(0, 2) scale(0.85)">\n};
+        $o .= qq{    <path d="M 3.5,10 A 8.5,8.5 0 0,0 20.5,10 M 6.5,10 A 5.5,5.5 0 0,0 17.5,10" fill="none" stroke="$c" stroke-width="1.8" stroke-linecap="round" />\n};
+        $o .= qq{    <path d="M 12,2 C 12,6.5 13.5,8 18,8 C 13.5,8 12,9.5 12,14 C 12,9.5 10.5,8 6,8 C 10.5,8 12,6.5 12,2 Z" fill="$c" />\n};
+        $o .= qq{    <path d="M 18.5,1.5 C 18.5,2.7 18.9,3.1 20.1,3.1 C 18.9,3.1 18.5,3.5 18.5,4.7 C 18.5,3.5 18.1,3.1 16.9,3.1 C 18.1,3.1 18.5,2.7 18.5,1.5 Z" fill="$c" />\n};
+        $o .= qq{  </g>\n};
+        $o .= qq{  <text x="28" y="15" font-family="$UI" font-size="15" font-weight="700" fill="$C{text}">$title</text>\n};
+        $o .= tool_button('export', 286, 2);
+        $o .= tool_button('settings', 316, 2);
+        $o .= tool_button('refresh', 346, 2);
     } else {
         $o .= brand_glyph($brand, 0, 2, 18, "", 1.0);
         $o .= qq{  <text x="28" y="15" font-family="$UI" font-size="15" font-weight="700" fill="$C{text}">$title</text>\n};
@@ -230,10 +244,10 @@ sub header_row {
     return $o;
 }
 
-# Tab bar: 7 enabled providers, icon-only pills matching live QML when labelFits is false
+# Tab bar: supports custom tabs list (with feature tab dots or provider icons)
 sub tab_bar {
-    my ($active_tab) = @_;
-    my @tabs = (
+    my ($active_tab, $custom_tabs) = @_;
+    my @tabs = $custom_tabs ? @$custom_tabs : (
         { id => "claude",      brand => "claude" },
         { id => "antigravity", brand => "antigravity" },
         { id => "openai",      brand => "openai" },
@@ -243,10 +257,10 @@ sub tab_bar {
         { id => "cline",       brand => "cline" },
     );
 
-    my $o = qq{<!-- Tab Bar (7 providers, icon-only pills matching live QML) -->\n<g transform="translate(0, 0)">\n};
+    my $o = qq{<!-- Tab Bar -->\n<g transform="translate(0, 0)">\n};
     my $x = 16;
     my $spacing = 4;
-    my $tab_w = 48.5; # (368 - 6*4) / 7 = 49.14
+    my $tab_w = sprintf("%.2f", (368 - ($#tabs) * $spacing) / scalar(@tabs));
     for my $i (0 .. $#tabs) {
         my $t = $tabs[$i];
         my $is_active = ($t->{id} eq $active_tab);
@@ -258,7 +272,13 @@ sub tab_bar {
         my $icon_y = sprintf("%.1f", 52 + (32 - 16) / 2);
 
         $o .= qq{  <rect x="$cur_x" y="52" width="$tab_w" height="32" rx="6" fill="$bg" stroke="$border" stroke-width="1"/>\n};
-        $o .= qq{  } . brand_glyph($t->{brand}, $icon_x, $icon_y, 16, "", $icon_op) . "\n";
+        if ($t->{dot}) {
+            my $dot_x = sprintf("%.1f", $cur_x + $tab_w / 2);
+            my $dot_y = sprintf("%.1f", 52 + 16);
+            $o .= qq{  <circle cx="$dot_x" cy="$dot_y" r="4" fill="$t->{dot}" opacity="$icon_op"/>\n};
+        } else {
+            $o .= qq{  } . brand_glyph($t->{brand}, $icon_x, $icon_y, 16, "", $icon_op) . "\n";
+        }
     }
     $o .= qq{</g>\n};
     return $o;
@@ -871,6 +891,238 @@ sub make_agy_pill {
     write_svg('agy_pill.svg', $o);
 }
 
+# ── 8. OVERVIEW_TAB.SVG (Overview / General Tab) ─────────────────────────────
+sub make_overview_tab {
+    my $w = 400; my $h = 560;
+    my $o = qq{<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $w $h" width="$w" height="$h">\n};
+    $o .= defs_block();
+    $o .= qq{<rect width="$w" height="$h" rx="12" fill="url(#bgGrad)"/>\n};
+    $o .= qq{<rect width="$w" height="$h" rx="12" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1.2"/>\n};
+    $o .= header_row(title => "AI Usage Monitor", brand => "overview", color => $C{overview});
+
+    my @custom_tabs = (
+        { id => "overview",    dot => $C{overview} },
+        { id => "spend",       dot => $C{spend} },
+        { id => "sessions",    dot => $C{sessions} },
+        { id => "claude",      brand => "claude" },
+        { id => "antigravity", brand => "antigravity" },
+        { id => "openai",      brand => "openai" },
+        { id => "kiro",        brand => "kiro" },
+    );
+    $o .= tab_bar("overview", \@custom_tabs);
+
+    # Overview Sub-Header matching OverviewTab.qml
+    $o .= qq{<g transform="translate(16, 96)">\n};
+    $o .= qq{  <text x="0" y="12" font-family="$UI" font-size="14" font-weight="700" fill="$C{text}">Overview</text>\n};
+    $o .= qq{  <text x="368" y="12" text-anchor="end" font-family="$UI" font-size="10" fill="$C{muted}">7 providers</text>\n};
+    $o .= qq{</g>\n};
+
+    # Provider Rows
+    my @rows = (
+        { id => "claude",      name => "Claude",      accent => $C{claude},      pct => 61, detail => "Pro" },
+        { id => "antigravity", name => "Antigravity", accent => $C{antigravity}, pct => 42, detail => "Google AI Pro" },
+        { id => "openai",      name => "OpenAI",      accent => $C{openai},      pct => 20, detail => "Plus" },
+        { id => "kiro",        name => "Kiro",        accent => $C{kiro},        pct => 75, detail => "Free" },
+        { id => "grok",        name => "Grok",        accent => $C{grok},        pct => 35, detail => "Credits" },
+        { id => "cursor",      name => "Cursor",      accent => $C{cursor},      pct => 58, detail => "Pro" },
+        { id => "cline",       name => "Cline",       accent => $C{cline},       pct => 12, detail => "30d API" },
+    );
+
+    my $ry = 120;
+    for my $r (@rows) {
+        $o .= qq{<g transform="translate(16, $ry)">\n};
+        $o .= qq{  <rect width="368" height="52" rx="8" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>\n};
+        # Icon box
+        $o .= qq{  <rect x="8" y="12" width="28" height="28" rx="6" fill="$r->{accent}" fill-opacity="0.15"/>\n};
+        $o .= brand_glyph($r->{id}, 14, 18, 16, "", 1.0) . "\n";
+        # Provider Name & Percentage
+        $o .= qq{  <text x="44" y="22" font-family="$UI" font-size="12" font-weight="700" fill="$C{text}">$r->{name}</text>\n};
+        $o .= qq{  <text x="360" y="22" text-anchor="end" font-family="$UI" font-size="12" font-weight="700" fill="$r->{accent}">$r->{pct}%</text>\n};
+        # Progress Bar
+        my $bar_w = int(316 * ($r->{pct} / 100));
+        $o .= qq{  <rect x="44" y="28" width="316" height="6" rx="3" fill="#ffffff" fill-opacity="0.08"/>\n};
+        $o .= qq{  <rect x="44" y="28" width="$bar_w" height="6" rx="3" fill="$r->{accent}"/>\n};
+        # Detail line
+        $o .= qq{  <text x="44" y="44" font-family="$UI" font-size="9.5" fill="$C{faint}">$r->{detail}</text>\n};
+        $o .= qq{</g>\n};
+        $ry += 58;
+    }
+
+    $o .= footer_row($w, 542, "", "12:31");
+    $o .= qq{</svg>\n};
+    write_svg('overview_tab.svg', $o);
+    write_svg('general_tab.svg', $o);
+}
+
+# ── 9. SESSIONS_TAB.SVG (Sessions Tab) ───────────────────────────────────────
+sub make_sessions_tab {
+    my $w = 400; my $h = 474;
+    my $o = qq{<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $w $h" width="$w" height="$h">\n};
+    $o .= defs_block();
+    $o .= qq{<rect width="$w" height="$h" rx="12" fill="url(#bgGrad)"/>\n};
+    $o .= qq{<rect width="$w" height="$h" rx="12" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1.2"/>\n};
+    $o .= header_row(title => "AI Usage Monitor", brand => "sessions", color => $C{sessions});
+
+    my @custom_tabs = (
+        { id => "overview",    dot => $C{overview} },
+        { id => "spend",       dot => $C{spend} },
+        { id => "sessions",    dot => $C{sessions} },
+        { id => "claude",      brand => "claude" },
+        { id => "antigravity", brand => "antigravity" },
+        { id => "openai",      brand => "openai" },
+        { id => "kiro",        brand => "kiro" },
+    );
+    $o .= tab_bar("sessions", \@custom_tabs);
+
+    # Sub-header: Sessions + Count + Refresh button
+    $o .= qq{<g transform="translate(16, 96)">\n};
+    $o .= qq{  <text x="0" y="14" font-family="$UI" font-size="14" font-weight="700" fill="$C{text}">Sessions</text>\n};
+    $o .= qq{  <text x="340" y="13" text-anchor="end" font-family="$UI" font-size="10" fill="$C{muted}">4 local sessions</text>\n};
+    $o .= qq{  <g transform="translate(346, 0)">\n};
+    $o .= qq{    <rect width="22" height="20" rx="4" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>\n};
+    $o .= qq{    <path d="M14.65 3.35A6 6 0 1 0 17 8h-1.8a4.2 4.2 0 1 1-1.4-2.88L12 7h5V2l-2.35 2.35z" transform="scale(0.85) translate(3, 1)" fill="#9ca3af"/>\n};
+    $o .= qq{  </g>\n};
+    $o .= qq{</g>\n};
+
+    # Search Bar (TextField)
+    $o .= qq{<g transform="translate(16, 124)">\n};
+    $o .= qq{  <rect width="368" height="26" rx="5" fill="#13141a" stroke="#ffffff" stroke-opacity="0.10" stroke-width="1"/>\n};
+    $o .= qq{  <path d="M7 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm-4.2 3a4.2 4.2 0 1 1 7.2 2.95l3.5 3.5-.85.85-3.5-3.5A4.2 4.2 0 0 1 2.8 7z" fill="$C{faint}" transform="translate(8, 5) scale(0.85)"/>\n};
+    $o .= qq{  <text x="28" y="17" font-family="$UI" font-size="10" fill="$C{faint}">Search sessions…</text>\n};
+    $o .= qq{</g>\n};
+
+    # Sessions List
+    my @sessions = (
+        {
+            accent    => $C{claude},
+            title     => "Refactor audio pipeline for low latency",
+            session   => "session-7b19a · Claude Code",
+            detail    => "14 turns · 42.1k tokens · ~/projects/plasma/ai-usage",
+            active    => 1,
+            age       => "2m ago",
+        },
+        {
+            accent    => $C{openai},
+            title     => "Debug memory leak in websocket worker",
+            session   => "session-c8201 · Codex CLI",
+            detail    => "8 turns · 19.5k tokens · ~/projects/backend-service",
+            active    => 0,
+            age       => "45m ago",
+        },
+        {
+            accent    => $C{grok},
+            title     => "Generate mock fixtures for billing tests",
+            session   => "session-94a20 · Grok CLI",
+            detail    => "5 turns · 11.2k tokens · ~/projects/api-test-suite",
+            active    => 0,
+            age       => "2h ago",
+        },
+        {
+            accent    => $C{cline},
+            title     => "Update KDE Plasma 6 SVG vector assets",
+            session   => "session-3f04b · Cline",
+            detail    => "22 turns · 68.4k tokens · ~/projects/KDE-PLASMA",
+            active    => 0,
+            age       => "1d ago",
+        },
+    );
+
+    my $sy = 158;
+    for my $s (@sessions) {
+        $o .= qq{<g transform="translate(16, $sy)">\n};
+        $o .= qq{  <rect width="368" height="64" rx="8" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>\n};
+        # Accent dot
+        $o .= qq{  <circle cx="14" cy="18" r="4" fill="$s->{accent}"/>\n};
+        # Title
+        $o .= qq{  <text x="24" y="20" font-family="$UI" font-size="11.5" font-weight="700" fill="$C{text}">$s->{title}</text>\n};
+        # Session Name
+        $o .= qq{  <text x="24" y="35" font-family="$UI" font-size="9.5" fill="$C{dim}">$s->{session}</text>\n};
+        # Detail (tokens/turns)
+        $o .= qq{  <text x="24" y="50" font-family="$UI" font-size="9" fill="$C{faint}">$s->{detail}</text>\n};
+        # State
+        my $st_col = $s->{active} ? $s->{accent} : $C{muted};
+        my $st_lbl = $s->{active} ? "Active" : "Idle";
+        $o .= qq{  <text x="334" y="20" text-anchor="end" font-family="$UI" font-size="10.5" font-weight="700" fill="$st_col">$st_lbl</text>\n};
+        # Age
+        $o .= qq{  <text x="334" y="34" text-anchor="end" font-family="$UI" font-size="9.5" fill="$C{faint}">$s->{age}</text>\n};
+        # Open in terminal button
+        $o .= qq{  <g transform="translate(342, 12)">\n};
+        $o .= qq{    <rect width="20" height="20" rx="4" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>\n};
+        $o .= qq{    <path d="M3 3h5v1.5H4.5v7h7V9H13v4H3V3zm6 0h4v4h-1.5V4.6L8.5 7.6 7.4 6.5l3-3H9V3z" fill="#9ca3af" transform="scale(0.85) translate(4, 3)"/>\n};
+        $o .= qq{  </g>\n};
+        $o .= qq{</g>\n};
+        $sy += 72;
+    }
+
+    $o .= footer_row($w, 456, "", "12:31");
+    $o .= qq{</svg>\n};
+    write_svg('sessions_tab.svg', $o);
+    write_svg('session_tab.svg', $o);
+}
+
+# ── 10. SPEND_TAB.SVG (Cost Usage & Spend Tab) ──────────────────────────────
+sub make_spend_tab {
+    my $w = 400; my $h = 434;
+    my $o = qq{<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $w $h" width="$w" height="$h">\n};
+    $o .= defs_block();
+    $o .= qq{<rect width="$w" height="$h" rx="12" fill="url(#bgGrad)"/>\n};
+    $o .= qq{<rect width="$w" height="$h" rx="12" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1.2"/>\n};
+    $o .= header_row(title => "AI Usage Monitor", brand => "spend", color => $C{spend});
+
+    my @custom_tabs = (
+        { id => "overview",    dot => $C{overview} },
+        { id => "spend",       dot => $C{spend} },
+        { id => "sessions",    dot => $C{sessions} },
+        { id => "claude",      brand => "claude" },
+        { id => "antigravity", brand => "antigravity" },
+        { id => "openai",      brand => "openai" },
+        { id => "kiro",        brand => "kiro" },
+    );
+    $o .= tab_bar("spend", \@custom_tabs);
+
+    # Sub-header: Usage & Spend + Total
+    $o .= qq{<g transform="translate(16, 96)">\n};
+    $o .= qq{  <text x="0" y="14" font-family="$UI" font-size="14" font-weight="700" fill="$C{text}">Usage &amp; Spend</text>\n};
+    $o .= qq{  <text x="368" y="14" text-anchor="end" font-family="$UI" font-size="13" font-weight="700" fill="$C{spend}">Σ \$48.35</text>\n};
+    $o .= qq{</g>\n};
+
+    # Note
+    $o .= qq{<g transform="translate(16, 122)">\n};
+    $o .= qq{  <text x="0" y="9" font-family="$UI" font-size="9" fill="$C{faint}">Totals come from each provider's own usage APIs and local CLI logs.</text>\n};
+    $o .= qq{  <text x="0" y="21" font-family="$UI" font-size="9" fill="$C{faint}">Ranges differ (30-day, all-time, lifetime).</text>\n};
+    $o .= qq{</g>\n};
+
+    # Spend Rows
+    my @spend_rows = (
+        { name => "Claude",     accent => $C{claude},     note => "30d API",    cost => "\$24.15" },
+        { name => "OpenAI",     accent => $C{openai},     note => "30d API",    cost => "\$12.80" },
+        { name => "OpenRouter", accent => $C{openrouter}, note => "all-time",   cost => "\$6.40" },
+        { name => "Mistral",    accent => $C{mistral},    note => "vibe CLI",   cost => "\$3.20" },
+        { name => "Cursor",     accent => $C{cursor},     note => "on-demand",  cost => "\$1.80" },
+    );
+
+    my $cy = 156;
+    for my $r (@spend_rows) {
+        $o .= qq{<g transform="translate(16, $cy)">\n};
+        $o .= qq{  <rect width="368" height="42" rx="8" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>\n};
+        # Accent dot
+        $o .= qq{  <circle cx="16" cy="21" r="4" fill="$r->{accent}"/>\n};
+        # Name
+        $o .= qq{  <text x="28" y="19" font-family="$UI" font-size="12" font-weight="700" fill="$C{text}">$r->{name}</text>\n};
+        # Note
+        $o .= qq{  <text x="28" y="33" font-family="$UI" font-size="9.5" fill="$C{faint}">$r->{note}</text>\n};
+        # Cost
+        $o .= qq{  <text x="354" y="26" text-anchor="end" font-family="$UI" font-size="12.5" font-weight="700" fill="$C{text}">$r->{cost}</text>\n};
+        $o .= qq{</g>\n};
+        $cy += 48;
+    }
+
+    $o .= footer_row($w, 416, "48.35", "12:31");
+    $o .= qq{</svg>\n};
+    write_svg('spend_tab.svg', $o);
+    write_svg('cost_usage.svg', $o);
+}
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 make_claude_usage();
 make_antigravity_usage();
@@ -879,5 +1131,8 @@ make_usage_chart();
 make_settings();
 make_claude_pill();
 make_agy_pill();
+make_overview_tab();
+make_sessions_tab();
+make_spend_tab();
 
 print "All demo visuals generated successfully.\n";
