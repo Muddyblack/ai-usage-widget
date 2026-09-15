@@ -106,7 +106,7 @@ ColumnLayout {
                     }
                     Text {
                         visible: modelData.note !== ""
-                        text: modelData.note
+                        text: shell.i18n(modelData.note)
                         font.pixelSize: 10
                         opacity: 0.45
                         color: "#f8fafc"

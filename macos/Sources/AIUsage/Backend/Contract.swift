@@ -117,27 +117,27 @@ enum SpendRows {
             switch provider.id {
             case "claude", "openai":
                 cost = details.double(paths: [["organizationUsage", "totalCostUSD"], ["org", "totalCostUSD"], ["totalCostUSD"], ["stats", "totalCostUSD"]])
-                note = "30d API"
+                note = i18n("30d API")
                 currency = "USD"
             case "openrouter":
                 cost = details.double(paths: [["usageUSD"], ["usage"]])
-                note = "all-time"
+                note = i18n("all-time")
                 currency = "USD"
             case "mistral":
                 cost = details.double(paths: [["vibe", "totalCost"], ["vibeTotalCost"], ["totalCost"]])
-                note = "vibe CLI"
+                note = i18n("vibe CLI")
                 currency = "USD"
             case "muse":
                 cost = details.double(paths: [["stats", "totalCostUSD"], ["totalCostUSD"]])
-                note = "local est."
+                note = i18n("local est.")
                 currency = details.string(paths: [["stats", "currency"], ["currency"]], fallback: "USD")
             case "cline":
                 cost = details.double(paths: [["stats", "totalCostUSD"], ["totalCostUSD"]])
-                note = "local"
+                note = i18n("local")
                 currency = "USD"
             case "cursor":
                 cost = details.double(paths: [["onDemandUsed"], ["onDemandSpendUSD"], ["onDemand"]])
-                note = "on-demand"
+                note = i18n("on-demand")
                 currency = "USD"
             default:
                 continue

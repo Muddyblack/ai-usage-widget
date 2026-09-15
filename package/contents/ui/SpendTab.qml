@@ -33,13 +33,13 @@ ColumnLayout {
                 accent: rootItem.tabColor(id)
             });
         }
-        push("claude", "Claude", rootItem.claudeTotalCostUSD || rootItem.claudeStatsTotalCostUSD || 0, "30d API");
-        push("openai", "OpenAI", rootItem.openaiTotalCostUSD || rootItem.codexStatsTotalCostUSD || 0, "30d API");
-        push("openrouter", "OpenRouter", rootItem.openrouterUsageUSD, "all-time");
-        push("mistral", "Mistral", rootItem.mistralVibeTotalCost, "vibe CLI");
-        push("muse", "Muse", rootItem.museCostUSD, "local est.", rootItem.museCurrency || "USD");
-        push("cline", "Cline", (rootItem.clineStats && rootItem.clineStats.totalCostUSD) || 0, "local");
-        push("cursor", "Cursor", rootItem.cursorOnDemandUsed, "on-demand");
+        push("claude", "Claude", rootItem.claudeTotalCostUSD || rootItem.claudeStatsTotalCostUSD || 0, i18n("30d API"));
+        push("openai", "OpenAI", rootItem.openaiTotalCostUSD || rootItem.codexStatsTotalCostUSD || 0, i18n("30d API"));
+        push("openrouter", "OpenRouter", rootItem.openrouterUsageUSD, i18n("all-time"));
+        push("mistral", "Mistral", rootItem.mistralVibeTotalCost, i18n("vibe CLI"));
+        push("muse", "Muse", rootItem.museCostUSD, i18n("local est."), rootItem.museCurrency || "USD");
+        push("cline", "Cline", (rootItem.clineStats && rootItem.clineStats.totalCostUSD) || 0, i18n("local"));
+        push("cursor", "Cursor", rootItem.cursorOnDemandUsed, i18n("on-demand"));
         out.sort(function (a, b) {
             return b.cost - a.cost;
         });

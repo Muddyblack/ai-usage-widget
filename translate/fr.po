@@ -28,6 +28,16 @@ msgstr "Échec de l'export"
 msgid "usage backend returned no data"
 msgstr "le backend d'utilisation n'a renvoyé aucune donnée"
 
+#: hyprland/AiUsageShell.qml package/contents/ui/SessionsTab.qml
+#: windows/qml/Main.qml
+msgid "Could not load sessions."
+msgstr "Impossible de charger les sessions."
+
+#: hyprland/AiUsageShell.qml package/contents/ui/SessionsTab.qml
+#: windows/qml/Main.qml
+msgid "Could not resume session."
+msgstr "Impossible de reprendre la session."
+
 #: hyprland/AiUsageShell.qml
 msgid "usage backend failed"
 msgstr "échec du backend d'utilisation"
@@ -39,6 +49,21 @@ msgstr "Chargement"
 #: hyprland/AiUsageShell.qml windows/qml/Main.qml
 msgid "No data"
 msgstr "Aucune donnée"
+
+#: hyprland/OverviewPage.qml hyprland/SettingsPage.qml
+#: package/contents/ui/OverviewTab.qml package/contents/ui/SettingsPanel.qml
+msgid "Overview"
+msgstr "Vue d’ensemble"
+
+#: hyprland/OverviewPage.qml package/contents/ui/OverviewTab.qml
+msgid "%1 provider"
+msgid_plural "%1 providers"
+msgstr[0] "%1 fournisseur"
+msgstr[1] "%1 fournisseurs"
+
+#: hyprland/OverviewPage.qml package/contents/ui/OverviewTab.qml
+msgid "Enable a provider in Settings to see it here."
+msgstr "Activez un fournisseur dans les paramètres pour le voir ici."
 
 #: hyprland/PopupContent.qml package/contents/ui/main.qml windows/qml/Main.qml
 msgid "Settings"
@@ -55,6 +80,10 @@ msgstr "Langue, pilule, position et graphique"
 #: hyprland/PopupContent.qml
 msgid "Language and usage chart"
 msgstr "Langue et graphique d'utilisation"
+
+#: hyprland/PopupContent.qml package/contents/ui/main.qml
+msgid "Optional Overview, Spend and Sessions tabs"
+msgstr "Onglets facultatifs Vue d’ensemble, Dépenses et Sessions"
 
 #: hyprland/PopupContent.qml package/contents/ui/main.qml
 msgid "Refresh interval and usage history"
@@ -164,9 +193,79 @@ msgstr "Quota"
 msgid "fallback if the plan reports none"
 msgstr "valeur de repli si le plan n'en indique aucun"
 
+#: hyprland/SessionsPage.qml hyprland/SettingsPage.qml
+#: package/contents/ui/SessionsTab.qml package/contents/ui/SettingsPanel.qml
+msgid "Sessions"
+msgstr "Sessions"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Refreshing…"
+msgstr "Actualisation…"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "%1 local session"
+msgid_plural "%1 local sessions"
+msgstr[0] "%1 session locale"
+msgstr[1] "%1 sessions locales"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Search sessions…"
+msgstr "Rechercher des sessions…"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid ""
+"No local agent sessions found. They appear after Claude Code, Codex, Muse, "
+"Cline or Grok CLI records activity."
+msgstr ""
+"Aucune session locale d’agent trouvée. Elles apparaissent lorsque Claude "
+"Code, Codex, Muse, Cline ou Grok CLI enregistre une activité."
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "No sessions match your search."
+msgstr "Aucune session ne correspond à votre recherche."
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Session"
+msgstr "Session"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Active"
+msgstr "Active"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Idle"
+msgstr "Inactive"
+
+#: hyprland/SessionsPage.qml package/contents/ui/MistralTab.qml
+#: package/contents/ui/SessionsTab.qml
+msgid "just now"
+msgstr "à l'instant"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "%1 min ago"
+msgid_plural "%1 min ago"
+msgstr[0] "il y a %1 min"
+msgstr[1] "il y a %1 min"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "%1 h ago"
+msgid_plural "%1 h ago"
+msgstr[0] "il y a %1 h"
+msgstr[1] "il y a %1 h"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "%1 d ago"
+msgid_plural "%1 d ago"
+msgstr[0] "il y a %1 j"
+msgstr[1] "il y a %1 j"
+
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "Providers"
 msgstr "Fournisseurs"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Views"
+msgstr "Vues"
 
 #: hyprland/SettingsPage.qml
 msgid "Panel"
@@ -193,6 +292,29 @@ msgstr ""
 "Dépliez un fournisseur pour sa clé API et ses options. Les clés sont "
 "stockées dans %1 ; laissez-en une vide pour utiliser les variables "
 "d'environnement ou une connexion CLI existante."
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Optional tabs that sit ahead of your providers in the popup."
+msgstr ""
+"Onglets facultatifs affichés avant vos fournisseurs dans la fenêtre "
+"contextuelle."
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "All enabled providers at a glance"
+msgstr "Tous les fournisseurs activés en un coup d’œil"
+
+#: hyprland/SettingsPage.qml hyprland/SpendPage.qml
+#: package/contents/ui/SettingsPanel.qml package/contents/ui/SpendTab.qml
+msgid "Usage & Spend"
+msgstr "Utilisation et dépenses"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Combined cost figures across providers"
+msgstr "Coûts cumulés des fournisseurs"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Recent local agent sessions (no transcripts)"
+msgstr "Sessions locales récentes des agents (sans transcriptions)"
 
 #: hyprland/SettingsPage.qml
 msgid "Language"
@@ -386,6 +508,24 @@ msgstr ""
 "Mêmes données que ce menu contextuel, sous forme de tableau dans un shell. "
 "Liez-le dans ~/.local/bin pour l'exécuter sous le nom ai-usage-cli, ou "
 "passez --compact pour une ligne de barre d'état."
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid ""
+"Totals come from each provider's own usage APIs and local CLI logs. Ranges "
+"differ (30-day, all-time, lifetime)."
+msgstr ""
+"Les totaux proviennent des API d’utilisation de chaque fournisseur et des "
+"journaux locaux des outils en ligne de commande. Les périodes diffèrent (30 "
+"jours, depuis le début, durée de vie)."
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid ""
+"No cost figures yet. Enable providers that report spend, or use them until "
+"local logs appear."
+msgstr ""
+"Aucun coût disponible pour le moment. Activez des fournisseurs qui indiquent "
+"les dépenses, ou utilisez-les jusqu’à ce que des journaux locaux "
+"apparaissent."
 
 #: hyprland/StatsSection.qml package/contents/ui/CopilotTab.qml
 msgid "Top repositories"
@@ -1255,8 +1395,8 @@ msgstr[0] "%1 req"
 msgstr[1] "%1 req"
 
 #: package/contents/ui/CursorTab.qml
-msgid "Cursor error"
-msgstr "Erreur Cursor"
+msgid "Usage unavailable"
+msgstr "Utilisation indisponible"
 
 #: package/contents/ui/CursorTab.qml package/contents/ui/main.qml
 msgid "Not signed in"
@@ -1456,10 +1596,6 @@ msgstr ""
 "connectez-vous une fois pour que le widget puisse lire son instantané "
 "d'utilisation. Une connexion kiro-cli expire environ une heure après la "
 "dernière exécution du CLI — démarrez kiro-cli pour la renouveler."
-
-#: package/contents/ui/MistralTab.qml
-msgid "just now"
-msgstr "à l'instant"
 
 #: package/contents/ui/MistralTab.qml
 msgid "%1m ago"
@@ -1802,6 +1938,14 @@ msgstr "Masquer les options"
 msgid "Key and options"
 msgstr "Clé et options"
 
+#: package/contents/ui/SessionsTab.qml
+msgid "Resume session"
+msgstr "Reprendre la session"
+
+#: package/contents/ui/SessionsTab.qml
+msgid "Could not parse sessions."
+msgstr "Impossible d’analyser les sessions."
+
 #: package/contents/ui/SettingsPanel.qml
 msgid "Appearance"
 msgstr "Apparence"
@@ -1877,6 +2021,30 @@ msgid ""
 msgstr ""
 "Interpréteur pour le backend — par ex. le bin/python d'un venv. Si vide, "
 "détection automatique depuis PATH."
+
+#: package/contents/ui/SpendTab.qml
+msgid "30d API"
+msgstr "API sur 30 j"
+
+#: package/contents/ui/SpendTab.qml
+msgid "all-time"
+msgstr "depuis le début"
+
+#: package/contents/ui/SpendTab.qml
+msgid "vibe CLI"
+msgstr "CLI Vibe"
+
+#: package/contents/ui/SpendTab.qml
+msgid "local est."
+msgstr "estimation locale"
+
+#: package/contents/ui/SpendTab.qml
+msgid "local"
+msgstr "local"
+
+#: package/contents/ui/SpendTab.qml
+msgid "on-demand"
+msgstr "à la demande"
 
 #: package/contents/ui/StatsSparkline.qml
 msgid "%1 / day"
@@ -2657,9 +2825,17 @@ msgstr ""
 msgid "Usage over the last %1"
 msgstr "Utilisation sur les derniers %1"
 
+#: macos/Sources/AIUsage/Views/OverviewView.swift
+msgid "%1%"
+msgstr "%1 %"
+
 #: macos/Sources/AIUsage/Views/QuotaRowView.swift
 msgid "Resets %1"
 msgstr "Réinitialisation %1"
+
+#: macos/Sources/AIUsage/Views/SessionsView.swift
+msgid "Refresh sessions"
+msgstr "Actualiser les sessions"
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Admin API key"
@@ -2703,6 +2879,12 @@ msgstr "Barre des menus"
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "General"
 msgstr "Général"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Optional tabs that sit ahead of your providers in the popover."
+msgstr ""
+"Onglets facultatifs affichés avant vos fournisseurs dans la fenêtre "
+"contextuelle."
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Show"
@@ -2833,10 +3015,6 @@ msgid ""
 msgstr ""
 "Partagé avec `ai-usage-cli` et avec les interfaces Linux de ce widget, pour "
 "qu'une clé collée ici ne soit collée qu'une seule fois."
-
-#: macos/Sources/AIUsage/Views/StatsView.swift
-msgid "Sessions"
-msgstr "Sessions"
 
 #: macos/Sources/AIUsage/Views/StatsView.swift
 msgid "Messages"
