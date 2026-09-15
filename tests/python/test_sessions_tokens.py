@@ -55,7 +55,7 @@ class ClaudeSessionTokensTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             path = os.path.join(root, "t.jsonl")
             with open(path, "w", encoding="utf-8") as f:
-                f.write("not json but has \"usage\" in it\n")
+                f.write('not json but has "usage" in it\n')
                 f.write(json.dumps({"message": {"usage": {"input_tokens": 7}}}) + "\n")
             self.assertEqual(sessions._claude_session_tokens(path), 7)
 

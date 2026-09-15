@@ -45,11 +45,14 @@ class OpenSessionFailsClosedTest(unittest.TestCase):
         self.assertIn("refresh", message)
 
     def test_failure_message_never_names_a_path_or_id(self):
-        with mock.patch.object(
-            sessions,
-            "collect_open_targets",
-            return_value={"0123456789abcdef": {"provider": "claude", "id": "secret-session-id", "cwd": "/home/user/project"}},
-        ), mock.patch.object(sessions.shutil, "which", return_value=None):
+        with (
+            mock.patch.object(
+                sessions,
+                "collect_open_targets",
+                return_value={"0123456789abcdef": {"provider": "claude", "id": "secret-session-id", "cwd": "/home/user/project"}},
+            ),
+            mock.patch.object(sessions.shutil, "which", return_value=None),
+        ):
             ok, message = sessions.open_session("0123456789abcdef" * 4)
         self.assertFalse(ok)
         self.assertNotIn("secret-session-id", message)
@@ -68,7 +71,8 @@ class OpenSessionResolvesAndSpawnsTest(unittest.TestCase):
         entry = sessions._entry(provider, "Example", 1, session_id=session_id)
         target_key = entry["openKey"]
         targets_patch = mock.patch.object(
-            sessions, "collect_open_targets",
+            sessions,
+            "collect_open_targets",
             return_value={target_key: {"provider": provider, "id": session_id, "cwd": cwd}},
         )
 
@@ -85,11 +89,13 @@ class OpenSessionResolvesAndSpawnsTest(unittest.TestCase):
                 return f"/usr/bin/{name}"
             return None
 
-        with targets_patch, \
-                mock.patch.dict("os.environ", {"TERMINAL": ""}, clear=False), \
-                mock.patch.object(sessions.shutil, "which", side_effect=fake_which), \
-                mock.patch.object(sessions.subprocess, "Popen", side_effect=fake_popen), \
-                mock.patch.object(sessions, "_TERMINAL_TEMPLATES", [("fake-term", ["-e", "sh", "-c", "{cmd}"])]):
+        with (
+            targets_patch,
+            mock.patch.dict("os.environ", {"TERMINAL": ""}, clear=False),
+            mock.patch.object(sessions.shutil, "which", side_effect=fake_which),
+            mock.patch.object(sessions.subprocess, "Popen", side_effect=fake_popen),
+            mock.patch.object(sessions, "_TERMINAL_TEMPLATES", [("fake-term", ["-e", "sh", "-c", "{cmd}"])]),
+        ):
             ok, message = sessions.open_session(target_key)
 
         self.assertTrue(ok)
@@ -108,8 +114,10 @@ class OpenSessionResolvesAndSpawnsTest(unittest.TestCase):
 
     def test_missing_resume_binary_fails_closed(self):
         key = sessions._open_key("claude", "some-id")
-        with mock.patch.object(sessions, "collect_open_targets", return_value={key: {"provider": "claude", "id": "some-id", "cwd": ""}}), \
-                mock.patch.object(sessions.shutil, "which", return_value=None):
+        with (
+            mock.patch.object(sessions, "collect_open_targets", return_value={key: {"provider": "claude", "id": "some-id", "cwd": ""}}),
+            mock.patch.object(sessions.shutil, "which", return_value=None),
+        ):
             ok, message = sessions.open_session(key)
         self.assertFalse(ok)
         self.assertIn("claude", message)

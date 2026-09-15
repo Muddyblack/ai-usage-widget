@@ -659,12 +659,14 @@ def _claude_targets():
                 newest_entry = entry
         if not newest_entry:
             continue
-        out.append({
-            "provider": "claude",
-            "id": newest_entry[: -len(".jsonl")],
-            "mtime": newest,
-            "cwd": _decode_claude_dir(name),
-        })
+        out.append(
+            {
+                "provider": "claude",
+                "id": newest_entry[: -len(".jsonl")],
+                "mtime": newest,
+                "cwd": _decode_claude_dir(name),
+            }
+        )
     return out
 
 
@@ -732,12 +734,12 @@ def _terminal_launch(resume_argv, cwd):
     resume_line = " ".join(shlex.quote(part) for part in resume_argv)
     # Keep the window open afterwards: a resumed TUI that exits immediately
     # (or fails) would otherwise vanish before it can be read.
-    hold = f"{resume_line}; exec \"${{SHELL:-/bin/sh}}\""
+    hold = f'{resume_line}; exec "${{SHELL:-/bin/sh}}"'
     candidates = []
     term_env = (os.environ.get("TERMINAL") or "").strip()
     if term_env:
         # $TERMINAL may itself carry flags; go through sh so they survive.
-        candidates.append(("sh", ["-c", f'exec {term_env} -e sh -c {shlex.quote(hold)}']))
+        candidates.append(("sh", ["-c", f"exec {term_env} -e sh -c {shlex.quote(hold)}"]))
     for binary, template in _TERMINAL_TEMPLATES:
         candidates.append((binary, [part.format(cmd=hold) for part in template]))
     for binary, args in candidates:
