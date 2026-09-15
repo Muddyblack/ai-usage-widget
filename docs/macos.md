@@ -233,15 +233,20 @@ user sees. Where the window server declines, it falls back to the window
 drawing itself into a bitmap, which keeps the real controls even though it
 loses the material behind them.
 
-Eleven shots come out, uploaded as the run's `screenshots` artifact:
+Capture steps wait for the previous step to finish before starting their
+settling delay. Window PNGs are composited onto an opaque background matching
+their light or dark appearance, so GitHub's page theme cannot darken a
+translucent light popover. Full-screen and menu-bar captures are unmodified.
+
+Eight shots come out, uploaded as the run's `screenshots` artifact:
 
 | | |
 | --- | --- |
 | `menubar-monochrome` / `-tinted` / `-brand` | the right-hand end of the menu bar, one shot per icon style — the equivalent of the README's panel-pill pictures. No light and dark versions: the system menu bar does not follow an application's appearance, so there is nothing different to photograph |
-| `popover-light` / `-dark` | the popover as it opens |
+| `popover-dark` | the popover as it opens, with the provider logo beside its selector |
 | `popover-expanded-light` / `-dark` | with the usage history and the activity statistics open |
-| `screen-light` / `-dark` | the whole display, item and popover together |
-| `settings-light` / `-dark` | the settings window |
+| `screen-dark` | the whole display, item and popover together |
+| `settings-dark` | the settings window |
 
 The session hashes every shot and fails the run when two come out identical.
 That has earned itself twice: once on a capture that raced the compositor and

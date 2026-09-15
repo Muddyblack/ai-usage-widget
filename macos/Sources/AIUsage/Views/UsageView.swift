@@ -40,12 +40,29 @@ struct UsageView: View {
 
     private var header: some View {
         HStack(spacing: 8) {
+            providerIcon
             providerPicker
             Spacer(minLength: 4)
             if let provider = model.selected {
                 StatusChipView(status: provider.status)
             }
             overflowMenu
+        }
+    }
+
+    // Keep the artwork outside Menu's native button label. AppKit can reduce
+    // a custom SwiftUI menu label to its title and omit the embedded image.
+    @ViewBuilder
+    private var providerIcon: some View {
+        if let view = model.featureView {
+            Circle().fill(Theme.accent(view.accentHex)).frame(width: 8, height: 8)
+        } else {
+            Image(nsImage: Artwork.providerImage(model.selected?.icon ?? "") ?? Artwork.fallbackSymbol)
+                .renderingMode(.original)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 16, height: 16)
+                .accessibilityHidden(true)
         }
     }
 
@@ -79,23 +96,8 @@ struct UsageView: View {
                 }
             }
         } label: {
-            HStack(spacing: 6) {
-                if let view = model.featureView {
-                    Circle().fill(Theme.accent(view.accentHex)).frame(width: 8, height: 8)
-                    Text(view.title)
-                        .font(.system(size: 13, weight: .semibold))
-                } else if let image = Artwork.providerImage(model.selected?.icon ?? "") {
-                    Image(nsImage: image)
-                        .resizable()
-                        .frame(width: 16, height: 16)
-                    Text(model.selected?.label ?? i18n("AI Usage"))
-                        .font(.system(size: 13, weight: .semibold))
-                } else {
-                    Circle().fill(accent).frame(width: 8, height: 8)
-                    Text(model.selected?.label ?? i18n("AI Usage"))
-                        .font(.system(size: 13, weight: .semibold))
-                }
-            }
+            Text(model.featureView?.title ?? model.selected?.label ?? i18n("AI Usage"))
+                .font(.system(size: 13, weight: .semibold))
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
