@@ -20,7 +20,7 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         spacing: 8
-        visible: rootItem.cursorAvailable
+        visible: rootItem.cursorAvailable || cursorTabRoot.statsAvailable
 
         Kirigami.Icon {
             source: "user-identity"
@@ -62,7 +62,7 @@ ColumnLayout {
     }
 
     SubTabBar {
-        visible: rootItem.cursorAvailable
+        visible: rootItem.cursorAvailable || cursorTabRoot.statsAvailable
         accent: rootItem.cursorWhite
         currentId: cursorTabRoot.subTab
         onSelected: id => cursorTabRoot.subTab = id
@@ -186,7 +186,7 @@ ColumnLayout {
     }
 
     ColumnLayout {
-        visible: rootItem.cursorAvailable && cursorTabRoot.subTab === "stats" && cursorTabRoot.statsAvailable
+        visible: cursorTabRoot.subTab === "stats" && cursorTabRoot.statsAvailable
         Layout.fillWidth: true
         spacing: 8
 
@@ -323,12 +323,12 @@ ColumnLayout {
     }
 
     ColumnLayout {
-        visible: !rootItem.cursorAvailable
+        visible: !rootItem.cursorAvailable && (cursorTabRoot.subTab === "usage" || !cursorTabRoot.statsAvailable)
         Layout.fillWidth: true
         spacing: 6
 
         PlasmaComponents.Label {
-            text: rootItem.cursorLoggedIn ? i18n("Cursor error") : i18n("Not signed in")
+            text: rootItem.cursorLoggedIn ? i18n("Usage unavailable") : i18n("Not signed in")
             font.pixelSize: 12
             font.bold: true
             color: rootItem.cursorLoggedIn ? "#ef4444" : Kirigami.Theme.textColor

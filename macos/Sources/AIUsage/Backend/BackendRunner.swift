@@ -74,6 +74,45 @@ enum Backend {
         }
     }
 
+    /// Recent local agent sessions for the optional Sessions view.
+    /// `get-ai-usage --sessions` prints a redacted envelope (titles and folder
+    /// names only — never paths or transcripts), and the frozen binary passes
+    /// `--sessions` straight through to the same `aiusage.__main__`.
+    static func sessions() throws -> LocalSessions {
+        let data = try run(arguments: ["--sessions"])
+        do {
+            return try JSONDecoder().decode(LocalSessions.self, from: data)
+        } catch {
+            throw Failure.badJSON(error.localizedDescription)
+        }
+    }
+
+    /// Resume one listed session (by its `openKey`) in the user's terminal.
+    /// `--open-session` prints `{ok,message}` and exits 1 on a failure that is
+    /// still meant to be shown, not thrown — so this bypasses `run()`'s
+    /// nonzero-exit guard and decodes stdout either way.
+    static func openSession(_ key: String) throws -> OpenSessionResult {
+        guard let tool = executable else { throw Failure.notFound }
+
+        let process = Process()
+        process.executableURL = tool
+        process.arguments = ["--open-session", key]
+        process.environment = ProcessInfo.processInfo.environment
+        let out = Pipe()
+        let err = Pipe()
+        process.standardOutput = out
+        process.standardError = err
+        process.standardInput = FileHandle.nullDevice
+
+        try process.run()
+        let data = try collect(process, out: out, err: err, ignoreStatus: true)
+        do {
+            return try JSONDecoder().decode(OpenSessionResult.self, from: data)
+        } catch {
+            throw Failure.badJSON(error.localizedDescription)
+        }
+    }
+
     /// One `history-io` command.
     ///
     /// The payload — the samples just taken — goes in through
@@ -117,7 +156,9 @@ enum Backend {
         return try collect(process, out: out, err: err)
     }
 
-    private static func collect(_ process: Process, out: Pipe, err: Pipe) throws -> Data {
+    private static func collect(
+        _ process: Process, out: Pipe, err: Pipe, ignoreStatus: Bool = false
+    ) throws -> Data {
         // Both pipes are drained while the child runs. Waiting first and
         // reading after deadlocks as soon as a provider list outgrows the
         // 64 KB pipe buffer, which `--all` does.
@@ -138,7 +179,7 @@ enum Backend {
         process.waitUntilExit()
         group.wait()
 
-        guard process.terminationStatus == 0 else {
+        guard ignoreStatus || process.terminationStatus == 0 else {
             throw Failure.failed(
                 status: process.terminationStatus,
                 stderr: String(data: stderr, encoding: .utf8) ?? ""
@@ -146,4 +187,11 @@ enum Backend {
         }
         return stdout
     }
+}
+
+/// `--open-session`'s answer: safe to show as-is, names binaries and
+/// terminals only — never a path or transcript.
+struct OpenSessionResult: Decodable {
+    var ok: Bool
+    var message: String
 }

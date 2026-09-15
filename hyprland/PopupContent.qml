@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
+import "../package/contents/code/FeatureTabs.js" as FeatureTabs
 
 // The popup's content — header, tabs, usage rows, stats, chart and footer —
 // shared by every frontend that draws the popup itself: the Quickshell panel
@@ -33,7 +34,7 @@ ColumnLayout {
             // Brand logos carry their own colours, so they render as-is.
             // The generic app icon has none, so it is tinted to the active
             // accent over a soft halo — the settings page always uses it.
-            readonly property string brandLogo: shell.showSettings ? "" : shell.providerIcon(shell.activeProvider())
+            readonly property string brandLogo: shell.showSettings || shell.activeIsFeature ? "" : shell.providerIcon(shell.activeProvider())
 
             Image {
                 id: headerHalo
@@ -88,6 +89,8 @@ ColumnLayout {
                 text: {
                     if (shell.showSettings)
                         return shell.i18n("Settings");
+                    if (shell.activeIsFeature)
+                        return FeatureTabs.label(shell.activeId, shell.i18n);
                     var p = shell.activeProvider();
                     return shell.i18n("%1 Usage", p ? p.label : "AI");
                 }
@@ -103,6 +106,9 @@ ColumnLayout {
                 text: {
                     if (settingsPage.section === "panel")
                         return shell.pillControls ? shell.i18n("Language, pill, position and chart") : shell.i18n("Language and usage chart");
+
+                    if (settingsPage.section === "views")
+                        return shell.i18n("Optional Overview, Spend and Sessions tabs");
 
                     if (settingsPage.section === "data")
                         return shell.i18n("Refresh interval and usage history");
@@ -214,10 +220,10 @@ ColumnLayout {
     Flow {
         Layout.fillWidth: true
         spacing: 4
-        visible: shell.providers.length > 1 && !shell.showSettings
+        visible: shell.popupTabs.length > 1 && !shell.showSettings
 
         Repeater {
-            model: shell.providers
+            model: shell.popupTabs
 
             Rectangle {
                 required property var modelData
@@ -245,6 +251,11 @@ ColumnLayout {
                         shell.activeId = modelData.id;
                         // A shell may throttle what a tab switch fetches
                         // (the Windows app does); the ⟳ button always refreshes.
+                        if (modelData.feature) {
+                            if (modelData.id === "sessions" && typeof shell.refreshSessions === "function")
+                                shell.refreshSessions();
+                            return;
+                        }
                         if (typeof shell.refreshTab === "function")
                             shell.refreshTab();
                         else
@@ -302,7 +313,7 @@ ColumnLayout {
     // ── Provider detail line (plan / account) ───────────────────
     Text {
         visible: {
-            if (shell.showSettings)
+            if (shell.showSettings || shell.activeIsFeature)
                 return false;
             var p = shell.activeProvider();
             return p && p.summary.detail !== "" && p.error === "";
@@ -320,7 +331,7 @@ ColumnLayout {
     // ── Error banner ────────────────────────────────────────────
     Rectangle {
         visible: {
-            if (shell.showSettings)
+            if (shell.showSettings || shell.activeIsFeature)
                 return false;
             var p = shell.activeProvider();
             return p && p.error !== "";
@@ -402,9 +413,28 @@ ColumnLayout {
         }
     }
 
+    // ── Feature tabs (Overview / Spend / Sessions) ──────────────
+    OverviewPage {
+        visible: !shell.showSettings && shell.activeId === "overview"
+        Layout.fillWidth: true
+        shell: content.shell
+    }
+
+    SpendPage {
+        visible: !shell.showSettings && shell.activeId === "spend"
+        Layout.fillWidth: true
+        shell: content.shell
+    }
+
+    SessionsPage {
+        visible: !shell.showSettings && shell.activeId === "sessions"
+        Layout.fillWidth: true
+        shell: content.shell
+    }
+
     // ── Usage rows ──────────────────────────────────────────────
     ColumnLayout {
-        visible: !shell.showSettings && (!shell.activeHasStats || shell.activeSubTab === "usage")
+        visible: !shell.showSettings && !shell.activeIsFeature && (!shell.activeHasStats || shell.activeSubTab === "usage")
         Layout.fillWidth: true
         spacing: 12
 
@@ -456,7 +486,7 @@ ColumnLayout {
 
     // ── Stats section ───────────────────────────────────────────
     StatsSection {
-        visible: !shell.showSettings && shell.activeHasStats && shell.activeSubTab === "stats"
+        visible: !shell.showSettings && !shell.activeIsFeature && shell.activeHasStats && shell.activeSubTab === "stats"
         stats: shell.activeProvider() ? (shell.activeProvider().details.stats || ({})) : ({})
         providerId: shell.activeId
         accent: shell.activeAccent
@@ -466,7 +496,7 @@ ColumnLayout {
 
     // ── Usage chart ─────────────────────────────────────────────
     UsageChart {
-        extraVisible: !shell.showSettings && (!shell.activeHasStats || shell.activeSubTab === "usage") && shell.settings.showChart && shell.activeProvider() && (shell.activeProvider().error || "") === "" && shell.activeProvider().ok !== false && shell.activeProvider().summary.hasChart !== false
+        extraVisible: !shell.showSettings && !shell.activeIsFeature && (!shell.activeHasStats || shell.activeSubTab === "usage") && shell.settings.showChart && shell.activeProvider() && (shell.activeProvider().error || "") === "" && shell.activeProvider().ok !== false && shell.activeProvider().summary.hasChart !== false
         shell: content.shell
         usageHistory: shell.usageHistory
         windows: shell.windowsForProvider(shell.activeId)

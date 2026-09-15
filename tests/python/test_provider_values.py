@@ -341,16 +341,21 @@ class ProviderValuesTest(unittest.TestCase):
         self.check_fields(
             "cursor-free",
             {
-                "ok": True,
+                "ok": False,
                 "summary/detail": "Free",
                 "summary/pct": 0,
-                "quotaWindows/0/detail": "0% of included usage",
+                "summary/text": "unavailable",
+                "summary/hasChart": False,
+                "quotaWindows": [],
+                "chartWindows": [],
+                "historyValues": {},
+                "slots/0/text": "—",
                 "details/nextUpgrade/name": "Pro",
                 "details/source": "cli",
                 "details/stats/available": False,
             },
         )
-        self.assertEqual(len(fixture("cursor-free")["quotaWindows"]), 3)
+        self.assertIn("0% does not mean agent usage is available", fixture("cursor-free")["error"])
         self.check_fields(
             "cline-success",
             {

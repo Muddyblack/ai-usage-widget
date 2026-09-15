@@ -112,9 +112,9 @@ The Kimi tab combines two independent sources; either one is enough.
 - **Kimi Code plan** — read with the login the `kimi` CLI stores in `~/.kimi-code/credentials/kimi-code.json` (`$KIMI_CODE_HOME` is honoured), from the same `GET https://api.kimi.com/coding/v1/usages` endpoint its `/usage` panel shows (`$KIMI_CODE_BASE_URL` is honoured). It shows each plan window with its reset countdown — the 5-hour and weekly windows are charted — plus the extra-usage wallet when there is one. A plan that is used up is shown as full rather than as an error. The access token is short-lived and the widget does not refresh it (the CLI rotates the pair itself and a second refresher could sign it out), so run `kimi` once when the tab reports an expired login.
 - **Moonshot API balance** — `GET https://api.moonshot.ai/v1/users/me/balance` with the available, voucher and cash balances. The key is resolved from widget settings → `$MOONSHOT_API_KEY` / `$KIMI_API_KEY` → `~/.config/moonshot/api-key`.
 
-## Cursor *(free plan tested; paid plans untested)*
+## Cursor *(free login/stats tested; paid quotas untested)*
 
-The Cursor tab needs no API key and no Cursor IDE: it uses the login `cursor-agent login` stores in `~/.config/cursor/auth.json`, falling back to the Cursor IDE's own login in its `state.vscdb`. With it, the widget calls the two dashboard RPCs the CLI's `/usage` screen uses (`aiserver.v1.DashboardService/GetCurrentPeriodUsage` and `GetPlanInfo` on `api2.cursor.sh`) and shows the included usage for the billing cycle, how much of it went to Auto/Composer versus hand-picked API models, on-demand spend against its limit, the plan name and the cycle's end. Enterprise seats get no plan block from Cursor — the CLI says the same — and the tab reports that instead of a number. A **Stats** sub-tab mirrors the Usage page of cursor.com/dashboard for the current billing cycle: tokens, the usage value Cursor prices it at, requests, conversations, active days, peak hour, a per-day sparkline and a per-model breakdown, from the same `GetAggregatedUsageEvents` / `GetFilteredUsageEvents` calls the dashboard makes (the request list is capped at 500 per refresh; beyond that the per-day figures cover the newest requests). Cursor is opt-in, so enable it under **Settings → Providers**.
+The Cursor tab needs no API key and no Cursor IDE: it uses the login `cursor-agent login` stores in `~/.config/cursor/auth.json`, falling back to the Cursor IDE's own login in its `state.vscdb`. With it, the widget calls the two dashboard RPCs the CLI's `/usage` screen uses (`aiserver.v1.DashboardService/GetCurrentPeriodUsage` and `GetPlanInfo` on `api2.cursor.sh`) and shows the included usage for the billing cycle, how much of it went to Auto/Composer versus hand-picked API models, on-demand spend against its limit, the plan name and the cycle's end. Enterprise seats get no plan block from Cursor — the CLI says the same — and the tab reports that instead of a number. A **Stats** sub-tab mirrors the Usage page of cursor.com/dashboard for the current billing cycle: tokens, the usage value Cursor prices it at, requests, conversations, active days, peak hour, a per-day sparkline and a per-model breakdown, from the same `GetAggregatedUsageEvents` / `GetFilteredUsageEvents` calls the dashboard makes (the request list is capped at 500 per refresh; beyond that the per-day figures cover the newest requests). Free/Hobby accounts without an included allowance report **usage unavailable**: the billing endpoint can return all-zero percentages even when agent usage is blocked. These are not an agent-session quota or reset timer, so the widget does not draw meters or record quota history for that response. Dashboard stats remain available. Cursor is opt-in, so enable it under **Settings → Providers**.
 
 ## Cline
 
@@ -144,6 +144,22 @@ So reading it from a widget means one minimal model call per refresh — about 1
 - `MUSE_QUOTA_TTL_SECONDS` (default 1800) bounds how often it can fire, so a 5-minute poll interval cannot become a per-poll model call.
 
 The tab itself is off by default too: enable *Muse* in settings if you use Muse Code.
+
+## Local sessions
+
+The optional Sessions tab (**Settings → Views**) lists recent local activity merged
+from Claude Code, Codex, Grok CLI, Cline and Muse: a redacted title, the
+workspace/session name, active/idle state and recency only — paths and transcript
+contents never leave the backend (`get-ai-usage --sessions`).
+
+Rows for Claude Code, Codex, Grok CLI and Cline carry a ⧉ button that resumes that
+exact session in your terminal (`get-ai-usage --open-session <key>`, using each
+CLI's own resume flag: `claude --resume`, `codex resume`, `grok --resume`,
+`cline --id`). The button spawns your `$TERMINAL`, falling back through
+ghostty/alacritty/kitty/wezterm/konsole/gnome-terminal/xfce4-terminal/xterm, and
+resumes headless in the background if none is found. **Muse has no button** — it
+ships no CLI binary here and documents no resume/continue flag, so its rows are
+display-only.
 
 ## Usage history
 

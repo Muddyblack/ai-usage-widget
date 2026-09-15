@@ -5,7 +5,12 @@ The Cline CLI writes one JSON record per session to
 end time, and the session's token and cost totals (`metadata.aggregateUsage`,
 which includes any sub-agents). Only those fields are kept: the prompt, the
 title, the git remote and the transcript beside it are never read into the
-result.
+result. The `prompt` field looked at first glance like the session's opening
+message — it is not: Cline overwrites it as the session runs, so a live
+record's `prompt` can hold a rolling snapshot of recent tool output, grep
+results and file paths, including from other projects entirely. Reading it
+into any result, redacted or not, would be exactly the transcript leak this
+module exists to prevent.
 """
 
 import json

@@ -140,6 +140,24 @@ final class SettingsStore: ObservableObject {
         set { set("museQuota", newValue) }
     }
 
+    // ── Feature views (Overview / Spend / Sessions) ──────────────────────
+    // Same defaults as FeatureTabs.js and the other frontends: Sessions is on
+    // unless turned off, Overview and Spend stay off until turned on.
+    // Top-level booleans (overviewEnabled …), shared with the Hyprland and
+    // Windows settings files.
+    func featureEnabled(_ id: String) -> Bool {
+        if id == "sessions" { return bool("sessionsEnabled", default: true) }
+        if id == "overview" { return bool("overviewEnabled", default: false) }
+        if id == "spend" { return bool("spendEnabled", default: false) }
+        return false
+    }
+
+    func setFeature(_ id: String, enabled: Bool) {
+        if id == "overview" { set("overviewEnabled", enabled) }
+        else if id == "spend" { set("spendEnabled", enabled) }
+        else if id == "sessions" { set("sessionsEnabled", enabled) }
+    }
+
     /// The provider the menu bar shows. Stable by choice: the numbers must not
     /// change meaning on their own while someone is glancing at them.
     var menuBarProvider: String {

@@ -51,12 +51,27 @@ struct UsageView: View {
 
     private var providerPicker: some View {
         Menu {
+            ForEach(model.featureTabs) { view in
+                Button {
+                    model.showFeature(view)
+                } label: {
+                    if model.featureView == view {
+                        Label(view.title, systemImage: "checkmark")
+                    } else {
+                        Text(view.title)
+                    }
+                }
+            }
+            if !model.featureTabs.isEmpty {
+                Divider()
+            }
             ForEach(model.providers) { provider in
                 Button {
+                    model.showFeature(nil)
                     model.selectedID = provider.id
                 } label: {
                     // A check mark is how a Mac menu says which item it is on.
-                    if provider.id == model.selectedID {
+                    if model.featureView == nil, provider.id == model.selectedID {
                         Label(provider.label, systemImage: "checkmark")
                     } else {
                         Text(provider.label)
@@ -65,20 +80,26 @@ struct UsageView: View {
             }
         } label: {
             HStack(spacing: 6) {
-                if let image = Artwork.providerImage(model.selected?.icon ?? "") {
+                if let view = model.featureView {
+                    Circle().fill(Theme.accent(view.accentHex)).frame(width: 8, height: 8)
+                    Text(view.title)
+                        .font(.system(size: 13, weight: .semibold))
+                } else if let image = Artwork.providerImage(model.selected?.icon ?? "") {
                     Image(nsImage: image)
                         .resizable()
                         .frame(width: 16, height: 16)
+                    Text(model.selected?.label ?? i18n("AI Usage"))
+                        .font(.system(size: 13, weight: .semibold))
                 } else {
                     Circle().fill(accent).frame(width: 8, height: 8)
+                    Text(model.selected?.label ?? i18n("AI Usage"))
+                        .font(.system(size: 13, weight: .semibold))
                 }
-                Text(model.selected?.label ?? i18n("AI Usage"))
-                    .font(.system(size: 13, weight: .semibold))
             }
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
-        .disabled(model.providers.count <= 1)
+        .disabled(model.providers.count <= 1 && model.featureTabs.isEmpty)
         .accessibilityLabel(i18n("Choose a provider"))
     }
 
@@ -110,6 +131,8 @@ struct UsageView: View {
                 detail: i18n("This build has no copy of the Python backend to ask."))
         } else if !model.backendError.isEmpty {
             message(title: i18n("Could not read usage"), detail: model.backendError)
+        } else if let view = model.featureView {
+            featureBody(view)
         } else if let provider = model.selected {
             providerBody(provider)
         } else if model.isLoading {
@@ -130,6 +153,15 @@ struct UsageView: View {
     /// is not an empty meter, it is nothing to say.
     private func rows(_ provider: Provider) -> [QuotaWindow] {
         provider.visibleQuotaWindows
+    }
+
+    @ViewBuilder
+    private func featureBody(_ view: FeatureView) -> some View {
+        switch view {
+        case .overview: OverviewView(model: model)
+        case .spend: SpendView(model: model)
+        case .sessions: SessionsView(model: model)
+        }
     }
 
     @ViewBuilder

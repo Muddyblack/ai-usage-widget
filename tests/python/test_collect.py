@@ -159,14 +159,17 @@ class CollectorTest(IsolatedHomeTest):
             os.environ[variable] = str(FIXTURES / path)
         result = self.run_backend("--provider", "kiro,kimi,cursor")
         providers = {p["id"]: p for p in result["providers"]}
-        for p in providers.values():
-            self.assertTrue(p["ok"], p["error"])
+        for provider_id in ("kiro", "kimi"):
+            self.assertTrue(providers[provider_id]["ok"], providers[provider_id]["error"])
         kiro = providers["kiro"]["details"]
         self.assertEqual(
             (kiro["source"], kiro["planType"], kiro["currentUsage"], kiro["usageLimit"], kiro["resetAt"]), ("cli", "free", 0.13, 50, 1790812800)
         )
         self.assertEqual(providers["kiro"]["quotaWindows"][0]["detail"], "0.13 / 50 credits")
         cursor = providers["cursor"]
+        self.assertFalse(cursor["ok"])
+        self.assertEqual(cursor["historyValues"], {})
+        self.assertIn("agent usage limit unavailable", cursor["error"])
         self.assertEqual((cursor["summary"]["detail"], cursor["details"]["resetAt"], cursor["details"]["source"]), ("Free", 1790495647, "cli"))
         stats = cursor["details"]["stats"]
         self.assertTrue(stats["available"])

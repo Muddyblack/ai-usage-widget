@@ -1,5 +1,9 @@
 [h1]AI Usage Monitor[/h1]
 
+[b]Claude, Codex, ChatGPT, GitHub Copilot, Gemini/Antigravity, Cursor, ZAI, qwen, kimik & more AI quotas — live in your KDE Plasma 6 panel.[/b]
+
+Track Claude Code 5-hour and weekly limits, OpenAI Codex plan limits, Copilot premium requests, Cursor usage, and API balances for OpenRouter, DeepSeek, Kimi/Moonshot, Mistral, Grok/xAI, Z.AI, Kiro and Muse. One widget instead of an AI usage tab for each service.
+
 I got tired of opening a different website or CLI tool every time I wanted to check how much quota I had left. So I built this: a little panel widget that puts every AI service I use right where I can see it — no tabs, no terminal, just a glance.
 
 [b]One glance at your panel tells you exactly how much you've got left.[/b]

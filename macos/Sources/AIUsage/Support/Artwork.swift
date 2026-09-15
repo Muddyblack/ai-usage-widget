@@ -19,9 +19,20 @@ enum Artwork {
         guard !filename.isEmpty else { return nil }
         let name = (filename as NSString).deletingPathExtension as NSString
         if let cached = cache.object(forKey: name) { return cached }
-        guard let image = NSImage(named: name as String) else { return nil }
-        cache.setObject(image, forKey: name)
-        return image
+        if let image = NSImage(named: name as String) {
+            cache.setObject(image, forKey: name)
+            return image
+        }
+        // The packaged app's compiled asset catalog has no equivalent in a
+        // `swift run` build; fall back to the raw SVG bundled as an SPM
+        // resource (Sources/AIUsage/Resources, symlinked to
+        // package/contents/icons) so icons show there too.
+        if let url = Bundle.module.url(forResource: name as String, withExtension: "svg", subdirectory: "Resources"),
+            let image = NSImage(contentsOf: url) {
+            cache.setObject(image, forKey: name)
+            return image
+        }
+        return nil
     }
 
     /// The logo as the menu bar wants it: one flat silhouette, sized to the

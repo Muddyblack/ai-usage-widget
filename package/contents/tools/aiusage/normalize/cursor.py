@@ -97,4 +97,18 @@ def normalize_cursor(raw):
         "displayMessage": usage.get("displayMessage") or "",
         "nextUpgrade": {"name": upgrade.get("name") or "", "price": upgrade.get("price") or ""},
     }
+    # Free/Hobby responses can contain zero billing percentages without any
+    # included allowance. Those are not measurements of the agent limit.
+    # Likewise, an absent percentage must not become a measured zero.
+    free_without_allowance = plan_name.strip().lower() in ("free", "hobby") and limit <= 0
+    missing_meter = pu.get("totalPercentUsed") is None and limit <= 0
+    if free_without_allowance or missing_meter:
+        message = (
+            "Cursor: agent usage limit unavailable. The billing response does not provide "
+            "a usable quota for this plan; 0% does not mean agent usage is available. "
+            "Check Cursor's limit message for availability and reset timing."
+        )
+        r = provider_error("cursor", "Cursor", ACCENT, now, message, r["details"])
+        r["summary"]["detail"] = plan_name
+        r["summary"]["hasChart"] = False
     return r
