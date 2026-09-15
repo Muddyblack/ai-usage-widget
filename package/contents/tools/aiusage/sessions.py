@@ -113,7 +113,7 @@ def _entry(provider, title, last_activity, *, state="", session_name="", detail=
 
 
 def _open_key(provider, session_id):
-    """Opaque handle: ``sha1(provider:id)[:16]``.
+    """Opaque handle: ``sha256(provider:id)``.
 
     Content-addressed rather than positional, so concurrent refreshes that add
     or drop a session cannot shift the key onto a different conversation — a
@@ -121,7 +121,7 @@ def _open_key(provider, session_id):
     """
     if not provider or not session_id:
         return ""
-    digest = hashlib.sha1(f"{provider}:{session_id}".encode()).hexdigest()[:16]
+    digest = hashlib.sha256(f"{provider}:{session_id}".encode()).hexdigest()
     return digest
 
 
@@ -534,19 +534,6 @@ _TERMINAL_TEMPLATES = [
 ]
 
 
-def _open_key(provider, session_id):
-    """Opaque handle: ``sha1(provider:id)[:16]``.
-
-    Content-addressed rather than positional, so concurrent refreshes that add
-    or drop a session cannot shift the key onto a different conversation — a
-    key either resolves to the same session or fails closed.
-    """
-    if not provider or not session_id:
-        return ""
-    digest = hashlib.sha1(f"{provider}:{session_id}".encode()).hexdigest()[:16]
-    return digest
-
-
 def collect_sessions():
     """Merge every local source, newest first, capped."""
     merged = []
@@ -791,7 +778,7 @@ def open_session(open_key):
     to show — it names binaries and terminals, never paths.
     """
     key = (open_key or "").strip()
-    if not re.fullmatch(r"[0-9a-f]{16}", key):
+    if not re.fullmatch(r"[0-9a-f]{64}", key):
         return False, "unknown session (stale list — refresh and try again)"
     target = collect_open_targets().get(key)
     if target is None:

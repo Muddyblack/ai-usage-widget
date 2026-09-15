@@ -17,7 +17,7 @@ class OpenKeyStabilityTest(unittest.TestCase):
         first = sessions._open_key("claude", "abc-123")
         second = sessions._open_key("claude", "abc-123")
         self.assertEqual(first, second)
-        self.assertRegex(first, r"^[0-9a-f]{16}$")
+        self.assertRegex(first, r"^[0-9a-f]{64}$")
 
     def test_different_ids_get_different_digests(self):
         self.assertNotEqual(sessions._open_key("claude", "abc-123"), sessions._open_key("claude", "abc-124"))
@@ -32,7 +32,7 @@ class OpenKeyStabilityTest(unittest.TestCase):
 
 class OpenSessionFailsClosedTest(unittest.TestCase):
     def test_malformed_key_fails_closed(self):
-        for bad in ("", "not-hex", "abc", "0" * 15, "0" * 17, "GHIJKLMNOPQRSTUV"):
+        for bad in ("", "not-hex", "abc", "0" * 16, "0" * 63, "0" * 65, "GHIJKLMNOPQRSTUV"):
             with self.subTest(key=bad):
                 ok, message = sessions.open_session(bad)
                 self.assertFalse(ok)
@@ -40,7 +40,7 @@ class OpenSessionFailsClosedTest(unittest.TestCase):
 
     def test_stale_key_not_in_a_fresh_scan_fails_closed(self):
         with mock.patch.object(sessions, "collect_open_targets", return_value={}):
-            ok, message = sessions.open_session("0123456789abcdef")
+            ok, message = sessions.open_session("0123456789abcdef" * 4)
         self.assertFalse(ok)
         self.assertIn("refresh", message)
 
@@ -50,7 +50,7 @@ class OpenSessionFailsClosedTest(unittest.TestCase):
             "collect_open_targets",
             return_value={"0123456789abcdef": {"provider": "claude", "id": "secret-session-id", "cwd": "/home/user/project"}},
         ), mock.patch.object(sessions.shutil, "which", return_value=None):
-            ok, message = sessions.open_session("0123456789abcdef")
+            ok, message = sessions.open_session("0123456789abcdef" * 4)
         self.assertFalse(ok)
         self.assertNotIn("secret-session-id", message)
         self.assertNotIn("/home/user/project", message)
@@ -62,18 +62,15 @@ class OpenSessionResolvesAndSpawnsTest(unittest.TestCase):
     here or in CI."""
 
     def test_resolves_a_real_key_and_spawns_terminal_with_right_argv_and_cwd(self):
-        listing = sessions.collect_sessions()
-        target_key = next((s["openKey"] for s in listing["sessions"] if s.get("openKey")), None)
-        if target_key is None:
-            # No resumable session on this machine (nothing to resume) —
-            # exercise the same path against a synthetic target instead.
-            provider, session_id, cwd = "claude", "abc-123", "/tmp"
-            target_key = sessions._open_key(provider, session_id)
-            targets_patch = mock.patch.object(
-                sessions, "collect_open_targets", return_value={target_key: {"provider": provider, "id": session_id, "cwd": cwd}}
-            )
-        else:
-            targets_patch = mock.patch.object(sessions, "collect_open_targets", wraps=sessions.collect_open_targets)
+        # Use a known Claude target: local sessions may belong to another CLI,
+        # while fake_which below intentionally exposes only Claude.
+        provider, session_id, cwd = "claude", "abc-123", "/tmp"
+        entry = sessions._entry(provider, "Example", 1, session_id=session_id)
+        target_key = entry["openKey"]
+        targets_patch = mock.patch.object(
+            sessions, "collect_open_targets",
+            return_value={target_key: {"provider": provider, "id": session_id, "cwd": cwd}},
+        )
 
         captured = {}
 
