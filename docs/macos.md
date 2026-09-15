@@ -175,14 +175,34 @@ English next to a translation that already existed.
 
 ## Signing and distribution
 
-Ad-hoc signed, which is enough to run: the Keychain reads go through
-`/usr/bin/security` and do not care what this app is signed with. Gatekeeper
-still does — an unsigned download is quarantined, and the first launch needs a
-right-click → Open (or `xattr -dr com.apple.quarantine "/Applications/AI Usage.app"`).
+Download the release DMG, open it, and drag **AI Usage.app** onto
+**Applications**. Eject the disk image and open the app from Applications.
+The ZIP remains available: extract it and copy the app to Applications.
 
-Notarising it properly needs an Apple Developer account at $99/year, which is a
-decision for the project and not a technical one. `AI_USAGE_SIGN_IDENTITY`
-makes the build script use a real identity when there is one.
+The app is ad-hoc signed and is not notarized by Apple. A DMG provides the
+installer layout; it does not remove Gatekeeper's verification warning.
+If macOS blocks the first launch and you trust the download:
+
+1. Try opening the app from Applications.
+2. Open **System Settings → Privacy & Security** and scroll to **Security**.
+3. Choose **Open Anyway** for AI Usage and confirm the prompt.
+
+See [Apple's instructions for opening an app from an unknown developer](https://support.apple.com/guide/mac-help/mh40616/mac).
+Users do **not** need an Apple developer account to install or use the app.
+Developer ID signing and notarization require the publisher to enroll in the
+[Apple Developer Program](https://developer.apple.com/developer-id/).
+`AI_USAGE_SIGN_IDENTITY` selects a signing identity during the build; it does
+not perform notarization.
+
+To package an existing build on macOS, run:
+
+```bash
+bash macos/scripts/package-dmg.sh
+```
+
+This creates `ai-usage-macos-<version>.dmg` with the app, an Applications
+shortcut, and first-launch instructions. CI verifies the disk image and
+uploads both DMG and ZIP packages for releases.
 
 ## CI
 
@@ -190,6 +210,13 @@ makes the build script use a real identity when there is one.
 Swift suites and the Python ones, and uploads the screenshots as a
 `screenshots` artifact. Download the artifact from the workflow run to inspect
 the full gallery.
+
+For pull requests from this repository, a separate job waits for both backend
+and app checks to pass, stores the PNGs on `ci-screenshots/pr-<number>`, and
+updates one bot comment in the PR conversation with all images inline. Image
+links use the screenshot commit so reruns cannot change an older image URL.
+Fork PRs retain the downloadable artifact because their token cannot publish
+repository files or comments. A failed comment job is visible in CI.
 
 The app bundle includes the frozen Python backend. CI smoke-tests its provider
 listing, offline fixture normalization, and history loading before switching
@@ -206,15 +233,20 @@ user sees. Where the window server declines, it falls back to the window
 drawing itself into a bitmap, which keeps the real controls even though it
 loses the material behind them.
 
-Eleven shots come out, uploaded as the run's `screenshots` artifact:
+Capture steps wait for the previous step to finish before starting their
+settling delay. Window PNGs are composited onto an opaque background matching
+their light or dark appearance, so GitHub's page theme cannot darken a
+translucent light popover. Full-screen and menu-bar captures are unmodified.
+
+Eight shots come out, uploaded as the run's `screenshots` artifact:
 
 | | |
 | --- | --- |
 | `menubar-monochrome` / `-tinted` / `-brand` | the right-hand end of the menu bar, one shot per icon style — the equivalent of the README's panel-pill pictures. No light and dark versions: the system menu bar does not follow an application's appearance, so there is nothing different to photograph |
-| `popover-light` / `-dark` | the popover as it opens |
+| `popover-dark` | the popover as it opens, with the provider logo beside its selector |
 | `popover-expanded-light` / `-dark` | with the usage history and the activity statistics open |
-| `screen-light` / `-dark` | the whole display, item and popover together |
-| `settings-light` / `-dark` | the settings window |
+| `screen-dark` | the whole display, item and popover together |
+| `settings-dark` | the settings window |
 
 The session hashes every shot and fails the run when two come out identical.
 That has earned itself twice: once on a capture that raced the compositor and
@@ -228,7 +260,7 @@ translation checks too.
 ## Not done yet
 
 - Signing and notarisation, and a Homebrew cask
-- A release job building the universal `.app` and attaching a `.dmg`
+- Universal release builds (CI currently builds for Apple Silicon)
 - Interactive checks on a personal Mac: multiple displays, menu bar placement,
   credential discovery, and login-item behavior. CI screenshots do not cover
   those interactions.

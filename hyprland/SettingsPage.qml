@@ -86,6 +86,10 @@ ColumnLayout {
                 label: page.shell.i18n("Providers")
             },
             {
+                id: "views",
+                label: page.shell.i18n("Views")
+            },
+            {
                 id: "panel",
                 // Without a pill there is no panel to set up, only the chart.
                 label: page.shell.pillControls ? page.shell.i18n("Panel") : page.shell.i18n("Display")
@@ -128,6 +132,82 @@ ColumnLayout {
             opacity: 0.4
             color: "#f8fafc"
             wrapMode: Text.WordWrap
+        }
+    }
+
+    // ── Views (Overview / Spend / Sessions) ──────────────────────────────────
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 8
+        visible: page.section === "views"
+
+        Text {
+            Layout.fillWidth: true
+            text: page.shell.i18n("Optional tabs that sit ahead of your providers in the popup.")
+            font.pixelSize: 9
+            opacity: 0.45
+            color: "#f8fafc"
+            wrapMode: Text.WordWrap
+        }
+
+        Repeater {
+            model: [
+                {
+                    id: "overview",
+                    label: page.shell.i18n("Overview"),
+                    help: page.shell.i18n("All enabled providers at a glance"),
+                    accent: "#38bdf8"
+                },
+                {
+                    id: "spend",
+                    label: page.shell.i18n("Usage & Spend"),
+                    help: page.shell.i18n("Combined cost figures across providers"),
+                    accent: "#34d399"
+                },
+                {
+                    id: "sessions",
+                    label: page.shell.i18n("Sessions"),
+                    help: page.shell.i18n("Recent local agent sessions (no transcripts)"),
+                    accent: "#a78bfa"
+                }
+            ]
+
+            RowLayout {
+                required property var modelData
+                Layout.fillWidth: true
+                spacing: 8
+                Rectangle {
+                    width: 7
+                    height: 7
+                    radius: 3.5
+                    color: modelData.accent
+                    Layout.alignment: Qt.AlignVCenter
+                }
+                Text {
+                    text: modelData.label
+                    font.pixelSize: 11
+                    color: "#f8fafc"
+                    Layout.preferredWidth: 120
+                    elide: Text.ElideRight
+                }
+                StyledToggle {
+                    checked: {
+                        var v = page.shell.settings[modelData.id + "Enabled"];
+                        if (modelData.id === "sessions")
+                            return v === true;
+                        return v !== false;
+                    }
+                    onToggled: page.shell.setSetting2(modelData.id + "Enabled", checked)
+                }
+                Text {
+                    text: modelData.help
+                    font.pixelSize: 9
+                    opacity: 0.45
+                    color: "#f8fafc"
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
+            }
         }
     }
 

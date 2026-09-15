@@ -40,6 +40,7 @@ sys.path.insert(0, str(ROOT / "package" / "contents" / "tools"))
 
 from aiusage import config, history, historyio, paths  # noqa: E402
 from aiusage.__main__ import snapshot  # noqa: E402
+from aiusage.sessions import collect_sessions, open_session  # noqa: E402
 
 APP_NAME = "AI Usage"
 
@@ -69,6 +70,25 @@ _env_lock = threading.Lock()
 # in for a real network call so screenshots can be produced in CI without any
 # credentials.
 _DEMO_ENVELOPE: str | None = None
+
+
+def collect_sessions_json():
+    with _env_lock:
+        saved = dict(os.environ)
+        try:
+            return json.dumps(collect_sessions(), separators=(",", ":"), ensure_ascii=False)
+        finally:
+            _restore_environ(saved)
+
+
+def open_session_json(key):
+    with _env_lock:
+        saved = dict(os.environ)
+        try:
+            ok, message = open_session(key)
+            return json.dumps({"ok": ok, "message": message}, ensure_ascii=False)
+        finally:
+            _restore_environ(saved)
 
 
 def collect_snapshot():
@@ -300,6 +320,8 @@ class Backend(QObject):
     with a signal, which Qt delivers on the GUI thread."""
 
     snapshotReady = Signal(str)
+    sessionsReady = Signal(str)
+    openSessionFinished = Signal(str)
     refreshFailed = Signal(str)
     historyFinished = Signal(str, str)
     busyChanged = Signal()
@@ -312,6 +334,8 @@ class Backend(QObject):
     # Workers only emit these private signals. Public QML signals and property
     # notifications are published by slots on this object's GUI thread.
     _refreshCompleted = Signal(str, str)
+    _sessionsCompleted = Signal(str, str)
+    _openSessionCompleted = Signal(str)
     _historyCompleted = Signal(str, str)
 
     def __init__(self, first_run=False):
@@ -322,6 +346,8 @@ class Backend(QObject):
         self._first_run = first_run
         self._tray_labels = {}
         self._refreshCompleted.connect(self._finish_refresh, Qt.QueuedConnection)
+        self._sessionsCompleted.connect(self._finish_sessions, Qt.QueuedConnection)
+        self._openSessionCompleted.connect(self.openSessionFinished, Qt.QueuedConnection)
         self._historyCompleted.connect(self._finish_history, Qt.QueuedConnection)
 
     # ── Data ──
@@ -356,6 +382,36 @@ class Backend(QObject):
         finally:
             self._busy = False
             self.busyChanged.emit()
+
+    @Slot()
+    def refreshSessions(self):
+        self._pool.submit(self._refresh_sessions)
+
+    def _refresh_sessions(self):
+        try:
+            result = collect_sessions_json()
+        except Exception as exc:
+            self._sessionsCompleted.emit("", str(exc))
+        else:
+            self._sessionsCompleted.emit(result, "")
+
+    @Slot(str, str)
+    def _finish_sessions(self, result, error):
+        if error:
+            self.sessionsReady.emit(json.dumps({"error": error, "sessions": []}))
+        else:
+            self.sessionsReady.emit(result)
+
+    @Slot(str)
+    def openSession(self, key):
+        self._pool.submit(self._open_session, key)
+
+    def _open_session(self, key):
+        try:
+            result = open_session_json(key)
+        except Exception as exc:
+            result = json.dumps({"ok": False, "message": str(exc)})
+        self._openSessionCompleted.emit(result)
 
     # ── History ──
     @Slot(str, str)

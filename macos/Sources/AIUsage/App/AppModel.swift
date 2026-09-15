@@ -14,6 +14,18 @@ final class AppModel: ObservableObject {
     @Published var showingSettings = false
     @Published var showingChart = false
     @Published var showingStats = false
+    /// The feature view the popover is showing instead of a provider, or nil
+    /// for the provider itself. Session-only on purpose: the popover always
+    /// opens on the provider, the thing it was opened for.
+    @Published var featureView: FeatureView?
+    /// Recent local agent sessions for the optional Sessions view.
+    @Published private(set) var localSessions: [LocalSession] = []
+    @Published private(set) var sessionsLoading = false
+    @Published private(set) var sessionsError = ""
+    @Published private(set) var sessionsUpdated: Date?
+    /// The last `--open-session` result, shown as a status line and cleared
+    /// on the next attempt or the next refresh.
+    @Published private(set) var sessionsNotice = ""
 
     /// The provider the popover and the menu bar are showing. Deliberately
     /// sticky: a menu bar reading that silently changed which service it meant
@@ -48,6 +60,59 @@ final class AppModel: ObservableObject {
 
     var hasBackend: Bool { Backend.executable != nil }
 
+    // ── Feature views ────────────────────────────────────────────────────
+
+    /// The feature views switched on in settings, in tab order.
+    var featureTabs: [FeatureView] {
+        FeatureView.allCases.filter { settings.featureEnabled($0.rawValue) }
+    }
+
+    /// The spend rows the Usage & Spend view totals.
+    var spendRows: [SpendRow] { SpendRows.build(envelope.providers) }
+
+    func showFeature(_ view: FeatureView?) {
+        featureView = view
+        if view == .sessions { refreshSessions() }
+    }
+
+    /// Resume one listed session in the user's terminal; the result becomes
+    /// `sessionsNotice`. Rows with an empty `openKey` (Muse) show no button.
+    func openSession(_ key: String) {
+        guard !key.isEmpty else { return }
+        sessionsNotice = ""
+        Task.detached(priority: .userInitiated) {
+            do {
+                let result = try Backend.openSession(key)
+                await MainActor.run { self.sessionsNotice = result.message }
+            } catch {
+                await MainActor.run { self.sessionsNotice = error.localizedDescription }
+            }
+        }
+    }
+
+    func refreshSessions() {
+        guard !sessionsLoading else { return }
+        sessionsLoading = true
+        sessionsError = ""
+        sessionsNotice = ""
+        Task.detached(priority: .userInitiated) {
+            do {
+                let result = try Backend.sessions()
+                await MainActor.run {
+                    self.localSessions = result.sessions
+                    self.sessionsUpdated = result.updatedAt > 0
+                        ? Date(timeIntervalSince1970: result.updatedAt) : Date()
+                    self.sessionsLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.sessionsError = error.localizedDescription
+                    self.sessionsLoading = false
+                }
+            }
+        }
+    }
+
     // ── Refreshing ───────────────────────────────────────────────────────
 
     func refresh() {
@@ -75,6 +140,11 @@ final class AppModel: ObservableObject {
         // backend update. Fall back rather than showing an empty popover.
         if envelope.provider(id: selectedID) == nil {
             selectedID = envelope.fallbackID
+        }
+        // A feature view toggled off while shown leaves the popover behind —
+        // fall back to the provider rather than an empty view.
+        if let view = featureView, !settings.featureEnabled(view.rawValue) {
+            featureView = nil
         }
         history.record(envelope.providers)
     }

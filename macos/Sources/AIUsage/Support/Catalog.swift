@@ -275,7 +275,7 @@ extension Catalog {
     static func substitute(_ text: String, _ arguments: [String]) -> String {
         guard text.contains("%") else { return text }
         var out = ""
-        var characters = Array(text)
+        let characters = Array(text)
         var index = 0
         while index < characters.count {
             if characters[index] == "%", index + 1 < characters.count,

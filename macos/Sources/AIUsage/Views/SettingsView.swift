@@ -33,6 +33,8 @@ struct SettingsView: View {
         TabView {
             providersTab
                 .tabItem { Label(i18n("Providers"), systemImage: "square.grid.2x2") }
+            viewsTab
+                .tabItem { Label(i18n("Views"), systemImage: "rectangle.grid.2x2") }
             menuBarTab
                 .tabItem { Label(i18n("Menu Bar"), systemImage: "menubar.rectangle") }
             generalTab
@@ -96,6 +98,56 @@ struct SettingsView: View {
 
     private func iconName(_ id: String) -> String {
         model.envelope.provider(id: id)?.icon ?? ""
+    }
+
+    // ── Views (Overview / Spend / Sessions) ────────────────────────────────
+    // The same optional popup tabs the Linux frontends offer, with the same
+    // defaults and the same shared settings keys — so a toggle here is a
+    // toggle there. The popover reads them through AppModel.featureTabs.
+
+    private var viewsTab: some View {
+        Form {
+            Text(i18n("Optional tabs that sit ahead of your providers in the popover."))
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+            // Literals, not `view.label`: xgettext only extracts literals, and
+            // the settings key-field table next to this is the one allowed
+            // indirection (see test_every_translation_call…).
+            Toggle(isOn: Binding(
+                get: { model.settings.featureEnabled("overview") },
+                set: { value in model.changeSettings { $0.setFeature("overview", enabled: value) } }
+            )) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(i18n("Overview"))
+                    Text(i18n("All enabled providers at a glance"))
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Toggle(isOn: Binding(
+                get: { model.settings.featureEnabled("spend") },
+                set: { value in model.changeSettings { $0.setFeature("spend", enabled: value) } }
+            )) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(i18n("Usage & Spend"))
+                    Text(i18n("Combined cost figures across providers"))
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Toggle(isOn: Binding(
+                get: { model.settings.featureEnabled("sessions") },
+                set: { value in model.changeSettings { $0.setFeature("sessions", enabled: value) } }
+            )) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(i18n("Sessions"))
+                    Text(i18n("Recent local agent sessions (no transcripts)"))
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .formStyle(.grouped)
     }
 
     // ── Menu bar ─────────────────────────────────────────────────────────

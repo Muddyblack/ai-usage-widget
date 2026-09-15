@@ -93,11 +93,14 @@ final class ScreenshotSession {
                 // exactly the failure this sequence is recovering from.
                 self.statusItem.close()
             }
-            steps.append { self.statusItem.open() }
-            steps.append { self.capture(self.statusItem.popoverWindow, "popover-\(scheme.name)") }
-            // And the two together, in place, the way the KDE readme shows the
-            // panel pill beside its popup.
-            steps.append { self.captureScreen("screen-\(scheme.name)") }
+            steps.append {
+                self.statusItem.open()
+                self.prepare(self.statusItem.popoverWindow)
+            }
+            if scheme == .dark {
+                steps.append { self.capture(self.statusItem.popoverWindow, "popover-dark") }
+                steps.append { self.captureScreen("screen-dark") }
+            }
             steps.append {
                 self.model.showingChart = true
                 self.model.showingStats = true
@@ -108,9 +111,14 @@ final class ScreenshotSession {
                 self.model.showingStats = false
                 self.statusItem.close()
             }
-            steps.append { self.settingsWindow.show(model: self.model) }
-            steps.append { self.capture(self.settingsWindow.window, "settings-\(scheme.name)") }
-            steps.append { self.settingsWindow.close() }
+            if scheme == .dark {
+                steps.append {
+                    self.settingsWindow.show(model: self.model)
+                    self.prepare(self.settingsWindow.window)
+                }
+                steps.append { self.capture(self.settingsWindow.window, "settings-dark") }
+                steps.append { self.settingsWindow.close() }
+            }
         }
 
         schedule(steps) {
@@ -133,10 +141,27 @@ final class ScreenshotSession {
     }
 
     private func schedule(_ steps: [() -> Void], done: @escaping () -> Void) {
-        for (index, step) in steps.enumerated() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + settle * Double(index + 1)) { step() }
+        // Start each delay after the previous step completes. A blocking
+        // backend or screencapture must not consume later settling intervals.
+        func next(_ index: Int) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + settle) {
+                guard index < steps.count else {
+                    done()
+                    return
+                }
+                steps[index]()
+                next(index + 1)
+            }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + settle * Double(steps.count + 1)) { done() }
+        next(0)
+    }
+
+    private func prepare(_ window: NSWindow?) {
+        // Set appearance before the scheduled settling interval, not just
+        // before blocking the main thread to ask the compositor for a frame.
+        window?.appearance = appearance.nsAppearance
+        window?.contentView?.needsDisplay = true
+        window?.displayIfNeeded()
     }
 
     /// The backend, read on this thread rather than through the model's worker:
@@ -176,12 +201,6 @@ final class ScreenshotSession {
         let url = directory.appendingPathComponent("\(name).png")
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
-        // The appearance is forced on the window as well as on the
-        // application, and the window is told to draw, before anything is
-        // asked of the window server.
-        window.appearance = appearance.nsAppearance
-        window.displayIfNeeded()
-
         var how = "screencapture"
         if !screencapture(window, to: url) {
             guard drawIntoBitmap(window, to: url) else {
@@ -190,7 +209,40 @@ final class ScreenshotSession {
             }
             how = "the window's own drawing (screencapture gave nothing)"
         }
-        record(name: name, url: url, how: how)
+        guard flattenWindowPNG(at: url) else {
+            failures.append("\(name): could not give the window PNG an opaque background")
+            return
+        }
+        record(name: name, url: url, how: how + ", opaque \(appearance.name) background")
+    }
+
+    /// Window captures may retain the popover material's transparency. Give
+    /// exports a theme-matched backdrop so light text/background contrast does
+    /// not depend on the page displaying the PNG. Screen captures stay intact.
+    private func flattenWindowPNG(at url: URL) -> Bool {
+        guard let data = try? Data(contentsOf: url),
+              let source = NSBitmapImageRep(data: data)?.cgImage,
+              let context = CGContext(
+                data: nil, width: source.width, height: source.height,
+                bitsPerComponent: 8, bytesPerRow: 0,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)
+        else { return false }
+        let rect = CGRect(x: 0, y: 0, width: source.width, height: source.height)
+        appearance.nsAppearance?.performAsCurrentDrawingAppearance {
+            context.setFillColor(NSColor.windowBackgroundColor.cgColor)
+            context.fill(rect)
+        }
+        context.draw(source, in: rect)
+        guard let image = context.makeImage(),
+              let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:])
+        else { return false }
+        do {
+            try png.write(to: url, options: Data.WritingOptions.atomic)
+            return true
+        } catch {
+            return false
+        }
     }
 
     /// Names each shot, its size and how it was taken — and says so when two

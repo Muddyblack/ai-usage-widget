@@ -9,7 +9,12 @@ let package = Package(
     name: "AIUsage",
     platforms: [.macOS(.v13)],
     targets: [
-        .executableTarget(name: "AIUsage", path: "Sources/AIUsage"),
+        // `resources` is a symlink to ../../../package/contents/icons: the
+        // same SVGs scripts/build-app.sh compiles into the packaged app's
+        // asset catalog, bundled raw here too so a plain `swift run` shows
+        // provider icons instead of falling back to a plain dot (see
+        // Artwork.swift's providerImage()).
+        .executableTarget(name: "AIUsage", path: "Sources/AIUsage", resources: [.copy("Resources")]),
         // The parts with no AppKit in them: decoding the contract, replaying
         // quota resets, formatting a countdown, and not losing a Linux
         // frontend's settings on save. Everything visual is proved by

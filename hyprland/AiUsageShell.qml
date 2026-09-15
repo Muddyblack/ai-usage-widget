@@ -11,6 +11,7 @@ import Quickshell.Io
 // would escape it and load as qrc:/qs-blackhole.
 import "../package/contents/code/Format.js" as Format
 import "../package/contents/code/UsageHistory.js" as UsageHistory
+import "../package/contents/code/FeatureTabs.js" as FeatureTabs
 import "ProviderRegistry.js" as ProviderRegistry
 import "../package/contents/code/I18n.js" as I18n
 
@@ -135,6 +136,9 @@ ShellRoot {
             // writes the whole thing back, so a field missing here is a field
             // erased from the file by the next unrelated setting change.
             museQuota: false,
+            overviewEnabled: false,
+            spendEnabled: false,
+            sessionsEnabled: true,
             antigravityChartFilter: "both",
             pillMode: "always",
             position: "top-right",
@@ -238,6 +242,9 @@ ShellRoot {
                     s.pollSec = d.pollSec || 300;
                     s.showChart = d.showChart !== false;
                     s.museQuota = d.museQuota === true;
+                    s.overviewEnabled = d.overviewEnabled === true;
+                    s.spendEnabled = d.spendEnabled === true;
+                    s.sessionsEnabled = d.sessionsEnabled !== false;
                     s.antigravityChartFilter = d.antigravityChartFilter || "both";
                     s.pillMode = d.pillMode || (d.floatingPill === false ? "tray" : "always");
                     s.position = d.position || "top-right";
@@ -310,7 +317,36 @@ ShellRoot {
     }
 
     property var providers: []
+    // Local sessions for the optional Sessions tab.
+    property var sessions: []
+    property bool sessionsLoading: false
+    property string sessionsError: ""
+    // Last `--open-session` result, shown as a status line under the list.
+    property string sessionsNotice: ""
     property string activeId: ""
+    // The last real provider selected (never a feature tab id) — what the
+    // panel pill shows while a feature tab (Overview/Spend/Sessions) is
+    // active, since those have no percentage of their own to display.
+    property string lastProviderId: ""
+    // Feature tabs (Overview / Spend / Sessions) sit ahead of providers.
+    readonly property var popupTabs: {
+        var tabs = [];
+        var features = FeatureTabs.enabledFeatureTabs(root.settings);
+        for (var i = 0; i < features.length; i++) {
+            var id = features[i];
+            tabs.push({
+                id: id,
+                label: FeatureTabs.label(id, root.i18n),
+                accent: FeatureTabs.accent(id) || "#38bdf8",
+                icon: "",
+                feature: true
+            });
+        }
+        for (var j = 0; j < root.providers.length; j++)
+            tabs.push(root.providers[j]);
+        return tabs;
+    }
+    readonly property bool activeIsFeature: FeatureTabs.isFeatureTab(root.activeId)
     property string errorText: ""
     property bool loading: false
     property bool popupOpen: false
@@ -334,12 +370,22 @@ ShellRoot {
     // copilot, muse): "usage" vs "stats"
     property string activeSubTab: "usage"
     readonly property bool activeHasStats: {
+        if (root.activeIsFeature)
+            return false;
         var p = activeProvider();
         return p && (p.id === "claude" || p.id === "openai" || p.id === "copilot" || p.id === "muse" || p.id === "cursor" || p.id === "cline");
     }
 
+    function providerById(id) {
+        for (var i = 0; i < root.providers.length; i++) {
+            if (root.providers[i].id === id)
+                return root.providers[i];
+        }
+        return null;
+    }
+
     function activeProvider() {
-        if (root.providers.length === 0)
+        if (root.activeIsFeature || root.providers.length === 0)
             return null;
         for (var i = 0; i < root.providers.length; i++) {
             if (root.providers[i].id === root.activeId)
@@ -348,7 +394,17 @@ ShellRoot {
         return root.providers[0];
     }
 
+    // What the panel pill shows: the active provider normally, or the last
+    // real provider seen while a feature tab is active — never "no data".
+    function pillProvider() {
+        if (!root.activeIsFeature)
+            return root.activeProvider();
+        return root.providerById(root.lastProviderId) || root.providers[0] || null;
+    }
+
     readonly property color activeAccent: {
+        if (root.activeIsFeature)
+            return FeatureTabs.accent(root.activeId) || "#38bdf8";
         var p = activeProvider();
         return p ? p.accent : "#cc785c";
     }
@@ -391,6 +447,8 @@ ShellRoot {
         var win = windowForProvider(root.activeId, root.chartGranularity);
         if (root.chartWindow !== win)
             root.chartWindow = win;
+        if (root.activeId !== "" && !FeatureTabs.isFeatureTab(root.activeId))
+            root.lastProviderId = root.activeId;
     }
 
     function selectChartWindow(id) {
@@ -533,20 +591,80 @@ ShellRoot {
             var data = JSON.parse((text || "").trim());
             root.providers = data.providers || [];
             root.updatedAt = data.updatedAt || 0;
+            // Seed (or heal, if the remembered one got disabled) the pill's
+            // fallback provider — needed even before the user ever leaves a
+            // feature tab, since Sessions is the default-enabled one.
+            if (!root.providerById(root.lastProviderId))
+                root.lastProviderId = data.active || (root.providers[0] || {}).id || "";
             // Keep the active tab if it's still present; otherwise fall back to
             // the backend's suggestion or the first provider (e.g. after the
-            // active provider is disabled in settings).
-            var stillThere = false;
+            // active provider is disabled in settings). Feature tabs stay put.
+            var stillThere = FeatureTabs.isFeatureTab(root.activeId);
             for (var i = 0; i < root.providers.length; i++)
                 if (root.providers[i].id === root.activeId)
                     stillThere = true;
-            if (!stillThere)
-                root.activeId = data.active || (root.providers[0] || {}).id || "";
+            if (!stillThere) {
+                var features = FeatureTabs.enabledFeatureTabs(root.settings);
+                if (features.length > 0)
+                    root.activeId = features[0];
+                else
+                    root.activeId = data.active || (root.providers[0] || {}).id || "";
+            }
             root.errorText = "";
             root.nowTick = new Date().getTime();
             root.recordHistory();
         } catch (e) {
             root.errorText = root.i18n("usage backend returned no data");
+        }
+    }
+
+    function refreshSessions() {
+        if (sessionsProcess.running)
+            return;
+        root.sessionsLoading = true;
+        root.sessionsError = "";
+        sessionsProcess.exec({
+            command: ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --sessions", "ai-usage", root.settings.pythonPath || "", root.backendCommand]
+        });
+    }
+
+    Process {
+        id: sessionsProcess
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.sessionsLoading = false;
+                try {
+                    var data = JSON.parse((this.text || "").trim());
+                    root.sessions = data.sessions || [];
+                    root.sessionsError = "";
+                } catch (e) {
+                    root.sessionsError = root.i18n("Could not load sessions.");
+                }
+            }
+        }
+    }
+
+    // Rows with an empty openKey (Muse) render no button at all.
+    function openSession(key) {
+        if (!key || openSessionProcess.running)
+            return;
+        root.sessionsNotice = "";
+        openSessionProcess.exec({
+            command: ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --open-session \"$3\"", "ai-usage", root.settings.pythonPath || "", root.backendCommand, key]
+        });
+    }
+
+    Process {
+        id: openSessionProcess
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    var data = JSON.parse((this.text || "").trim());
+                    root.sessionsNotice = data.message || "";
+                } catch (e) {
+                    root.sessionsNotice = root.i18n("Could not resume session.");
+                }
+            }
         }
     }
 
@@ -679,11 +797,11 @@ ShellRoot {
                 // The active provider's brand logo, falling back to the app icon for
                 // providers that ship no artwork. PanelSlot tints whichever it gets to
                 // the slot's severity colour, so the panel still reads at a glance.
-                readonly property string brandLogo: root.providerIcon(root.activeProvider())
+                readonly property string brandLogo: root.providerIcon(root.pillProvider())
                 iconSource: brandLogo !== "" ? brandLogo : root.iconSource
                 active: root.popupOpen
                 slots: {
-                    var p = root.activeProvider();
+                    var p = root.pillProvider();
                     if (root.loading && root.providers.length === 0)
                         return [
                             {
@@ -703,11 +821,11 @@ ShellRoot {
                     ];
                 }
                 stale: {
-                    var p = root.activeProvider();
+                    var p = root.pillProvider();
                     return root.errorText !== "" || (p ? !!p.stale : false);
                 }
                 hasError: {
-                    var p = root.activeProvider();
+                    var p = root.pillProvider();
                     return root.errorText !== "" || (p ? p.error !== "" : false);
                 }
                 onClicked: {

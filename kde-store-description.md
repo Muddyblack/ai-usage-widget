@@ -1,5 +1,9 @@
 [h1]AI Usage Monitor[/h1]
 
+[b]Claude, Codex, ChatGPT, GitHub Copilot, Gemini/Antigravity, Cursor, ZAI, qwen, kimik & more AI quotas — live in your KDE Plasma 6 panel.[/b]
+
+Track Claude Code 5-hour and weekly limits, OpenAI Codex plan limits, Copilot premium requests, Cursor usage, and API balances for OpenRouter, DeepSeek, Kimi/Moonshot, Mistral, Grok/xAI, Z.AI, Kiro and Muse. One widget instead of an AI usage tab for each service.
+
 I got tired of opening a different website or CLI tool every time I wanted to check how much quota I had left. So I built this: a little panel widget that puts every AI service I use right where I can see it — no tabs, no terminal, just a glance.
 
 [b]One glance at your panel tells you exactly how much you've got left.[/b]
@@ -31,10 +35,15 @@ Switch between tabs in the popup for each service:
 [*] [b]Countdown timers[/b] — ticks down to your next quota reset (refreshes every ~5 min to stay friendly to the APIs)
 [*] [b]Usage chart[/b] — a smooth, glowing trend graph with 5H / 24H / 7D toggle and hover-scrub (24H shows the whole day's session burn as a sawtooth)
 [*] [b]Period comparison[/b] — [i]"+12% vs last week"[/i] at the same point in the cycle
+[*] [b]Overview[/b] — see every enabled provider at a glance
+[*] [b]Usage & Spend[/b] — totals the API spend figures each provider already reports
+[*] [b]Sessions[/b] — recent local Claude Code, Codex, Grok CLI, Cline and Muse activity, with redacted titles and recency only, no paths or transcripts. Resume supported sessions in your terminal (Muse has no resume command)
 [*] [b]Theme-aware[/b] — follows your Plasma accent by default, or flip on per-service brand colors
 [*] [b]Glassmorphism popup[/b] — translucent, blurred, and honestly just nice to look at
 [*] [b]Pin a service[/b] — open straight to your most-used tab
 [/list]
+
+Enable the optional Overview, Usage & Spend and Sessions tabs in Settings → Views.
 
 [b]Panel modes[/b]
 

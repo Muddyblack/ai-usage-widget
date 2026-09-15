@@ -18,11 +18,13 @@ from . import config, envelope
 from .contract import finalize
 from .normalize import normalize
 
-USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize]
+USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize | --sessions]
 
   --all                 fetch every provider enabled in the shared settings file
   --provider <ids>      fetch the named providers regardless of the toggles
   --normalize           read one raw envelope on stdin, print the provider object
+  --sessions            list recent local agent sessions (no paths or transcripts)
+  --open-session <key>  resume one listed session (by its openKey) in a terminal
   --list                print the known provider ids, one per line
   -h, --help            show this help
 
@@ -48,6 +50,7 @@ def snapshot():
 def main(argv):
     mode = ""
     requested = ""
+    open_key = ""
 
     i = 0
     while i < len(argv):
@@ -63,6 +66,15 @@ def main(argv):
             requested = arg[len("--provider=") :]
         elif arg == "--normalize":
             mode = "normalize"
+        elif arg == "--sessions":
+            mode = "sessions"
+        elif arg == "--open-session":
+            mode = "open-session"
+            i += 1
+            open_key = argv[i] if i < len(argv) else ""
+        elif arg.startswith("--open-session="):
+            mode = "open-session"
+            open_key = arg[len("--open-session=") :]
         elif arg == "--list":
             for p in config.ALL_PROVIDERS:
                 print(p)
@@ -75,6 +87,19 @@ def main(argv):
             sys.stderr.write(USAGE + "\n")
             return 2
         i += 1
+
+    if mode == "sessions":
+        from .sessions import collect_sessions
+
+        _emit(collect_sessions())
+        return 0
+
+    if mode == "open-session":
+        from .sessions import open_session
+
+        ok, message = open_session(open_key)
+        print(json.dumps({"ok": ok, "message": message}))
+        return 0 if ok else 1
 
     cfg = config.load_settings()
     config.apply_widget_env(cfg)

@@ -25,6 +25,10 @@ ColumnLayout {
                 label: i18n("Providers")
             },
             {
+                id: "views",
+                label: i18n("Views")
+            },
+            {
                 id: "appearance",
                 label: i18n("Appearance")
             },
@@ -67,6 +71,89 @@ ColumnLayout {
             opacity: 0.4
             color: Kirigami.Theme.textColor
             wrapMode: Text.WordWrap
+        }
+    }
+
+    // ── Views (Overview / Spend / Sessions) ─────────────────────
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 6
+        visible: rootItem.settingsTab === "views"
+
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            text: i18n("Optional tabs that sit ahead of your providers in the popup.")
+            font.pixelSize: 9
+            opacity: 0.45
+            color: Kirigami.Theme.textColor
+            wrapMode: Text.WordWrap
+        }
+
+        Repeater {
+            model: [
+                {
+                    id: "overview",
+                    label: i18n("Overview"),
+                    help: i18n("All enabled providers at a glance")
+                },
+                {
+                    id: "spend",
+                    label: i18n("Usage & Spend"),
+                    help: i18n("Combined cost figures across providers")
+                },
+                {
+                    id: "sessions",
+                    label: i18n("Sessions"),
+                    help: i18n("Recent local agent sessions (no transcripts)")
+                }
+            ]
+
+            RowLayout {
+                required property var modelData
+                Layout.fillWidth: true
+                spacing: 6
+                Rectangle {
+                    width: 7
+                    height: 7
+                    radius: 3.5
+                    color: {
+                        if (modelData.id === "overview")
+                            return "#38bdf8";
+                        if (modelData.id === "spend")
+                            return "#34d399";
+                        return "#a78bfa";
+                    }
+                    Layout.alignment: Qt.AlignVCenter
+                }
+                PlasmaComponents.Label {
+                    text: modelData.label
+                    font.pixelSize: 11
+                    color: Kirigami.Theme.textColor
+                    Layout.preferredWidth: 120
+                    elide: Text.ElideRight
+                }
+                QQC2.Switch {
+                    implicitHeight: 20
+                    // Same defaults as FeatureTabs.js / Hyprland / Windows:
+                    // Overview and Spend are on unless explicitly turned off,
+                    // Sessions stays off until explicitly turned on.
+                    checked: {
+                        var v = Plasmoid.configuration[modelData.id + "Enabled"];
+                        if (v === undefined || v === null)
+                            return modelData.id !== "sessions";
+                        return v === true;
+                    }
+                    onToggled: Plasmoid.configuration[modelData.id + "Enabled"] = checked
+                }
+                PlasmaComponents.Label {
+                    text: modelData.help
+                    font.pixelSize: 9
+                    opacity: 0.45
+                    color: Kirigami.Theme.textColor
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
+            }
         }
     }
 

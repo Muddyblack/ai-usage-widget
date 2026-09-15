@@ -20,31 +20,28 @@
   <img src="https://img.shields.io/github/downloads/Muddyblack/ai-usage-widget/total?style=for-the-badge&logo=github&logoColor=white&label=GitHub%20Downloads&color=blue" alt="GitHub Downloads" />
 </p>
 
-<p align="center">
-  <b>Panel Pills — Live Quota Readouts</b><br/><br/>
-  <img src="./readme/claude_pill.svg?v=12" alt="Claude Panel Pill" width="160" valign="middle"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="./readme/agy_pill.svg?v=12" alt="Antigravity Dual-Slot Pill" width="165" valign="middle"/>
-</p>
-
-<p align="center">
-  <b>Popup Views — Detailed Provider Usage &amp; History</b><br/><br/>
-  <img src="./readme/claude_usage.svg?v=12" alt="Claude Usage" width="340" valign="top"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="./readme/antigravity_usage.svg?v=12" alt="Antigravity Usage" width="340" valign="top"/>
-</p>
-<p align="center">
-  <img src="./readme/openai_usage.svg?v=12" alt="OpenAI Usage" width="340" valign="top"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="./readme/usage_chart.svg?v=12" alt="Usage Chart" width="340" valign="top"/>
-</p>
-
-<p align="center">
-  <b>Settings &amp; Provider Configuration</b><br/><br/>
-  <img src="./readme/settings.svg?v=12" alt="Settings panel" width="340" valign="top"/>
-</p>
-
 A KDE Plasma 6 panel widget for tracking AI API quota usage across multiple services. Monitor your **Claude** subscription windows and local activity stats, **Antigravity/Google AI Studio**, **OpenAI API and Codex plan limits**, **Grok CLI**, **Kiro**, **Mistral AI**, **OpenRouter**, **Z.AI**, **GitHub Copilot**, **DeepSeek**, **Kimi / Moonshot AI**, and **Muse** usage or balance at a glance with animated segmented bars, live countdown timers, account status, and per-model breakdowns.
+
+
+## Screenshots
+
+### Panel
+
+| Claude | Antigravity |
+| :---: | :---: |
+| <img src="./readme/claude_pill.svg?v=12" alt="Claude panel pill" width="160"> | <img src="./readme/agy_pill.svg?v=12" alt="Antigravity panel pill" width="165"> |
+
+### Popup
+
+| Claude | Antigravity |
+| :---: | :---: |
+| <img src="./readme/claude_usage.svg?v=12" alt="Claude usage" width="340"> | <img src="./readme/antigravity_usage.svg?v=12" alt="Antigravity usage" width="340"> |
+| **OpenAI** | **Usage history** |
+| <img src="./readme/openai_usage.svg?v=12" alt="OpenAI usage" width="340"> | <img src="./readme/usage_chart.svg?v=12" alt="Usage history chart" width="340"> |
+| **Overview** | **Sessions** |
+| <img src="./readme/overview_tab.svg?v=12" alt="Provider overview" width="340"> | <img src="./readme/sessions_tab.svg?v=12" alt="Recent sessions" width="340"> |
+| **Usage & Spend** | **Settings** |
+| <img src="./readme/spend_tab.svg?v=12" alt="Usage and spend" width="340"> | <img src="./readme/settings.svg?v=12" alt="Provider settings" width="340"> |
 
 ---
 
@@ -64,6 +61,7 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across multiple serv
 - **Pin services** — Pin one or more tabs so they stay visible on the panel; with no pins, the panel mirrors the active tab
 - **History export / import** — Save and restore usage history as JSON; history is mirrored to disk so it survives reinstalls
 - **Robust refresh** — Poll interval from 1 to 30 minutes, respects `retry-after` headers, dims and shows the error inline when a fetch fails
+- **Optional Overview / Usage & Spend / Sessions tabs** — turn on in Settings → Views. Overview shows every enabled provider at a glance, Usage & Spend totals the API spend figures each provider already reports, and Sessions lists recent local Claude Code / Codex / Grok CLI / Cline / Muse activity — redacted titles and recency only, no paths or transcripts — with a ⧉ button to resume a session in your terminal (`get-ai-usage --sessions` / `--open-session <key>`; not available for Muse, which ships no resume command)
 
 Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on macOS](docs/macos.md) and [in a terminal](docs/cli.md) — every frontend shares one backend.
 
@@ -95,7 +93,7 @@ settings, menu bar styles, and build instructions.
 | DeepSeek | Available balance with granted and topped-up breakdown | Supported |
 | Kimi / Moonshot AI | Kimi Code plan windows (5-hour and weekly) and extra-usage wallet; Moonshot API balance with voucher and cash breakdown | Moonshot balance supported; Kimi Code quota tested on a used-up plan only |
 | Muse | Local session stats: tokens, offline spend estimate, sessions, tool calls, workspaces, streaks. Plan windows available behind an opt-in switch | Supported (the plan quota costs tokens to read — off by default) |
-| Cursor | Included usage for the billing cycle, the Auto/API split, on-demand spend, and plan name | Free plan tested; paid plans unverified |
+| Cursor | Included usage for the billing cycle, the Auto/API split, on-demand spend, and plan name | Free login/stats tested; free agent quota unavailable; paid plans unverified |
 | Cline | Tokens, sessions and spend for today / 7 / 30 days, plus all-time stats per model and workspace, from the CLI's own session logs | Supported (local stats; account balance not yet shown) |
 
 What each provider needs signed in, and what it reads, is in

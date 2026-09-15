@@ -19,7 +19,18 @@ function qmlFunction(file, name) {
     return source.slice(start, end + 6);
 }
 const plasma = qmlFunction("package/contents/ui/main.qml", "applyOpenAi");
-const windows = qmlFunction("windows/qml/Main.qml", "publishTray");
+const windows = ["providerById", "activeProvider", "pillProvider", "publishTray"]
+    .map(name => qmlFunction("windows/qml/Main.qml", name)
+        + "\nroot." + name + " = " + name + ";")
+    .join("\n");
+
+function publishWindowsTray(state) {
+    let published;
+    const root = { providers: [], settings: {}, providerIcon: () => "", ...state };
+    const backend = { defaultTrayStyle: "numbers", publishTrayState: value => { published = JSON.parse(value); } };
+    vm.runInNewContext(windows + "\nroot.publishTray();", { root, backend });
+    return published;
+}
 
 test("shared frontend behavior", async t => {
     const { stdout } = await promisify(execFile)(process.env.PYTHON || "python3",
@@ -44,11 +55,24 @@ test("shared frontend behavior", async t => {
 
         await t.test(scenario.name + ": Windows tray publication", () => {
             const provider = scenario.envelope.providers[0];
-            let published;
-            const root = { activeProvider: () => provider, providers: [provider], settings: {}, providerIcon: () => "" };
-            const backend = { defaultTrayStyle: "numbers", publishTrayState: value => { published = JSON.parse(value); } };
-            vm.runInNewContext(windows + "\npublishTray();", { root, backend });
+            const published = publishWindowsTray({
+                activeId: provider.id, activeIsFeature: false, providers: [provider]
+            });
             assert.deepEqual(published.slots.map(s => s.text || Math.round(s.pct) + "%"), scenario.expected.panelText);
         });
+    }
+});
+
+
+test("Windows tray keeps provider usage while a feature tab is active", () => {
+    const providers = [
+        { id: "claude", label: "Claude", slots: [{ pct: 25 }] },
+        { id: "openai", label: "OpenAI", slots: [{ pct: 70 }] }
+    ];
+    for (const activeId of ["overview", "spend", "sessions"]) {
+        const state = { activeId, activeIsFeature: true, providers, lastProviderId: "openai" };
+        assert.deepEqual(publishWindowsTray(state).slots.map(s => s.pct), [70]);
+        assert.deepEqual(publishWindowsTray({ ...state, lastProviderId: "removed" }).slots.map(s => s.pct), [25]);
+        assert.deepEqual(publishWindowsTray({ ...state, providers: [] }).slots, []);
     }
 });

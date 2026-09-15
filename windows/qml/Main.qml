@@ -3,6 +3,7 @@ import QtQuick.Controls.Basic as QC
 import "../../hyprland"
 import "../../hyprland/ProviderRegistry.js" as ProviderRegistry
 import "../../package/contents/code/Format.js" as Format
+import "../../package/contents/code/FeatureTabs.js" as FeatureTabs
 import "../../package/contents/code/UsageHistory.js" as UsageHistory
 import "../../package/contents/code/I18n.js" as I18n
 
@@ -81,6 +82,9 @@ Window {
             pollSec: 300,
             showChart: true,
             museQuota: false,
+            overviewEnabled: false,
+            spendEnabled: false,
+            sessionsEnabled: true,
             antigravityChartFilter: "both",
             trayStyle: backend.defaultTrayStyle,
             floatingPill: false,
@@ -101,6 +105,9 @@ Window {
         s.pollSec = d.pollSec || 300;
         s.showChart = d.showChart !== false;
         s.museQuota = d.museQuota === true;
+        s.overviewEnabled = d.overviewEnabled === true;
+        s.spendEnabled = d.spendEnabled === true;
+        s.sessionsEnabled = d.sessionsEnabled !== false;
         s.antigravityChartFilter = d.antigravityChartFilter || "both";
         // trayNumbers was the on/off switch before there were three styles;
         // with neither, the platform's default (app.py, DEFAULT_TRAY_STYLE).
@@ -135,7 +142,33 @@ Window {
 
     // ── Provider state ───────────────────────────────────────────────────────
     property var providers: []
+    property var sessions: []
+    property bool sessionsLoading: false
+    property string sessionsError: ""
+    property string sessionsNotice: ""
     property string activeId: ""
+    // The last real provider selected (never a feature tab id) — what the
+    // panel pill shows while a feature tab (Overview/Spend/Sessions) is
+    // active, since those have no percentage of their own to display.
+    property string lastProviderId: ""
+    readonly property var popupTabs: {
+        var tabs = [];
+        var features = FeatureTabs.enabledFeatureTabs(root.settings);
+        for (var i = 0; i < features.length; i++) {
+            var id = features[i];
+            tabs.push({
+                id: id,
+                label: FeatureTabs.label(id, root.i18n),
+                accent: FeatureTabs.accent(id) || "#38bdf8",
+                icon: "",
+                feature: true
+            });
+        }
+        for (var j = 0; j < root.providers.length; j++)
+            tabs.push(root.providers[j]);
+        return tabs;
+    }
+    readonly property bool activeIsFeature: FeatureTabs.isFeatureTab(root.activeId)
     property string errorText: ""
     readonly property bool loading: backend.busy
     property int updatedAt: 0
@@ -146,12 +179,22 @@ Window {
     property string chartGranularity: "7d"
     property string activeSubTab: "usage"
     readonly property bool activeHasStats: {
+        if (root.activeIsFeature)
+            return false;
         var p = activeProvider();
         return p && (p.id === "claude" || p.id === "openai" || p.id === "copilot" || p.id === "muse" || p.id === "cursor" || p.id === "cline");
     }
 
+    function providerById(id) {
+        for (var i = 0; i < root.providers.length; i++) {
+            if (root.providers[i].id === id)
+                return root.providers[i];
+        }
+        return null;
+    }
+
     function activeProvider() {
-        if (root.providers.length === 0)
+        if (root.activeIsFeature || root.providers.length === 0)
             return null;
         for (var i = 0; i < root.providers.length; i++) {
             if (root.providers[i].id === root.activeId)
@@ -160,7 +203,17 @@ Window {
         return root.providers[0];
     }
 
+    // What the panel pill shows: the active provider normally, or the last
+    // real provider seen while a feature tab is active — never "no data".
+    function pillProvider() {
+        if (!root.activeIsFeature)
+            return root.activeProvider();
+        return root.providerById(root.lastProviderId) || root.providers[0] || null;
+    }
+
     readonly property color activeAccent: {
+        if (root.activeIsFeature)
+            return FeatureTabs.accent(root.activeId) || "#38bdf8";
         var p = activeProvider();
         return p ? p.accent : "#cc785c";
     }
@@ -198,6 +251,8 @@ Window {
         var win = windowForProvider(root.activeId, root.chartGranularity);
         if (root.chartWindow !== win)
             root.chartWindow = win;
+        if (root.activeId !== "" && !FeatureTabs.isFeatureTab(root.activeId))
+            root.lastProviderId = root.activeId;
         root.publishTray();
     }
 
@@ -215,7 +270,7 @@ Window {
     // The glance the Hyprland pill gives: the active tab's slots, which app.py
     // (tray_entries) turns into tray icons in the chosen trayStyle.
     function publishTray() {
-        var p = root.activeProvider();
+        var p = root.pillProvider();
         var lines = ["AI Usage"];
         for (var i = 0; i < root.providers.length; i++) {
             var q = root.providers[i];
@@ -252,12 +307,22 @@ Window {
             var data = JSON.parse((text || "").trim());
             root.providers = data.providers || [];
             root.updatedAt = data.updatedAt || 0;
-            var stillThere = false;
+            // Seed (or heal, if the remembered one got disabled) the pill's
+            // fallback provider — needed even before the user ever leaves a
+            // feature tab, since Sessions is the default-enabled one.
+            if (!root.providerById(root.lastProviderId))
+                root.lastProviderId = data.active || (root.providers[0] || {}).id || "";
+            var stillThere = FeatureTabs.isFeatureTab(root.activeId);
             for (var i = 0; i < root.providers.length; i++)
                 if (root.providers[i].id === root.activeId)
                     stillThere = true;
-            if (!stillThere)
-                root.activeId = data.active || (root.providers[0] || {}).id || "";
+            if (!stillThere) {
+                var features = FeatureTabs.enabledFeatureTabs(root.settings);
+                if (features.length > 0)
+                    root.activeId = features[0];
+                else
+                    root.activeId = data.active || (root.providers[0] || {}).id || "";
+            }
             root.errorText = "";
             root.nowTick = new Date().getTime();
             root.lastFetched = root.nowTick;
@@ -270,6 +335,21 @@ Window {
 
     function refresh() {
         backend.refresh();
+    }
+
+    function refreshSessions() {
+        root.sessionsLoading = true;
+        root.sessionsError = "";
+        root.sessionsNotice = "";
+        backend.refreshSessions();
+    }
+
+    // Rows with an empty openKey (Muse) render no button at all.
+    function openSession(key) {
+        if (!key)
+            return;
+        root.sessionsNotice = "";
+        backend.openSession(key);
     }
 
     // A tab click only fetches when the data is over a minute old: every
@@ -370,6 +450,31 @@ Window {
 
         function onSnapshotReady(text) {
             root.applySnapshot(text);
+        }
+
+        function onSessionsReady(text) {
+            root.sessionsLoading = false;
+            try {
+                var data = JSON.parse((text || "").trim());
+                if (data.error) {
+                    root.sessionsError = data.error;
+                    root.sessions = data.sessions || [];
+                } else {
+                    root.sessions = data.sessions || [];
+                    root.sessionsError = "";
+                }
+            } catch (e) {
+                root.sessionsError = root.i18n("Could not load sessions.");
+            }
+        }
+
+        function onOpenSessionFinished(text) {
+            try {
+                var data = JSON.parse((text || "").trim());
+                root.sessionsNotice = data.message || "";
+            } catch (e) {
+                root.sessionsNotice = root.i18n("Could not resume session.");
+            }
         }
 
         function onRefreshFailed(message) {
@@ -473,7 +578,7 @@ Window {
         PanelPill {
             id: pill
 
-            readonly property string brandLogo: root.providerIcon(root.activeProvider())
+            readonly property string brandLogo: root.providerIcon(root.pillProvider())
 
             anchors.centerIn: parent
             iconSource: brandLogo !== "" ? brandLogo : root.iconSource
@@ -481,7 +586,7 @@ Window {
             // is driven from there.
             active: pillMouse.containsMouse || root.visible
             slots: {
-                var p = root.activeProvider();
+                var p = root.pillProvider();
                 if (root.loading && root.providers.length === 0)
                     return [
                         {
@@ -514,11 +619,11 @@ Window {
                 return out;
             }
             stale: {
-                var p = root.activeProvider();
+                var p = root.pillProvider();
                 return root.errorText !== "" || (p ? !!p.stale : false);
             }
             hasError: {
-                var p = root.activeProvider();
+                var p = root.pillProvider();
                 return root.errorText !== "" || (p ? (p.error || "") !== "" : false);
             }
         }

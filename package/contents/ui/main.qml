@@ -6,6 +6,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasma5support as Plasma5Support
 import org.kde.plasma.plasmoid
+import "../code/FeatureTabs.js" as FeatureTabs
 import "../code/Format.js" as Format
 import "../code/Shell.js" as Shell
 import "../code/UsageHistory.js" as UsageHistory
@@ -22,9 +23,9 @@ PlasmoidItem {
     // ── Script directory ──────────────────────────────────────────────────────
     readonly property string scriptDir: Qt.resolvedUrl("../tools/sh/").toString().replace("file://", "")
     // ── Settings: which tabs are enabled (persisted via Plasmoid.configuration) ─
-    // Computed list of enabled tab IDs, in the registry's display order.
+    // Feature views (Overview / Spend / Sessions) sit ahead of provider tabs.
     property var enabledTabs: {
-        var t = [];
+        var t = FeatureTabs.enabledFeatureTabsPlasmoid(Plasmoid.configuration);
         for (var i = 0; i < root.providers.length; i++) {
             var p = root.providers[i];
             if (Plasmoid.configuration[p.id + "Enabled"])
@@ -33,13 +34,27 @@ PlasmoidItem {
         return t;
     }
     property int activeTab: 0
+    // The last real provider tab selected (never a feature tab id) — what
+    // the compact panel falls back to while a feature tab is active, in
+    // preference to just the first enabled provider.
+    property string lastProviderId: ""
     // Primary tab for single-tab fallbacks. The compact panel can show every
-    // pinned service; without pins it mirrors the in-popup active tab.
+    // pinned service; without pins it mirrors the in-popup active tab — but
+    // never a feature view, which has no panel meter of its own.
     readonly property string panelTab: {
         if (root.pinnedTabs.length > 0)
             return root.pinnedTabs[0];
 
-        return root.enabledTabs[root.activeTab] || "";
+        var tab = root.enabledTabs[root.activeTab] || "";
+        if (!FeatureTabs.isFeatureTab(tab))
+            return tab;
+        if (root.lastProviderId !== "" && root.enabledTabs.indexOf(root.lastProviderId) !== -1)
+            return root.lastProviderId;
+        for (var i = 0; i < root.enabledTabs.length; i++) {
+            if (!FeatureTabs.isFeatureTab(root.enabledTabs[i]))
+                return root.enabledTabs[i];
+        }
+        return "";
     }
     property real chartTimeOffset: 0
     // ── Service status (status pages) ────────────────────────────────────────
@@ -121,6 +136,7 @@ PlasmoidItem {
     property string codexStatsFavoriteModel: ""
     property var codexStatsModels: ({})
     property var codexStatsDailyTokens: []
+    property real codexStatsTotalCostUSD: 0
     // Live model / reasoning effort, from the newest rollout's turn_context
     // (falls back to ~/.codex/config.toml).
     property string codexModel: ""
@@ -1022,13 +1038,30 @@ PlasmoidItem {
     }
 
     function tabColor(tabId) {
+        if (FeatureTabs.isFeatureTab(tabId)) {
+            var accent = FeatureTabs.accent(tabId);
+            return accent !== "" ? accent : Kirigami.Theme.highlightColor;
+        }
         var p = root.providerById(tabId);
         return p ? p.color : Kirigami.Theme.textColor;
     }
 
     function tabName(tabId) {
+        if (FeatureTabs.isFeatureTab(tabId))
+            return FeatureTabs.label(tabId, i18n);
         var p = root.providerById(tabId);
         return p ? p.label : tabId;
+    }
+
+    // Switch the popup to a provider (or feature) tab by id.
+    function selectTab(tabId) {
+        var idx = root.enabledTabs.indexOf(tabId);
+        if (idx < 0)
+            return;
+        root.activeTab = idx;
+        root.errorMsg = "";
+        if (!FeatureTabs.isFeatureTab(tabId))
+            root.refresh();
     }
 
     function formatMoney(value, currency) {
@@ -1162,6 +1195,8 @@ PlasmoidItem {
     // Brand logo for a tab, or "" when the provider has no artwork yet (callers
     // fall back to the plain colour dot).
     function tabIcon(tabId) {
+        if (FeatureTabs.isFeatureTab(tabId))
+            return "";
         var p = root.providerById(tabId);
         return p ? Qt.resolvedUrl("../icons/" + p.icon) : "";
     }
@@ -1188,6 +1223,8 @@ PlasmoidItem {
     }
 
     function togglePin(tabId) {
+        if (FeatureTabs.isFeatureTab(tabId))
+            return;
         var pins = root.pinnedTabs.slice();
         var pos = pins.indexOf(tabId);
         if (pos >= 0)
@@ -1627,6 +1664,7 @@ PlasmoidItem {
         root.codexStatsFavoriteModel = stats.favoriteModel || "";
         root.codexStatsModels = stats.models || ({});
         root.codexStatsDailyTokens = stats.dailyTokens || [];
+        root.codexStatsTotalCostUSD = stats.totalCostUSD || 0;
         root.codexModel = stats.model || "";
         root.codexEffortLevel = stats.effortLevel || "";
         root.ensureAvailableChartWindow("openai");
@@ -2107,6 +2145,8 @@ PlasmoidItem {
             root.chartWindow = win;
             Plasmoid.configuration.chartWindow = win;
         }
+        if (tab !== "" && !FeatureTabs.isFeatureTab(tab))
+            root.lastProviderId = tab;
         root.chartTimeOffset = 0;
         // A rate limit belongs to the provider that hit it; don't let it keep
         // the tab you just switched to empty.
@@ -2866,6 +2906,9 @@ PlasmoidItem {
                         // Names the section on screen, so the header says where
                         // you are rather than repeating what the page is.
                         text: {
+                            if (root.settingsTab === "views")
+                                return i18n("Optional Overview, Spend and Sessions tabs");
+
                             if (root.settingsTab === "appearance")
                                 return i18n("Colors, chart and popup style");
 
@@ -3092,6 +3135,18 @@ PlasmoidItem {
             }
 
             SettingsPanel {
+                rootItem: root
+            }
+
+            OverviewTab {
+                rootItem: root
+            }
+
+            SpendTab {
+                rootItem: root
+            }
+
+            SessionsTab {
                 rootItem: root
             }
 
