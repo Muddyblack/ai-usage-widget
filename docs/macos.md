@@ -175,14 +175,34 @@ English next to a translation that already existed.
 
 ## Signing and distribution
 
-Ad-hoc signed, which is enough to run: the Keychain reads go through
-`/usr/bin/security` and do not care what this app is signed with. Gatekeeper
-still does — an unsigned download is quarantined, and the first launch needs a
-right-click → Open (or `xattr -dr com.apple.quarantine "/Applications/AI Usage.app"`).
+Download the release DMG, open it, and drag **AI Usage.app** onto
+**Applications**. Eject the disk image and open the app from Applications.
+The ZIP remains available: extract it and copy the app to Applications.
 
-Notarising it properly needs an Apple Developer account at $99/year, which is a
-decision for the project and not a technical one. `AI_USAGE_SIGN_IDENTITY`
-makes the build script use a real identity when there is one.
+The app is ad-hoc signed and is not notarized by Apple. A DMG provides the
+installer layout; it does not remove Gatekeeper's verification warning.
+If macOS blocks the first launch and you trust the download:
+
+1. Try opening the app from Applications.
+2. Open **System Settings → Privacy & Security** and scroll to **Security**.
+3. Choose **Open Anyway** for AI Usage and confirm the prompt.
+
+See [Apple's instructions for opening an app from an unknown developer](https://support.apple.com/guide/mac-help/mh40616/mac).
+Users do **not** need an Apple developer account to install or use the app.
+Developer ID signing and notarization require the publisher to enroll in the
+[Apple Developer Program](https://developer.apple.com/developer-id/).
+`AI_USAGE_SIGN_IDENTITY` selects a signing identity during the build; it does
+not perform notarization.
+
+To package an existing build on macOS, run:
+
+```bash
+bash macos/scripts/package-dmg.sh
+```
+
+This creates `ai-usage-macos-<version>.dmg` with the app, an Applications
+shortcut, and first-launch instructions. CI verifies the disk image and
+uploads both DMG and ZIP packages for releases.
 
 ## CI
 
@@ -228,7 +248,7 @@ translation checks too.
 ## Not done yet
 
 - Signing and notarisation, and a Homebrew cask
-- A release job building the universal `.app` and attaching a `.dmg`
+- Universal release builds (CI currently builds for Apple Silicon)
 - Interactive checks on a personal Mac: multiple displays, menu bar placement,
   credential discovery, and login-item behavior. CI screenshots do not cover
   those interactions.

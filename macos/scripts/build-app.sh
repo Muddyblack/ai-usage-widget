@@ -115,8 +115,8 @@ fi
 # ── 6. Signature ─────────────────────────────────────────────────────────
 # Ad-hoc unless an identity is given. Ad-hoc is enough to run — reading the
 # Keychain goes through /usr/bin/security, which does not care what this app is
-# signed with — but Gatekeeper still asks the user to right-click → Open the
-# first time. See docs/macos.md.
+# signed with — but Gatekeeper requires a first-launch exception through
+# System Settings → Privacy & Security → Open Anyway. See docs/macos.md.
 IDENTITY="${AI_USAGE_SIGN_IDENTITY:--}"
 codesign --force --deep --sign "$IDENTITY" --options runtime --timestamp=none "$APP" 2>/dev/null \
     || codesign --force --deep --sign "$IDENTITY" "$APP"
