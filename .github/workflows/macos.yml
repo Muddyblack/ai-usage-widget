@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -49,15 +49,10 @@ jobs:
 
   app:
     runs-on: macos-14
-    # Only this job posts to the PR (a curated set of the screenshots below);
-    # the rest of the workflow stays read-only.
-    permissions:
-      contents: read
-      pull-requests: write
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -137,73 +132,6 @@ jobs:
           name: screenshots
           path: ${{ runner.temp }}/screens/*.png
           if-no-files-found: error
-
-      # A curated four of the eleven shots, inlined so a reviewer sees them
-      # without downloading the artifact; the rest are linked from there.
-      # `continue-on-error` because this is a convenience, not the build: a
-      # comment failure (GitHub outage, rate limit, or — on a fork PR — the
-      # read-only token `pull_request` runs with there, which cannot post at
-      # all) must never fail CI. Updates its own earlier comment on a rerun
-      # instead of stacking a new one each time.
-      - name: Comment screenshots on the PR
-        if: github.event_name == 'pull_request'
-        continue-on-error: true
-        uses: actions/github-script@v7
-        env:
-          SCREENSHOT_DIR: ${{ runner.temp }}/screens
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-
-            const dir = process.env.SCREENSHOT_DIR;
-            const highlight = ['popover-expanded-light.png', 'popover-expanded-dark.png', 'settings-light.png', 'settings-dark.png'];
-            const marker = '<!-- macos-screenshots -->';
-            const maxBytes = 6 * 1024 * 1024; // stay well clear of the comment size limit
-
-            let images = [];
-            let totalBytes = 0;
-            for (const name of highlight) {
-              const file = path.join(dir, name);
-              if (!fs.existsSync(file)) continue;
-              const buf = fs.readFileSync(file);
-              if (totalBytes + buf.length > maxBytes) break;
-              totalBytes += buf.length;
-              images.push({ name, b64: buf.toString('base64') });
-            }
-
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            let body = `${marker}\n### macOS screenshots (\`${context.sha.slice(0, 7)}\`)\n\n`;
-            if (images.length === 0) {
-              body += `_Could not embed screenshots for this run — see the [\`screenshots\` artifact](${runUrl}) instead._\n`;
-            } else {
-              for (const img of images)
-                body += `**${img.name}**\n\n![${img.name}](data:image/png;base64,${img.b64})\n\n`;
-              body += `All eleven shots (menu bar styles, light/dark, and the full screen) are in the [\`screenshots\` artifact](${runUrl}) on this run.\n`;
-            }
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const existing = comments.find(c => c.body && c.body.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body,
-              });
-            }
-          # Replace any artifact left by the failed finalization attempt.
           overwrite: true
 
       # ditto, not zip: it preserves the app bundle's extended attributes
@@ -244,3 +172,83 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           overwrite: true
+
+  screenshots-comment:
+    needs: [backend, app]
+    # Fork pull requests have read-only tokens; their PNGs remain in artifacts.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    concurrency:
+      group: macos-screenshots-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    steps:
+      # No checkout or execution of app code in this publishing job.
+      - uses: actions/download-artifact@v8
+        with:
+          name: screenshots
+          path: ${{ runner.temp }}/screens
+
+      - name: Publish PNGs and update the PR conversation
+        uses: actions/github-script@v8
+        env:
+          SCREENSHOT_DIR: ${{ runner.temp }}/screens
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const repo = context.repo;
+            const pr = context.payload.pull_request;
+            const { data: current } = await github.rest.pulls.get({ ...repo, pull_number: pr.number });
+            if (current.state !== 'open' || current.head.sha !== pr.head.sha) {
+              core.info('Skipping screenshots from a superseded or closed PR.');
+              return;
+            }
+            const dir = process.env.SCREENSHOT_DIR;
+            const names = fs.readdirSync(dir).filter(name => /^[a-z0-9-]+\.png$/.test(name)).sort();
+            if (!names.length) throw new Error('Screenshot artifact contains no PNGs');
+            const tree = [];
+            for (const name of names) {
+              const file = path.join(dir, name);
+              const stat = fs.lstatSync(file);
+              if (!stat.isFile() || stat.size > 10 * 1024 * 1024) throw new Error(`Invalid screenshot: ${name}`);
+              const png = fs.readFileSync(file);
+              if (!png.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])))
+                throw new Error(`Not a PNG: ${name}`);
+              const { data: blob } = await github.rest.git.createBlob({ ...repo, content: png.toString('base64'), encoding: 'base64' });
+              tree.push({ path: name, mode: '100644', type: 'blob', sha: blob.sha });
+            }
+            const ref = `heads/ci-screenshots/pr-${pr.number}`;
+            let previous;
+            try {
+              const result = await github.rest.git.getRef({ ...repo, ref });
+              previous = result.data.object.sha;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            const { data: snapshot } = await github.rest.git.createTree({ ...repo, tree });
+            const { data: commit } = await github.rest.git.createCommit({
+              ...repo, message: `macOS screenshots for PR #${pr.number} (${pr.head.sha.slice(0, 7)})`,
+              tree: snapshot.sha, parents: previous ? [previous] : []
+            });
+            if (previous) {
+              await github.rest.git.updateRef({ ...repo, ref, sha: commit.sha, force: false });
+            } else {
+              await github.rest.git.createRef({ ...repo, ref: `refs/${ref}`, sha: commit.sha });
+            }
+            const marker = '<!-- macos-screenshots -->';
+            const runUrl = `${context.serverUrl}/${repo.owner}/${repo.repo}/actions/runs/${context.runId}`;
+            const imageRoot = `${context.serverUrl}/${repo.owner}/${repo.repo}/blob/${commit.sha}`;
+            let body = `${marker}\n### macOS screenshots (${pr.head.sha.slice(0, 7)})\n\nBackend and app checks passed. [Build and downloadable PNGs](${runUrl})\n\n`;
+            for (const name of names) {
+              body += `**${name}**\n\n![${name}](${imageRoot}/${name}?raw=true)\n\n`;
+            }
+            const comments = await github.paginate(github.rest.issues.listComments, { ...repo, issue_number: pr.number, per_page: 100 });
+            const existing = comments.find(c => c.user?.login === 'github-actions[bot]' && c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ ...repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...repo, issue_number: pr.number, body });
+            }

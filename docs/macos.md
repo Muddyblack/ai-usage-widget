@@ -211,6 +211,13 @@ Swift suites and the Python ones, and uploads the screenshots as a
 `screenshots` artifact. Download the artifact from the workflow run to inspect
 the full gallery.
 
+For pull requests from this repository, a separate job waits for both backend
+and app checks to pass, stores the PNGs on `ci-screenshots/pr-<number>`, and
+updates one bot comment in the PR conversation with all images inline. Image
+links use the screenshot commit so reruns cannot change an older image URL.
+Fork PRs retain the downloadable artifact because their token cannot publish
+repository files or comments. A failed comment job is visible in CI.
+
 The app bundle includes the frozen Python backend. CI smoke-tests its provider
 listing, offline fixture normalization, and history loading before switching
 to the shared demo script for screenshots.
