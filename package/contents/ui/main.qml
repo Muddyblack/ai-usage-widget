@@ -1928,7 +1928,7 @@ PlasmoidItem {
         // whose data is on screen, so those are the only ones worth fetching.
         var ids = [];
         var active = root.enabledTabs[root.activeTab] || "";
-        if (active !== "")
+        if (active !== "" && !FeatureTabs.isFeatureTab(active))
             ids.push(active);
 
         var pins = root.pinnedTabs;

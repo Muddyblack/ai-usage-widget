@@ -285,7 +285,10 @@ ColumnLayout {
             sessionsTab.loading = false;
             sessionsSource.disconnectSource(sourceName);
             var stdout = (data && data.stdout) ? data.stdout : "";
-            var exitCode = data ? Number(data.exitCode) : 1;
+            // Plasma's executable DataSource reports the exit status under the
+            // key "exit code" (with a space) — dot-access (data.exitCode)
+            // silently returns undefined, which always failed this check.
+            var exitCode = data ? Number(data["exit code"]) : 1;
             if (exitCode !== 0) {
                 sessionsTab.errorText = i18n("Could not load sessions.");
                 return;
