@@ -150,6 +150,7 @@ msgid "updated %1"
 msgstr "mis à jour %1"
 
 #: hyprland/ProviderSettingRow.qml package/contents/ui/ProviderSettingRow.qml
+#: package/contents/ui/SettingsPanel.qml
 msgid "Off"
 msgstr "Désactivé"
 
@@ -2016,8 +2017,16 @@ msgid "30 seconds"
 msgstr "30 secondes"
 
 #: package/contents/ui/SettingsPanel.qml
+msgid "1 minute"
+msgstr "1 minute"
+
+#: package/contents/ui/SettingsPanel.qml
 msgid "2 minutes"
 msgstr "2 minutes"
+
+#: package/contents/ui/SettingsPanel.qml
+msgid "5 minutes"
+msgstr "5 minutes"
 
 #: package/contents/ui/SettingsPanel.qml
 msgid "10 minutes"
@@ -3006,14 +3015,6 @@ msgstr "Fournisseur"
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Refresh every"
 msgstr "Actualiser toutes les"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "1 minute"
-msgstr "1 minute"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "5 minutes"
-msgstr "5 minutes"
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "15 minutes"
