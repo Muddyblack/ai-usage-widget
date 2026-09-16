@@ -171,9 +171,11 @@ The tab itself is off by default too: enable *Muse* in settings if you use Muse 
 ## Local sessions
 
 The optional Sessions tab (**Settings → Views**) lists recent local activity merged
-from Claude Code, Codex, Grok CLI, Cline, OpenCode, Antigravity and Muse: a redacted title, the
-workspace/session name, active/idle state and recency only — paths and transcript
-contents never leave the backend (`get-ai-usage --sessions`).
+from Claude Code, Codex, Grok CLI, Cline, OpenCode, Antigravity and Muse: a title preview, the
+workspace/session name, active/idle state and recency (`get-ai-usage --sessions`).
+Source paths and raw session IDs are omitted from the output. Titles can contain
+prompt text or artifact headings; they are shortened, not scrubbed of secrets,
+and may expose sensitive text in the local UI.
 
 Rows for Claude Code, Codex, Grok CLI, Cline, OpenCode and Antigravity carry a ⧉ button that resumes that
 exact session in your terminal (`get-ai-usage --open-session <key>`, using each
@@ -187,8 +189,11 @@ display-only.
 Antigravity CLI transcripts are read from
 `~/.gemini/antigravity-cli/brain/<id>/.system_generated/logs/transcript.jsonl`;
 editor artifact sessions are read from `~/.gemini/antigravity/brain/<id>/*.md`.
-Only bounded metadata is used for the Sessions tab; the raw paths and transcript
-contents remain inside the backend.
+The reader examines at most 20,000 lines and 4 MiB per CLI transcript, stopping
+at a record larger than 256 KiB. Editor title reads are limited to 2,000 characters.
+The Sessions tab displays up to 60 characters of the first user prompt or artifact
+heading as plain text. Listing these sessions makes no network requests; choosing
+Resume launches `agy`, which can use its own network connections.
 
 ## Usage history
 
