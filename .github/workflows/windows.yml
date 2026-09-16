@@ -187,12 +187,19 @@ jobs:
         shell: pwsh
         run: windows/build-installer.ps1 -Version $env:VERSION
 
+      - name: Package manager manifests (stable releases)
+        if: inputs.version != '' && !contains(inputs.version, '-')
+        shell: pwsh
+        run: python windows/package-manifests.py --version $env:VERSION
+
       - uses: actions/upload-artifact@v7
         with:
           name: ai-usage-windows
           path: |
             ai-usage-windows-*.zip
             AI-Usage-Setup-*.exe
+            dist/package-manifests/ai-usage.json
+            dist/package-manifests/ai-usage-winget-*.zip
           if-no-files-found: error
           # A release has its own copy attached; this one is for trying a build.
           retention-days: 14

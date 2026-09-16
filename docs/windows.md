@@ -13,6 +13,96 @@ take `ai-usage-windows-<version>.zip`, unzip it anywhere and run
 *More info → Run anyway*. Nothing else to install — Python and Qt ship inside
 the folder.
 
+## Package managers
+
+Stable releases built with package-manager support attach `ai-usage.json`
+(Scoop) and `ai-usage-winget-<version>.zip` (WinGet manifests) alongside the
+Windows binaries. Wait for the Windows assets to appear before installing.
+Both target x64 Windows and keep settings/history in the locations below.
+
+### Scoop
+
+With [Scoop](https://scoop.sh/) installed, run in PowerShell:
+
+```powershell
+scoop install https://github.com/Muddyblack/ai-usage-widget/releases/latest/download/ai-usage.json
+```
+
+Launch **AI Usage** from the Start menu. Quit the tray app before updating:
+
+```powershell
+scoop update ai-usage
+```
+
+Scoop remembers the manifest URL, so installing from the `latest/download`
+URL follows subsequent releases. Installing a version-specific manifest pins
+that source to that release. The manifest also includes `checkver` and
+`autoupdate` for maintainers who want to add it to a Scoop bucket; this
+repository does not currently publish a bucket.
+
+Before `scoop uninstall ai-usage`, switch off **Start with Windows** in the
+app and quit it. Settings and history survive uninstall. Use one installation
+method at a time: uninstall an existing Inno/WinGet copy before moving to Scoop
+to avoid duplicate shortcuts and competing autostart entries.
+
+### WinGet
+
+The release ZIP contains the three manifests under
+`manifests/m/Muddyblack/AIUsage/<version>/`, ready for validation and submission
+to [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs).
+Generating these files does **not** register the app in the public catalog.
+
+To test a release before catalog acceptance, download and extract its
+`ai-usage-winget-<version>.zip`. Enable local manifests once from an elevated
+terminal (`winget settings --enable LocalManifestFiles`), then run from a
+normal PowerShell terminal, replacing `<version>`:
+
+```powershell
+winget validate --manifest .\manifests\m\Muddyblack\AIUsage\<version>
+winget install --manifest .\manifests\m\Muddyblack\AIUsage\<version>
+```
+
+The manifest uses the existing per-user Inno installer, including its stable
+uninstall identity and in-place updates. Installation leaves autostart off by
+default; enable it in the app. Existing autostart preferences survive upgrades.
+After a maintainer submits the manifests and the public catalog accepts them,
+users can install and update with:
+
+```powershell
+winget install --id Muddyblack.AIUsage --exact --source winget
+winget upgrade --id Muddyblack.AIUsage --exact --source winget
+```
+
+### Maintaining the manifests
+
+The Windows build runs `windows/package-manifests.py` after packaging each
+stable release. It hashes the actual ZIP and installer, checks the portable
+archive layout, and writes version-specific download URLs. To reproduce:
+
+```powershell
+python windows/package-manifests.py --version 3.2.0 --assets . --output dist/package-manifests
+```
+
+Use assets from that exact release; rebuilding a binary changes its hash.
+For each WinGet release, validate and test the extracted manifests on Windows,
+then submit the version folder following Microsoft's
+[submission instructions](https://learn.microsoft.com/en-us/windows/package-manager/package/repository).
+Catalog submissions are separate from the release workflow.
+
+### Microsoft Store
+
+Store distribution is a follow-up; there is no Store package or listing in
+this change. The existing installer already supports silent, offline installs,
+but the EXE submission route requires trusted code signing for the installer
+and all bundled PE binaries, plus versioned URLs submitted through Partner
+Center. The current build is unsigned. See Microsoft's
+[EXE/MSI requirements](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msi/app-package-requirements).
+
+Alternatively, MSIX offers Store-managed signing and updates, but needs its
+own packaging and Windows testing, particularly for tray startup, autostart,
+and access to the CLI credentials under the user's profile. Choose that route
+as a separate packaging task once the Store publisher identity is available.
+
 ## Using it
 
 It sits in the notification area: click the icon for the popup, right-click for
