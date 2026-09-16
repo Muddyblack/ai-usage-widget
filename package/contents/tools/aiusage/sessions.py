@@ -34,10 +34,10 @@ import time
 import urllib.parse
 
 from .contract import epoch_of, num
+from .providers import opencode
 from .providers.cline import get_cline_sessions
 from .providers.grok import grok_home
 from .providers.muse import sessions_root as muse_sessions_root
-from .providers import opencode
 from .providers.openai_credentials import codex_home
 
 # Cap so a machine with years of logs stays snappy on a tab open.

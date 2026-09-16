@@ -3,13 +3,11 @@ import os
 import sqlite3
 import tempfile
 import unittest
-from pathlib import Path
 from unittest import mock
 
-from _support import REPO
+from _support import REPO  # noqa: F401  (ensures TOOLS is on sys.path)
 from aiusage import sessions
 from aiusage.providers import opencode
-
 
 _SESSION_SCHEMA = (
     "CREATE TABLE session ("
@@ -78,8 +76,11 @@ class OpenCodeDiscoveryTest(unittest.TestCase):
     def test_rejects_sqlite_files_without_a_session_table(self):
         with tempfile.TemporaryDirectory() as root:
             path = os.path.join(root, "opencode.db")
-            with sqlite3.connect(path) as connection:
+            connection = sqlite3.connect(path)
+            try:
                 connection.execute("CREATE TABLE unrelated (value TEXT)")
+            finally:
+                connection.close()
             with mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True):
                 records = opencode.read_recent_sessions()
 
@@ -88,10 +89,7 @@ class OpenCodeDiscoveryTest(unittest.TestCase):
 
 class OpenCodeSessionRowsTest(unittest.TestCase):
     def test_reads_only_recent_metadata_and_normalizes_milliseconds(self):
-        rows = [
-            (f"ses-{index:03d}", f"Session {index}", "/private/project", 1_700_000_000_000, 1_700_000_000_000 + index)
-            for index in range(61)
-        ]
+        rows = [(f"ses-{index:03d}", f"Session {index}", "/private/project", 1_700_000_000_000, 1_700_000_000_000 + index) for index in range(61)]
         with tempfile.TemporaryDirectory() as root:
             path = _create_database(root, "opencode.db", rows)
             with mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True):

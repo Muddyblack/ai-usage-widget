@@ -6,13 +6,12 @@ import shutil
 import sqlite3
 import subprocess
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator
 
 from .. import paths
-
 
 _MAX_ROWS = 60
 _QUERY_TIMEOUT_SECONDS = 2.0
@@ -81,11 +80,7 @@ def _connect_readonly(database_path: str) -> Iterator[sqlite3.Connection]:
 
 
 def _schema_is_supported(connection: sqlite3.Connection) -> bool:
-    columns = {
-        row[1]
-        for row in connection.execute("PRAGMA table_info(session)").fetchall()
-        if len(row) > 1
-    }
+    columns = {row[1] for row in connection.execute("PRAGMA table_info(session)").fetchall() if len(row) > 1}
     return _REQUIRED_COLUMNS <= columns
 
 
@@ -115,8 +110,7 @@ def _read_database(database_path: str) -> list[OpenCodeSession]:
             connection.set_progress_handler(interrupt_query, 1000)
             try:
                 rows = connection.execute(
-                    "SELECT id, title, directory, time_created, time_updated "
-                    "FROM session ORDER BY time_updated DESC LIMIT ?",
+                    "SELECT id, title, directory, time_created, time_updated FROM session ORDER BY time_updated DESC LIMIT ?",
                     (_MAX_ROWS,),
                 ).fetchall()
             finally:
