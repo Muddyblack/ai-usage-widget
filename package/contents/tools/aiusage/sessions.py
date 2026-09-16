@@ -37,6 +37,7 @@ from .contract import epoch_of, num
 from .providers.cline import get_cline_sessions
 from .providers.grok import grok_home
 from .providers.muse import sessions_root as muse_sessions_root
+from .providers import opencode
 from .providers.openai_credentials import codex_home
 
 # Cap so a machine with years of logs stays snappy on a tab open.
@@ -378,6 +379,59 @@ def _grok_entries():
     return out
 
 
+def _opencode_identity(record):
+    return f"{record.database_path}\x00{record.session_id}"
+
+
+def _opencode_records(reader):
+    selected = {}
+    for record in reader():
+        previous = selected.get(record.session_id)
+        if previous is None or (
+            record.last_activity,
+            record.created_at,
+            record.database_path,
+        ) > (
+            previous.last_activity,
+            previous.created_at,
+            previous.database_path,
+        ):
+            selected[record.session_id] = record
+    return sorted(
+        selected.values(),
+        key=lambda record: (-record.last_activity, record.session_id),
+    )[:_MAX_SESSIONS]
+
+
+def _opencode_entries():
+    out = []
+    for record in _opencode_records(opencode.read_recent_sessions):
+        title = _clip_title(record.title) or _basename(record.directory) or "OpenCode"
+        out.append(
+            _entry(
+                "opencode",
+                title,
+                record.last_activity,
+                session_name="OpenCode",
+                detail=_basename(record.directory),
+                session_id=_opencode_identity(record),
+            )
+        )
+    return [entry for entry in out if entry]
+
+
+def _opencode_targets():
+    return [
+        {
+            "provider": "opencode",
+            "id": record.session_id,
+            "keyId": _opencode_identity(record),
+            "cwd": record.directory,
+        }
+        for record in _opencode_records(opencode.read_session_targets)
+    ]
+
+
 def _claude_prompt_titles(root):
     """sessionId -> that session's first prompt, from ``history.jsonl``.
 
@@ -515,6 +569,7 @@ def _claude_entries():
 _RESUME_SPECS = {
     "claude": {"bin": "claude", "cmd": ["--resume", "{id}"]},
     "openai": {"bin": "codex", "cmd": ["resume", "{id}"]},
+    "opencode": {"bin": "opencode", "cmd": ["--session", "{id}"]},
     "grok": {"bin": "grok", "cmd": ["--resume", "{id}"]},
     "cline": {"bin": "cline", "cmd": ["--id", "{id}"]},
     # Muse ships no usable binary here and documents no resume/continue flag
@@ -537,7 +592,7 @@ _TERMINAL_TEMPLATES = [
 def collect_sessions():
     """Merge every local source, newest first, capped."""
     merged = []
-    for collector in (_cline_entries, _muse_entries, _codex_entries, _grok_entries, _claude_entries):
+    for collector in (_cline_entries, _muse_entries, _codex_entries, _grok_entries, _claude_entries, _opencode_entries):
         try:
             merged.extend(collector())
         except Exception:
@@ -559,10 +614,10 @@ def collect_open_targets():
     is what ``--open-session`` validates a stale or fresh key against.
     """
     targets = {}
-    for collector in (_codex_targets, _grok_targets, _claude_targets, _cline_targets):
+    for collector in (_codex_targets, _grok_targets, _claude_targets, _cline_targets, _opencode_targets):
         try:
             for target in collector():
-                key = _open_key(target["provider"], target["id"])
+                key = _open_key(target["provider"], target.get("keyId") or target["id"])
                 if key:
                     targets[key] = target
         except Exception:
