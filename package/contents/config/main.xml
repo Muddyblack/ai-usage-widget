@@ -29,6 +29,9 @@
     <entry name="openrouterEnabled" type="Bool">
       <default>false</default>
     </entry>
+    <entry name="ollamaEnabled" type="Bool">
+      <default>false</default>
+    </entry>
     <entry name="grokEnabled" type="Bool">
       <default>true</default>
     </entry>
@@ -79,6 +82,9 @@
       <default></default>
     </entry>
     <entry name="openrouterApiKey" type="String">
+      <default></default>
+    </entry>
+    <entry name="ollamaApiKey" type="String">
       <default></default>
     </entry>
     <entry name="grokApiKey" type="String">

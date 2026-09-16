@@ -21,6 +21,7 @@ struct SettingsView: View {
         "openai": ("openai", i18nNoop("API key"), i18nNoop("Optional. Codex sign-in is read from ~/.codex.")),
         "mistral": ("mistral", i18nNoop("API key"), ""),
         "openrouter": ("openrouter", i18nNoop("API key"), ""),
+        "ollama": ("ollama", i18nNoop("API key"), i18nNoop("Optional. OpenCode's Ollama Cloud login is used when this is empty.")),
         "grok": ("grok", i18nNoop("API key"), ""),
         "zai": ("zai", i18nNoop("Token"), ""),
         "copilot": ("github", i18nNoop("GitHub token"), i18nNoop("Optional. `gh auth token` is used when this is empty.")),

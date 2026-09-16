@@ -39,6 +39,7 @@ BIN_PATH="$(swift "${SWIFT_ARGS[@]}" --show-bin-path)"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_PATH/AIUsage" "$APP/Contents/MacOS/AIUsage"
+cp "$ROOT/package/contents/icons/LICENSE.lobehub" "$APP/Contents/Resources/LICENSE.lobehub"
 sed "s/__VERSION__/$VERSION/g" "$MACOS_DIR/Resources/Info.plist" > "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 

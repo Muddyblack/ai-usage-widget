@@ -46,6 +46,13 @@ var providers = [
         keyPlaceholder: "or $OPENROUTER_API_KEY"
     },
     {
+        id: "ollama",
+        label: "Ollama Cloud",
+        accent: "#f0f0f0",
+        keySetting: "ollama",
+        keyPlaceholder: "optional — OpenCode login or $OLLAMA_API_KEY"
+    },
+    {
         id: "grok",
         label: "Grok",
         accent: "#e6e6e6",
@@ -101,7 +108,7 @@ var providers = [
 
 // Mirrors OPT_IN_PROVIDERS in aiusage/config.py: these stay off until switched
 // on, the rest stay on until switched off.
-var OPT_IN = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline"];
+var OPT_IN = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "ollama"];
 
 function enabled(settings, id) {
     var toggles = (settings && settings.providers) || {};

@@ -82,13 +82,13 @@ final class SettingsStore: ObservableObject {
 
     /// Every provider id the backend knows, in the backend's own order.
     static let allProviders = [
-        "claude", "antigravity", "openai", "kiro", "mistral", "openrouter",
+        "claude", "antigravity", "openai", "kiro", "mistral", "openrouter", "ollama",
         "grok", "zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline",
     ]
 
     /// Providers that stay off until switched on — they need a token to paste,
     /// or a tool that may not be installed. Mirrors config.py:OPT_IN_PROVIDERS.
-    static let optInProviders: Set<String> = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline"]
+    static let optInProviders: Set<String> = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "ollama"]
 
     func providerEnabled(_ id: String) -> Bool {
         let toggles = raw["providers"] as? [String: Any] ?? [:]

@@ -10,6 +10,7 @@ from .kiro import normalize_kiro
 from .mistral import normalize_mistral
 from .moonshot import normalize_moonshot
 from .muse import normalize_muse
+from .ollama import normalize_ollama
 from .openai import normalize_openai
 from .openrouter import normalize_openrouter
 from .zai import normalize_zai
@@ -22,6 +23,7 @@ _DISPATCH = {
     "mistral": normalize_mistral,
     "muse": normalize_muse,
     "openrouter": normalize_openrouter,
+    "ollama": normalize_ollama,
     "grok": normalize_grok,
     "zai": normalize_zai,
     "copilot": normalize_copilot,
