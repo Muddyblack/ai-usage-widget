@@ -178,6 +178,8 @@ ColumnLayout {
                 return Math.min(100, (rootItem.openrouterUsageUSD / rootItem.openrouterLimitUSD) * 100);
             return -1;
         }
+        if (id === "ollama")
+            return rootItem.ollamaWindows.length > 0 ? rootItem.ollamaPct : -1;
         if (id === "grok")
             return rootItem.grokPct;
         if (id === "zai")
@@ -200,6 +202,8 @@ ColumnLayout {
             return rootItem.openaiPlanType;
         if (id === "openrouter" && rootItem.openrouterUsageUSD > 0)
             return rootItem.formatMoney(rootItem.openrouterUsageUSD, "USD");
+        if (id === "ollama" && rootItem.ollamaWindows.length > 0)
+            return rootItem.ollamaWindows[0].label;
         if (id === "deepseek" && rootItem.deepseekPrimaryTotal > 0)
             return rootItem.formatMoney(rootItem.deepseekPrimaryTotal, rootItem.deepseekCurrency || "USD");
         if (id === "mistral" && rootItem.mistralVibeTotalCost > 0)

@@ -38,6 +38,7 @@ Enable only the services you use. Each one has its own setup requirement:
 | Kiro | kiro-cli signed in (`kiro-cli login`), or the Kiro IDE signed in at least once |
 | Mistral AI | A Mistral API key; vibe CLI is optional and adds local session statistics |
 | OpenRouter | An OpenRouter API key entered in widget settings |
+| Ollama Cloud | Enable the provider, then use an Ollama API key in widget settings or `$OLLAMA_API_KEY`; the `ollama-cloud` API-key login from OpenCode is also detected automatically |
 | Z.AI | A Z.AI token from widget settings, `$ZAI_TOKEN`, `$Z_AI_API_KEY`, `~/.config/zai/token`, `~/.zai/token`, or the one `glm-acp-agent --setup` already stored |
 | GitHub Copilot | Usually nothing to configure: the Copilot editor login (`~/.config/github-copilot/apps.json`), the Copilot CLI login, or `gh auth token` is picked up automatically. Widget settings, `$GITHUB_TOKEN` and `$GH_TOKEN` still win when set; a token with fine-grained **Plan: read** permission additionally unlocks the documented billing endpoint. Personal billing only |
 | DeepSeek | A DeepSeek API key from widget settings, `$DEEPSEEK_API_KEY`, or `~/.config/deepseek/api-key` |
@@ -53,6 +54,28 @@ Provider APIs do not all expose the same information. In particular,
 Codex/ChatGPT plan limits are separate from OpenAI API organization usage,
 DeepSeek reports a balance rather than a usage window, and Grok's free tier does
 not expose progressive usage before its limit is exhausted.
+
+## Ollama Cloud *(experimental)*
+
+The Ollama Cloud tab reads `GET https://ollama.com/api/usage` with an Ollama
+Cloud API key. It accepts the session, weekly, and monthly limit buckets the
+service actually returns, plus the optional recent activity cost and per-model
+request counts. The endpoint is undocumented and has changed shape, so the
+widget reports an error if it stops returning recognizable limit data. It does
+not guess reset times or convert request counts to tokens. Reading the endpoint
+does not run a model.
+
+Older plans expose session and weekly limits; newer plans expose a monthly
+credit pool. Both response shapes are supported. On an older plan, Ollama may
+report a zero recent activity cost even while quota has been used, so the tab
+hides that zero. A positive reported cost and a monthly plan's zero remain
+visible. The widget does not change the account's billing plan.
+
+Key order: widget settings → `$OLLAMA_API_KEY` → OpenCode's
+`ollama-cloud` API-key entry in `~/.local/share/opencode/auth.json` (or
+`$XDG_DATA_HOME/opencode/auth.json` when set, on every OS). OpenCode's `/connect` flow saves that key. Other
+OpenCode provider logins remain separate; OpenCode does not aggregate their
+account quotas for this widget.
 
 ## Claude
 

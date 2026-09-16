@@ -1,0 +1,14 @@
+{
+  "id": "ollama",
+  "now": 1785000000,
+  "inputs": {
+    "usage": {
+      "limits": {
+        "session": {"usage": 0.25, "models": [{"name": "glm-5", "request_count": 3}]},
+        "weekly": {"usage": 0.4, "models": []}
+      },
+      "activity": {"cost": "1.25"}
+    },
+    "status": null
+  }
+}

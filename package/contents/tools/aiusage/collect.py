@@ -29,6 +29,7 @@ from .providers.mistral import get_mistral_usage
 from .providers.moonshot import get_moonshot_balance
 from .providers.muse import get_muse_usage
 from .providers.muse_quota import get_muse_quota
+from .providers.ollama import get_ollama_usage
 from .providers.openai_credentials import get_openai_credentials
 from .providers.openrouter import get_openrouter_usage
 from .providers.zai import get_zai_usage
@@ -234,6 +235,7 @@ _SIMPLE = {
     "kiro": get_kiro_usage,
     "mistral": get_mistral_usage,
     "openrouter": get_openrouter_usage,
+    "ollama": get_ollama_usage,
     "grok": get_grok_usage,
     "zai": get_zai_usage,
     "deepseek": get_deepseek_balance,

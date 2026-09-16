@@ -98,8 +98,9 @@ ManifestVersion: 1.6.0
     with zipfile.ZipFile(output / f"ai-usage-winget-{version}.zip", "w", zipfile.ZIP_DEFLATED) as archive:
         for name, contents in manifests.items():
             path = manifest_dir / name
-            path.write_text(contents, encoding="utf-8")
-            archive.writestr(path.relative_to(output / "winget").as_posix(), contents)
+            data = contents.encode("utf-8")
+            path.write_bytes(data)
+            archive.writestr(path.relative_to(output / "winget").as_posix(), data)
 
 
 def main():

@@ -16,6 +16,7 @@ ALL_PROVIDERS = [
     "kiro",
     "mistral",
     "openrouter",
+    "ollama",
     "grok",
     "zai",
     "copilot",
@@ -30,13 +31,14 @@ ALL_PROVIDERS = [
 # has to paste, so defaulting them on would only produce error rows. Muse,
 # Cursor and Cline need no token at all — they are opt-in because a machine
 # without the tool installed should not grow a tab for it.
-OPT_IN_PROVIDERS = {"zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline"}
+OPT_IN_PROVIDERS = {"zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "ollama"}
 
 _KEY_EXPORTS = [
     ("WIDGET_CLAUDE_ADMIN_KEY", "claudeAdmin"),
     ("WIDGET_OPENAI_API_KEY", "openai"),
     ("WIDGET_MISTRAL_API_KEY", "mistral"),
     ("WIDGET_OPENROUTER_API_KEY", "openrouter"),
+    ("WIDGET_OLLAMA_API_KEY", "ollama"),
     ("WIDGET_GROK_API_KEY", "grok"),
     ("WIDGET_ZAI_TOKEN", "zai"),
     ("WIDGET_GITHUB_TOKEN", "github"),

@@ -20,7 +20,7 @@
   <img src="https://img.shields.io/github/downloads/Muddyblack/ai-usage-widget/total?style=for-the-badge&logo=github&logoColor=white&label=GitHub%20Downloads&color=blue" alt="GitHub Downloads" />
 </p>
 
-A KDE Plasma 6 panel widget for tracking AI API quota usage across multiple services. Monitor your **Claude** subscription windows and local activity stats, **Antigravity/Google AI Studio**, **OpenAI API and Codex plan limits**, **Grok CLI**, **Kiro**, **Mistral AI**, **OpenRouter**, **Z.AI**, **GitHub Copilot**, **DeepSeek**, **Kimi / Moonshot AI**, and **Muse** usage or balance at a glance with animated segmented bars, live countdown timers, account status, and per-model breakdowns.
+A KDE Plasma 6 panel widget for tracking AI API quota usage across multiple services. Monitor your **Claude** subscription windows and local activity stats, **Antigravity/Google AI Studio**, **OpenAI API and Codex plan limits**, **Grok CLI**, **Kiro**, **Mistral AI**, **OpenRouter**, **Ollama Cloud**, **Z.AI**, **GitHub Copilot**, **DeepSeek**, **Kimi / Moonshot AI**, and **Muse** usage or balance at a glance with animated segmented bars, live countdown timers, account status, and per-model breakdowns.
 
 
 ## Screenshots
@@ -47,7 +47,7 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across multiple serv
 
 ## Features
 
-- **Multi-service support** — 14 providers in one popup, each on its own tab
+- **Multi-service support** — 15 providers in one popup, each on its own tab
 - **Panel view** — Compact percentage readouts in the taskbar, color-coded by usage level, with an inline spark-line trend
 - **Popup view** — Segmented bars showing exact fill level with reset times and live countdowns that show "resetting..." when a window flips
 - **Usage chart** — Smooth, glowing area chart of historical usage with availability-aware 5H / 24H / 7D choices and hover-scrub
@@ -89,6 +89,7 @@ settings, menu bar styles, and build instructions.
 | Mistral AI | Key status, available models, and local vibe CLI cost/token statistics | Supported |
 | OpenRouter | Spend, credit limit, usage percentage, and account label | Untested |
 | Z.AI | 5-hour token quota, monthly tools quota, reset countdowns, model details, and today's token consumption | Supported |
+| Ollama Cloud | Account usage limits and recent activity cost via API key or OpenCode login | Experimental; undocumented endpoint, live account test needed |
 | GitHub Copilot | Premium request usage against the plan's own entitlement, the real reset day, and local Copilot CLI activity stats | Personal billing supported; organization/enterprise billing not yet supported |
 | DeepSeek | Available balance with granted and topped-up breakdown | Supported |
 | Kimi / Moonshot AI | Kimi Code plan windows (5-hour and weekly) and extra-usage wallet; Moonshot API balance with voucher and cash breakdown | Moonshot balance supported; Kimi Code quota tested on a used-up plan only |

@@ -232,6 +232,11 @@ PlasmoidItem {
     property bool openrouterIsFreeTier: false
     property var openrouterRateLimit: ({})
     property string openrouterError: ""
+    property var ollamaWindows: []
+    property var ollamaModels: ({})
+    property string ollamaActivityCost: ""
+    property string ollamaError: ""
+    property real ollamaPct: 0
     // ── Grok CLI / xAI data ──────────────────────────────────────────────────
     property bool grokHasKey: false
     property bool grokLoggedIn: false
@@ -562,6 +567,14 @@ PlasmoidItem {
             icon: "openrouter.svg",
             keyConfig: "openrouterApiKey",
             keyPlaceholder: i18n("empty → $OPENROUTER_API_KEY")
+        },
+        {
+            id: "ollama",
+            label: "Ollama Cloud",
+            color: "#f0f0f0",
+            icon: "ollama.svg",
+            keyConfig: "ollamaApiKey",
+            keyPlaceholder: i18n("optional — OpenCode login or $OLLAMA_API_KEY")
         },
         {
             id: "grok",
@@ -1437,6 +1450,7 @@ PlasmoidItem {
         env += root.envAssign("WIDGET_OPENAI_API_KEY", Plasmoid.configuration.openaiApiKey);
         env += root.envAssign("WIDGET_MISTRAL_API_KEY", Plasmoid.configuration.mistralApiKey);
         env += root.envAssign("WIDGET_OPENROUTER_API_KEY", Plasmoid.configuration.openrouterApiKey);
+        env += root.envAssign("WIDGET_OLLAMA_API_KEY", Plasmoid.configuration.ollamaApiKey);
         env += root.envAssign("WIDGET_GROK_API_KEY", Plasmoid.configuration.grokApiKey);
         env += root.envAssign("WIDGET_ZAI_TOKEN", Plasmoid.configuration.zaiToken);
         env += root.envAssign("WIDGET_GITHUB_TOKEN", Plasmoid.configuration.githubToken);
@@ -1524,6 +1538,8 @@ PlasmoidItem {
             root.applyMistral(details, provider.error || "");
         else if (provider.id === "openrouter")
             root.applyOpenRouter(details, provider.error || "");
+        else if (provider.id === "ollama")
+            root.applyOllama(provider);
         else if (provider.id === "grok")
             root.applyGrok(details, provider.error || "");
         else if (provider.id === "zai")
@@ -1749,6 +1765,15 @@ PlasmoidItem {
         root.openrouterIsFreeTier = d.isFreeTier === true;
         root.openrouterRateLimit = d.rateLimit || ({});
         root.openrouterError = error;
+    }
+
+    function applyOllama(provider) {
+        var d = provider.details || {};
+        root.ollamaWindows = provider.quotaWindows || [];
+        root.ollamaModels = d.models || ({});
+        root.ollamaActivityCost = d.activityCost || "";
+        root.ollamaError = provider.error || "";
+        root.ollamaPct = provider.summary ? (provider.summary.pct || 0) : 0;
     }
 
     function applyGrok(d, error) {
@@ -2527,6 +2552,18 @@ PlasmoidItem {
             }
 
             PanelSlot {
+                pct: root.ollamaPct
+                iconColor: "#f0f0f0"
+                iconSource: Qt.resolvedUrl("../icons/ollama.svg")
+                iconText: "OL"
+                stale: root.stale && root.panelShows("ollama")
+                visible: root.panelShows("ollama") && !root.showSettings
+                showCost: root.ollamaWindows.length === 0
+                costText: "—"
+                tooltipText: "Ollama Cloud" + (root.ollamaWindows.length > 0 ? "\n" + root.ollamaWindows[0].label + ": " + Math.round(root.ollamaPct) + "%" : "\n" + root.ollamaError)
+            }
+
+            PanelSlot {
                 pct: root.grokPct
                 iconColor: root.grokWhite
                 iconSource: Qt.resolvedUrl("../icons/grok.svg")
@@ -2787,18 +2824,6 @@ PlasmoidItem {
                     width: 22
                     height: 22
 
-                    // Masked Kirigami Icons (shown when NOT in Settings)
-                    Kirigami.Icon {
-                        visible: !root.showSettings
-                        anchors.centerIn: parent
-                        width: 22
-                        height: 22
-                        source: Qt.resolvedUrl("../icons/org.muddyblack.aiUsageWidget.svg")
-                        isMask: true
-                        color: root.tabColor(root.enabledTabs[root.activeTab] || "claude")
-                        opacity: 0.22
-                    }
-
                     // Brand logo of the active provider, falling back to the
                     // tinted widget logo for providers without artwork.
                     Image {
@@ -2872,6 +2897,9 @@ PlasmoidItem {
 
                             if (tab === "openrouter")
                                 return i18n("OpenRouter Usage");
+
+                            if (tab === "ollama")
+                                return i18n("Ollama Cloud Usage");
 
                             if (tab === "grok")
                                 return i18n("Grok Usage");
@@ -3171,6 +3199,10 @@ PlasmoidItem {
             }
 
             OpenRouterTab {
+                rootItem: root
+            }
+
+            OllamaTab {
                 rootItem: root
             }
 

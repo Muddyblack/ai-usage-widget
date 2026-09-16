@@ -32,6 +32,7 @@ PROVIDER_ICONS = {
     "mistral": "mistral-color.svg",
     "muse": "muse-color.svg",
     "openai": "openai.svg",
+    "ollama": "ollama.svg",
     "openrouter": "openrouter.svg",
     "zai": "zai.svg",
 }
