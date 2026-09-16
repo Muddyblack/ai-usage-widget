@@ -34,7 +34,7 @@ import time
 import urllib.parse
 
 from .contract import epoch_of, num
-from .providers import opencode
+from .providers import antigravity_sessions, opencode
 from .providers.cline import get_cline_sessions
 from .providers.grok import grok_home
 from .providers.muse import sessions_root as muse_sessions_root
@@ -432,6 +432,33 @@ def _opencode_targets():
     ]
 
 
+def _antigravity_entries():
+    out = []
+    for record in antigravity_sessions.read_recent_sessions():
+        entry = _entry(
+            "antigravity",
+            _clip_title(record.title) or "Antigravity",
+            record.last_activity,
+            session_name="Antigravity",
+            session_id=record.session_id,
+        )
+        if entry:
+            out.append(entry)
+    return out
+
+
+def _antigravity_targets():
+    return [
+        {
+            "provider": "antigravity",
+            "id": record.session_id,
+            "keyId": record.session_id,
+            "cwd": "",
+        }
+        for record in antigravity_sessions.read_session_targets()
+    ]
+
+
 def _claude_prompt_titles(root):
     """sessionId -> that session's first prompt, from ``history.jsonl``.
 
@@ -570,6 +597,7 @@ _RESUME_SPECS = {
     "claude": {"bin": "claude", "cmd": ["--resume", "{id}"]},
     "openai": {"bin": "codex", "cmd": ["resume", "{id}"]},
     "opencode": {"bin": "opencode", "cmd": ["--session", "{id}"]},
+    "antigravity": {"bin": "agy", "cmd": ["--conversation", "{id}"]},
     "grok": {"bin": "grok", "cmd": ["--resume", "{id}"]},
     "cline": {"bin": "cline", "cmd": ["--id", "{id}"]},
     # Muse ships no usable binary here and documents no resume/continue flag
@@ -592,7 +620,15 @@ _TERMINAL_TEMPLATES = [
 def collect_sessions():
     """Merge every local source, newest first, capped."""
     merged = []
-    for collector in (_cline_entries, _muse_entries, _codex_entries, _grok_entries, _claude_entries, _opencode_entries):
+    for collector in (
+        _cline_entries,
+        _muse_entries,
+        _codex_entries,
+        _grok_entries,
+        _claude_entries,
+        _opencode_entries,
+        _antigravity_entries,
+    ):
         try:
             merged.extend(collector())
         except Exception:
@@ -614,7 +650,14 @@ def collect_open_targets():
     is what ``--open-session`` validates a stale or fresh key against.
     """
     targets = {}
-    for collector in (_codex_targets, _grok_targets, _claude_targets, _cline_targets, _opencode_targets):
+    for collector in (
+        _codex_targets,
+        _grok_targets,
+        _claude_targets,
+        _cline_targets,
+        _opencode_targets,
+        _antigravity_targets,
+    ):
         try:
             for target in collector():
                 key = _open_key(target["provider"], target.get("keyId") or target["id"])
