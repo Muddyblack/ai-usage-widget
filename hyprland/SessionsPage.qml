@@ -225,6 +225,7 @@ ColumnLayout {
                             spacing: 2
                             Text {
                                 text: expanded && hasFullTitle ? modelData.fullTitle : (modelData.title || modelData.provider || shell.i18n("Session"))
+                                textFormat: Text.PlainText
                                 font.bold: true
                                 font.pixelSize: 12
                                 color: "#f8fafc"
@@ -242,6 +243,7 @@ ColumnLayout {
                             Text {
                                 visible: (modelData.sessionName || "") !== "" && modelData.sessionName !== modelData.title
                                 text: modelData.sessionName || ""
+                                textFormat: Text.PlainText
                                 font.pixelSize: 10
                                 opacity: 0.55
                                 color: "#f8fafc"
@@ -251,6 +253,7 @@ ColumnLayout {
                             Text {
                                 visible: (modelData.detail || "") !== ""
                                 text: modelData.detail || ""
+                                textFormat: Text.PlainText
                                 font.pixelSize: 10
                                 opacity: 0.45
                                 color: "#f8fafc"
@@ -287,13 +290,13 @@ ColumnLayout {
                             Layout.alignment: Qt.AlignTop
                             radius: 6
                             color: resumeMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.11) : "transparent"
-                            Text {
+                            Image {
                                 anchors.centerIn: parent
-                                text: "❯_"
-                                color: "#e2e8f0"
-                                font.family: "monospace"
-                                font.bold: true
-                                font.pixelSize: 11
+                                source: Qt.resolvedUrl("../package/contents/icons/session-terminal.svg")
+                                sourceSize.width: 18
+                                sourceSize.height: 18
+                                width: 18
+                                height: 18
                                 opacity: resumeMouse.containsMouse ? 1 : 0.6
                             }
                             MouseArea {

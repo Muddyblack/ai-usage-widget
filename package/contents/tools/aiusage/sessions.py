@@ -1,15 +1,10 @@
 """Local agent sessions across supported CLIs.
 
-Returns a redacted list for the Sessions tab. Titles and workspace folder
-names are fine; absolute paths and transcript contents never leave here — with
-one deliberate, narrow exception: Claude Code writes no separate summary, so
-its row title is that session's own *opening* prompt (from `history.jsonl`,
-one line per turn — the first one only), clipped to `_TITLE_PREVIEW_LEN` by
-default (`_clip_title()`) with the full text carried as `fullTitle` for a
-frontend that offers to expand it. That is the user's own words handed back
-to the same user, on their own machine, and bounded to one message — not the
-same thing as a transcript. Cline's own `prompt` field looks similar but is
-not: providers/cline.py explains why it stays untouched.
+Returns local title previews and activity metadata for the Sessions tab.
+Source paths and raw session IDs are omitted, but title text is not scrubbed
+of secrets. Claude Code titles can contain the opening prompt, and Antigravity
+titles can contain the first user prompt or an editor artifact heading.
+Claude previews may also carry the full prompt as ``fullTitle`` for expansion.
 
 Each resumable entry also carries an opaque ``openKey`` (a digest of
 provider + session id) so the frontends can re-open exactly that session in
