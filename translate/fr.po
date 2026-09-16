@@ -2008,6 +2008,26 @@ msgid "Use Plasma accent color"
 msgstr "Utiliser l'accent de Plasma"
 
 #: package/contents/ui/SettingsPanel.qml
+msgid "Panel rotation"
+msgstr "Rotation du panneau"
+
+#: package/contents/ui/SettingsPanel.qml
+msgid "30 seconds"
+msgstr "30 secondes"
+
+#: package/contents/ui/SettingsPanel.qml
+msgid "2 minutes"
+msgstr "2 minutes"
+
+#: package/contents/ui/SettingsPanel.qml
+msgid "10 minutes"
+msgstr "10 minutes"
+
+#: package/contents/ui/SettingsPanel.qml
+msgid "Rotate pinned providers in the compact panel"
+msgstr "Faire pivoter les fournisseurs épinglés dans le panneau compact"
+
+#: package/contents/ui/SettingsPanel.qml
 msgid "Popup BG"
 msgstr "Fond du popup"
 
