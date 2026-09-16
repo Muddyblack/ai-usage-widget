@@ -112,6 +112,40 @@ class OpenSessionResolvesAndSpawnsTest(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("muse", message)
 
+    def test_opencode_uses_actual_session_id_but_keeps_database_in_opaque_key(self):
+        provider, session_id, key_id, cwd = "opencode", "ses-abc", "/private/opencode.db\x00ses-abc", "/tmp"
+        target_key = sessions._open_key(provider, key_id)
+        targets_patch = mock.patch.object(
+            sessions,
+            "collect_open_targets",
+            return_value={target_key: {"provider": provider, "id": session_id, "keyId": key_id, "cwd": cwd}},
+        )
+        captured = {}
+
+        def fake_popen(argv, **kwargs):
+            captured["argv"] = argv
+            captured["cwd"] = kwargs.get("cwd")
+            return mock.Mock()
+
+        def fake_which(name):
+            if name in ("opencode", "fake-term"):
+                return f"/usr/bin/{name}"
+            return None
+
+        with (
+            targets_patch,
+            mock.patch.object(sessions.shutil, "which", side_effect=fake_which),
+            mock.patch.object(sessions.subprocess, "Popen", side_effect=fake_popen),
+            mock.patch.object(sessions, "_TERMINAL_TEMPLATES", [("fake-term", ["-e", "sh", "-c", "{cmd}"])]),
+        ):
+            ok, _message = sessions.open_session(target_key)
+
+        self.assertTrue(ok)
+        command = " ".join(captured["argv"])
+        self.assertIn("--session", command)
+        self.assertIn(session_id, command)
+        self.assertNotIn(key_id, command)
+
     def test_missing_resume_binary_fails_closed(self):
         key = sessions._open_key("claude", "some-id")
         with (
