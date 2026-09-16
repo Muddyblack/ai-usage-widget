@@ -2824,18 +2824,6 @@ PlasmoidItem {
                     width: 22
                     height: 22
 
-                    // Masked Kirigami Icons (shown when NOT in Settings)
-                    Kirigami.Icon {
-                        visible: !root.showSettings
-                        anchors.centerIn: parent
-                        width: 22
-                        height: 22
-                        source: Qt.resolvedUrl("../icons/org.muddyblack.aiUsageWidget.svg")
-                        isMask: true
-                        color: root.tabColor(root.enabledTabs[root.activeTab] || "claude")
-                        opacity: 0.22
-                    }
-
                     // Brand logo of the active provider, falling back to the
                     // tinted widget logo for providers without artwork.
                     Image {

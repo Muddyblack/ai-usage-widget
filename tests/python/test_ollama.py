@@ -96,6 +96,13 @@ class OllamaTest(IsolatedHomeTest):
         self.assertFalse(result["ok"])
         self.assertEqual(result["quotaWindows"], [])
 
+    def test_legacy_zero_cost_does_not_imply_free_usage(self):
+        limits = {"session": {"usage": 0.058}, "weekly": {"usage": 0.183}}
+        legacy = normalize_ollama({"now": 100, "inputs": {"usage": {"limits": limits, "activity": {"cost": "0.00000"}}}})
+        self.assertEqual(legacy["details"]["activityCost"], "")
+        monthly = normalize_ollama({"now": 100, "inputs": {"usage": {"limits": {"monthly": {"usage": 0.1}}, "activity": {"cost": "0.00000"}}}})
+        self.assertEqual(monthly["details"]["activityCost"], "0.00000")
+
     def test_malformed_values_do_not_become_available_zero(self):
         for value in (None, True, "0.5", -0.1, float("nan"), float("inf")):
             with self.subTest(value=value):

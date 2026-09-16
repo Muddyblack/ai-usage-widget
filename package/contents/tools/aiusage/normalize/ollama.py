@@ -54,6 +54,10 @@ def normalize_ollama(raw):
         cost_value = -1
     cost = str(cost) if math.isfinite(cost_value) and cost_value >= 0 else ""
     primary = windows[0]
+    # Legacy session/weekly plans can report zero activity cost despite
+    # consumed quota. Treat that zero as unavailable rather than a bill.
+    if cost_value == 0 and primary["key"] in ("ollama_session", "ollama_weekly") and any(w["pct"] > 0 for w in windows):
+        cost = ""
     r = provider_base("ollama", "Ollama Cloud", ACCENT, now)
     r["summary"] = {"pct": primary["pct"], "text": f"{jround(primary['pct'])}%", "detail": primary["label"], "hasChart": True}
     r["quotaWindows"] = windows

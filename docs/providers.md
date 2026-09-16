@@ -65,6 +65,12 @@ widget reports an error if it stops returning recognizable limit data. It does
 not guess reset times or convert request counts to tokens. Reading the endpoint
 does not run a model.
 
+Older plans expose session and weekly limits; newer plans expose a monthly
+credit pool. Both response shapes are supported. On an older plan, Ollama may
+report a zero recent activity cost even while quota has been used, so the tab
+hides that zero. A positive reported cost and a monthly plan's zero remain
+visible. The widget does not change the account's billing plan.
+
 Key order: widget settings → `$OLLAMA_API_KEY` → OpenCode's
 `ollama-cloud` API-key entry in `~/.local/share/opencode/auth.json` (or
 `$XDG_DATA_HOME/opencode/auth.json` when set, on every OS). OpenCode's `/connect` flow saves that key. Other
