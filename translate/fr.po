@@ -1763,6 +1763,39 @@ msgstr "sous-agents"
 msgid "Delegated subagent sessions, logged separately by Muse"
 msgstr "Sessions de sous-agents délégués, journalisées séparément par Muse"
 
+#: package/contents/ui/OllamaTab.qml
+msgid "Ollama Cloud usage"
+msgstr "Utilisation d'Ollama Cloud"
+
+#: package/contents/ui/OllamaTab.qml
+msgid ""
+"Checking usage… Enable this provider and sign in to Ollama Cloud in "
+"OpenCode, set $OLLAMA_API_KEY, or enter a key in Settings."
+msgstr ""
+"Vérification de l'utilisation… Activez ce fournisseur et connectez-vous à "
+"Ollama Cloud dans OpenCode, définissez $OLLAMA_API_KEY ou saisissez une clé "
+"dans les paramètres."
+
+#: package/contents/ui/OllamaTab.qml
+msgid "Ollama does not provide a reset time in this response."
+msgstr "Ollama ne fournit pas d'heure de réinitialisation dans cette réponse."
+
+#: package/contents/ui/OllamaTab.qml
+msgid "%1: %2 requests"
+msgstr "Nombre de requêtes pour %1 : %2"
+
+#: package/contents/ui/OllamaTab.qml
+msgid "Recent activity cost: $%1"
+msgstr "Coût de l'activité récente : %1 $"
+
+#: package/contents/ui/OllamaTab.qml
+msgid ""
+"Usage comes from an undocumented Ollama Cloud endpoint; its fields may "
+"change."
+msgstr ""
+"L'utilisation provient d'un point de terminaison Ollama Cloud non "
+"documenté ; ses champs peuvent changer."
+
 #: package/contents/ui/OpenAiTab.qml
 msgid "Codex / ChatGPT User"
 msgstr "Utilisateur Codex / ChatGPT"
@@ -2101,6 +2134,10 @@ msgstr "vide → $MISTRAL_API_KEY"
 #: package/contents/ui/main.qml
 msgid "empty → $OPENROUTER_API_KEY"
 msgstr "vide → $OPENROUTER_API_KEY"
+
+#: package/contents/ui/main.qml
+msgid "optional — OpenCode login or $OLLAMA_API_KEY"
+msgstr "optionnel — connexion OpenCode ou $OLLAMA_API_KEY"
 
 #: package/contents/ui/main.qml
 msgid "empty → $GROK_API_KEY"
@@ -2687,6 +2724,10 @@ msgid "OpenRouter Usage"
 msgstr "Utilisation OpenRouter"
 
 #: package/contents/ui/main.qml
+msgid "Ollama Cloud Usage"
+msgstr "Utilisation d'Ollama Cloud"
+
+#: package/contents/ui/main.qml
 msgid "Grok Usage"
 msgstr "Utilisation Grok"
 
@@ -2850,6 +2891,12 @@ msgstr ""
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Optional. Codex sign-in is read from ~/.codex."
 msgstr "Optionnel. La connexion Codex est lue depuis ~/.codex."
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Optional. OpenCode's Ollama Cloud login is used when this is empty."
+msgstr ""
+"Optionnel. La connexion Ollama Cloud d'OpenCode est utilisée si ce champ est "
+"vide."
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Token"
