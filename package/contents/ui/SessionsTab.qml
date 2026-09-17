@@ -21,25 +21,46 @@ ColumnLayout {
     property string errorText: ""
     property string notice: ""
     property string filterText: ""
+    readonly property string searchQuery: (filterText || "").trim()
+    property string requestedQuery: ""
+    property string activeQuery: ""
+    property string activeCommand: ""
+    property int requestSerial: 0
+    property int activeRequestSerial: 0
+    readonly property int sessionsLimit: 60
+    property int sessionsTotal: 0
+    property bool sessionsHasMore: false
+    property int sessionsOffset: 0
+    property int activeOffset: 0
+    property bool activeAppend: false
     property double clockMs: Date.now()
 
-    // Client-side only: filters the already-fetched list by title, session
-    // name, detail or provider id. No backend round-trip.
-    readonly property var filteredSessions: {
-        var q = (filterText || "").toLowerCase().trim();
-        if (q === "")
-            return sessions;
-        return sessions.filter(function (s) {
-            var hay = [s.title, s.sessionName, s.detail, s.provider].join(" ").toLowerCase();
-            return hay.indexOf(q) !== -1;
-        });
-    }
+    readonly property var displayedSessions: sessions || []
 
     onVisibleChanged: {
         if (visible) {
             clockMs = Date.now();
             refresh();
         }
+    }
+
+    onFilterTextChanged: {
+        var query = searchQuery;
+        if (query !== requestedQuery) {
+            requestedQuery = query;
+            requestSerial += 1;
+            sessionsOffset = 0;
+            sessionsTotal = 0;
+            sessionsHasMore = false;
+        }
+        searchTimer.restart();
+    }
+
+    Timer {
+        id: searchTimer
+        interval: 300
+        repeat: false
+        onTriggered: sessionsTab.refresh()
     }
 
     Timer {
@@ -61,7 +82,7 @@ ColumnLayout {
             Layout.fillWidth: true
         }
         PlasmaComponents.Label {
-            text: sessionsTab.loading ? i18n("Refreshing…") : i18np("%1 local session", "%1 local sessions", sessionsTab.sessions.length)
+            text: sessionsTab.loading ? i18n("Refreshing…") : i18np("%1 local session", "%1 local sessions", sessionsTab.sessionsTotal)
             font.pixelSize: 10
             opacity: 0.5
             color: Kirigami.Theme.textColor
@@ -76,7 +97,7 @@ ColumnLayout {
 
     QQC2.TextField {
         Layout.fillWidth: true
-        visible: sessionsTab.sessions.length > 0
+        visible: sessionsTab.sessions.length > 0 || sessionsTab.searchQuery !== "" || searchTimer.running || sessionsTab.loading
         placeholderText: i18n("Search sessions…")
         text: sessionsTab.filterText
         onTextChanged: sessionsTab.filterText = text
@@ -102,7 +123,7 @@ ColumnLayout {
     }
 
     PlasmaComponents.Label {
-        visible: !sessionsTab.loading && sessionsTab.sessions.length === 0 && sessionsTab.errorText === ""
+        visible: !sessionsTab.loading && !searchTimer.running && sessionsTab.searchQuery === "" && sessionsTab.sessions.length === 0 && sessionsTab.errorText === ""
         Layout.fillWidth: true
         text: i18n("No local agent sessions found. They appear after Claude Code, Codex, Muse, Cline or Grok CLI records activity.")
         wrapMode: Text.WordWrap
@@ -111,7 +132,7 @@ ColumnLayout {
     }
 
     PlasmaComponents.Label {
-        visible: sessionsTab.sessions.length > 0 && sessionsTab.filteredSessions.length === 0
+        visible: !sessionsTab.loading && !searchTimer.running && sessionsTab.searchQuery !== "" && sessionsTab.sessions.length === 0 && sessionsTab.errorText === ""
         Layout.fillWidth: true
         text: i18n("No sessions match your search.")
         wrapMode: Text.WordWrap
@@ -125,7 +146,7 @@ ColumnLayout {
     QQC2.ScrollView {
         Layout.fillWidth: true
         Layout.preferredHeight: Math.min(360, listColumn.implicitHeight)
-        visible: sessionsTab.filteredSessions.length > 0
+        visible: sessionsTab.displayedSessions.length > 0
         clip: true
         QQC2.ScrollBar.horizontal.policy: QQC2.ScrollBar.AlwaysOff
 
@@ -135,7 +156,7 @@ ColumnLayout {
             spacing: 10
 
             Repeater {
-                model: sessionsTab.filteredSessions
+                model: sessionsTab.displayedSessions
 
                 Rectangle {
                     required property var modelData
@@ -148,8 +169,6 @@ ColumnLayout {
 
                     readonly property bool activeSession: modelData.state === "active" || modelData.state === "running"
                     readonly property color accent: rootItem.tabColor(modelData.provider || "")
-                    readonly property bool hasFullTitle: (modelData.fullTitle || "") !== ""
-                    property bool expanded: false
 
                     RowLayout {
                         id: body
@@ -170,20 +189,13 @@ ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 2
                             PlasmaComponents.Label {
-                                text: expanded && hasFullTitle ? modelData.fullTitle : (modelData.title || modelData.provider || i18n("Session"))
+                                text: modelData.title || modelData.provider || i18n("Session")
                                 font.bold: true
                                 font.pixelSize: 12
                                 color: Kirigami.Theme.textColor
-                                elide: expanded ? Text.ElideNone : Text.ElideRight
-                                wrapMode: expanded ? Text.WordWrap : Text.NoWrap
+                                elide: Text.ElideRight
+                                wrapMode: Text.NoWrap
                                 Layout.fillWidth: true
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    enabled: hasFullTitle
-                                    cursorShape: hasFullTitle ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                    onClicked: expanded = !expanded
-                                }
                             }
                             PlasmaComponents.Label {
                                 visible: (modelData.sessionName || "") !== "" && modelData.sessionName !== modelData.title
@@ -252,6 +264,16 @@ ColumnLayout {
         }
     }
 
+    PlasmaComponents.Button {
+        visible: sessionsTab.sessionsHasMore
+        Layout.fillWidth: true
+        text: i18n("Load more")
+        implicitHeight: 26
+        font.pixelSize: 10
+        enabled: !sessionsTab.loading
+        onClicked: sessionsTab.loadMore()
+    }
+
     function ageText(epochSec) {
         var sec = Number(epochSec) || 0;
         if (sec <= 0)
@@ -266,15 +288,38 @@ ColumnLayout {
         return i18np("%1 d ago", "%1 d ago", Math.floor(age / 86400));
     }
 
-    function refresh() {
-        if (loading)
-            return;
+    function requestSessions(offset, append) {
+        requestSerial += 1;
+        requestedQuery = searchQuery;
+        activeQuery = requestedQuery;
+        activeRequestSerial = requestSerial;
+        activeOffset = offset;
+        activeAppend = append;
+        if (!append) {
+            sessionsOffset = 0;
+            sessionsTotal = 0;
+            sessionsHasMore = false;
+        }
         loading = true;
         errorText = "";
         notice = "";
-        var cmd = "cd " + Shell.quote(rootItem.scriptDir) + " && ./get-ai-usage --sessions";
+        var cmd = "cd " + Shell.quote(rootItem.scriptDir) + " && ./get-ai-usage --sessions --query " + Shell.quote(activeQuery);
+        cmd += " --limit " + sessionsLimit + " --offset " + activeOffset;
+        activeCommand = cmd;
         sessionsSource.disconnectSource(cmd);
         sessionsSource.connectSource(cmd);
+    }
+
+    function refresh() {
+        if (loading)
+            return;
+        requestSessions(0, false);
+    }
+
+    function loadMore() {
+        if (loading || !sessionsHasMore)
+            return;
+        requestSessions(sessionsOffset + sessionsLimit, true);
     }
 
     Plasma5Support.DataSource {
@@ -282,8 +327,16 @@ ColumnLayout {
         engine: "executable"
         connectedSources: []
         onNewData: function (sourceName, data) {
-            sessionsTab.loading = false;
             sessionsSource.disconnectSource(sourceName);
+            var current = sourceName === sessionsTab.activeCommand && sessionsTab.activeRequestSerial === sessionsTab.requestSerial && sessionsTab.activeQuery === sessionsTab.requestedQuery;
+            if (!current) {
+                if (sessionsTab.activeRequestSerial < sessionsTab.requestSerial) {
+                    sessionsTab.loading = false;
+                    searchTimer.restart();
+                }
+                return;
+            }
+            sessionsTab.loading = false;
             var stdout = (data && data.stdout) ? data.stdout : "";
             // Plasma's executable DataSource reports the exit status under the
             // key "exit code" (with a space) — dot-access (data.exitCode)
@@ -295,7 +348,11 @@ ColumnLayout {
             }
             try {
                 var payload = JSON.parse(stdout);
-                sessionsTab.sessions = payload.sessions || [];
+                var page = payload.sessions || [];
+                sessionsTab.sessionsTotal = Number(payload.total) || 0;
+                sessionsTab.sessionsOffset = Number(payload.offset) || sessionsTab.activeOffset;
+                sessionsTab.sessionsHasMore = payload.hasMore === true;
+                sessionsTab.sessions = sessionsTab.activeAppend ? sessionsTab.sessions.concat(page) : page;
             } catch (e) {
                 sessionsTab.errorText = i18n("Could not parse sessions.");
             }
