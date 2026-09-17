@@ -130,17 +130,31 @@ class SessionQueryTest(unittest.TestCase):
 
         self.assertEqual([row["title"] for row in result["sessions"]], ["Safe Title"])
 
+
 class SessionQueryCliTest(unittest.TestCase):
     def test_space_and_equals_query_forms_are_forwarded_to_sessions(self):
         for argv in (("--sessions", "--query", "old"), ("--sessions", "--query=old")):
-            with self.subTest(argv=argv), mock.patch("aiusage.sessions.collect_sessions", return_value={"updatedAt": 1, "sessions": []}) as collect, mock.patch("sys.stdout", new=io.StringIO()):
+            with (
+                self.subTest(argv=argv),
+                mock.patch(
+                    "aiusage.sessions.collect_sessions",
+                    return_value={"updatedAt": 1, "sessions": []},
+                ) as collect,
+                mock.patch("sys.stdout", new=io.StringIO()),
+            ):
                 self.assertEqual(backend.main(list(argv)), 0)
 
             collect.assert_called_once_with("old")
 
     def test_pagination_forms_are_forwarded_to_sessions(self):
         argv = ("--sessions", "--query=old", "--limit", "5", "--offset=7")
-        with mock.patch("aiusage.sessions.collect_sessions", return_value={"updatedAt": 1, "sessions": []}) as collect, mock.patch("sys.stdout", new=io.StringIO()):
+        with (
+            mock.patch(
+                "aiusage.sessions.collect_sessions",
+                return_value={"updatedAt": 1, "sessions": []},
+            ) as collect,
+            mock.patch("sys.stdout", new=io.StringIO()),
+        ):
             self.assertEqual(backend.main(list(argv)), 0)
 
         collect.assert_called_once_with("old", limit=5, offset=7)
@@ -153,7 +167,12 @@ class SessionQueryCliTest(unittest.TestCase):
             ("--sessions", "--offset", "-1"),
             ("--sessions", "--offset", "not-a-number"),
         ):
-            with self.subTest(argv=argv), mock.patch("sys.stdout", new=io.StringIO()), mock.patch("sys.stderr", new=io.StringIO()) as error, mock.patch("aiusage.sessions.collect_sessions") as collect:
+            with (
+                self.subTest(argv=argv),
+                mock.patch("sys.stdout", new=io.StringIO()),
+                mock.patch("sys.stderr", new=io.StringIO()) as error,
+                mock.patch("aiusage.sessions.collect_sessions") as collect,
+            ):
                 self.assertEqual(backend.main(list(argv)), 2)
 
             self.assertIn("usage:", error.getvalue())
@@ -161,7 +180,13 @@ class SessionQueryCliTest(unittest.TestCase):
 
     def test_query_response_does_not_add_private_data(self):
         entry = _entry("matching", 2, open_key="opaque")
-        with mock.patch("aiusage.sessions.collect_sessions", return_value={"updatedAt": 1, "sessions": [entry]}), mock.patch("sys.stdout", new=io.StringIO()) as output:
+        with (
+            mock.patch(
+                "aiusage.sessions.collect_sessions",
+                return_value={"updatedAt": 1, "sessions": [entry]},
+            ),
+            mock.patch("sys.stdout", new=io.StringIO()) as output,
+        ):
             self.assertEqual(backend.main(["--sessions", "--query", "matching"]), 0)
 
         encoded = output.getvalue()

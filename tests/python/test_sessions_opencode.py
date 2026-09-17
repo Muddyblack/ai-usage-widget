@@ -101,7 +101,16 @@ class OpenCodeSessionRowsTest(unittest.TestCase):
         self.assertEqual(records[0].directory, "/private/project")
 
     def test_query_reads_matching_rows_older_than_the_default_cap(self):
-        rows = [(f"ses-{index:03d}", "older needle" if index == 0 else f"Session {index}", "/private/project", 1_700_000_000_000, 1_700_000_000_000 + index) for index in range(61)]
+        rows = [
+            (
+                f"ses-{index:03d}",
+                "older needle" if index == 0 else f"Session {index}",
+                "/private/project",
+                1_700_000_000_000,
+                1_700_000_000_000 + index,
+            )
+            for index in range(61)
+        ]
         with tempfile.TemporaryDirectory() as root:
             path = _create_database(root, "opencode.db", rows)
             with (
