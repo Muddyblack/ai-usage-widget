@@ -139,6 +139,10 @@
     <entry name="pollIntervalSec" type="Int">
       <default>300</default>
     </entry>
+    <!-- Compact Plasma panel rotation interval; 0 keeps the existing pin display -->
+    <entry name="panelRotationIntervalSec" type="Int">
+      <default>0</default>
+    </entry>
     <!-- Interpreter for the shell tools, exported as $PYTHON3. Empty = let
          tools/sh/python-interp.sh search PATH. Set it to pin a specific
          interpreter, e.g. a virtualenv's bin/python. -->

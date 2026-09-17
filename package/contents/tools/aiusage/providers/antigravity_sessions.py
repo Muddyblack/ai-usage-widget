@@ -12,6 +12,8 @@ from ..contract import epoch_of
 
 _MAX_SESSIONS = 60
 _MAX_TRANSCRIPT_LINES = 20_000
+_MAX_TRANSCRIPT_BYTES = 4 * 1024 * 1024
+_MAX_LINE_BYTES = 256 * 1024
 _MAX_TITLE_CHARS = 2_000
 _UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$")
 
@@ -66,12 +68,20 @@ def _read_cli(session_id: str, transcript: Path) -> AntigravitySession | None:
     title = ""
     recognized = False
     try:
-        with transcript.open(encoding="utf-8", errors="replace") as stream:
-            for index, line in enumerate(stream):
-                if index >= _MAX_TRANSCRIPT_LINES:
+        with transcript.open("rb") as stream:
+            remaining = _MAX_TRANSCRIPT_BYTES
+            for _ in range(_MAX_TRANSCRIPT_LINES):
+                if remaining <= 0:
                     break
+                limit = min(_MAX_LINE_BYTES, remaining)
+                line = stream.readline(limit + 1)
+                # Stop at an oversized record rather than parsing a partial
+                # record or spending unbounded time draining its remainder.
+                if not line or len(line) > limit:
+                    break
+                remaining -= len(line)
                 try:
-                    row = json.loads(line)
+                    row = json.loads(line.decode("utf-8", errors="replace"))
                 except ValueError:
                     continue
                 if not isinstance(row, dict) or not isinstance(row.get("step_index"), int):
@@ -109,7 +119,8 @@ def _read_editor(session_id: str, conversation: Path) -> AntigravitySession | No
         return None
     artifact = artifacts[0]
     try:
-        text = artifact.read_text(encoding="utf-8", errors="replace")[:_MAX_TITLE_CHARS]
+        with artifact.open(encoding="utf-8", errors="replace") as stream:
+            text = stream.read(_MAX_TITLE_CHARS)
     except OSError:
         return None
     activity = _mtime(artifact)

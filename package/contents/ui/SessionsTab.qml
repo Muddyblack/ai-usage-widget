@@ -190,6 +190,7 @@ ColumnLayout {
                             spacing: 2
                             PlasmaComponents.Label {
                                 text: modelData.title || modelData.provider || i18n("Session")
+                                textFormat: Text.PlainText
                                 font.bold: true
                                 font.pixelSize: 12
                                 color: Kirigami.Theme.textColor
@@ -200,6 +201,7 @@ ColumnLayout {
                             PlasmaComponents.Label {
                                 visible: (modelData.sessionName || "") !== "" && modelData.sessionName !== modelData.title
                                 text: modelData.sessionName || ""
+                                textFormat: Text.PlainText
                                 font.pixelSize: 10
                                 opacity: 0.55
                                 color: Kirigami.Theme.textColor
@@ -209,6 +211,7 @@ ColumnLayout {
                             PlasmaComponents.Label {
                                 visible: (modelData.detail || "") !== ""
                                 text: modelData.detail || ""
+                                textFormat: Text.PlainText
                                 font.pixelSize: 10
                                 opacity: 0.45
                                 color: Kirigami.Theme.textColor
@@ -240,7 +243,10 @@ ColumnLayout {
 
                         PlasmaComponents.ToolButton {
                             visible: (modelData.openKey || "") !== ""
-                            icon.name: "utilities-terminal"
+                            icon.source: Qt.resolvedUrl("../icons/session-terminal.svg")
+                            icon.color: Kirigami.Theme.textColor
+                            icon.width: 18
+                            icon.height: 18
                             Layout.alignment: Qt.AlignTop
                             display: PlasmaComponents.AbstractButton.IconOnly
                             text: i18n("Resume session")
