@@ -6,20 +6,9 @@ import SwiftUI
 struct SessionsView: View {
     @ObservedObject var model: AppModel
     @State private var filterText = ""
-    /// Rows currently showing their full (untruncated) title, by session id.
-    @State private var expandedIDs: Set<String> = []
 
-    /// Client-side only: filters the already-fetched list by title, session
-    /// name, detail or provider id. No backend round-trip.
-    private var filteredSessions: [LocalSession] {
-        let q = filterText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard !q.isEmpty else { return model.localSessions }
-        return model.localSessions.filter { session in
-            [session.title, session.sessionName, session.detail, session.provider]
-                .joined(separator: " ")
-                .lowercased()
-                .contains(q)
-        }
+    private var normalizedFilterText: String {
+        filterText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var body: some View {
@@ -30,18 +19,18 @@ struct SessionsView: View {
                 if model.sessionsLoading {
                     ProgressView().controlSize(.small)
                 } else {
-                    Text(i18np("%1 local session", "%1 local sessions", model.localSessions.count))
+                    Text(i18np("%1 local session", "%1 local sessions", model.sessionsTotal))
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
                 }
-                Button { model.refreshSessions() } label: {
+                Button { model.refreshSessions(query: filterText) } label: {
                     Image(systemName: "arrow.clockwise").font(.system(size: 11, weight: .medium))
                 }
                 .buttonStyle(.plain)
                 .disabled(model.sessionsLoading)
                 .accessibilityLabel(i18n("Refresh sessions"))
             }
-            if !model.localSessions.isEmpty {
+            if !model.localSessions.isEmpty || !normalizedFilterText.isEmpty {
                 HStack(spacing: 4) {
                     Image(systemName: "magnifyingglass").font(.system(size: 10)).foregroundStyle(.secondary)
                     TextField(i18n("Search sessions…"), text: $filterText)
@@ -58,10 +47,10 @@ struct SessionsView: View {
             if !model.sessionsNotice.isEmpty {
                 Text(model.sessionsNotice).font(.system(size: 11)).foregroundStyle(.secondary)
             }
-            if !model.sessionsLoading, model.localSessions.isEmpty, model.sessionsError.isEmpty {
+            if !model.sessionsLoading, model.localSessions.isEmpty, model.sessionsError.isEmpty, normalizedFilterText.isEmpty {
                 FeatureViews.message(detail: i18n("No local agent sessions found. They appear after Claude Code, Codex, Muse, Cline or Grok CLI records activity."))
             }
-            if !model.localSessions.isEmpty, filteredSessions.isEmpty {
+            if !model.sessionsLoading, model.localSessions.isEmpty, model.sessionsError.isEmpty, !normalizedFilterText.isEmpty {
                 FeatureViews.message(detail: i18n("No sessions match your search."))
             }
             // Bounded and independently scrollable: the header above (title,
@@ -73,14 +62,25 @@ struct SessionsView: View {
                     sessionRows
                 }
             }
-            .frame(maxHeight: min(360, CGFloat(filteredSessions.count) * 56))
+            .frame(maxHeight: min(360, CGFloat(model.localSessions.count) * 56))
+            if model.sessionsHasMore {
+                Button { model.loadMoreSessions() } label: {
+                    Text(i18n("Load more"))
+                        .font(.system(size: 11, weight: .medium))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .disabled(model.sessionsLoading)
+            }
         }
-        .onAppear { model.refreshSessions() }
+        .onAppear { model.refreshSessions(query: filterText) }
+        .onChange(of: filterText) { model.scheduleSessionsRefresh(query: $0) }
     }
 
     @ViewBuilder
     private var sessionRows: some View {
-        ForEach(filteredSessions) { session in
+        ForEach(model.localSessions) { session in
             // Not a Button: the resume button below needs to be tappable on
             // its own, and SwiftUI does not route taps to a Button nested
             // inside another Button's label.
@@ -90,15 +90,9 @@ struct SessionsView: View {
                     .frame(width: 8, height: 8)
                     .padding(.top, 4)
                 VStack(alignment: .leading, spacing: 2) {
-                    let expanded = expandedIDs.contains(session.id)
-                    Text(expanded && !session.fullTitle.isEmpty ? session.fullTitle : (session.title.isEmpty ? session.provider : session.title))
+                    Text(session.title.isEmpty ? session.provider : session.title)
                         .font(.system(size: 12, weight: .semibold))
-                        .lineLimit(expanded ? nil : 1)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            guard !session.fullTitle.isEmpty else { return }
-                            if expanded { expandedIDs.remove(session.id) } else { expandedIDs.insert(session.id) }
-                        }
+                        .lineLimit(1)
                     if !session.sessionName.isEmpty, session.sessionName != session.title {
                         Text(session.sessionName).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
                     }
