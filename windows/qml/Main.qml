@@ -779,7 +779,7 @@ Window {
             SettingsButton {
                 id: windowsSessionsLoadMore
 
-                visible: !root.showSettings && root.activeId === "sessions" && root.sessionsQuery !== "" && root.sessionsHasMore
+                visible: !root.showSettings && root.activeId === "sessions" && root.sessionsHasMore
                 x: 0
                 y: mainColumn.implicitHeight + 10
                 width: parent.width
