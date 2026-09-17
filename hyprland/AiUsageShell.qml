@@ -323,6 +323,21 @@ ShellRoot {
     property string sessionsError: ""
     // Last `--open-session` result, shown as a status line under the list.
     property string sessionsNotice: ""
+    property string sessionsQuery: ""
+    property string sessionsActiveQuery: ""
+    property int sessionsRequestId: 0
+    property int sessionsActiveRequestId: 0
+    readonly property int sessionsLimit: 60
+    property int sessionsTotal: 0
+    property bool sessionsHasMore: false
+    property int sessionsOffset: 0
+    property int sessionsActiveOffset: 0
+    property bool sessionsActiveAppend: false
+    property bool sessionsFollowup: false
+    property int sessionsFollowupOffset: 0
+    property bool sessionsFollowupAppend: false
+    property bool sessionsResponseDone: false
+    property bool sessionsProcessExited: false
     property string activeId: ""
     // The last real provider selected (never a feature tab id) — what the
     // panel pill shows while a feature tab (Overview/Spend/Sessions) is
@@ -618,30 +633,114 @@ ShellRoot {
         }
     }
 
-    function refreshSessions() {
-        if (sessionsProcess.running)
+    function setSessionsQuery(query) {
+        query = (query || "").trim();
+        if (query === root.sessionsQuery)
             return;
+        root.sessionsQuery = query;
+        root.sessionsRequestId += 1;
+        root.sessionsOffset = 0;
+        root.sessionsTotal = 0;
+        root.sessionsHasMore = false;
+        if (sessionsProcess.running)
+            root.queueSessionsRequest(0, false);
+    }
+
+    function queueSessionsRequest(offset, append) {
+        root.sessionsFollowup = true;
+        root.sessionsFollowupOffset = offset;
+        root.sessionsFollowupAppend = append;
+    }
+
+    function startSessionsRequest(offset, append) {
+        root.sessionsActiveQuery = root.sessionsQuery;
+        root.sessionsActiveRequestId = root.sessionsRequestId;
+        root.sessionsActiveOffset = offset;
+        root.sessionsActiveAppend = append;
+        root.sessionsFollowup = false;
+        root.sessionsResponseDone = false;
+        root.sessionsProcessExited = false;
+        if (!append) {
+            root.sessionsOffset = 0;
+            root.sessionsTotal = 0;
+            root.sessionsHasMore = false;
+        }
         root.sessionsLoading = true;
         root.sessionsError = "";
         sessionsProcess.exec({
-            command: ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --sessions", "ai-usage", root.settings.pythonPath || "", root.backendCommand]
+            command: root.sessionsCommand()
         });
+    }
+
+    function sessionsCommand() {
+        var command = ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --sessions --query \"$3\"", "ai-usage", root.settings.pythonPath || "", root.backendCommand, root.sessionsActiveQuery];
+        command[2] += " --limit \"$4\" --offset \"$5\"";
+        command.push(String(root.sessionsLimit), String(root.sessionsActiveOffset));
+        return command;
+    }
+
+    function refreshSessions(query, offset, append) {
+        root.setSessionsQuery(query);
+        if (sessionsProcess.running) {
+            root.queueSessionsRequest(0, false);
+            return;
+        }
+        root.startSessionsRequest(offset === undefined ? 0 : offset, append === true);
+    }
+
+    function loadMoreSessions() {
+        if (root.sessionsLoading || sessionsProcess.running || !root.sessionsHasMore)
+            return;
+        root.startSessionsRequest(root.sessionsOffset + root.sessionsLimit, true);
     }
 
     Process {
         id: sessionsProcess
         stdout: StdioCollector {
             onStreamFinished: {
+                root.sessionsResponseDone = true;
+                var current = root.sessionsActiveRequestId === root.sessionsRequestId && root.sessionsActiveQuery === root.sessionsQuery;
+                if (!current) {
+                    root.sessionsFollowup = true;
+                    root.finishSessionsProcess();
+                    return;
+                }
                 root.sessionsLoading = false;
                 try {
                     var data = JSON.parse((this.text || "").trim());
-                    root.sessions = data.sessions || [];
+                    var page = data.sessions || [];
+                    root.sessionsTotal = Number(data.total) || 0;
+                    root.sessionsOffset = Number(data.offset) || root.sessionsActiveOffset;
+                    root.sessionsHasMore = data.hasMore === true;
+                    root.sessions = root.sessionsActiveAppend ? root.sessions.concat(page) : page;
                     root.sessionsError = "";
                 } catch (e) {
                     root.sessionsError = root.i18n("Could not load sessions.");
                 }
             }
         }
+        onExited: function (exitCode) {
+            root.sessionsProcessExited = true;
+            if (exitCode !== 0 && root.sessionsLoading) {
+                root.sessionsLoading = false;
+                root.sessionsError = root.i18n("Could not load sessions.");
+                root.sessionsResponseDone = true;
+            }
+            root.finishSessionsProcess();
+        }
+    }
+
+    function finishSessionsProcess() {
+        if (!sessionsResponseDone || !sessionsProcessExited || !sessionsFollowup)
+            return;
+        sessionsFollowup = false;
+        var followupOffset = sessionsFollowupOffset;
+        var followupAppend = sessionsFollowupAppend;
+        sessionsFollowupOffset = 0;
+        sessionsFollowupAppend = false;
+        sessionsResponseDone = false;
+        sessionsProcessExited = false;
+        refreshSessions(sessionsQuery, followupOffset, followupAppend);
     }
 
     // Rows with an empty openKey (Muse) render no button at all.

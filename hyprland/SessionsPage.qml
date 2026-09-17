@@ -13,25 +13,27 @@ ColumnLayout {
     readonly property string errorText: shell.sessionsError || ""
     readonly property string notice: shell.sessionsNotice || ""
     property string filterText: ""
+    readonly property string searchQuery: (filterText || "").trim()
+    readonly property int sessionsTotal: shell.sessionsTotal || 0
     property double clockMs: Date.now()
 
-    // Client-side only: filters the already-fetched list by title, session
-    // name, detail or provider id. No backend round-trip.
-    readonly property var filteredSessions: {
-        var q = (filterText || "").toLowerCase().trim();
-        if (q === "")
-            return sessions;
-        return sessions.filter(function (s) {
-            var hay = [s.title, s.sessionName, s.detail, s.provider].join(" ").toLowerCase();
-            return hay.indexOf(q) !== -1;
-        });
-    }
+    readonly property var displayedSessions: sessions
 
     onVisibleChanged: {
         if (visible) {
             clockMs = Date.now();
             if (typeof shell.refreshSessions === "function")
-                shell.refreshSessions();
+                shell.refreshSessions(searchQuery);
+        }
+    }
+
+    Timer {
+        id: searchTimer
+        interval: 300
+        repeat: false
+        onTriggered: {
+            if (typeof shell.refreshSessions === "function")
+                shell.refreshSessions(page.searchQuery);
         }
     }
 
@@ -54,7 +56,7 @@ ColumnLayout {
             Layout.fillWidth: true
         }
         Text {
-            text: page.loading ? shell.i18n("Refreshing…") : shell.i18np("%1 local session", "%1 local sessions", page.sessions.length)
+            text: page.loading ? shell.i18n("Refreshing…") : shell.i18np("%1 local session", "%1 local sessions", page.sessionsTotal)
             font.pixelSize: 10
             opacity: 0.5
             color: "#f8fafc"
@@ -78,14 +80,14 @@ ColumnLayout {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
                     if (typeof shell.refreshSessions === "function")
-                        shell.refreshSessions();
+                        shell.refreshSessions(page.searchQuery);
                 }
             }
         }
     }
 
     Rectangle {
-        visible: page.sessions.length > 0
+        visible: page.sessions.length > 0 || page.searchQuery !== "" || searchTimer.running || page.loading
         Layout.fillWidth: true
         Layout.preferredHeight: 28
         radius: 6
@@ -106,7 +108,12 @@ ColumnLayout {
             verticalAlignment: TextInput.AlignVCenter
             background: null
             selectByMouse: true
-            onTextEdited: page.filterText = text
+            onTextEdited: {
+                page.filterText = text;
+                if (typeof shell.setSessionsQuery === "function")
+                    shell.setSessionsQuery(page.searchQuery);
+                searchTimer.restart();
+            }
         }
     }
 
@@ -130,7 +137,7 @@ ColumnLayout {
     }
 
     Text {
-        visible: !page.loading && page.sessions.length === 0 && page.errorText === ""
+        visible: !page.loading && !searchTimer.running && page.searchQuery === "" && page.sessions.length === 0 && page.errorText === ""
         Layout.fillWidth: true
         text: shell.i18n("No local agent sessions found. They appear after Claude Code, Codex, Muse, Cline or Grok CLI records activity.")
         wrapMode: Text.WordWrap
@@ -140,7 +147,7 @@ ColumnLayout {
     }
 
     Text {
-        visible: page.sessions.length > 0 && page.filteredSessions.length === 0
+        visible: !page.loading && !searchTimer.running && page.searchQuery !== "" && page.sessions.length === 0 && page.errorText === ""
         Layout.fillWidth: true
         text: shell.i18n("No sessions match your search.")
         wrapMode: Text.WordWrap
@@ -156,7 +163,7 @@ ColumnLayout {
         id: listFlick
         Layout.fillWidth: true
         Layout.preferredHeight: Math.min(360, listColumn.implicitHeight)
-        visible: page.filteredSessions.length > 0
+        visible: page.displayedSessions.length > 0
         clip: true
         contentWidth: width
         contentHeight: listColumn.implicitHeight
@@ -174,7 +181,7 @@ ColumnLayout {
             spacing: 10
 
             Repeater {
-                model: page.filteredSessions
+                model: page.displayedSessions
 
                 Rectangle {
                     required property var modelData
@@ -190,8 +197,6 @@ ColumnLayout {
                         var p = shell.providerById ? shell.providerById(modelData.provider) : null;
                         return (p && p.accent) ? p.accent : "#a78bfa";
                     }
-                    readonly property bool hasFullTitle: (modelData.fullTitle || "") !== ""
-                    property bool expanded: false
 
                     MouseArea {
                         anchors.fill: parent
@@ -224,20 +229,13 @@ ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 2
                             Text {
-                                text: expanded && hasFullTitle ? modelData.fullTitle : (modelData.title || modelData.provider || shell.i18n("Session"))
+                                text: modelData.title || modelData.provider || shell.i18n("Session")
                                 font.bold: true
                                 font.pixelSize: 12
                                 color: "#f8fafc"
-                                elide: expanded ? Text.ElideNone : Text.ElideRight
-                                wrapMode: expanded ? Text.WordWrap : Text.NoWrap
+                                elide: Text.ElideRight
+                                wrapMode: Text.NoWrap
                                 Layout.fillWidth: true
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    enabled: hasFullTitle
-                                    cursorShape: hasFullTitle ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                    onClicked: expanded = !expanded
-                                }
                             }
                             Text {
                                 visible: (modelData.sessionName || "") !== "" && modelData.sessionName !== modelData.title
@@ -310,6 +308,17 @@ ColumnLayout {
                     }
                 }
             }
+        }
+    }
+
+    SettingsButton {
+        visible: shell.sessionsHasMore === true
+        Layout.fillWidth: true
+        text: shell.i18n("Load more")
+        enabled: !page.loading
+        onClicked: {
+            if (typeof shell.loadMoreSessions === "function")
+                shell.loadMoreSessions();
         }
     }
 
