@@ -237,6 +237,11 @@ msgstr "Active"
 msgid "Idle"
 msgstr "Inactive"
 
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: windows/qml/Main.qml
+msgid "Load more"
+msgstr "Charger plus"
+
 #: hyprland/SessionsPage.qml package/contents/ui/MistralTab.qml
 #: package/contents/ui/SessionsTab.qml
 msgid "just now"
