@@ -1,15 +1,13 @@
 """Local agent sessions across supported CLIs.
 
 Returns a redacted list for the Sessions tab. Titles and workspace folder
-names are fine; absolute paths and transcript contents never leave here — with
-one deliberate, narrow exception: Claude Code writes no separate summary, so
-its row title is that session's own *opening* prompt (from `history.jsonl`,
-one line per turn — the first one only), clipped to `_TITLE_PREVIEW_LEN` by
-default (`_clip_title()`) with the full text carried as `fullTitle` for a
-frontend that offers to expand it. That is the user's own words handed back
-to the same user, on their own machine, and bounded to one message — not the
-same thing as a transcript. Cline's own `prompt` field looks similar but is
-not: providers/cline.py explains why it stays untouched.
+names are fine; absolute paths and transcript contents never leave here. Claude
+Code writes no separate summary, so its row title is a clipped preview of that
+session's own *opening* prompt (from `history.jsonl`, one line per turn — the
+first one only), produced by `_clip_title()`. The raw prompt stays in the
+backend. Cline's own
+`prompt` field looks similar but is not: providers/cline.py explains why it
+stays untouched.
 
 Each resumable entry also carries an opaque ``openKey`` (a digest of
 provider + session id) so the frontends can re-open exactly that session in
@@ -42,6 +40,7 @@ from .providers.openai_credentials import codex_home
 
 # Cap so a machine with years of logs stays snappy on a tab open.
 _MAX_SESSIONS = 60
+_SEARCH_FIELDS = ("provider", "title", "sessionName", "state", "detail")
 # A session touched within this window is treated as active.
 _ACTIVE_WITHIN_SEC = 15 * 60
 
@@ -53,10 +52,8 @@ def _basename(path):
 
 
 # How much of a session's own title (Claude Code's first prompt, Cline's task
-# text) shows inline. Neither CLI writes a separate short summary to disk —
-# this *is* what the user typed — so the row shows a clipped preview and the
-# frontends offer to expand it to the full text on request; nothing further
-# is read than what already ships in this field.
+# text) shows inline. Neither CLI writes a separate short summary to disk, so
+# the row shows a clipped preview.
 _TITLE_PREVIEW_LEN = 60
 
 
@@ -91,7 +88,7 @@ def _state(last_activity, ended=False):
     return "active" if age <= _ACTIVE_WITHIN_SEC else "idle"
 
 
-def _entry(provider, title, last_activity, *, state="", session_name="", detail="", session_id="", full_title=""):
+def _entry(provider, title, last_activity, *, state="", session_name="", detail="", session_id=""):
     activity = int(last_activity or 0)
     if activity <= 0:
         return None
@@ -106,10 +103,6 @@ def _entry(provider, title, last_activity, *, state="", session_name="", detail=
         # command (Muse) or the session id could not be established.
         "openKey": _open_key(provider, session_id) if session_id else "",
     }
-    # Only carried when the row's title was clipped, so a frontend can offer
-    # to expand it; omitted rather than duplicating what's already the title.
-    if full_title and full_title != entry["title"]:
-        entry["fullTitle"] = full_title
     return entry
 
 
@@ -126,11 +119,14 @@ def _open_key(provider, session_id):
     return digest
 
 
-def _cline_entries():
+def _cline_entries(*, include_all=False):
     raw = get_cline_sessions().get("sessions") or []
-    ids = _cline_ids()[-_MAX_SESSIONS:]
+    ids = _cline_ids()
+    if not include_all:
+        raw = raw[-_MAX_SESSIONS:]
+        ids = ids[-_MAX_SESSIONS:]
     out = []
-    for index, s in enumerate(raw[-_MAX_SESSIONS:]):
+    for index, s in enumerate(raw):
         ended = num(s.get("endedAt")) > 0
         last = num(s.get("endedAt")) or num(s.get("startedAt"))
         title = s.get("workspace") or s.get("model") or "Cline"
@@ -189,7 +185,7 @@ def _cline_ids():
     return [sid for _started, sid in by_start]
 
 
-def _muse_entries():
+def _muse_entries(*, include_all=False):
     root = muse_sessions_root()
     if not os.path.isdir(root):
         return []
@@ -238,14 +234,14 @@ def _muse_entries():
                     detail=model if model and model != title else "",
                 )
             )
-            if len(out) >= _MAX_SESSIONS:
+            if not include_all and len(out) >= _MAX_SESSIONS:
                 break
     except OSError:
         return []
     return out
 
 
-def _codex_entries():
+def _codex_entries(*, include_all=False):
     sessions = os.environ.get("CODEX_SESSIONS_DIR") or os.path.join(codex_home(), "sessions")
     if not os.path.isdir(sessions):
         return []
@@ -260,7 +256,7 @@ def _codex_entries():
                     continue
     files.sort(reverse=True)
     out = []
-    for mtime, path in files[:_MAX_SESSIONS]:
+    for mtime, path in files if include_all else files[:_MAX_SESSIONS]:
         cwd = ""
         model = ""
         # The codex CLI's own cumulative counter — the last ``token_count``
@@ -335,7 +331,7 @@ def _codex_id_from_path(path):
     return match.group(1) if match else ""
 
 
-def _grok_entries():
+def _grok_entries(*, include_all=False):
     sessions_dir = os.path.join(grok_home(), "sessions")
     if not os.path.isdir(sessions_dir):
         return []
@@ -374,7 +370,7 @@ def _grok_entries():
                     session_id=session_id if session_id and session_id != "sessions" else "",
                 )
             )
-            if len(out) >= _MAX_SESSIONS:
+            if not include_all and len(out) >= _MAX_SESSIONS:
                 return out
     return out
 
@@ -383,9 +379,9 @@ def _opencode_identity(record):
     return f"{record.database_path}\x00{record.session_id}"
 
 
-def _opencode_records(reader):
+def _opencode_records(reader, *, include_all=False):
     selected = {}
-    for record in reader():
+    for record in reader(include_all=include_all):
         previous = selected.get(record.session_id)
         if previous is None or (
             record.last_activity,
@@ -397,15 +393,16 @@ def _opencode_records(reader):
             previous.database_path,
         ):
             selected[record.session_id] = record
-    return sorted(
+    records = sorted(
         selected.values(),
         key=lambda record: (-record.last_activity, record.session_id),
-    )[:_MAX_SESSIONS]
+    )
+    return records if include_all else records[:_MAX_SESSIONS]
 
 
-def _opencode_entries():
+def _opencode_entries(*, include_all=False):
     out = []
-    for record in _opencode_records(opencode.read_recent_sessions):
+    for record in _opencode_records(opencode.read_recent_sessions, include_all=include_all):
         title = _clip_title(record.title) or _basename(record.directory) or "OpenCode"
         out.append(
             _entry(
@@ -428,13 +425,13 @@ def _opencode_targets():
             "keyId": _opencode_identity(record),
             "cwd": record.directory,
         }
-        for record in _opencode_records(opencode.read_session_targets)
+        for record in _opencode_records(opencode.read_session_targets, include_all=True)
     ]
 
 
-def _antigravity_entries():
+def _antigravity_entries(*, include_all=False):
     out = []
-    for record in antigravity_sessions.read_recent_sessions():
+    for record in antigravity_sessions.read_recent_sessions(include_all=include_all):
         entry = _entry(
             "antigravity",
             _clip_title(record.title) or "Antigravity",
@@ -465,8 +462,7 @@ def _claude_prompt_titles(root):
     Claude Code writes no separate summary to disk — the CLI's own
     ``--resume`` picker computes its labels on the fly. This is the opening
     prompt itself (the same text `--resume`'s search matches against), kept
-    verbatim; ``_claude_entries()`` is the only caller, and only to hand it
-    straight back to the user who typed it, clipped, as their own row's title.
+    verbatim so ``_claude_entries()`` can derive the clipped row title.
     """
     path = os.path.join(root, "history.jsonl")
     titles = {}
@@ -522,7 +518,7 @@ def _claude_session_tokens(path):
     return total
 
 
-def _claude_entries():
+def _claude_entries(*, include_all=False):
     """Light scan of Claude Code project folders — mtime only, no transcripts."""
     root = os.environ.get("CLAUDE_CONFIG_DIR") or os.path.expanduser("~/.claude")
     projects = os.path.join(root, "projects")
@@ -535,8 +531,7 @@ def _claude_entries():
             project = os.path.join(projects, name)
             if not os.path.isdir(project):
                 continue
-            newest = 0
-            newest_entry = ""
+            project_entries = []
             try:
                 for entry in os.listdir(project):
                     if not entry.endswith(".jsonl"):
@@ -545,38 +540,36 @@ def _claude_entries():
                         stamp = os.path.getmtime(os.path.join(project, entry))
                     except OSError:
                         continue
-                    if stamp > newest:
-                        newest = stamp
-                        newest_entry = entry
+                    project_entries.append((stamp, entry))
             except OSError:
                 continue
-            if newest <= 0:
-                continue
+            if not include_all:
+                project_entries = sorted(project_entries, reverse=True)[:1]
             # Project dir names are path-encoded; show a short readable slice.
             folder_title = name.replace("-", "/").strip("/")
             folder_title = _basename(folder_title) or "Claude"
-            # Resume target: the newest transcript, whose file name is the
-            # session id claude --resume <id> expects.
-            session_id = newest_entry[: -len(".jsonl")] if newest_entry else ""
-            full_title = prompt_titles.get(session_id, "")
-            title = _clip_title(full_title) or folder_title
-            tokens = _claude_session_tokens(os.path.join(project, newest_entry)) if newest_entry else 0
-            bits = []
-            if folder_title != title:
-                bits.append(folder_title)
-            if tokens > 0:
-                bits.append(f"{_format_tokens(tokens)} tok")
-            out.append(
-                _entry(
-                    "claude",
-                    title,
-                    newest,
-                    session_name="Claude Code",
-                    detail=" · ".join(bits),
-                    session_id=session_id,
-                    full_title=full_title,
+            for newest, newest_entry in project_entries:
+                if newest <= 0:
+                    continue
+                session_id = newest_entry[: -len(".jsonl")]
+                full_title = prompt_titles.get(session_id, "")
+                title = _clip_title(full_title) or folder_title
+                tokens = _claude_session_tokens(os.path.join(project, newest_entry))
+                bits = []
+                if folder_title != title:
+                    bits.append(folder_title)
+                if tokens > 0:
+                    bits.append(f"{_format_tokens(tokens)} tok")
+                out.append(
+                    _entry(
+                        "claude",
+                        title,
+                        newest,
+                        session_name="Claude Code",
+                        detail=" · ".join(bits),
+                        session_id=session_id,
+                    )
                 )
-            )
     except OSError:
         return []
     return out
@@ -617,8 +610,14 @@ _TERMINAL_TEMPLATES = [
 ]
 
 
-def collect_sessions():
-    """Merge every local source, newest first, capped."""
+def _matches_query(entry, query):
+    needle = query.casefold()
+    return any(needle in entry.get(field, "").casefold() for field in _SEARCH_FIELDS if isinstance(entry.get(field), str))
+
+
+def collect_sessions(query="", limit=None, offset=0):
+    """Merge local sessions, filtering and paging the redacted records."""
+    normalized_query = (query or "").strip()
     merged = []
     for collector in (
         _cline_entries,
@@ -630,15 +629,25 @@ def collect_sessions():
         _antigravity_entries,
     ):
         try:
-            merged.extend(collector())
+            merged.extend(collector(include_all=True))
         except Exception:
             # One broken store must not blank the whole tab.
             continue
     merged = [s for s in merged if s]
     merged.sort(key=lambda s: s.get("lastActivityAt") or 0, reverse=True)
+    matches = [entry for entry in merged if _matches_query(entry, normalized_query)] if normalized_query else merged
+    total = len(matches)
+    page_limit = _MAX_SESSIONS if limit is None else limit
+    page = matches[offset : offset + page_limit]
+    has_more = offset + page_limit < total
     return {
         "updatedAt": int(time.time()),
-        "sessions": merged[:_MAX_SESSIONS],
+        "sessions": page,
+        "total": total,
+        "totalExact": True,
+        "offset": offset,
+        "limit": page_limit,
+        "hasMore": has_more,
     }
 
 
@@ -714,18 +723,11 @@ def _grok_targets():
             except Exception:
                 cwd = ""
         out.append({"provider": "grok", "id": session_id, "mtime": mtime, "cwd": cwd})
-        if len(out) >= _MAX_SESSIONS:
-            break
     return out
 
 
 def _claude_targets():
-    """One target per project: resume its newest transcript there.
-
-    ``collect_sessions()`` lists Claude per project (matching how the CLI
-    presents workspaces); the resume coordinates point at that project's
-    latest conversation so the opened tab shows the freshest thread.
-    """
+    """Return every Claude transcript as a resume target."""
     root = os.environ.get("CLAUDE_CONFIG_DIR") or os.path.expanduser("~/.claude")
     projects = os.path.join(root, "projects")
     if not os.path.isdir(projects):
@@ -739,8 +741,6 @@ def _claude_targets():
         project = os.path.join(projects, name)
         if not os.path.isdir(project):
             continue
-        newest = 0
-        newest_entry = ""
         try:
             entries = os.listdir(project)
         except OSError:
@@ -752,19 +752,14 @@ def _claude_targets():
                 stamp = os.path.getmtime(os.path.join(project, entry))
             except OSError:
                 continue
-            if stamp > newest:
-                newest = stamp
-                newest_entry = entry
-        if not newest_entry:
-            continue
-        out.append(
-            {
-                "provider": "claude",
-                "id": newest_entry[: -len(".jsonl")],
-                "mtime": newest,
-                "cwd": _decode_claude_dir(name),
-            }
-        )
+            out.append(
+                {
+                    "provider": "claude",
+                    "id": entry[: -len(".jsonl")],
+                    "mtime": stamp,
+                    "cwd": _decode_claude_dir(name),
+                }
+            )
     return out
 
 
@@ -836,12 +831,19 @@ def _terminal_launch(resume_argv, cwd):
     candidates = []
     term_env = (os.environ.get("TERMINAL") or "").strip()
     if term_env:
-        # $TERMINAL may itself carry flags; go through sh so they survive.
-        candidates.append(("sh", ["-c", f"exec {term_env} -e sh -c {shlex.quote(hold)}"]))
+        try:
+            parsed_terminal = shlex.split(term_env, comments=False, posix=True)
+        except ValueError:
+            parsed_terminal = []
+        metacharacters = ";&|<>$`(){}*?[]!\r\n"
+        if parsed_terminal and all(not any(char in metacharacters for char in token) for token in parsed_terminal):
+            terminal = shutil.which(parsed_terminal[0])
+            if terminal:
+                candidates.append((terminal, parsed_terminal[1:] + ["-e", "sh", "-c", hold]))
     for binary, template in _TERMINAL_TEMPLATES:
         candidates.append((binary, [part.format(cmd=hold) for part in template]))
     for binary, args in candidates:
-        exe = shutil.which(binary)
+        exe = binary if os.path.isabs(binary) else shutil.which(binary)
         if not exe:
             continue
         try:
@@ -866,8 +868,8 @@ def _terminal_launch(resume_argv, cwd):
             start_new_session=True,
         )
         return True, "resumed in the background (no terminal found)"
-    except (OSError, ValueError) as exc:
-        return False, f"could not launch: {exc}"
+    except (OSError, ValueError):
+        return False, "could not launch session"
 
 
 def open_session(open_key):

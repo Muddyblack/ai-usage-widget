@@ -2,8 +2,8 @@
 words.
 
 Claude Code writes no separate summary, so its row title is the session's own
-opening prompt (from ``history.jsonl``), clipped, with the full text offered
-back as ``fullTitle`` for a frontend to expand. Cline's own ``prompt`` field
+opening prompt (from ``history.jsonl``), clipped without retaining the raw
+prompt. Cline's own ``prompt`` field
 looks similar but is a rolling snapshot of recent tool output rather than an
 opening message, so it must never reach ``_cline_entries()``'s output — that
 is a regression a future edit could reintroduce without this test.
@@ -88,8 +88,9 @@ class ClaudeEntriesTitleTest(unittest.TestCase):
         self.assertEqual(entry["detail"], "widget")
         self.assertNotIn("fullTitle", entry)  # short enough it wasn't clipped
 
-    def test_long_prompt_carries_fulltitle_when_clipped(self):
-        long_prompt = "please " + ("x" * 100)
+    def test_long_prompt_is_clipped_without_raw_prompt_or_fulltitle(self):
+        raw_prompt_suffix = "__CLAUDE_RAW_PROMPT_MUST_NOT_LEAK_7f4c9a__"
+        long_prompt = "please " + ("x" * 100) + raw_prompt_suffix
         with tempfile.TemporaryDirectory() as root:
             self._write_session(root, "-mnt-projects-widget", "session-1")
             with open(os.path.join(root, "history.jsonl"), "w", encoding="utf-8") as f:
@@ -97,8 +98,12 @@ class ClaudeEntriesTitleTest(unittest.TestCase):
             with mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": root}):
                 entries = sessions._claude_entries()
         entry = entries[0]
+        self.assertEqual(entry["title"], sessions._clip_title(long_prompt))
         self.assertTrue(entry["title"].endswith("…"))
-        self.assertEqual(entry["fullTitle"], long_prompt)
+        self.assertNotIn("fullTitle", entry)
+        self.assertNotIn(raw_prompt_suffix, json.dumps(entry))
+        self.assertRegex(entry["openKey"], r"^[0-9a-f]{64}$")
+        self.assertNotEqual(entry["openKey"], "session-1")
 
     def test_no_history_entry_falls_back_to_folder_name(self):
         with tempfile.TemporaryDirectory() as root:
@@ -109,6 +114,30 @@ class ClaudeEntriesTitleTest(unittest.TestCase):
         self.assertEqual(entry["title"], "widget")
         self.assertEqual(entry["detail"], "")
         self.assertNotIn("fullTitle", entry)
+
+    def test_query_scan_exposes_an_older_transcript_in_the_same_project(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._write_session(root, "-mnt-projects-widget", "old-session")
+            self._write_session(root, "-mnt-projects-widget", "new-session")
+            old_path = os.path.join(root, "projects", "-mnt-projects-widget", "old-session.jsonl")
+            new_path = os.path.join(root, "projects", "-mnt-projects-widget", "new-session.jsonl")
+            os.utime(old_path, (1_000, 1_000))
+            os.utime(new_path, (2_000, 2_000))
+            with open(os.path.join(root, "history.jsonl"), "w", encoding="utf-8") as f:
+                f.write(json.dumps({"sessionId": "old-session", "display": "find this older Claude session"}) + "\n")
+                f.write(json.dumps({"sessionId": "new-session", "display": "newer session"}) + "\n")
+            with (
+                mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": root}),
+                mock.patch.object(sessions, "_cline_entries", return_value=[]),
+                mock.patch.object(sessions, "_muse_entries", return_value=[]),
+                mock.patch.object(sessions, "_codex_entries", return_value=[]),
+                mock.patch.object(sessions, "_grok_entries", return_value=[]),
+                mock.patch.object(sessions, "_opencode_entries", return_value=[]),
+                mock.patch.object(sessions, "_antigravity_entries", return_value=[]),
+            ):
+                result = sessions.collect_sessions("OLDER CLAUDE")
+
+        self.assertEqual([entry["title"] for entry in result["sessions"]], ["find this older Claude session"])
 
 
 class ClineNeverUsesItsPromptFieldTest(unittest.TestCase):
