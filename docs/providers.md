@@ -173,7 +173,8 @@ The tab itself is off by default too: enable *Muse* in settings if you use Muse 
 The optional Sessions tab (**Settings → Views**) lists recent local activity merged
 from Claude Code, Codex, Grok CLI, Cline, OpenCode, Antigravity and Muse: a redacted title, the
 workspace/session name, active/idle state and recency only — paths and transcript
-contents never leave the backend (`get-ai-usage --sessions`).
+contents never leave the backend (`get-ai-usage --sessions`). Claude's title is a
+clipped opening-prompt preview; raw prompt text never leaves the backend.
 
 Rows for Claude Code, Codex, Grok CLI, Cline, OpenCode and Antigravity carry a ⧉ button that resumes that
 exact session in your terminal (`get-ai-usage --open-session <key>`, using each
@@ -189,6 +190,17 @@ Antigravity CLI transcripts are read from
 editor artifact sessions are read from `~/.gemini/antigravity/brain/<id>/*.md`.
 Only bounded metadata is used for the Sessions tab; the raw paths and transcript
 contents remain inside the backend.
+
+Search is backend-powered, not a client-side-only filter. The command
+`get-ai-usage --sessions --query <text>` searches all underlying session records
+for a non-empty query, using only `provider`, `title`, `sessionName`, `state`,
+and `detail`. Empty, whitespace-only, and non-empty queries all return 60-row
+pages with exact totals and show **Load more** while another page exists.
+`fullTitle`, opaque resume keys, IDs, paths, and
+transcripts are not searchable. The KDE, Hyprland, and Windows frontends request
+the backend after their search input debounce, and macOS does the same through
+its debounced search task. Existing redaction and opaque resume-key handling
+remain unchanged.
 
 ## Usage history
 

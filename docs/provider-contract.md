@@ -43,6 +43,7 @@ get-ai-usage --provider claude,openai     # several (KDE: active tab + pins)
 get-ai-usage --all                        # every enabled provider (Hyprland)
 get-ai-usage --normalize < envelope.json  # replay a raw envelope, no network
 get-ai-usage --list                       # known provider ids
+get-ai-usage --sessions --query <text>    # search local sessions through the backend
 ```
 
 The terminal frontend renders that same model, either fetching it itself or
@@ -58,6 +59,28 @@ get-ai-usage --all | ai-usage-cli   # render a fetched envelope, no second fetch
 (`$XDG_CONFIG_HOME/ai-usage-widget/hyprland-settings.json`, overridable with
 `AI_USAGE_CONFIG`). `--provider` fetches exactly what was asked for, because the
 Plasma widget keeps its own toggles in the plasmoid configuration.
+
+### Session search
+
+`get-ai-usage --sessions --query <text>` performs session search in the shared
+backend. Empty, whitespace-only, and non-empty queries all return 60-session
+pages by default; `--limit <n>` and `--offset <n>` select a page. The response
+includes the exact `total`, `totalExact`, `offset`, `limit`, and `hasMore`
+metadata, so frontends can append another page with **Load more** rather than
+loading every match in one response or filtering client-side. A non-empty query
+searches the underlying session records rather than filtering only that
+60-session result, using only the safe display fields
+`provider`, `title`, `sessionName`, `state`, and `detail`. It does not search
+`fullTitle`, opaque resume keys, IDs, paths, or transcripts. Claude's `title`
+is a clipped opening-prompt preview; raw prompt text never leaves the backend.
+Provider readers retain their existing safety limits while supplying records
+for the search.
+
+The session views in KDE, Hyprland, Windows, and macOS send search requests to
+this backend instead of filtering locally. Their search inputs are debounced
+before a request is started, including the macOS input. Session rows remain
+redacted, and existing opaque resume keys are still the only values passed back
+to `--open-session`.
 
 API keys come from `WIDGET_*` environment variables (what Plasma passes) or from
 the `keys` object of the settings file (what the Hyprland settings page writes).
