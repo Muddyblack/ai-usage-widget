@@ -154,8 +154,8 @@ class OpenSessionResolvesAndSpawnsTest(unittest.TestCase):
             with self.subTest(terminal=terminal):
                 captured = {}
 
-                def fake_popen(argv, **kwargs):
-                    captured["argv"] = argv
+                def fake_popen(argv, _captured=captured, **kwargs):
+                    _captured["argv"] = argv
                     return mock.Mock()
 
                 with (
