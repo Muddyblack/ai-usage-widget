@@ -343,6 +343,7 @@ class Backend(QObject):
         self._pool = ThreadPoolExecutor(max_workers=3, thread_name_prefix="aiusage")
         self._busy = False
         self._sessions_request_id = 0
+        self._sessions_future = None
         self._autostart = autostart_enabled()
         self._first_run = first_run
         self._tray_labels = {}
@@ -393,7 +394,10 @@ class Backend(QObject):
             self._sessions_request_id += 1
             request_id = self._sessions_request_id
         normalized_query = query.strip()
-        self._pool.submit(self._refresh_sessions, normalized_query, request_id, offset)
+        previous_session_future = self._sessions_future
+        if previous_session_future is not None:
+            previous_session_future.cancel()
+        self._sessions_future = self._pool.submit(self._refresh_sessions, normalized_query, request_id, offset)
 
     def _refresh_sessions(self, query, request_id, offset):
         try:

@@ -64,6 +64,33 @@ class BackendThreadTest(unittest.TestCase):
         self.qt_app.processEvents()
         self.assertEqual(self.events, [("historyFinished", ("autoload", '{"data":[]}'), self.gui_thread)])
 
+    def test_session_refresh_cancels_queued_superseded_future(self):
+        release = threading.Event()
+        barrier = threading.Barrier(4)
+        self.addCleanup(release.set)
+
+        def block_worker():
+            barrier.wait()
+            release.wait()
+
+        blockers = [self.backend._pool.submit(block_worker) for _ in range(3)]
+        barrier.wait(timeout=5)
+        with mock.patch("app.collect_sessions_json", return_value='{"sessions":[]}') as collect:
+            self.backend.refreshSessions("first", 1, 0)
+            first = self.backend._sessions_future
+            self.backend.refreshSessions("second", 2, 0)
+            second = self.backend._sessions_future
+
+            self.assertTrue(first.cancelled())
+            self.assertFalse(second.cancelled())
+
+            release.set()
+            for blocker in blockers:
+                blocker.result(timeout=5)
+            second.result(timeout=5)
+
+        self.assertEqual(collect.call_args_list, [mock.call("second", limit=60, offset=0)])
+
 
 if __name__ == "__main__":
     unittest.main()
