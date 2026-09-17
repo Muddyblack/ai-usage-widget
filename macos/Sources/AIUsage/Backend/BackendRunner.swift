@@ -75,11 +75,20 @@ enum Backend {
     }
 
     /// Recent local agent sessions for the optional Sessions view.
-    /// `get-ai-usage --sessions` prints a redacted envelope (titles and folder
-    /// names only — never paths or transcripts), and the frozen binary passes
-    /// `--sessions` straight through to the same `aiusage.__main__`.
-    static func sessions() throws -> LocalSessions {
-        let data = try run(arguments: ["--sessions"])
+    /// `get-ai-usage --sessions --query <text>` prints a redacted envelope
+    /// (titles and folder names only — never paths or transcripts), and the
+    /// frozen binary passes these flags straight through to `aiusage.__main__`.
+    static func sessions(
+        _ query: String = "", limit: Int? = nil, offset: Int? = nil
+    ) throws -> LocalSessions {
+        var arguments = ["--sessions", "--query", query]
+        if let limit {
+            arguments += ["--limit", String(limit)]
+        }
+        if let offset {
+            arguments += ["--offset", String(offset)]
+        }
+        let data = try run(arguments: arguments)
         do {
             return try JSONDecoder().decode(LocalSessions.self, from: data)
         } catch {
