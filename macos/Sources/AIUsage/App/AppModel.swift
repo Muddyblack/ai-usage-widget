@@ -51,6 +51,7 @@ final class AppModel: ObservableObject {
     private var sessionsRequestID = 0
     private var sessionsQuery = ""
     private var sessionsDebounceTask: Task<Void, Never>?
+    private var sessionsFetchTask: Task<Void, Never>?
 
     init(settings: SettingsStore = SettingsStore()) {
         self.settings = settings
@@ -125,6 +126,7 @@ final class AppModel: ObservableObject {
     }
 
     private func refreshSessions(query: String, offset: Int, appending: Bool) {
+        sessionsFetchTask?.cancel()
         sessionsRequestID += 1
         let requestID = sessionsRequestID
         sessionsQuery = query
@@ -140,13 +142,15 @@ final class AppModel: ObservableObject {
         sessionsNotice = ""
         let requestedOffset = offset
         let requestedLimit: Int? = 60
-        Task.detached(priority: .userInitiated) {
+        sessionsFetchTask = Task.detached(priority: .userInitiated) { [weak self] in
             do {
                 let result = try Backend.sessions(
                     query, limit: requestedLimit, offset: requestedOffset
                 )
+                guard !Task.isCancelled else { return }
                 await MainActor.run {
-                    guard self.sessionsRequestID == requestID, self.sessionsQuery == query else { return }
+                    guard !Task.isCancelled, let self,
+                          self.sessionsRequestID == requestID, self.sessionsQuery == query else { return }
                     if requestedOffset == 0 {
                         self.localSessions = result.sessions
                     } else {
@@ -160,12 +164,16 @@ final class AppModel: ObservableObject {
                     self.sessionsUpdated = result.updatedAt > 0
                         ? Date(timeIntervalSince1970: result.updatedAt) : Date()
                     self.sessionsLoading = false
+                    self.sessionsFetchTask = nil
                 }
             } catch {
+                guard !Task.isCancelled else { return }
                 await MainActor.run {
-                    guard self.sessionsRequestID == requestID, self.sessionsQuery == query else { return }
+                    guard !Task.isCancelled, let self,
+                          self.sessionsRequestID == requestID, self.sessionsQuery == query else { return }
                     self.sessionsError = error.localizedDescription
                     self.sessionsLoading = false
+                    self.sessionsFetchTask = nil
                 }
             }
         }
