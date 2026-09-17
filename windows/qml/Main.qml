@@ -18,7 +18,7 @@ Window {
     id: root
 
     width: 460
-    height: Math.min(680, mainColumn.implicitHeight + 40)
+    height: Math.min(680, popupContent.height + 40)
     visible: false
     color: "transparent"
     flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
@@ -146,6 +146,14 @@ Window {
     property bool sessionsLoading: false
     property string sessionsError: ""
     property string sessionsNotice: ""
+    property string sessionsQuery: ""
+    property int sessionsRequestId: 0
+    readonly property int sessionsLimit: 60
+    property int sessionsTotal: 0
+    property bool sessionsHasMore: false
+    property int sessionsOffset: 0
+    property int sessionsActiveOffset: 0
+    property bool sessionsActiveAppend: false
     property string activeId: ""
     // The last real provider selected (never a feature tab id) — what the
     // panel pill shows while a feature tab (Overview/Spend/Sessions) is
@@ -337,11 +345,32 @@ Window {
         backend.refresh();
     }
 
-    function refreshSessions() {
+    function refreshSessions(query) {
+        var normalizedQuery = (query || "").trim();
+        root.sessionsQuery = normalizedQuery;
+        root.sessionsOffset = 0;
+        root.sessionsTotal = 0;
+        root.sessionsHasMore = false;
+        root.sessionsActiveOffset = 0;
+        root.sessionsActiveAppend = false;
+        root.sessionsRequestId += 1;
         root.sessionsLoading = true;
         root.sessionsError = "";
         root.sessionsNotice = "";
-        backend.refreshSessions();
+        backend.refreshSessions(normalizedQuery, root.sessionsRequestId, 0);
+    }
+
+    function loadMoreSessions() {
+        if (root.sessionsLoading || !root.sessionsHasMore)
+            return;
+        var offset = root.sessionsOffset + root.sessionsLimit;
+        root.sessionsActiveOffset = offset;
+        root.sessionsActiveAppend = true;
+        root.sessionsRequestId += 1;
+        root.sessionsLoading = true;
+        root.sessionsError = "";
+        root.sessionsNotice = "";
+        backend.refreshSessions(root.sessionsQuery, root.sessionsRequestId, offset);
     }
 
     // Rows with an empty openKey (Muse) render no button at all.
@@ -452,7 +481,9 @@ Window {
             root.applySnapshot(text);
         }
 
-        function onSessionsReady(text) {
+        function onSessionsReady(text, query, requestId) {
+            if (requestId !== root.sessionsRequestId || query !== root.sessionsQuery)
+                return;
             root.sessionsLoading = false;
             try {
                 var data = JSON.parse((text || "").trim());
@@ -460,7 +491,11 @@ Window {
                     root.sessionsError = data.error;
                     root.sessions = data.sessions || [];
                 } else {
-                    root.sessions = data.sessions || [];
+                    var page = data.sessions || [];
+                    root.sessionsTotal = Number(data.total) || 0;
+                    root.sessionsOffset = Number(data.offset) || root.sessionsActiveOffset;
+                    root.sessionsHasMore = data.hasMore === true;
+                    root.sessions = root.sessionsActiveAppend ? root.sessions.concat(page) : page;
                     root.sessionsError = "";
                 }
             } catch (e) {
@@ -720,7 +755,7 @@ Window {
         anchors.margins: 20
         clip: true
         contentWidth: width
-        contentHeight: mainColumn.implicitHeight
+        contentHeight: popupContent.height
         boundsBehavior: Flickable.StopAtBounds
         interactive: contentHeight > height
 
@@ -729,10 +764,29 @@ Window {
             width: 6
         }
 
-        PopupContent {
-            id: mainColumn
+        Item {
+            id: popupContent
+
             width: contentFlick.width
-            shell: root
+            height: mainColumn.implicitHeight + (windowsSessionsLoadMore.visible ? windowsSessionsLoadMore.implicitHeight + 10 : 0)
+
+            PopupContent {
+                id: mainColumn
+                width: parent.width
+                shell: root
+            }
+
+            SettingsButton {
+                id: windowsSessionsLoadMore
+
+                visible: !root.showSettings && root.activeId === "sessions" && root.sessionsQuery !== "" && root.sessionsHasMore
+                x: 0
+                y: mainColumn.implicitHeight + 10
+                width: parent.width
+                text: root.i18n("Load more")
+                enabled: !root.sessionsLoading
+                onClicked: root.loadMoreSessions()
+            }
         }
     }
 }

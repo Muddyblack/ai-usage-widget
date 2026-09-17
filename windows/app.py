@@ -72,11 +72,11 @@ _env_lock = threading.Lock()
 _DEMO_ENVELOPE: str | None = None
 
 
-def collect_sessions_json():
+def collect_sessions_json(query: str = "", limit: int | None = 60, offset: int = 0) -> str:
     with _env_lock:
         saved = dict(os.environ)
         try:
-            return json.dumps(collect_sessions(), separators=(",", ":"), ensure_ascii=False)
+            return json.dumps(collect_sessions(query, limit=limit, offset=offset), separators=(",", ":"), ensure_ascii=False)
         finally:
             _restore_environ(saved)
 
@@ -320,7 +320,7 @@ class Backend(QObject):
     with a signal, which Qt delivers on the GUI thread."""
 
     snapshotReady = Signal(str)
-    sessionsReady = Signal(str)
+    sessionsReady = Signal(str, str, int)
     openSessionFinished = Signal(str)
     refreshFailed = Signal(str)
     historyFinished = Signal(str, str)
@@ -334,7 +334,7 @@ class Backend(QObject):
     # Workers only emit these private signals. Public QML signals and property
     # notifications are published by slots on this object's GUI thread.
     _refreshCompleted = Signal(str, str)
-    _sessionsCompleted = Signal(str, str)
+    _sessionsCompleted = Signal(str, str, str, int)
     _openSessionCompleted = Signal(str)
     _historyCompleted = Signal(str, str)
 
@@ -342,6 +342,7 @@ class Backend(QObject):
         super().__init__()
         self._pool = ThreadPoolExecutor(max_workers=3, thread_name_prefix="aiusage")
         self._busy = False
+        self._sessions_request_id = 0
         self._autostart = autostart_enabled()
         self._first_run = first_run
         self._tray_labels = {}
@@ -384,23 +385,30 @@ class Backend(QObject):
             self.busyChanged.emit()
 
     @Slot()
-    def refreshSessions(self):
-        self._pool.submit(self._refresh_sessions)
+    @Slot(str)
+    @Slot(str, int)
+    @Slot(str, int, int)
+    def refreshSessions(self, query="", request_id=0, offset=0):
+        if request_id == 0:
+            self._sessions_request_id += 1
+            request_id = self._sessions_request_id
+        normalized_query = query.strip()
+        self._pool.submit(self._refresh_sessions, normalized_query, request_id, offset)
 
-    def _refresh_sessions(self):
+    def _refresh_sessions(self, query, request_id, offset):
         try:
-            result = collect_sessions_json()
+            result = collect_sessions_json(query, limit=60, offset=offset)
         except Exception as exc:
-            self._sessionsCompleted.emit("", str(exc))
+            self._sessionsCompleted.emit("", str(exc), query, request_id)
         else:
-            self._sessionsCompleted.emit(result, "")
+            self._sessionsCompleted.emit(result, "", query, request_id)
 
-    @Slot(str, str)
-    def _finish_sessions(self, result, error):
+    @Slot(str, str, str, int)
+    def _finish_sessions(self, result, error, query, request_id):
         if error:
-            self.sessionsReady.emit(json.dumps({"error": error, "sessions": []}))
+            self.sessionsReady.emit(json.dumps({"error": error, "sessions": []}), query, request_id)
         else:
-            self.sessionsReady.emit(result)
+            self.sessionsReady.emit(result, query, request_id)
 
     @Slot(str)
     def openSession(self, key):
