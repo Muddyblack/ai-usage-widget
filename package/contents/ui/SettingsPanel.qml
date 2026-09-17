@@ -241,6 +241,46 @@ ColumnLayout {
             }
         }
 
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Rectangle {
+                width: 7
+                height: 7
+                radius: 3.5
+                color: rootItem.activeAccent
+                Layout.alignment: Qt.AlignVCenter
+            }
+            PlasmaComponents.Label {
+                text: i18n("Panel rotation")
+                font.pixelSize: 11
+                color: Kirigami.Theme.textColor
+                Layout.preferredWidth: 120
+                elide: Text.ElideRight
+            }
+            QQC2.ComboBox {
+                id: panelRotationCombo
+                implicitHeight: 24
+                Layout.preferredWidth: 120
+                font.pixelSize: 10
+                readonly property var secs: [0, 30, 60, 120, 300, 600]
+                model: [i18n("Off"), i18n("30 seconds"), i18n("1 minute"), i18n("2 minutes"), i18n("5 minutes"), i18n("10 minutes")]
+                currentIndex: Math.max(0, secs.indexOf(Plasmoid.configuration.panelRotationIntervalSec || 0))
+                onActivated: {
+                    var seconds = secs[currentIndex];
+                    Plasmoid.configuration.panelRotationIntervalSec = seconds;
+                }
+            }
+            PlasmaComponents.Label {
+                text: i18n("Rotate pinned providers in the compact panel")
+                font.pixelSize: 9
+                opacity: 0.45
+                color: Kirigami.Theme.textColor
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+            }
+        }
+
         GridLayout {
             Layout.fillWidth: true
             Layout.topMargin: 2

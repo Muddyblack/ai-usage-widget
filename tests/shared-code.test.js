@@ -1,13 +1,38 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const Format = require("../package/contents/code/Format.js");
+const PanelRotation = require("../package/contents/code/PanelRotation.js");
 const UsageHistory = require("../package/contents/code/UsageHistory.js");
 const Shell = require("../package/contents/code/Shell.js");
 const { execFileSync } = require("node:child_process");
 
-// Both frontends import these modules, so a change here shows up in the Plasma
-// popup and the Quickshell panel at once. Provider parsing and the chart-range
-// table live in the backend; see tests/python/test_fixtures.py.
+test("panel rotation is opt-in and only runs with multiple pins", () => {
+    const schema = fs.readFileSync(path.join(__dirname, "..", "package/contents/config/main.xml"), "utf8");
+    assert.match(schema, /entry name="panelRotationIntervalSec" type="Int">[\s\S]*?<default>0<\/default>/);
+    assert.equal(PanelRotation.normalizeIntervalSec(1), 0);
+    assert.equal(PanelRotation.normalizeIntervalSec(600), 600);
+    assert.equal(PanelRotation.isEnabled(0, ["claude", "openai"]), false);
+    assert.equal(PanelRotation.isEnabled(1, ["claude", "openai"]), false);
+    assert.equal(PanelRotation.isEnabled(30, ["claude"]), false);
+    assert.equal(PanelRotation.isEnabled(30, ["claude", "openai"]), true);
+});
+
+test("panel rotation preserves valid selection and wraps in pin order", () => {
+    const pins = ["openai", "claude", "muse"];
+    assert.equal(PanelRotation.normalizeSelection(pins, "claude"), "claude");
+    assert.equal(PanelRotation.normalizeSelection(["claude", "muse"], "openai"), "claude");
+    assert.equal(PanelRotation.nextSelection(pins, "openai"), "claude");
+    assert.equal(PanelRotation.nextSelection(pins, "muse"), "openai");
+});
+
+test("panel rotation stops changing selection for zero or one pin", () => {
+    assert.equal(PanelRotation.normalizeSelection([], "claude"), "");
+    assert.equal(PanelRotation.nextSelection([], "claude"), "");
+    assert.equal(PanelRotation.nextSelection(["claude"], "claude"), "claude");
+    assert.equal(PanelRotation.nextSelection(["claude"], "removed"), "claude");
+});
 
 test("formats a countdown down to the minute", () => {
     const now = 1785000000000;
@@ -461,8 +486,6 @@ test("the burn rate can read one series through another", () => {
 // history-io, and that composition is replayed here rather than only its parts.
 
 const os = require("node:os");
-const fs = require("node:fs");
-const path = require("node:path");
 
 const HISTORY_IO = path.join(__dirname, "..", "package", "contents", "tools", "sh", "history-io");
 
