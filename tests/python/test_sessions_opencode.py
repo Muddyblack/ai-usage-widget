@@ -100,6 +100,27 @@ class OpenCodeSessionRowsTest(unittest.TestCase):
         self.assertEqual(records[0].last_activity, 1_700_000_000)
         self.assertEqual(records[0].directory, "/private/project")
 
+    def test_query_reads_matching_rows_older_than_the_default_cap(self):
+        rows = [(f"ses-{index:03d}", "older needle" if index == 0 else f"Session {index}", "/private/project", 1_700_000_000_000, 1_700_000_000_000 + index) for index in range(61)]
+        with tempfile.TemporaryDirectory() as root:
+            path = _create_database(root, "opencode.db", rows)
+            with (
+                mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True),
+                mock.patch.object(sessions, "_cline_entries", return_value=[]),
+                mock.patch.object(sessions, "_muse_entries", return_value=[]),
+                mock.patch.object(sessions, "_codex_entries", return_value=[]),
+                mock.patch.object(sessions, "_grok_entries", return_value=[]),
+                mock.patch.object(sessions, "_claude_entries", return_value=[]),
+                mock.patch.object(sessions, "_antigravity_entries", return_value=[]),
+            ):
+                result = sessions.collect_sessions("needle")
+
+        self.assertEqual([entry["title"] for entry in result["sessions"]], ["older needle"])
+        encoded = json.dumps(result)
+        self.assertNotIn(path, encoded)
+        self.assertNotIn("ses-000", encoded)
+        self.assertNotIn("/private/project", encoded)
+
     def test_multiple_databases_are_deduplicated_by_newest_session(self):
         with tempfile.TemporaryDirectory() as root:
             data = os.path.join(root, "opencode")
