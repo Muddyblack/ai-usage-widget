@@ -82,6 +82,66 @@ function accent(id) {
     return "";
 }
 
+function localSpendRows(localSpend) {
+    var rows = [];
+    var groups = [
+        { key: "actual", id: "local-actual", label: "Actual provider cost" },
+        { key: "estimated", id: "local-estimated", label: "Calculated estimate" }
+    ];
+
+    for (var i = 0; i < groups.length; i++) {
+        var definition = groups[i];
+        var group = localSpend && localSpend[definition.key];
+        if (!group || (group.costStatus !== "exact" && group.costStatus !== "partial"))
+            continue;
+        if (typeof group.totalUSD !== "number" || !isFinite(group.totalUSD) || !(group.totalUSD > 0))
+            continue;
+        rows.push({
+            id: definition.id,
+            label: definition.label,
+            cost: group.totalUSD,
+            currency: "USD",
+            note: "local CLI logs",
+            local: true,
+            provenance: definition.key,
+            costStatus: group.costStatus
+        });
+    }
+
+    if (rows.length === 0 && localSpend &&
+            (localSpend.costStatus === "exact" || localSpend.costStatus === "partial") &&
+            typeof localSpend.totalUSD === "number" && isFinite(localSpend.totalUSD) &&
+            localSpend.totalUSD > 0) {
+        rows.push({
+            id: "local",
+            label: "Local sessions",
+            cost: localSpend.totalUSD,
+            currency: "USD",
+            note: "local CLI logs",
+            local: true,
+            legacy: true,
+            costStatus: localSpend.costStatus
+        });
+    }
+    return rows;
+}
+
+function sessionCostInfo(entry) {
+    var status = entry && entry.costStatus;
+    var cost = entry && entry.costUSD;
+    if ((status !== "exact" && status !== "partial") ||
+            typeof cost !== "number" || !isFinite(cost) || cost < 0)
+        return { available: false, provenance: "", status: "unavailable", cost: 0 };
+
+    var provenance = entry.costProvenance;
+    if (provenance === undefined || provenance === null || provenance === "")
+        provenance = "legacy";
+    if (provenance !== "actual" && provenance !== "estimated" &&
+            provenance !== "mixed" && provenance !== "legacy")
+        return { available: false, provenance: "", status: "unavailable", cost: 0 };
+    return { available: true, provenance: provenance, status: status, cost: cost };
+}
+
 // Build the per-provider cost rows the Spend tab shows from a provider list
 // that already carries details. Only numbers the backend already exposed.
 function spendProviderRows(providers) {
@@ -96,34 +156,34 @@ function spendProviderRows(providers) {
         var id = p.id || "";
 
         if (id === "claude") {
-            cost = Number((d.organizationUsage && d.organizationUsage.totalCostUSD)
+            cost = (d.organizationUsage && d.organizationUsage.totalCostUSD)
                 || (d.org && d.org.totalCostUSD) || d.totalCostUSD
-                || (d.stats && d.stats.totalCostUSD) || 0);
+                || (d.stats && d.stats.totalCostUSD) || 0;
             note = "30d API";
         } else if (id === "openai") {
-            cost = Number((d.organizationUsage && d.organizationUsage.totalCostUSD)
+            cost = (d.organizationUsage && d.organizationUsage.totalCostUSD)
                 || (d.org && d.org.totalCostUSD) || d.totalCostUSD
-                || (d.stats && d.stats.totalCostUSD) || 0);
+                || (d.stats && d.stats.totalCostUSD) || 0;
             note = "30d API";
         } else if (id === "openrouter") {
-            cost = Number(d.usageUSD || d.usage || 0);
+            cost = d.usageUSD || d.usage || 0;
             note = "all-time";
         } else if (id === "mistral") {
-            cost = Number((d.vibe && d.vibe.totalCost) || d.vibeTotalCost || d.totalCost || 0);
+            cost = (d.vibe && d.vibe.totalCost) || d.vibeTotalCost || d.totalCost || 0;
             note = "vibe CLI";
         } else if (id === "muse") {
-            cost = Number((d.stats && d.stats.totalCostUSD) || d.totalCostUSD || 0);
+            cost = (d.stats && d.stats.totalCostUSD) || d.totalCostUSD || 0;
             currency = (d.stats && d.stats.currency) || d.currency || "USD";
             note = "local est.";
         } else if (id === "cline") {
-            cost = Number((d.stats && d.stats.totalCostUSD) || d.totalCostUSD || 0);
+            cost = (d.stats && d.stats.totalCostUSD) || d.totalCostUSD || 0;
             note = "local";
         } else if (id === "cursor") {
-            cost = Number(d.onDemandUsed || d.onDemandSpendUSD || d.onDemand || 0);
+            cost = d.onDemandUsed || d.onDemandSpendUSD || d.onDemand || 0;
             note = "on-demand";
         }
 
-        if (!(cost > 0))
+        if (typeof cost !== "number" || !isFinite(cost) || !(cost > 0))
             continue;
         rows.push({
             id: id,
@@ -145,8 +205,9 @@ function spendTotal(rows, currency) {
     var sum = 0;
     var cur = currency || "USD";
     for (var i = 0; i < (rows || []).length; i++) {
-        if ((rows[i].currency || "USD") === cur)
-            sum += Number(rows[i].cost) || 0;
+        if (rows[i].local !== true && (rows[i].currency || "USD") === cur &&
+                typeof rows[i].cost === "number" && isFinite(rows[i].cost))
+            sum += rows[i].cost;
     }
     return sum;
 }
