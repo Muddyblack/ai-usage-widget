@@ -142,10 +142,14 @@ Window {
 
     // ── Provider state ───────────────────────────────────────────────────────
     property var providers: []
+    property var localSpend: ({})
     property var sessions: []
     property bool sessionsLoading: false
     property string sessionsError: ""
     property string sessionsNotice: ""
+    readonly property bool pricingLoading: backend.pricingBusy
+    property string pricingStatus: ""
+    property string pricingError: ""
     property string activeId: ""
     // The last real provider selected (never a feature tab id) — what the
     // panel pill shows while a feature tab (Overview/Spend/Sessions) is
@@ -306,6 +310,7 @@ Window {
         try {
             var data = JSON.parse((text || "").trim());
             root.providers = data.providers || [];
+            root.localSpend = data.localSpend || ({});
             root.updatedAt = data.updatedAt || 0;
             // Seed (or heal, if the remembered one got disabled) the pill's
             // fallback provider — needed even before the user ever leaves a
@@ -342,6 +347,12 @@ Window {
         root.sessionsError = "";
         root.sessionsNotice = "";
         backend.refreshSessions();
+    }
+
+    function refreshPricing() {
+        if (root.pricingLoading)
+            return;
+        backend.refreshPricing();
     }
 
     // Rows with an empty openKey (Muse) render no button at all.
@@ -479,6 +490,24 @@ Window {
 
         function onRefreshFailed(message) {
             root.errorText = message;
+        }
+
+        function onPricingRefreshFinished(text) {
+            try {
+                var data = JSON.parse((text || "").trim());
+                root.pricingStatus = data.status || (data.ok === true ? "refreshed" : "no-cache");
+                root.pricingError = data.error || "";
+                if (data.ok === true)
+                    root.refresh();
+            } catch (e) {
+                root.pricingStatus = "no-cache";
+                root.pricingError = root.i18n("Could not refresh pricing.");
+            }
+        }
+
+        function onPricingRefreshFailed(message) {
+            root.pricingStatus = "no-cache";
+            root.pricingError = message;
         }
 
         // The tray menu's switches (tray style, floating pill), JSON-encoded.
