@@ -11,19 +11,48 @@ Organization token costs use the community-maintained
 The widget downloads data only, with no LiteLLM package dependency. Direct
 Anthropic and OpenAI standard token rates are selected by exact model ID;
 reseller and regional rates are excluded. Prices refresh automatically once
-per day when organization usage needs pricing, and both providers share
-`pricing-litellm-v1.json` in the widget's cache directory (`AI_USAGE_CACHE_DIR`
-can override that location). No account credentials or usage are sent to the
-catalog host.
+every seven days, after the fixed 604800-second TTL expires, when organization
+usage needs pricing. A manual `--refresh-pricing` bypasses that TTL once, and
+concurrent forced refreshes share one in-flight refresh. No account credentials
+or usage are sent to the catalog host.
 
-A failed or malformed download retains the last good cache and retries after
-15 minutes. Before the first successful download, or for a model absent from
-the catalog, tokens remain visible with `priced: false`; cost totals include
-only priced models. These are standard-rate estimates, not invoices: contract
-discounts, batch rates, long-context tiers and other per-request charges cannot
-be reconstructed from the aggregate usage available here. Claude Code's local
-recorded costs and subscription limits continue to come from their existing
-sources.
+A failed or malformed download retains the last good rates and their original
+`fetchedAt`. The refresh result is `refreshed` on success, `stale-good` when
+saved rates remain usable after a failed refresh, or `no-cache` when no usable
+rates exist. The command exits nonzero only for `no-cache`. Before the first
+successful download, or for a model absent from the catalog, tokens remain
+visible with `priced: false`; unknown models are not estimated and cost totals
+include only priced models. These are standard-rate estimates, not invoices:
+contract discounts, batch rates, long-context tiers and other per-request
+charges cannot be reconstructed from the aggregate usage available here.
+Claude Code's local recorded costs and subscription limits continue to come
+from their existing sources.
+
+Session rows can expose optional structured `costUSD` and `costStatus` values.
+Statuses are `exact`, `partial`, and `unavailable`. Multi-model session costs
+are summed from the structured model buckets that can be priced. Overview and
+provider totals remain provider-level figures, not session totals. Session
+activity is locally observed only, so the widget does not infer costs or promise
+parsing for unsupported local formats.
+
+Session cost provenance is separate from coverage status. `actual` means a
+finite provider-reported USD amount; `estimated` means a calculated amount from
+exact local token fields and an exact cached model rate; and `mixed` means the
+row contains both, with `actualUSD` and `estimatedUSD` subtotals in
+`costBreakdown`. Estimates are labels for calculated rates, not bills or
+invoices. `partial` indicates that at least one structured bucket was priced
+and another was not; `unavailable` is used when there is no trustworthy numeric
+result.
+
+The Usage & Spend tab shows **Actual provider cost** and **Calculated estimate**
+as separate Local session totals. They are not added to provider/API spend and
+must not be interpreted as one bill. Mixed rows feed each subtotal only when
+both origin-specific values are finite and non-negative and their sum matches
+the session total. Unknown or missing model, rate, or token data remains
+unavailable. OpenCode estimates are especially
+strict: the local model string must exactly match a key in the OpenAI catalog
+namespace. Aliases, normalized names, near matches, and metadata-only records
+do not produce estimates.
 
 ## Setup per provider
 
@@ -142,6 +171,12 @@ The Cursor tab needs no API key and no Cursor IDE: it uses the login `cursor-age
 ## Cline
 
 The Cline tab is **offline**: it reads the session records the Cline CLI writes to `~/.cline/data/sessions/<id>/<id>.json` and keeps only the provider, model, workspace folder name, start and end time, and the token and cost totals (sub-agents included). Prompts, titles, git remotes and transcripts are never read into the result. **Usage** shows today, the last 7 days and the last 30 days — tokens, sessions, and spend when Cline recorded one; a lifetime token count says little on its own, since a token costs very different amounts from model to model. **Stats** keeps the all-time picture: tokens, spend, sessions, active days, streaks, longest session, peak hour, a per-day sparkline, top workspaces and a per-model breakdown. Cline is opt-in, so enable it under **Settings → Providers**.
+
+Cline's aggregate `totalCost` is provider-owned and belongs to Cline's provider
+reporting. It is intentionally not surfaced as a per-session or local actual
+value. A local Cline cost is an estimate only when trustworthy per-session
+model and token fields exist and the exact cached model rate is available;
+otherwise the local session cost remains unavailable.
 
 ## Muse
 

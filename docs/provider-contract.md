@@ -8,12 +8,13 @@ through `package/contents/tools/sh/get-ai-usage`; the Windows app, which has no
 shell, calls it in-process; the macOS app runs a frozen copy of the same package
 as a subprocess.
 
-The macOS app is the one that reads only the **provider-agnostic** half of this
-document — `summary`, `quotaWindows`, `chartWindows`, `slots`, `historyValues`
-and the shared `details.status` — and nothing under `details` beyond those. That
-is deliberate, and it is what makes a third UI codebase affordable: a provider
-added to the backend appears there with no Swift change at all. Keep it that
-way; see `macos/README.md`.
+The macOS app reads the **provider-agnostic** core of this document — `summary`,
+`quotaWindows`, `chartWindows`, `slots`, `historyValues`, and the shared
+`details.status` — plus the generic provider cost figures under `details`, the
+shared `localSpend` aggregates, and structured session cost fields. That keeps
+the third UI codebase small: a provider added to the backend appears in the
+core views with no Swift change, while a new contract field or provider-specific
+presentation may require one. See `macos/README.md`.
 
 ```
 shared provider backend (Python, stdlib only)   package/contents/tools/aiusage
@@ -58,6 +59,72 @@ get-ai-usage --all | ai-usage-cli   # render a fetched envelope, no second fetch
 (`$XDG_CONFIG_HOME/ai-usage-widget/hyprland-settings.json`, overridable with
 `AI_USAGE_CONFIG`). `--provider` fetches exactly what was asked for, because the
 Plasma widget keeps its own toggles in the plasmoid configuration.
+
+## Pricing catalog refresh
+
+The shared model pricing catalog has a fixed TTL of **604800 seconds**, exactly
+seven days. A normal catalog read reuses usable rates until that TTL expires.
+The `--refresh-pricing` operation is the manual force refresh: it bypasses the
+TTL once. Concurrent forced refreshes are single-flight, so they share one
+download and one result.
+
+The refresh result is a compact object with only `ok`, `status`, `fetchedAt`,
+and `error`.
+
+If a refresh fails after usable rates have been saved, those last-good rates and
+their original `fetchedAt` remain available. The operation returns `ok: true`,
+`status: "stale-good"`, and a non-empty `error` describing the failed refresh.
+A successful refresh returns `ok: true` and `status: "refreshed"`. When no
+usable rates exist, it returns `ok: false`, `status: "no-cache"`,
+`fetchedAt: 0` when no prior fetch exists, and an `error`. The command exits
+nonzero only for this no-usable-rates case. Frontends should use `status` and
+`error` together rather than treating a refresh error as proof that saved rates
+are unusable.
+
+Unknown or unpriced models remain visible in usage data but are not estimated.
+Session rows may carry optional structured `costUSD` and `costStatus` values.
+`costStatus` is `exact`, `partial`, or `unavailable`; a row with an unknown
+model normally has no `costUSD` and uses `unavailable`. For a multi-model row,
+the cost is the sum of the structured per-model buckets that can be priced,
+not an estimate based on one selected model. Overview and provider totals are
+provider-level figures and are not session totals.
+
+### Local session cost provenance
+
+`costProvenance` is optional and independent of `costStatus`:
+
+| value | meaning |
+| --- | --- |
+| `actual` | finite, positive USD reported by the local provider/session record; this is the only local value that represents a provider-reported amount |
+| `estimated` | calculated from exact local input/output/cache token counts and an exact cached model rate; it is not an invoice or subscription bill |
+| `mixed` | the session contains both actual and calculated amounts; `costBreakdown` contains finite non-negative `actualUSD` and `estimatedUSD` subtotals whose sum matches the session `costUSD` |
+
+An estimate is allowed only when the local usage fields and model identity are
+complete and the cached rate is exact. OpenCode may use the `openai` catalog
+namespace only when its model string exactly equals an OpenAI catalog key; no
+alias, normalization, or near-match is accepted. Unknown or missing model/rate
+data, incomplete or invalid token data, and metadata-only records remain
+`unavailable`. `partial` coverage means that some structured buckets were
+priced while others were not; it does not change an estimate into actual cost.
+
+The envelope's `localSpend` object has two independent aggregate objects,
+`actual` and `estimated`. Each may contain `totalUSD`, `costStatus`,
+`costProvenance`, and provider rollups. These totals are displayed as
+**Actual provider cost** and **Calculated estimate**; neither is included in
+provider/API spend, and neither is a combined bill-like total. A mixed session
+contributes its two `costBreakdown` subtotals to the corresponding aggregate.
+When no qualifying numeric rows exist, the aggregate contains only
+`costStatus: "unavailable"`.
+
+Session activity is locally observed data. The contract does not promise parsing
+formats that do not produce supported local records, and frontends must not
+infer missing costs or session details.
+
+Cline's aggregate `totalCost` is provider-owned aggregate reporting. It is not a
+per-session local actual and is intentionally excluded from the local session
+actual aggregate. Cline contributes to a local calculated estimate only when
+trustworthy per-session model and token fields are present and the exact cached
+model rate is available; otherwise its local session cost is `unavailable`.
 
 API keys come from `WIDGET_*` environment variables (what Plasma passes) or from
 the `keys` object of the settings file (what the Hyprland settings page writes).

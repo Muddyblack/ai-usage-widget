@@ -62,7 +62,46 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across multiple serv
 - **Optional Plasma panel rotation** — Choose Off, 30 seconds, 1 minute, 2 minutes, 5 minutes, or 10 minutes in Appearance to show pinned providers one at a time in pin order; disabled by default
 - **History export / import** — Save and restore usage history as JSON; history is mirrored to disk so it survives reinstalls
 - **Robust refresh** — Poll interval from 1 to 30 minutes, respects `retry-after` headers, dims and shows the error inline when a fetch fails
-- **Optional Overview / Usage & Spend / Sessions tabs** — turn on in Settings → Views. Overview shows every enabled provider at a glance, Usage & Spend totals the API spend figures each provider already reports, and Sessions lists recent local Claude Code / Codex / Grok CLI / Cline / OpenCode / Antigravity / Muse activity — local title previews and recency; previews may contain sensitive text — with a ⧉ button to resume a session in your terminal (`get-ai-usage --sessions` / `--open-session <key>`; not available for Muse, which ships no resume command)
+- **Optional Overview / Usage & Spend / Sessions tabs**, turn on in Settings → Views. Overview shows every enabled provider at a glance, Usage & Spend shows provider-reported spend and separate Local session totals, and Sessions lists recent local Claude Code / Codex / Grok CLI / Cline / OpenCode / Antigravity / Muse activity, local title previews and recency; previews may contain sensitive text, with a ⧉ button to resume a session in your terminal (`get-ai-usage --sessions` / `--open-session <key>`; not available for Muse, which ships no resume command)
+
+## Session costs and Usage & Spend
+
+Sessions may include structured `costUSD` and `costStatus` fields. The status is
+`exact`, `partial`, or `unavailable`. Token-derived costs are exact only when
+the model matches the cached pricing catalog. Finite USD costs reported by a
+provider can be exact. A mix of known and unknown models is partial. Unknown,
+missing, or invalid model usage is unpriced and never estimated.
+
+The optional `costProvenance` field says where a numeric session cost came from:
+`actual` is a finite provider-reported USD amount, `estimated` is calculated
+from exact local token usage and an exact cached model rate, and `mixed` contains
+both kinds. A mixed row also carries finite non-negative
+`costBreakdown.actualUSD` and `costBreakdown.estimatedUSD` values whose sum
+matches `costUSD`; it is not a bill. Provenance is independent of coverage:
+`partial` means some usage could not be priced, while `unavailable` means there
+is no trustworthy numeric result.
+
+Current local cost coverage includes Claude, Codex/OpenAI, Cline, and OpenCode
+when explicit structured local usage is available. Cline's aggregate provider
+`totalCost` remains provider-owned and is not surfaced as a per-session or local
+actual; local Cline costs are estimates only when trustworthy per-session model
+and token fields exist. OpenCode reads bounded, read-only structured assistant
+usage; metadata-only sessions remain unavailable.
+Antigravity remains metadata-only and unavailable for cost because its verified
+local schema has no structured billing data. Other providers are not implied to
+have local session cost support.
+
+Usage & Spend keeps provider-reported spend separate from two non-navigable
+local rows: **Actual provider cost** and **Calculated estimate**. The rows are
+separate totals and must not be merged or read as one provider or API bill.
+Session resume is a separate Sessions action that uses an opaque handle.
+
+The local aggregate contains only totals and provider rollups. It emits no
+prompts, transcripts, paths, or raw session IDs. Local session costs therefore
+depend on the data and exact cached model pricing available on the machine.
+For the full contract and provider details, see
+[docs/provider-contract.md](docs/provider-contract.md) and
+[docs/providers.md](docs/providers.md).
 
 Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on macOS](docs/macos.md) and [in a terminal](docs/cli.md) — every frontend shares one backend.
 
