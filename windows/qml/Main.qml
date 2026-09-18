@@ -370,7 +370,6 @@ Window {
         root.sessionsOffset = 0;
         root.sessionsTotal = 0;
         root.sessionsHasMore = false;
-        root.sessions = [];
     }
 
     function sessionSourceSelectionHasStaleIds(available) {
