@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from _support import REPO  # noqa: F401  (ensures TOOLS is on sys.path)
+from _support import REPO, IsolatedHomeTest  # noqa: F401  (ensures TOOLS is on sys.path)
 from aiusage import sessions
 from aiusage.providers import opencode
 
@@ -87,7 +87,7 @@ class OpenCodeDiscoveryTest(unittest.TestCase):
         self.assertEqual(records, [])
 
 
-class OpenCodeSessionRowsTest(unittest.TestCase):
+class OpenCodeSessionRowsTest(IsolatedHomeTest):
     def test_reads_only_recent_metadata_and_normalizes_milliseconds(self):
         rows = [(f"ses-{index:03d}", f"Session {index}", "/private/project", 1_700_000_000_000, 1_700_000_000_000 + index) for index in range(61)]
         with tempfile.TemporaryDirectory() as root:
@@ -99,6 +99,37 @@ class OpenCodeSessionRowsTest(unittest.TestCase):
         self.assertEqual(records[0].session_id, "ses-060")
         self.assertEqual(records[0].last_activity, 1_700_000_000)
         self.assertEqual(records[0].directory, "/private/project")
+
+    def test_query_reads_matching_rows_older_than_the_default_cap(self):
+        rows = [
+            (
+                f"ses-{index:03d}",
+                "older needle" if index == 0 else f"Session {index}",
+                "/private/project",
+                1_700_000_000_000,
+                1_700_000_000_000 + index,
+            )
+            for index in range(61)
+        ]
+        with tempfile.TemporaryDirectory() as root:
+            path = _create_database(root, "opencode.db", rows)
+            with (
+                mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True),
+                mock.patch.object(sessions, "_cline_entries", return_value=[]),
+                mock.patch.object(sessions, "_muse_entries", return_value=[]),
+                mock.patch.object(sessions, "_codex_entries", return_value=[]),
+                mock.patch.object(sessions, "_grok_entries", return_value=[]),
+                mock.patch.object(sessions, "_claude_entries", return_value=[]),
+                mock.patch.object(sessions, "_antigravity_entries", return_value=[]),
+            ):
+                sessions.refresh_sessions()
+                result = sessions.collect_sessions("needle")
+
+        self.assertEqual([entry["title"] for entry in result["sessions"]], ["older needle"])
+        encoded = json.dumps(result)
+        self.assertNotIn(path, encoded)
+        self.assertNotIn("ses-000", encoded)
+        self.assertNotIn("/private/project", encoded)
 
     def test_multiple_databases_are_deduplicated_by_newest_session(self):
         with tempfile.TemporaryDirectory() as root:

@@ -64,6 +64,8 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across multiple serv
 - **Robust refresh** — Poll interval from 1 to 30 minutes, respects `retry-after` headers, dims and shows the error inline when a fetch fails
 - **Optional Overview / Usage & Spend / Sessions tabs** — turn on in Settings → Views. Overview shows every enabled provider at a glance, Usage & Spend totals the API spend figures each provider already reports, and Sessions lists recent local Claude Code / Codex / Grok CLI / Cline / OpenCode / Antigravity / Muse activity — local title previews and recency; previews may contain sensitive text — with a ⧉ button to resume a session in your terminal (`get-ai-usage --sessions` / `--open-session <key>`; not available for Muse, which ships no resume command)
 
+Session search is handled by the backend with `get-ai-usage --sessions --query <text>`. Empty, whitespace-only, and non-empty searches all return 60-session pages with exact totals and offer **Load more** when additional sessions exist. Non-empty searches check all underlying session records using only `provider`, `title`, `sessionName`, `state`, and `detail`; `fullTitle`, opaque resume keys, IDs, paths, and transcripts are not searchable or exposed. Claude titles are clipped opening-prompt previews; raw prompt text never leaves the backend.
+
 Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on macOS](docs/macos.md) and [in a terminal](docs/cli.md) — every frontend shares one backend.
 
 ## macOS — native Swift menu bar app

@@ -323,6 +323,24 @@ ShellRoot {
     property string sessionsError: ""
     // Last `--open-session` result, shown as a status line under the list.
     property string sessionsNotice: ""
+    property string sessionsQuery: ""
+    property string sessionsActiveQuery: ""
+    property int sessionsRequestId: 0
+    property int sessionsActiveRequestId: 0
+    readonly property int sessionsLimit: 60
+    property int sessionsTotal: 0
+    property bool sessionsHasMore: false
+    property int sessionsOffset: 0
+    property int sessionsActiveOffset: 0
+    property bool sessionsActiveAppend: false
+    property bool sessionsActiveRefresh: false
+    property bool sessionsFollowup: false
+    property int sessionsFollowupOffset: 0
+    property bool sessionsFollowupAppend: false
+    property bool sessionsFollowupRefresh: false
+    property bool sessionsResponseDone: false
+    property bool sessionsProcessExited: false
+    readonly property bool sessionsViewVisible: root.popupOpen && !root.showSettings && root.activeId === "sessions"
     property string activeId: ""
     // The last real provider selected (never a feature tab id) — what the
     // panel pill shows while a feature tab (Overview/Spend/Sessions) is
@@ -618,30 +636,134 @@ ShellRoot {
         }
     }
 
-    function refreshSessions() {
-        if (sessionsProcess.running)
+    function setSessionsQuery(query) {
+        query = (query || "").trim();
+        if (query === root.sessionsQuery)
             return;
+        root.sessionsQuery = query;
+        root.sessionsRequestId += 1;
+        root.sessionsOffset = 0;
+        root.sessionsTotal = 0;
+        root.sessionsHasMore = false;
+        if (sessionsProcess.running)
+            root.queueSessionsRequest(0, false, false);
+    }
+
+    function queueSessionsRequest(offset, append, refreshMode) {
+        root.sessionsFollowup = true;
+        root.sessionsFollowupOffset = offset;
+        root.sessionsFollowupAppend = append;
+        root.sessionsFollowupRefresh = refreshMode === true;
+    }
+
+    function startSessionsRequest(offset, append, refreshMode) {
+        root.sessionsActiveQuery = root.sessionsQuery;
+        root.sessionsActiveRequestId = root.sessionsRequestId;
+        root.sessionsActiveOffset = offset;
+        root.sessionsActiveAppend = append;
+        root.sessionsActiveRefresh = refreshMode === true;
+        root.sessionsFollowup = false;
+        root.sessionsResponseDone = false;
+        root.sessionsProcessExited = false;
+        if (!append) {
+            root.sessionsOffset = 0;
+            root.sessionsTotal = 0;
+            root.sessionsHasMore = false;
+        }
         root.sessionsLoading = true;
         root.sessionsError = "";
         sessionsProcess.exec({
-            command: ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --sessions", "ai-usage", root.settings.pythonPath || "", root.backendCommand]
+            command: root.sessionsCommand()
         });
+    }
+
+    function sessionsCommand() {
+        var command = root.sessionsActiveRefresh ? ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --sessions --refresh --query \"$3\"", "ai-usage", root.settings.pythonPath || "", root.backendCommand, root.sessionsActiveQuery] : ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --sessions --query-only --query \"$3\"", "ai-usage", root.settings.pythonPath || "", root.backendCommand, root.sessionsActiveQuery];
+        command[2] += " --limit \"$4\" --offset \"$5\"";
+        command.push(String(root.sessionsLimit), String(root.sessionsActiveOffset));
+        return command;
+    }
+
+    function refreshSessions(query, offset, append) {
+        root.setSessionsQuery(query);
+        if (sessionsProcess.running) {
+            root.queueSessionsRequest(0, false, true);
+            return;
+        }
+        root.startSessionsRequest(offset === undefined ? 0 : offset, append === true, true);
+    }
+
+    function reconcileSessions(query) {
+        root.refreshSessions(query);
+    }
+
+    function querySessions(query, offset, append) {
+        root.setSessionsQuery(query);
+        if (sessionsProcess.running) {
+            root.queueSessionsRequest(offset === undefined ? 0 : offset, append === true, false);
+            return;
+        }
+        root.startSessionsRequest(offset === undefined ? 0 : offset, append === true, false);
+    }
+
+    function loadMoreSessions() {
+        if (root.sessionsLoading || sessionsProcess.running || !root.sessionsHasMore)
+            return;
+        root.querySessions(root.sessionsQuery, root.sessionsOffset + root.sessionsLimit, true);
     }
 
     Process {
         id: sessionsProcess
         stdout: StdioCollector {
             onStreamFinished: {
+                root.sessionsResponseDone = true;
+                var current = root.sessionsActiveRequestId === root.sessionsRequestId && root.sessionsActiveQuery === root.sessionsQuery;
+                if (!current) {
+                    root.sessionsFollowup = true;
+                    root.finishSessionsProcess();
+                    return;
+                }
                 root.sessionsLoading = false;
                 try {
                     var data = JSON.parse((this.text || "").trim());
-                    root.sessions = data.sessions || [];
+                    var page = data.sessions || [];
+                    root.sessionsTotal = Number(data.total) || 0;
+                    root.sessionsOffset = Number(data.offset) || root.sessionsActiveOffset;
+                    root.sessionsHasMore = data.hasMore === true;
+                    root.sessions = root.sessionsActiveAppend ? root.sessions.concat(page) : page;
                     root.sessionsError = "";
                 } catch (e) {
                     root.sessionsError = root.i18n("Could not load sessions.");
                 }
             }
         }
+        onExited: function (exitCode) {
+            root.sessionsProcessExited = true;
+            if (exitCode !== 0 && root.sessionsLoading) {
+                root.sessionsLoading = false;
+                root.sessionsError = root.i18n("Could not load sessions.");
+                root.sessionsResponseDone = true;
+            }
+            root.finishSessionsProcess();
+        }
+    }
+
+    function finishSessionsProcess() {
+        if (!sessionsResponseDone || !sessionsProcessExited || !sessionsFollowup)
+            return;
+        sessionsFollowup = false;
+        var followupOffset = sessionsFollowupOffset;
+        var followupAppend = sessionsFollowupAppend;
+        var followupRefresh = sessionsFollowupRefresh;
+        sessionsFollowupOffset = 0;
+        sessionsFollowupAppend = false;
+        sessionsFollowupRefresh = false;
+        sessionsResponseDone = false;
+        sessionsProcessExited = false;
+        if (followupRefresh)
+            refreshSessions(sessionsQuery, followupOffset, followupAppend);
+        else
+            querySessions(sessionsQuery, followupOffset, followupAppend);
     }
 
     // Rows with an empty openKey (Muse) render no button at all.
@@ -705,7 +827,11 @@ ShellRoot {
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: root.refresh()
+        onTriggered: {
+            root.refresh();
+            if (root.sessionsViewVisible)
+                root.reconcileSessions(root.sessionsQuery);
+        }
     }
 
     Timer {

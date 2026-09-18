@@ -30,8 +30,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model = AppModel(settings: settings)
 
         statusItem = StatusItemController(content: UsageView(model: model))
-        statusItem.onRefresh = { [weak self] in self?.model.refresh() }
+        statusItem.onRefresh = { [weak self] in self?.model.refreshManually() }
         statusItem.onOpenSettings = { [weak self] in self?.openSettings() }
+        statusItem.onVisibilityChanged = { [weak self] visible in self?.model.setPopoverVisible(visible) }
 
         // The menu bar item and the settings window both follow the model.
         cancellable = model.objectWillChange.sink { [weak self] _ in

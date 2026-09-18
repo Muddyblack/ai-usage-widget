@@ -18,6 +18,8 @@ import unittest
 from _support import REPO, fixture, provider_fixtures
 
 CONTRACT_SWIFT = os.path.join(REPO, "macos", "Sources", "AIUsage", "Backend", "Contract.swift")
+SESSIONS_VIEW_SWIFT = os.path.join(REPO, "macos", "Sources", "AIUsage", "Views", "SessionsView.swift")
+APP_MODEL_SWIFT = os.path.join(REPO, "macos", "Sources", "AIUsage", "App", "AppModel.swift")
 
 # Sub-objects Contract.swift decodes out of `details`, which is a free-form
 # blob in the contract — so they are checked against the fixtures separately.
@@ -69,6 +71,10 @@ class SwiftContractTest(unittest.TestCase):
         # absent from most fixtures, so the field names are gathered across all
         # of them rather than from whichever one is convenient.
         cls.emitted = cls._emitted_fields()
+        with open(SESSIONS_VIEW_SWIFT, encoding="utf-8") as fh:
+            cls.sessions_view = fh.read()
+        with open(APP_MODEL_SWIFT, encoding="utf-8") as fh:
+            cls.app_model = fh.read()
 
     @classmethod
     def _emitted_fields(cls):
@@ -232,6 +238,74 @@ class SwiftContractTest(unittest.TestCase):
         used = set(re.findall(r'\(\s*"([A-Za-z]+)",', block.group(0)))
         known = {name for _var, name in config._KEY_EXPORTS}
         self.assertLessEqual(used, known, f"unknown settings keys: {sorted(used - known)}")
+
+    def test_sessions_refresh_button_preserves_the_active_filter(self):
+        self.assertRegex(
+            self.sessions_view,
+            r"Button\s*\{\s*model\.refreshSessions\(query:\s*filterText\)\s*\}\s*label",
+        )
+
+    def test_session_filter_changes_are_debounced_before_refreshing(self):
+        self.assertRegex(
+            self.sessions_view,
+            r"\.onChange\(of: filterText\)\s*\{\s*model\.scheduleSessionsRefresh\(query:\s*\$0\)\s*\}",
+        )
+        self.assertNotRegex(
+            self.sessions_view,
+            r"\.onChange\(of: filterText\).*model\.refreshSessions\(query:\s*\$0\)",
+        )
+
+    def test_local_session_does_not_decode_raw_full_title(self):
+        self.assertNotIn("fullTitle", declaration(self.text, "LocalSession"))
+
+    def test_sessions_view_does_not_expand_raw_full_title(self):
+        self.assertNotIn("fullTitle", self.sessions_view)
+
+    def test_session_refresh_scheduler_replaces_pending_work_after_300_ms(self):
+        self.assertRegex(self.app_model, r"func scheduleSessionsRefresh\(query: String\)")
+        self.assertRegex(self.app_model, r"sessionsDebounceTask\?\.cancel\(\)")
+        self.assertRegex(self.app_model, r"sessionsDebounceTask\s*=\s*Task\s*\{")
+        self.assertRegex(self.app_model, r"Task\.sleep\(for:\s*\.milliseconds\(300\)\)")
+
+    def test_local_sessions_decodes_pagination_metadata_leniently(self):
+        body = declaration(self.text, "LocalSessions")
+        for field in ("total", "offset", "limit", "hasMore", "totalExact"):
+            self.assertIn(field, coding_keys(self.text, "LocalSessions"))
+            self.assertRegex(body, rf"try\?\s+c\.decode(?:IfPresent)?\([^)]*,\s*forKey:\s*\.{field}\)")
+
+    def test_app_model_owns_session_pagination_state(self):
+        for field in ("sessionsTotal", "sessionsOffset", "sessionsLimit", "sessionsHasMore", "sessionsTotalExact"):
+            self.assertRegex(self.app_model, rf"\b(?:private\(set\)\s+)?var\s+{field}\b")
+        self.assertRegex(self.app_model, r"\b(?:private\s+)?let\s+sessionsLimit\s*=\s*60\b")
+
+    def test_app_model_exposes_load_more_for_all_session_searches(self):
+        match = re.search(r"func loadMoreSessions\(\)\s*\{(.+?)\n    \}", self.app_model, re.DOTALL)
+        self.assertIsNotNone(match, "AppModel has no loadMoreSessions action")
+        body = match.group(1)
+        self.assertRegex(body, r"sessionsHasMore")
+        self.assertNotRegex(body, r"sessionsQuery\.isEmpty")
+        self.assertRegex(body, r"sessionsOffset.*sessionsLimit|sessionsLimit.*sessionsOffset")
+        self.assertRegex(body, r"refreshSessions")
+
+    def test_app_model_requests_every_session_search_in_sixty_row_pages(self):
+        self.assertRegex(self.app_model, r"let requestedLimit: Int\? = 60")
+        self.assertNotRegex(self.app_model, r"query\.isEmpty\s*\?\s*60\s*:\s*nil")
+        self.assertNotRegex(self.app_model, r"query\.isEmpty\s*\?\s*requestedOffset\s*:\s*nil")
+        self.assertRegex(
+            self.app_model,
+            r"Backend\.sessions\(\s*query,\s*limit:\s*requestedLimit,\s*offset:\s*requestedOffset",
+        )
+
+    def test_sessions_view_uses_total_and_routes_load_more(self):
+        self.assertRegex(self.sessions_view, r"Text\([^\n]*model\.sessionsTotal")
+        self.assertNotRegex(self.sessions_view, r"Text\([^\n]*model\.localSessions\.count")
+        match = re.search(
+            r"if\s+model\.sessionsHasMore\s*\{(.+?)\n\s*\}",
+            self.sessions_view,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(match, "SessionsView does not gate load-more on hasMore")
+        self.assertRegex(match.group(1), r"model\.loadMoreSessions\(\)")
 
 
 if __name__ == "__main__":

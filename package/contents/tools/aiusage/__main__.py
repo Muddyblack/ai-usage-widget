@@ -24,6 +24,11 @@ USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize 
   --provider <ids>      fetch the named providers regardless of the toggles
   --normalize           read one raw envelope on stdin, print the provider object
   --sessions            list recent local agent sessions (no paths or transcripts)
+  --query-only          query the shared session index without refreshing
+  --refresh             refresh all session providers before querying
+  --query <text>        search all local session records by safe display fields
+  --limit <n>           limit session results to a positive number of rows
+  --offset <n>          skip a non-negative number of session rows
   --open-session <key>  resume one listed session (by its openKey) in a terminal
   --list                print the known provider ids, one per line
   -h, --help            show this help
@@ -51,6 +56,11 @@ def main(argv):
     mode = ""
     requested = ""
     open_key = ""
+    query = ""
+    limit = None
+    offset = None
+    query_only = False
+    refresh = False
 
     i = 0
     while i < len(argv):
@@ -68,6 +78,47 @@ def main(argv):
             mode = "normalize"
         elif arg == "--sessions":
             mode = "sessions"
+        elif arg == "--query-only":
+            query_only = True
+        elif arg == "--refresh":
+            refresh = True
+        elif arg == "--query":
+            i += 1
+            query = argv[i] if i < len(argv) else ""
+        elif arg.startswith("--query="):
+            query = arg[len("--query=") :]
+        elif arg == "--limit" or arg.startswith("--limit="):
+            if arg == "--limit":
+                i += 1
+                raw_limit = argv[i] if i < len(argv) else ""
+            else:
+                raw_limit = arg[len("--limit=") :]
+            try:
+                limit = int(raw_limit)
+            except ValueError:
+                sys.stderr.write("get-ai-usage: --limit needs a positive integer\n")
+                sys.stderr.write(USAGE + "\n")
+                return 2
+            if limit <= 0:
+                sys.stderr.write("get-ai-usage: --limit needs a positive integer\n")
+                sys.stderr.write(USAGE + "\n")
+                return 2
+        elif arg == "--offset" or arg.startswith("--offset="):
+            if arg == "--offset":
+                i += 1
+                raw_offset = argv[i] if i < len(argv) else ""
+            else:
+                raw_offset = arg[len("--offset=") :]
+            try:
+                offset = int(raw_offset)
+            except ValueError:
+                sys.stderr.write("get-ai-usage: --offset needs a non-negative integer\n")
+                sys.stderr.write(USAGE + "\n")
+                return 2
+            if offset < 0:
+                sys.stderr.write("get-ai-usage: --offset needs a non-negative integer\n")
+                sys.stderr.write(USAGE + "\n")
+                return 2
         elif arg == "--open-session":
             mode = "open-session"
             i += 1
@@ -88,10 +139,25 @@ def main(argv):
             return 2
         i += 1
 
-    if mode == "sessions":
-        from .sessions import collect_sessions
+    if query_only and refresh:
+        sys.stderr.write("get-ai-usage: --query-only and --refresh cannot be used together\n")
+        sys.stderr.write(USAGE + "\n")
+        return 2
 
-        _emit(collect_sessions())
+    if (query_only or refresh) and mode != "sessions":
+        sys.stderr.write("get-ai-usage: session modes require --sessions\n")
+        sys.stderr.write(USAGE + "\n")
+        return 2
+
+    if mode == "sessions":
+        from .sessions import collect_sessions, refresh_sessions
+
+        collect = collect_sessions if query_only else refresh_sessions
+        if limit is None and offset is None:
+            result = collect(query)
+        else:
+            result = collect(query, limit=limit if limit is not None else 60, offset=offset if offset is not None else 0)
+        _emit(result)
         return 0
 
     if mode == "open-session":

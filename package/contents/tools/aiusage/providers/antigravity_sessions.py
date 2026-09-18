@@ -129,7 +129,7 @@ def _read_editor(session_id: str, conversation: Path) -> AntigravitySession | No
     return AntigravitySession(session_id, _markdown_title(text, artifact.stem), activity, str(artifact))
 
 
-def _discover() -> list[AntigravitySession]:
+def _discover(*, include_all: bool = False) -> list[AntigravitySession]:
     root = _home()
     selected: dict[str, AntigravitySession] = {}
     cli_root = root / "antigravity-cli" / "brain"
@@ -143,14 +143,15 @@ def _discover() -> list[AntigravitySession]:
         previous = selected.get(session_id)
         if record is not None and (previous is None or record.last_activity > previous.last_activity):
             selected[session_id] = record
-    return sorted(selected.values(), key=lambda record: (-record.last_activity, record.session_id))[:_MAX_SESSIONS]
+    records = sorted(selected.values(), key=lambda record: (-record.last_activity, record.session_id))
+    return records if include_all else records[:_MAX_SESSIONS]
 
 
-def read_recent_sessions() -> list[AntigravitySession]:
+def read_recent_sessions(*, include_all: bool = False) -> list[AntigravitySession]:
     """Return the bounded, newest-first Antigravity session metadata."""
-    return _discover()
+    return _discover(include_all=include_all)
 
 
 def read_session_targets() -> list[AntigravitySession]:
     """Return the same records used to resolve an opaque resume key."""
-    return _discover()
+    return _discover(include_all=True)

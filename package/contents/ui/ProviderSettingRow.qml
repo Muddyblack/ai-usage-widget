@@ -23,7 +23,7 @@ ColumnLayout {
     // "on" is not one state but two: local-only, and local + the billed live
     // quota. A switch cannot say that; three segments can.
     readonly property bool tristate: providerId === "muse"
-    readonly property bool hasDetails: keyConfig !== "" || providerId === "copilot"
+    readonly property bool hasDetails: keyConfig !== "" || providerId === "copilot" || providerId === "selfhosted"
     readonly property bool keySet: keyConfig !== "" && String(Plasmoid.configuration[keyConfig] || "") !== ""
 
     property bool expanded: false
@@ -106,7 +106,7 @@ ColumnLayout {
         }
 
         QQC2.ToolButton {
-            visible: prow.serviceOn && (prow.hasDetails || prow.tristate)
+            visible: (prow.serviceOn || prow.providerId === "selfhosted") && (prow.hasDetails || prow.tristate)
             implicitWidth: 22
             implicitHeight: 22
             icon.name: prow.expanded ? "go-up" : "go-down"
@@ -115,7 +115,7 @@ ColumnLayout {
             onClicked: prow.expanded = !prow.expanded
             QQC2.ToolTip.delay: 400
             QQC2.ToolTip.visible: hovered
-            QQC2.ToolTip.text: prow.expanded ? i18n("Hide options") : i18n("Key and options")
+            QQC2.ToolTip.text: prow.expanded ? i18n("Hide options") : (prow.providerId === "selfhosted" ? i18n("Server URL and options") : i18n("Key and options"))
         }
     }
 
@@ -124,7 +124,35 @@ ColumnLayout {
         Layout.leftMargin: 13
         Layout.bottomMargin: visible ? 4 : 0
         spacing: 3
-        visible: prow.expanded && prow.serviceOn
+        visible: prow.expanded && (prow.serviceOn || prow.providerId === "selfhosted")
+
+        PlasmaComponents.Label {
+            visible: prow.providerId === "selfhosted"
+            text: i18n("Local runtime (Ollama, vLLM, or llama.cpp)")
+            font.pixelSize: 10
+            color: Kirigami.Theme.textColor
+        }
+        QQC2.TextField {
+            visible: prow.providerId === "selfhosted"
+            Layout.fillWidth: true
+            placeholderText: i18n("Server URLs, separated by commas (empty: auto-detect)")
+            text: Plasmoid.configuration.selfhostedEndpoint || ""
+            onEditingFinished: Plasmoid.configuration.selfhostedEndpoint = text.trim()
+        }
+        QQC2.ComboBox {
+            visible: prow.providerId === "selfhosted"
+            model: ["auto", "ollama", "vllm", "llama.cpp"]
+            currentIndex: Math.max(0, model.indexOf(Plasmoid.configuration.selfhostedEngine || "auto"))
+            onActivated: Plasmoid.configuration.selfhostedEngine = currentText
+        }
+        QQC2.TextField {
+            visible: prow.providerId === "selfhosted"
+            Layout.fillWidth: true
+            echoMode: TextInput.Password
+            placeholderText: i18n("Optional bearer token")
+            text: Plasmoid.configuration.selfhostedKey || ""
+            onEditingFinished: Plasmoid.configuration.selfhostedKey = text
+        }
 
         KeyRow {
             label: i18n("API key")

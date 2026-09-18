@@ -32,6 +32,18 @@
     <entry name="ollamaEnabled" type="Bool">
       <default>false</default>
     </entry>
+    <entry name="selfhostedEnabled" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="selfhostedEndpoint" type="String">
+      <default></default>
+    </entry>
+    <entry name="selfhostedEngine" type="String">
+      <default>auto</default>
+    </entry>
+    <entry name="selfhostedKey" type="String">
+      <default></default>
+    </entry>
     <entry name="grokEnabled" type="Bool">
       <default>true</default>
     </entry>
