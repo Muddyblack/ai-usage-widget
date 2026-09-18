@@ -38,9 +38,7 @@ def _index_class() -> type:
     except ModuleNotFoundError as error:
         if error.name != "aiusage.session_index":
             raise
-        raise AssertionError(
-            "the approved SessionIndex implementation is not available yet"
-        ) from error
+        raise AssertionError("the approved SessionIndex implementation is not available yet") from error
     return module.SessionIndex
 
 
@@ -96,10 +94,7 @@ class SessionIndexTest(unittest.TestCase):
             root = Path(directory)
             cache = root / "sessions.sqlite3"
             source_ids = ("antigravity", "openai", "cline", "opencode", "claude")
-            sources = [
-                _source(root, f"{source_id}.jsonl", source_id, index + 1)
-                for index, source_id in enumerate(source_ids)
-            ]
+            sources = [_source(root, f"{source_id}.jsonl", source_id, index + 1) for index, source_id in enumerate(source_ids)]
 
             def parse(source: Source) -> list[Row]:
                 return [
@@ -116,9 +111,7 @@ class SessionIndexTest(unittest.TestCase):
 
             index = _index_class()(cache)
             index.reconcile(sources, parse)
-            result = index.query(
-                "preview", source_ids=["opencode", "openai"], limit=1, offset=1
-            )
+            result = index.query("preview", source_ids=["opencode", "openai"], limit=1, offset=1)
 
         self.assertEqual(
             result["sources"],
@@ -182,15 +175,11 @@ class SessionIndexTest(unittest.TestCase):
             source_key = hashlib.sha256(source.source_id.encode("utf-8")).hexdigest()
             checkpoints: list[str] = []
             events: list[str] = []
-            connection = _connection(
-                [(source_key, source.mtime_ns, source.size)], checkpoints, events
-            )
+            connection = _connection([(source_key, source.mtime_ns, source.size)], checkpoints, events)
             index = _index_class()(root / "sessions.sqlite3")
             with (
                 mock.patch.object(index, "_open", return_value=connection),
-                mock.patch.object(
-                    index, "query", return_value={"sessions": [], "total": 0}
-                ) as query,
+                mock.patch.object(index, "query", return_value={"sessions": [], "total": 0}) as query,
             ):
                 index.reconcile([source], _parser([]))
 
@@ -209,9 +198,7 @@ class SessionIndexTest(unittest.TestCase):
             calls: list[str] = []
             with (
                 mock.patch.object(index, "_open", return_value=connection),
-                mock.patch.object(
-                    index, "query", return_value={"sessions": [], "total": 0}
-                ) as query,
+                mock.patch.object(index, "query", return_value={"sessions": [], "total": 0}) as query,
             ):
                 index.reconcile([source], _parser(calls))
 
@@ -263,10 +250,7 @@ class SessionIndexTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             cache = root / "sessions.sqlite3"
-            sources = [
-                _source(root, f"{name}.jsonl", name, version)
-                for version, name in enumerate(("old", "needle-a", "needle-b"), 1)
-            ]
+            sources = [_source(root, f"{name}.jsonl", name, version) for version, name in enumerate(("old", "needle-a", "needle-b"), 1)]
             index = _index_class()(cache)
             index.reconcile(sources, _parser([]))
             result = index.query("needle", limit=1, offset=1)

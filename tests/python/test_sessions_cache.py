@@ -63,12 +63,14 @@ class SessionCacheIntegrationTest(unittest.TestCase):
 
         self.assertEqual([row["provider"] for row in result["sessions"]], ["openai"])
         self.assertEqual(result["total"], 1)
-        self.assertEqual(result["sources"], [
-            {"id": "openai", "label": "Codex"},
-            {"id": "opencode", "label": "OpenCode"},
-            {"id": "antigravity", "label": "Antigravity"},
-        ])
-
+        self.assertEqual(
+            result["sources"],
+            [
+                {"id": "openai", "label": "Codex"},
+                {"id": "opencode", "label": "OpenCode"},
+                {"id": "antigravity", "label": "Antigravity"},
+            ],
+        )
 
     def test_manifest_change_refreshes_the_merged_listing(self):
         with tempfile.TemporaryDirectory() as directory:

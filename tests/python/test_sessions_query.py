@@ -51,13 +51,16 @@ class SessionQueryTest(IsolatedHomeTest):
 
         self.assertEqual(result["total"], 5)
         self.assertEqual(len(result["sessions"]), 5)
-        self.assertEqual(result["sources"], [
-            {"id": "cline", "label": "Cline"},
-            {"id": "openai", "label": "Codex"},
-            {"id": "claude", "label": "Claude Code"},
-            {"id": "opencode", "label": "OpenCode"},
-            {"id": "antigravity", "label": "Antigravity"},
-        ])
+        self.assertEqual(
+            result["sources"],
+            [
+                {"id": "cline", "label": "Cline"},
+                {"id": "openai", "label": "Codex"},
+                {"id": "claude", "label": "Claude Code"},
+                {"id": "opencode", "label": "OpenCode"},
+                {"id": "antigravity", "label": "Antigravity"},
+            ],
+        )
 
     def test_one_source_filter_uses_empty_source_selection_as_all(self):
         rows = [
@@ -76,11 +79,14 @@ class SessionQueryTest(IsolatedHomeTest):
         self.assertEqual(selected["offset"], 0)
         self.assertEqual(selected["limit"], 60)
         self.assertFalse(selected["hasMore"])
-        self.assertEqual(selected["sources"], [
-            {"id": "openai", "label": "Codex"},
-            {"id": "opencode", "label": "OpenCode"},
-            {"id": "antigravity", "label": "Antigravity"},
-        ])
+        self.assertEqual(
+            selected["sources"],
+            [
+                {"id": "openai", "label": "Codex"},
+                {"id": "opencode", "label": "OpenCode"},
+                {"id": "antigravity", "label": "Antigravity"},
+            ],
+        )
 
     def test_multiple_sources_or_with_text_search_and_exact_pagination(self):
         rows = [
@@ -92,9 +98,7 @@ class SessionQueryTest(IsolatedHomeTest):
         ]
         with _empty_collectors(), mock.patch.object(sessions, "_claude_entries", return_value=rows):
             sessions.refresh_sessions()
-            result = sessions.collect_sessions(
-                "NEEDLE", source_ids=["openai", "antigravity", "opencode"], limit=2, offset=1
-            )
+            result = sessions.collect_sessions("NEEDLE", source_ids=["openai", "antigravity", "opencode"], limit=2, offset=1)
 
         self.assertEqual([row["provider"] for row in result["sessions"]], ["antigravity", "opencode"])
         self.assertEqual(result["total"], 3)
@@ -102,12 +106,15 @@ class SessionQueryTest(IsolatedHomeTest):
         self.assertEqual(result["offset"], 1)
         self.assertEqual(result["limit"], 2)
         self.assertFalse(result["hasMore"])
-        self.assertEqual(result["sources"], [
-            {"id": "openai", "label": "Codex"},
-            {"id": "claude", "label": "Claude Code"},
-            {"id": "opencode", "label": "OpenCode"},
-            {"id": "antigravity", "label": "Antigravity"},
-        ])
+        self.assertEqual(
+            result["sources"],
+            [
+                {"id": "openai", "label": "Codex"},
+                {"id": "claude", "label": "Claude Code"},
+                {"id": "opencode", "label": "OpenCode"},
+                {"id": "antigravity", "label": "Antigravity"},
+            ],
+        )
 
     def test_empty_and_whitespace_queries_keep_newest_sixty_rows(self):
         rows = [_entry(f"row-{index}", index) for index in range(61)]
@@ -225,9 +232,7 @@ class SessionQueryCliTest(unittest.TestCase):
             ):
                 self.assertEqual(backend.main([*argv, "--query=old", "--limit=5", "--offset=7"]), 0)
 
-            refresh.assert_called_once_with(
-                "old", source_ids=["openai", "opencode", "antigravity"], limit=5, offset=7
-            )
+            refresh.assert_called_once_with("old", source_ids=["openai", "opencode", "antigravity"], limit=5, offset=7)
 
     def test_invalid_source_ids_and_source_mode_are_rejected(self):
         for source_value in ("unknown", "", "openai,,antigravity", "openai;antigravity"):
