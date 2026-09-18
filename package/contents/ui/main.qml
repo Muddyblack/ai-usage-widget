@@ -64,6 +64,7 @@ PlasmoidItem {
     // Provider id → details.status from the backend:
     // { indicator, description, components, incidents, latestUpdate, url }
     property var providerStatus: ({})
+    property var localSpend: ({})
     // ── Claude data ───────────────────────────────────────────────────────────
     property bool sessionAvailable: false
     property real sessionPct: 0
@@ -713,6 +714,9 @@ PlasmoidItem {
     // ── Timers ────────────────────────────────────────────────────────────────
     // Poll interval is user-configurable (seconds); default 300s. Clamp to a sane floor.
     property int pollIntervalSec: Plasmoid.configuration.pollIntervalSec || 300
+    property bool pricingLoading: false
+    property string pricingStatus: ""
+    property string pricingError: ""
 
     function shellQuote(s) {
         return Shell.quote(s);
@@ -1495,6 +1499,7 @@ PlasmoidItem {
             return;
         }
         var providers = snapshot.providers || [];
+        root.localSpend = snapshot.localSpend || ({});
         var active = root.enabledTabs[root.activeTab] || "";
         var activeSeen = false;
         var activeError = "";
@@ -1988,6 +1993,15 @@ PlasmoidItem {
         usageSource.connectSource(cmd);
     }
 
+    function refreshPricing() {
+        if (root.pricingLoading)
+            return;
+        root.pricingLoading = true;
+        var cmd = root.pythonEnv() + root.scriptPath("get-ai-usage") + " --refresh-pricing";
+        pricingSource.disconnectSource(cmd);
+        pricingSource.connectSource(cmd);
+    }
+
     Plasmoid.backgroundHints: root.backgroundHints
     toolTipMainText: i18n("AI API Usage")
     toolTipSubText: {
@@ -2339,6 +2353,28 @@ PlasmoidItem {
         onNewData: function (src, data) {
             disconnectSource(src);
             root.applySnapshot((data["stdout"] || "").trim());
+        }
+    }
+
+    Plasma5Support.DataSource {
+        id: pricingSource
+
+        engine: "executable"
+        connectedSources: []
+        onNewData: function (src, data) {
+            disconnectSource(src);
+            root.pricingLoading = false;
+            var stdout = (data && data.stdout) ? data.stdout.trim() : "";
+            try {
+                var result = JSON.parse(stdout);
+                root.pricingStatus = result.status || (result.ok === true ? "refreshed" : "no-cache");
+                root.pricingError = result.error || "";
+                if (result.ok === true)
+                    root.refresh();
+            } catch (e) {
+                root.pricingStatus = "no-cache";
+                root.pricingError = i18n("Could not refresh pricing.");
+            }
         }
     }
 

@@ -16,6 +16,30 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 10
 
+    function pricingMessage() {
+        var status = settingsPanelRoot.rootItem.pricingStatus || "";
+        if (settingsPanelRoot.rootItem.pricingLoading === true)
+            return i18n("Refreshing pricing…");
+        if (status === "refreshed")
+            return i18n("Pricing updated.");
+        if (status === "stale-good")
+            return i18n("Pricing refresh failed; using saved rates.") + (settingsPanelRoot.rootItem.pricingError ? " " + settingsPanelRoot.rootItem.pricingError : "");
+        if (status === "no-cache")
+            return settingsPanelRoot.rootItem.pricingError || i18n("No pricing rates available; try again.");
+        return settingsPanelRoot.rootItem.pricingError || "";
+    }
+
+    function pricingMessageColor() {
+        var status = settingsPanelRoot.rootItem.pricingStatus || "";
+        if (status === "no-cache" || (status === "" && settingsPanelRoot.rootItem.pricingError !== ""))
+            return rootItem.dangerColor;
+        if (status === "stale-good")
+            return "#f5a623";
+        if (status === "refreshed")
+            return "#34d399";
+        return Kirigami.Theme.textColor;
+    }
+
     SubTabBar {
         accent: rootItem.activeAccent
         currentId: rootItem.settingsTab
@@ -527,6 +551,45 @@ ColumnLayout {
                 Layout.fillWidth: true
                 elide: Text.ElideRight
             }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Rectangle {
+                width: 7
+                height: 7
+                radius: 3.5
+                color: rootItem.pricingLoading ? "#f5a623" : rootItem.pricingStatus === "" ? Qt.rgba(1, 1, 1, 0.3) : rootItem.pricingStatus === "stale-good" ? "#f5a623" : rootItem.pricingStatus === "no-cache" ? rootItem.dangerColor : "#34d399"
+                Layout.alignment: Qt.AlignVCenter
+            }
+            PlasmaComponents.Label {
+                text: i18n("Pricing")
+                font.pixelSize: 11
+                color: Kirigami.Theme.textColor
+                Layout.preferredWidth: 120
+                elide: Text.ElideRight
+            }
+            PlasmaComponents.Button {
+                text: rootItem.pricingLoading ? i18n("Refreshing…") : i18n("Refresh pricing")
+                implicitHeight: 26
+                font.pixelSize: 10
+                enabled: !rootItem.pricingLoading
+                onClicked: rootItem.refreshPricing()
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+        }
+
+        PlasmaComponents.Label {
+            visible: rootItem.pricingLoading || rootItem.pricingStatus !== "" || rootItem.pricingError !== ""
+            text: settingsPanelRoot.pricingMessage()
+            font.pixelSize: 9
+            opacity: 0.8
+            color: settingsPanelRoot.pricingMessageColor()
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
         }
 
         RowLayout {
