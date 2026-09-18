@@ -8,7 +8,20 @@ ColumnLayout {
     property var shell
     spacing: 12
 
-    readonly property var rows: FeatureTabs.spendProviderRows(shell.providers)
+    readonly property var rows: {
+        var out = FeatureTabs.spendProviderRows(shell.providers);
+        var localRows = FeatureTabs.localSpendRows(shell.localSpend);
+        for (var i = 0; i < localRows.length; i++) {
+            localRows[i].accent = FeatureTabs.accent("spend");
+            localRows[i].label = shell.i18n(localRows[i].label);
+            localRows[i].note = shell.i18n(localRows[i].note);
+            out.push(localRows[i]);
+        }
+        out.sort(function (a, b) {
+            return b.cost - a.cost;
+        });
+        return out;
+    }
     readonly property real totalUsd: FeatureTabs.spendTotal(rows, "USD")
 
     function money(value, currency) {
@@ -73,8 +86,10 @@ ColumnLayout {
 
             MouseArea {
                 anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
+                cursorShape: modelData.local === true ? Qt.ArrowCursor : Qt.PointingHandCursor
                 onClicked: {
+                    if (modelData.local === true)
+                        return;
                     shell.activeId = modelData.id;
                     if (typeof shell.refreshTab === "function")
                         shell.refreshTab();

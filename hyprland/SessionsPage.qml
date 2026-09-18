@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic as QC
+import "../package/contents/code/FeatureTabs.js" as FeatureTabs
 
 ColumnLayout {
     id: page
@@ -260,6 +261,14 @@ ColumnLayout {
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
+                            Text {
+                                text: page.sessionCostText(modelData)
+                                font.pixelSize: 9
+                                opacity: (modelData.costStatus || "unavailable") === "unavailable" ? 0.4 : 0.7
+                                color: page.sessionCostColor(modelData)
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                            }
                         }
 
                         ColumnLayout {
@@ -328,5 +337,34 @@ ColumnLayout {
         if (age < 86400)
             return shell.i18np("%1 h ago", "%1 h ago", Math.floor(age / 3600));
         return shell.i18np("%1 d ago", "%1 d ago", Math.floor(age / 86400));
+    }
+
+    function sessionCostText(entry) {
+        var info = FeatureTabs.sessionCostInfo(entry);
+        if (!info.available)
+            return shell.i18n("Cost unavailable");
+        var cost = info.cost.toFixed(4);
+        if (info.provenance === "actual")
+            return info.status === "exact" ? shell.i18n("Actual provider cost: $%1 (exact)", cost) : shell.i18n("Actual provider cost: $%1 (partial)", cost);
+        if (info.provenance === "estimated")
+            return info.status === "exact" ? shell.i18n("Calculated estimate: $%1 (exact)", cost) : shell.i18n("Calculated estimate: $%1 (partial)", cost);
+        if (info.provenance === "mixed")
+            return info.status === "exact" ? shell.i18n("Mixed cost: $%1 (exact)", cost) : shell.i18n("Mixed cost: $%1 (partial)", cost);
+        return info.status === "exact" ? shell.i18n("Cost: $%1 (exact)", cost) : shell.i18n("Cost: $%1 (partial)", cost);
+    }
+
+    function sessionCostColor(entry) {
+        var info = FeatureTabs.sessionCostInfo(entry);
+        if (!info.available)
+            return "#f8fafc";
+        if (info.status === "partial" || info.provenance === "mixed")
+            return "#f5a623";
+        if (info.provenance === "estimated")
+            return FeatureTabs.accent("spend");
+        if (info.status === "exact") {
+            var provider = shell.providerById ? shell.providerById(entry.provider) : null;
+            return provider && provider.accent ? provider.accent : "#34d399";
+        }
+        return "#f8fafc";
     }
 }
