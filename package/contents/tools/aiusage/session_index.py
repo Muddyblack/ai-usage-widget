@@ -5,9 +5,9 @@ from __future__ import annotations
 import hashlib
 import sqlite3
 import time
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Callable, Final, Iterable, Mapping, Protocol, Sequence, TypedDict
-
+from typing import Callable, Final, Protocol, TypedDict
 
 _SEARCH_COLUMNS: Final = ("provider", "title", "session_name", "state", "detail")
 SOURCE_REGISTRY: Final = (
