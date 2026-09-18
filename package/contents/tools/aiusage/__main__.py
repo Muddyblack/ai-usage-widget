@@ -24,6 +24,8 @@ USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize 
   --provider <ids>      fetch the named providers regardless of the toggles
   --normalize           read one raw envelope on stdin, print the provider object
   --sessions            list recent local agent sessions (no paths or transcripts)
+  --query-only          query the shared session index without refreshing
+  --refresh             refresh all session providers before querying
   --query <text>        search all local session records by safe display fields
   --limit <n>           limit session results to a positive number of rows
   --offset <n>          skip a non-negative number of session rows
@@ -57,6 +59,8 @@ def main(argv):
     query = ""
     limit = None
     offset = None
+    query_only = False
+    refresh = False
 
     i = 0
     while i < len(argv):
@@ -74,6 +78,10 @@ def main(argv):
             mode = "normalize"
         elif arg == "--sessions":
             mode = "sessions"
+        elif arg == "--query-only":
+            query_only = True
+        elif arg == "--refresh":
+            refresh = True
         elif arg == "--query":
             i += 1
             query = argv[i] if i < len(argv) else ""
@@ -131,13 +139,24 @@ def main(argv):
             return 2
         i += 1
 
-    if mode == "sessions":
-        from .sessions import collect_sessions
+    if query_only and refresh:
+        sys.stderr.write("get-ai-usage: --query-only and --refresh cannot be used together\n")
+        sys.stderr.write(USAGE + "\n")
+        return 2
 
+    if (query_only or refresh) and mode != "sessions":
+        sys.stderr.write("get-ai-usage: session modes require --sessions\n")
+        sys.stderr.write(USAGE + "\n")
+        return 2
+
+    if mode == "sessions":
+        from .sessions import collect_sessions, refresh_sessions
+
+        collect = collect_sessions if query_only else refresh_sessions
         if limit is None and offset is None:
-            result = collect_sessions(query)
+            result = collect(query)
         else:
-            result = collect_sessions(query, limit=limit if limit is not None else 60, offset=offset if offset is not None else 0)
+            result = collect(query, limit=limit if limit is not None else 60, offset=offset if offset is not None else 0)
         _emit(result)
         return 0
 
