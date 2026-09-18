@@ -10,6 +10,15 @@ from typing import Callable, Final, Iterable, Mapping, Protocol, Sequence, Typed
 
 
 _SEARCH_COLUMNS: Final = ("provider", "title", "session_name", "state", "detail")
+SOURCE_REGISTRY: Final = (
+    ("cline", "Cline"),
+    ("muse", "Muse"),
+    ("openai", "Codex"),
+    ("grok", "Grok"),
+    ("claude", "Claude Code"),
+    ("opencode", "OpenCode"),
+    ("antigravity", "Antigravity"),
+)
 
 
 class SessionSource(Protocol):
@@ -28,6 +37,11 @@ class SessionRow(TypedDict):
     openKey: str
 
 
+class SessionSourceDescriptor(TypedDict):
+    id: str
+    label: str
+
+
 class SessionQueryResult(TypedDict):
     updatedAt: int
     sessions: list[SessionRow]
@@ -36,6 +50,7 @@ class SessionQueryResult(TypedDict):
     offset: int
     limit: int
     hasMore: bool
+    sources: list[SessionSourceDescriptor]
 
 
 SessionParser = Callable[[SessionSource], Sequence[Mapping[str, str | int]]]
@@ -68,6 +83,28 @@ def _redact(rows: Sequence[Mapping[str, str | int]]) -> list[SessionRow]:
             }
         )
     return redacted
+
+
+def redact_rows(rows: Sequence[Mapping[str, str | int]]) -> list[SessionRow]:
+    """Return only the public fields allowed in a session response."""
+    return _redact(rows)
+
+
+def normalize_source_ids(source_ids: Sequence[str] | None) -> tuple[str, ...] | None:
+    """Normalize selected source IDs while preserving an explicit filter."""
+    if source_ids is None or not source_ids:
+        return None
+    return tuple(dict.fromkeys(source_id.strip() for source_id in source_ids))
+
+
+def source_descriptors(providers: Iterable[str]) -> list[SessionSourceDescriptor]:
+    """Return canonical, public descriptors for cached provider rows."""
+    available = frozenset(providers)
+    return [
+        {"id": source_id, "label": label}
+        for source_id, label in SOURCE_REGISTRY
+        if source_id in available
+    ]
 
 
 def _valid_open_key(value: object) -> str:
@@ -197,23 +234,42 @@ class SessionIndex:
         ]
 
     def query(
-        self, query: str = "", limit: int = 60, offset: int = 0
+        self,
+        query: str = "",
+        limit: int = 60,
+        offset: int = 0,
+        source_ids: Sequence[str] | None = None,
     ) -> SessionQueryResult:
         """Return a literal, case-insensitive substring page of public rows."""
         needle = query.strip().casefold()
+        normalized_source_ids = normalize_source_ids(source_ids)
         connection = self._open()
         try:
-            where = ""
-            search_parameters: tuple[str, ...] = ()
+            available_providers = [
+                str(row[0])
+                for row in connection.execute(
+                    "SELECT DISTINCT provider FROM session_rows"
+                ).fetchall()
+            ]
+            predicates: list[str] = []
+            parameters: list[str] = []
             if needle:
-                where = " WHERE " + " OR ".join(
-                    f"instr(casefold({column}), ?) > 0" for column in _SEARCH_COLUMNS
+                predicates.append(
+                    "(" + " OR ".join(
+                        f"instr(casefold({column}), ?) > 0" for column in _SEARCH_COLUMNS
+                    ) + ")"
                 )
-                search_parameters = (needle,) * len(_SEARCH_COLUMNS)
+                parameters.extend((needle,) * len(_SEARCH_COLUMNS))
+            if normalized_source_ids is not None:
+                predicates.append(
+                    "(" + " OR ".join("provider = ?" for _ in normalized_source_ids) + ")"
+                )
+                parameters.extend(normalized_source_ids)
+            where = " WHERE " + " AND ".join(predicates) if predicates else ""
             total = int(
                 connection.execute(
                     "SELECT COUNT(*) FROM session_rows" + where,
-                    search_parameters,
+                    tuple(parameters),
                 ).fetchone()[0]
             )
             page = connection.execute(
@@ -224,7 +280,7 @@ class SessionIndex:
                 "(SELECT source_order FROM source_meta WHERE source_key = session_rows.source_key) ASC, "
                 "row_order ASC"
                 + " LIMIT ? OFFSET ?",
-                (*search_parameters, limit, offset),
+                (*parameters, limit, offset),
             ).fetchall()
             sessions: list[SessionRow] = [
                 {
@@ -248,4 +304,5 @@ class SessionIndex:
             "offset": offset,
             "limit": limit,
             "hasMore": offset + limit < total,
+            "sources": source_descriptors(available_providers),
         }
