@@ -8,15 +8,22 @@ import json
 import math
 import os
 import tempfile
+import threading
 import time
 
 from . import config
 from .http import as_json, fetch_json
+from .pricing_lock import acquire as _acquire_lock
+from .pricing_lock import release as _release_lock
 
 SOURCE_URL = "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json"
-REFRESH_SECONDS = 86400
+OPENROUTER_SOURCE_URL = "https://openrouter.ai/api/v1/models"
+REFRESH_SECONDS = 604800
 RETRY_SECONDS = 900
 PROVIDERS = ("anthropic", "openai")
+_PROCESS_LOCK = threading.RLock()
+_CURRENT_SNAPSHOTS = {}
+_REFRESH_GENERATIONS = {}
 
 
 def valid_rate(value):
@@ -54,8 +61,74 @@ def parse_catalog(data):
     return tables
 
 
+def parse_openrouter_catalog(data):
+    if not isinstance(data, dict) or not isinstance(data.get("data"), list):
+        raise ValueError("OpenRouter pricing catalog must contain a data list")
+    tables = {provider: {} for provider in PROVIDERS}
+    for row in data["data"]:
+        if not isinstance(row, dict):
+            continue
+        model_id = row.get("id")
+        pricing = row.get("pricing")
+        if not isinstance(model_id, str) or not model_id or not isinstance(pricing, dict):
+            continue
+        provider, separator, _ = model_id.partition("/")
+        if not separator or provider not in tables:
+            continue
+        prompt = pricing.get("prompt")
+        completion = pricing.get("completion")
+        try:
+            prompt = float(prompt)
+            completion = float(completion)
+        except (TypeError, ValueError):
+            continue
+        if any(type(value) is bool for value in (pricing.get("prompt"), pricing.get("completion"))):
+            continue
+        if not valid_rate(prompt) or not valid_rate(completion) or prompt > 1 or completion > 1:
+            continue
+        price = {"input": prompt * 1_000_000, "output": completion * 1_000_000}
+        cached = pricing.get("input_cache_read")
+        if cached is not None:
+            if type(cached) is bool:
+                continue
+            try:
+                cached = float(cached)
+            except (TypeError, ValueError):
+                continue
+            if not valid_rate(cached) or cached > 1:
+                continue
+            price["cached"] = cached * 1_000_000
+        tables[provider][model_id] = price
+    return tables
+
+
+def _requested_models(models):
+    if not isinstance(models, dict):
+        return []
+    return [
+        (provider, model)
+        for provider in PROVIDERS
+        for model in ((models.get(provider),) if isinstance(models.get(provider), str) else (models.get(provider) or ()))
+        if isinstance(model, str) and model
+    ]
+
+
+def _merge_openrouter_missing(tables, fallback, models):
+    missing = []
+    for provider, model in _requested_models(models):
+        if model in tables.get(provider, {}):
+            continue
+        candidates = (model, f"{provider}/{model}")
+        row = next((fallback.get(provider, {}).get(candidate) for candidate in candidates if candidate in fallback.get(provider, {})), None)
+        if row is None:
+            missing.append((provider, model))
+            continue
+        tables.setdefault(provider, {})[model] = row
+    return missing
+
+
 def _valid_tables(tables):
-    if not isinstance(tables, dict) or set(tables) != set(PROVIDERS):
+    if not isinstance(tables, dict) or not tables or not set(tables) <= set(PROVIDERS):
         return False
     for table in tables.values():
         if not isinstance(table, dict) or not table:
@@ -102,38 +175,97 @@ def _write_cache(path, snapshot):
                 pass
 
 
-def load_catalog(*, force=False):
-    """Refresh daily, retry failures after 15 minutes, retain last good rates.
+def _snapshot(path):
+    disk = _read_cache(path)
+    memory = _CURRENT_SNAPSHOTS.get(path, {})
+    return memory if memory.get("checkedAt", 0) >= disk.get("checkedAt", 0) else disk
 
-    The returned error describes a failed refresh even when cached rates exist.
-    """
+
+def _fetch_openrouter():
+    response = fetch_json(OPENROUTER_SOURCE_URL, timeout=10)
+    if response.status != 200:
+        raise ValueError(f"OpenRouter pricing download failed (HTTP {response.status})")
+    data = as_json(response.body)
+    return parse_openrouter_catalog(data)
+
+
+def load_catalog(*, force=False, models=None):
+    """Refresh weekly, retry failures after 15 minutes, and retain last-good rates."""
     path = os.path.join(config.cache_dir(), "pricing-litellm-v1.json")
-    cached = _read_cache(path)
-    now = time.time()
-    ttl = RETRY_SECONDS if cached.get("error") else REFRESH_SECONDS
-    age = now - cached.get("checkedAt", 0)
-    if cached and not force and 0 <= age < ttl:
-        return cached
-    snapshot = {
-        "version": 1,
-        "source": SOURCE_URL,
-        "fetchedAt": cached.get("fetchedAt", 0),
-        "checkedAt": now,
-        "providers": cached.get("providers", {}),
-        "error": "",
-    }
-    try:
-        response = fetch_json(SOURCE_URL, timeout=10)
-        if response.status != 200:
-            raise ValueError(f"pricing download failed (HTTP {response.status})")
-        data = as_json(response.body)
-        snapshot["providers"] = parse_catalog(data)
-        snapshot["fetchedAt"] = now
-    except (OSError, ValueError) as e:
-        snapshot["error"] = str(e)
-    _write_cache(path, snapshot)
-    return snapshot
+    generation = _REFRESH_GENERATIONS.get(path, 0)
+    with _PROCESS_LOCK:
+        cached = _snapshot(path)
+        initial = cached
+        now = time.time()
+        ttl = RETRY_SECONDS if cached.get("error") else REFRESH_SECONDS
+        age = now - cached.get("checkedAt", 0)
+        handle = _acquire_lock(path)
+        if handle is None:
+            return _snapshot(path)
+        try:
+            cached = _snapshot(path)
+            if force and (_REFRESH_GENERATIONS.get(path, 0) != generation or cached.get("checkedAt") != initial.get("checkedAt")):
+                return cached
+            now = time.time()
+            ttl = RETRY_SECONDS if cached.get("error") else REFRESH_SECONDS
+            age = now - cached.get("checkedAt", 0)
+            fresh = bool(cached) and not force and 0 <= age < ttl
+            if fresh:
+                missing = _merge_openrouter_missing(cached["providers"], {}, models)
+                if not missing or cached.get("error"):
+                    return cached
+            snapshot = {
+                "version": 1,
+                "source": SOURCE_URL,
+                "fetchedAt": cached.get("fetchedAt", 0),
+                "checkedAt": now,
+                "providers": cached.get("providers", {}),
+                "error": "",
+            }
+            primary_error = ""
+            if not fresh:
+                try:
+                    response = fetch_json(SOURCE_URL, timeout=10)
+                    if response.status != 200:
+                        raise ValueError(f"pricing download failed (HTTP {response.status})")
+                    data = as_json(response.body)
+                    snapshot["providers"] = parse_catalog(data)
+                except (OSError, ValueError) as error:
+                    primary_error = str(error)
+
+            if not primary_error:
+                missing = _merge_openrouter_missing(snapshot["providers"], {}, models)
+                if missing:
+                    try:
+                        missing = _merge_openrouter_missing(snapshot["providers"], _fetch_openrouter(), models)
+                    except (OSError, ValueError):
+                        snapshot["error"] = "OpenRouter pricing fallback unavailable"
+                snapshot["error"] = "OpenRouter pricing fallback unavailable" if missing else snapshot["error"]
+            elif _requested_models(models):
+                try:
+                    fallback = _fetch_openrouter()
+                    missing = _merge_openrouter_missing(snapshot["providers"], fallback, models)
+                    if missing:
+                        snapshot["error"] = primary_error + "; OpenRouter pricing fallback unavailable"
+                except (OSError, ValueError) as fallback_error:
+                    snapshot["error"] = primary_error + "; " + str(fallback_error)
+            else:
+                snapshot["error"] = primary_error
+            if not snapshot["error"]:
+                snapshot["fetchedAt"] = now
+            _CURRENT_SNAPSHOTS[path] = snapshot
+            _REFRESH_GENERATIONS[path] = _REFRESH_GENERATIONS.get(path, 0) + 1
+            _write_cache(path, snapshot)
+            return snapshot
+        finally:
+            _release_lock(path, handle)
 
 
-def get_pricing(provider):
-    return load_catalog()["providers"].get(provider, {})
+def cached_catalog():
+    path = os.path.join(config.cache_dir(), "pricing-litellm-v1.json")
+    return _snapshot(path).get("providers", {})
+
+
+def get_pricing(provider, models=None):
+    requested = {provider: models} if models is not None else None
+    return load_catalog(models=requested)["providers"].get(provider, {})
