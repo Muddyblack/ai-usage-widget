@@ -78,12 +78,14 @@ class BackendThreadTest(unittest.TestCase):
 
         self.assertEqual(
             collect.call_args_list,
-            [mock.call(
-                "query",
-                source_ids=["openai", "antigravity"],
-                limit=60,
-                offset=3,
-            )],
+            [
+                mock.call(
+                    "query",
+                    source_ids=["openai", "antigravity"],
+                    limit=60,
+                    offset=3,
+                )
+            ],
         )
 
     def test_explicit_session_refresh_uses_global_collection(self):
@@ -100,12 +102,14 @@ class BackendThreadTest(unittest.TestCase):
 
         self.assertEqual(
             refresh.call_args_list,
-            [mock.call(
-                "query",
-                source_ids=["openai", "opencode"],
-                limit=60,
-                offset=3,
-            )],
+            [
+                mock.call(
+                    "query",
+                    source_ids=["openai", "opencode"],
+                    limit=60,
+                    offset=3,
+                )
+            ],
         )
 
     def test_session_refresh_cancels_queued_superseded_future(self):
