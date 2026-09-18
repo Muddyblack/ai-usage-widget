@@ -30,16 +30,22 @@ struct SessionsView: View {
                 .disabled(model.sessionsLoading)
                 .accessibilityLabel(i18n("Refresh sessions"))
             }
-            if !model.localSessions.isEmpty || !normalizedFilterText.isEmpty {
-                HStack(spacing: 4) {
-                    Image(systemName: "magnifyingglass").font(.system(size: 10)).foregroundStyle(.secondary)
-                    TextField(i18n("Search sessions…"), text: $filterText)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 11))
+            if !model.localSessions.isEmpty || !normalizedFilterText.isEmpty || !model.sessionSources.isEmpty {
+                HStack(spacing: 6) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "magnifyingglass").font(.system(size: 10)).foregroundStyle(.secondary)
+                        TextField(i18n("Search sessions…"), text: $filterText)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 11))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(.quaternary.opacity(0.5)))
+                    if !model.sessionSources.isEmpty {
+                        sourceFilterMenu
+                    }
                 }
-                .padding(.horizontal, 6)
-                .padding(.vertical, 4)
-                .background(RoundedRectangle(cornerRadius: 6).fill(.quaternary.opacity(0.5)))
             }
             if !model.sessionsError.isEmpty {
                 Text(model.sessionsError).font(.system(size: 11)).foregroundStyle(.red)
@@ -76,6 +82,51 @@ struct SessionsView: View {
         }
         .onAppear { model.refreshSessions(query: filterText, refresh: true) }
         .onChange(of: filterText) { model.scheduleSessionsRefresh(query: $0) }
+    }
+
+    private var sourceFilterMenu: some View {
+        Menu {
+            if model.sessionSources.count > 1 {
+                Button {
+                    model.setSessionSourceSelection([], query: filterText)
+                } label: {
+                    Label(i18n("All sources"), systemImage: model.selectedSessionSourceIDs.isEmpty ? "checkmark" : "circle")
+                }
+                Divider()
+            }
+            ForEach(model.sessionSources) { source in
+                Button {
+                    var selection = model.selectedSessionSourceIDs
+                    if selection.contains(source.id) {
+                        selection.remove(source.id)
+                    } else {
+                        selection.insert(source.id)
+                    }
+                    model.setSessionSourceSelection(selection, query: filterText)
+                } label: {
+                    Label(
+                        source.label,
+                        systemImage: model.selectedSessionSourceIDs.contains(source.id) ? "checkmark" : "circle")
+                }
+            }
+        } label: {
+            Label(sourceFilterLabel, systemImage: "line.3.horizontal.decrease.circle")
+                .font(.system(size: 10))
+                .lineLimit(1)
+        }
+        .menuStyle(.borderlessButton)
+        .frame(width: 100, alignment: .leading)
+        .accessibilityLabel(i18n("Filter sessions by source"))
+    }
+
+    private var sourceFilterLabel: String {
+        if model.sessionSources.count == 1 {
+            return model.sessionSources[0].label
+        }
+        if model.selectedSessionSourceIDs.isEmpty {
+            return i18n("All sources")
+        }
+        return i18np("%1 source", "%1 sources", model.selectedSessionSourceIDs.count)
     }
 
     @ViewBuilder

@@ -29,6 +29,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var sessionsLimit = 60
     @Published private(set) var sessionsHasMore = false
     @Published private(set) var sessionsTotalExact = false
+    @Published private(set) var sessionSources: [SessionSource] = []
+    @Published private(set) var selectedSessionSourceIDs: Set<String> = []
     /// The last `--open-session` result, shown as a status line and cleared
     /// on the next attempt or the next refresh.
     @Published private(set) var sessionsNotice = ""
@@ -51,6 +53,7 @@ final class AppModel: ObservableObject {
     private var wakeObserver: NSObjectProtocol?
     private var sessionsRequestID = 0
     private var sessionsQuery = ""
+    private var sessionsRequestSignature = ""
     private var sessionsDebounceTask: Task<Void, Never>?
     private var sessionsFetchTask: Task<Void, Never>?
 
@@ -96,7 +99,7 @@ final class AppModel: ObservableObject {
 
     func showFeature(_ view: FeatureView?) {
         featureView = view
-        if view == .sessions { refreshSessions(query: "", refresh: true) }
+        if view == .sessions { refreshSessions(query: sessionsQuery, refresh: true) }
     }
 
     /// Resume one listed session in the user's terminal; the result becomes
@@ -127,9 +130,20 @@ final class AppModel: ObservableObject {
         }
     }
 
+    func setSessionSourceSelection(_ ids: Set<String>, query: String? = nil) {
+        let normalizedIDs = Set(normalizedSessionSourceIDs(ids, available: sessionSources))
+        let allSourceIDs = Set(sessionSources.map(\.id))
+        let selection = normalizedIDs == allSourceIDs ? Set<String>() : normalizedIDs
+        guard selection != selectedSessionSourceIDs else { return }
+        selectedSessionSourceIDs = selection
+        sessionsDebounceTask?.cancel()
+        refreshSessions(query: query ?? sessionsQuery, refresh: false)
+    }
+
     func refreshSessions(query: String = "", refresh: Bool = true) {
         let normalizedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !(sessionsLoading && sessionsQuery == normalizedQuery) else { return }
+        let requestSignature = makeSessionsRequestSignature(for: normalizedQuery)
+        guard !(sessionsLoading && sessionsRequestSignature == requestSignature) else { return }
         refreshSessions(query: normalizedQuery, offset: 0, appending: false, refresh: refresh)
     }
 
@@ -144,6 +158,9 @@ final class AppModel: ObservableObject {
         sessionsFetchTask?.cancel()
         sessionsRequestID += 1
         let requestID = sessionsRequestID
+        let requestedSourceIDs = normalizedSessionSourceIDs(selectedSessionSourceIDs, available: sessionSources)
+        let requestSignature = makeSessionsRequestSignature(for: query, sourceIDs: requestedSourceIDs)
+        sessionsRequestSignature = requestSignature
         sessionsQuery = query
         if !appending {
             sessionsTotal = 0
@@ -162,18 +179,32 @@ final class AppModel: ObservableObject {
                 let result: LocalSessions
                 if refresh {
                     result = try Backend.refreshSessions(
-                        query, limit: requestedLimit, offset: requestedOffset
+                        query, limit: requestedLimit, offset: requestedOffset, sourceIds: requestedSourceIDs
                     )
                 } else {
                     result = try Backend.sessions(
-                        query, limit: requestedLimit, offset: requestedOffset
+                        query, limit: requestedLimit, offset: requestedOffset, sourceIds: requestedSourceIDs
                     )
                 }
                 guard !Task.isCancelled else { return }
                 guard let self else { return }
                 await MainActor.run { [self] in
                     guard !Task.isCancelled,
-                          self.sessionsRequestID == requestID, self.sessionsQuery == query else { return }
+                          self.sessionsRequestID == requestID,
+                          self.sessionsRequestSignature == requestSignature else { return }
+                    self.sessionSources = result.sources
+                    let sourceSelection = Self.reconciledSessionSourceIDs(
+                        requested: requestedSourceIDs, available: result.sources)
+                    self.selectedSessionSourceIDs = sourceSelection.selected
+                    if sourceSelection.requiresAllQuery {
+                        self.localSessions = []
+                        self.sessionsTotal = 0
+                        self.sessionsOffset = 0
+                        self.sessionsHasMore = false
+                        self.sessionsTotalExact = false
+                        self.refreshSessions(query: query, refresh: false)
+                        return
+                    }
                     if requestedOffset == 0 {
                         self.localSessions = result.sessions
                     } else {
@@ -194,13 +225,44 @@ final class AppModel: ObservableObject {
                 guard let self else { return }
                 await MainActor.run { [self] in
                     guard !Task.isCancelled,
-                          self.sessionsRequestID == requestID, self.sessionsQuery == query else { return }
+                          self.sessionsRequestID == requestID,
+                          self.sessionsRequestSignature == requestSignature else { return }
                     self.sessionsError = error.localizedDescription
                     self.sessionsLoading = false
                     self.sessionsFetchTask = nil
                 }
             }
         }
+    }
+
+    nonisolated static func reconciledSessionSourceIDs(
+        requested: [String], available: [SessionSource]
+    ) -> (selected: Set<String>, requiresAllQuery: Bool) {
+        let requestedIDs = Set(requested.map {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines)
+        }.filter { !$0.isEmpty })
+        let availableIDs = Set(available.map(\.id))
+        guard !requestedIDs.isEmpty else { return ([], false) }
+        guard requestedIDs.isSubset(of: availableIDs) else { return ([], true) }
+        return (requestedIDs, false)
+    }
+
+    private func normalizedSessionSourceIDs(
+        _ ids: Set<String>, available: [SessionSource]
+    ) -> [String] {
+        let requested = Set(ids.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) })
+            .filter { !$0.isEmpty }
+        let availableIDs = Set(available.map(\.id))
+        return available
+            .map(\.id)
+            .filter { requested.contains($0) && availableIDs.contains($0) }
+    }
+
+    private func makeSessionsRequestSignature(
+        for query: String, sourceIDs: [String]? = nil
+    ) -> String {
+        let ids = sourceIDs ?? normalizedSessionSourceIDs(selectedSessionSourceIDs, available: sessionSources)
+        return query + "\u{1F}" + ids.joined(separator: ",")
     }
 
     // ── Refreshing ───────────────────────────────────────────────────────
