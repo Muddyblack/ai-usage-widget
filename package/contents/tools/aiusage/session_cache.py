@@ -8,7 +8,13 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
 from . import config
-from .session_index import SessionIndex, SessionQueryResult, SessionRow, SessionSource
+from .session_index import (
+    SessionIndex,
+    SessionQueryResult,
+    SessionRow,
+    SessionSource,
+    redact_rows,
+)
 from .session_manifest import build_manifest
 
 CollectorBatch = tuple[list[Mapping[str, str | int]], bool]
@@ -30,12 +36,21 @@ class SessionCache:
         self._index = SessionIndex(Path(config.cache_dir()) / "sessions.sqlite3")
 
     def query(
-        self, query: str = "", limit: int | None = None, offset: int = 0
+        self,
+        query: str = "",
+        limit: int | None = None,
+        offset: int = 0,
+        source_ids: Sequence[str] | None = None,
     ) -> SessionQueryResult:
         """Return a page from the existing index without scanning session stores."""
         page_limit = 60 if limit is None else limit
         try:
-            return self._index.query(query, limit=page_limit, offset=offset)
+            return self._index.query(
+                query,
+                limit=page_limit,
+                offset=offset,
+                source_ids=source_ids,
+            )
         except (OSError, sqlite3.Error):
             return {
                 "updatedAt": int(time.time()),
@@ -45,6 +60,7 @@ class SessionCache:
                 "offset": offset,
                 "limit": page_limit,
                 "hasMore": False,
+                "sources": [],
             }
 
     def refresh(self, collect: Collector) -> list[SessionRow] | None:
@@ -60,7 +76,7 @@ class SessionCache:
         try:
             self._index.reconcile([manifest], parse, force=True)
         except IncompleteRefresh as error:
-            return [dict(row) for row in error.rows]
+            return redact_rows(error.rows)
         except (OSError, sqlite3.Error):
             return None
         return None

@@ -1,3 +1,4 @@
+import sqlite3
 import tempfile
 import unittest
 from unittest import mock
@@ -41,6 +42,33 @@ class SessionCacheIntegrationTest(unittest.TestCase):
         self.assertEqual([row["title"] for row in searched["sessions"]], ["needle"])
         self.assertEqual([row["title"] for row in page["sessions"]], ["needle"])
         self.assertEqual(page["total"], 3)
+
+    def test_cached_query_exposes_sources_and_applies_one_source_filter(self):
+        with tempfile.TemporaryDirectory() as directory:
+            rows = [
+                _row("codex", 3),
+                _row("antigravity", 2),
+                _row("opencode", 1),
+            ]
+            rows[0]["provider"] = "openai"
+            rows[1]["provider"] = "antigravity"
+            rows[2]["provider"] = "opencode"
+            with (
+                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch.object(session_cache, "build_manifest", return_value=self._manifest(1)),
+                mock.patch.object(sessions, "_collect_all_sessions", return_value=(rows, True)),
+            ):
+                sessions.refresh_sessions()
+                result = sessions.collect_sessions("", source_ids=["openai"])
+
+        self.assertEqual([row["provider"] for row in result["sessions"]], ["openai"])
+        self.assertEqual(result["total"], 1)
+        self.assertEqual(result["sources"], [
+            {"id": "openai", "label": "Codex"},
+            {"id": "opencode", "label": "OpenCode"},
+            {"id": "antigravity", "label": "Antigravity"},
+        ])
+
 
     def test_manifest_change_refreshes_the_merged_listing(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -88,6 +116,25 @@ class SessionCacheIntegrationTest(unittest.TestCase):
         self.assertEqual([row["title"] for row in result["sessions"]], ["current"])
         self.assertEqual([row["title"] for row in retained], ["old"])
 
+    def test_incomplete_refresh_derives_sources_from_direct_rows_without_private_data(self):
+        with tempfile.TemporaryDirectory() as directory:
+            old_rows = [_row("old", 1)]
+            old_rows[0]["provider"] = "claude"
+            current_rows = [_row("current", 2)]
+            current_rows[0]["provider"] = "antigravity"
+            with (
+                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch.object(session_cache, "build_manifest", side_effect=[self._manifest(1), self._manifest(2)]),
+                mock.patch.object(sessions, "_collect_all_sessions", side_effect=[(old_rows, True), (current_rows, False)]),
+            ):
+                sessions.refresh_sessions()
+                result = sessions.refresh_sessions()
+                retained = SessionIndex(f"{directory}/sessions.sqlite3").rows()
+
+        self.assertEqual([row["title"] for row in result["sessions"]], ["current"])
+        self.assertEqual([row["title"] for row in retained], ["old"])
+        self.assertEqual(result["sources"], [{"id": "antigravity", "label": "Antigravity"}])
+
     def test_corrupt_cache_rebuilds(self):
         with tempfile.TemporaryDirectory() as directory:
             cache = f"{directory}/sessions.sqlite3"
@@ -116,6 +163,23 @@ class SessionCacheIntegrationTest(unittest.TestCase):
         self.assertEqual(result["sessions"], [])
         self.assertEqual(result["total"], 0)
         self.assertTrue(result["totalExact"])
+        self.assertEqual(result["sources"], [])
+
+    def test_cache_query_error_returns_schema_complete_empty_result(self):
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            mock.patch("aiusage.config.cache_dir", return_value=directory),
+            mock.patch.object(SessionIndex, "query", side_effect=sqlite3.DatabaseError("broken cache")),
+        ):
+            result = sessions.collect_sessions("needle", limit=2, offset=3)
+
+        self.assertEqual(result["sessions"], [])
+        self.assertEqual(result["total"], 0)
+        self.assertTrue(result["totalExact"])
+        self.assertEqual(result["offset"], 3)
+        self.assertEqual(result["limit"], 2)
+        self.assertFalse(result["hasMore"])
+        self.assertEqual(result["sources"], [])
 
     def test_manifest_does_not_use_opencode_cli_discovery(self):
         with mock.patch.object(
