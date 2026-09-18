@@ -39,6 +39,7 @@ from .providers.cline import get_cline_sessions
 from .providers.grok import grok_home
 from .providers.muse import sessions_root as muse_sessions_root
 from .providers.openai_credentials import codex_home
+from .session_cache import SessionCache
 
 # Cap so a machine with years of logs stays snappy on a tab open.
 _MAX_SESSIONS = 60
@@ -617,10 +618,9 @@ def _matches_query(entry, query):
     return any(needle in entry.get(field, "").casefold() for field in _SEARCH_FIELDS if isinstance(entry.get(field), str))
 
 
-def collect_sessions(query="", limit=None, offset=0):
-    """Merge local sessions, filtering and paging the redacted records."""
-    normalized_query = (query or "").strip()
+def _collect_all_sessions():
     merged = []
+    complete = True
     for collector in (
         _cline_entries,
         _muse_entries,
@@ -633,8 +633,18 @@ def collect_sessions(query="", limit=None, offset=0):
         try:
             merged.extend(collector(include_all=True))
         except Exception:
-            # One broken store must not blank the whole tab.
-            continue
+            # One broken store must not blank the whole tab or replace its cache.
+            complete = False
+    return merged, complete
+
+
+def collect_sessions(query="", limit=None, offset=0):
+    """Return a page from the shared session index without collecting."""
+    return SessionCache().query(query, limit=limit, offset=offset)
+
+
+def _page_sessions(merged, query, limit, offset):
+    normalized_query = (query or "").strip()
     merged = [s for s in merged if s]
     merged.sort(key=lambda s: s.get("lastActivityAt") or 0, reverse=True)
     matches = [entry for entry in merged if _matches_query(entry, normalized_query)] if normalized_query else merged
@@ -651,6 +661,15 @@ def collect_sessions(query="", limit=None, offset=0):
         "limit": page_limit,
         "hasMore": has_more,
     }
+
+
+def refresh_sessions(query="", limit=None, offset=0):
+    """Refresh all session providers, then return the requested page."""
+    cache = SessionCache()
+    direct_rows = cache.refresh(_collect_all_sessions)
+    if direct_rows is not None:
+        return _page_sessions(direct_rows, query, limit, offset)
+    return cache.query(query, limit=limit, offset=offset)
 
 
 def collect_open_targets():

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from _support import REPO  # noqa: F401  (ensures TOOLS is on sys.path)
+from _support import IsolatedHomeTest, REPO  # noqa: F401  (ensures TOOLS is on sys.path)
 from aiusage import sessions
 from aiusage.providers import opencode
 
@@ -87,7 +87,7 @@ class OpenCodeDiscoveryTest(unittest.TestCase):
         self.assertEqual(records, [])
 
 
-class OpenCodeSessionRowsTest(unittest.TestCase):
+class OpenCodeSessionRowsTest(IsolatedHomeTest):
     def test_reads_only_recent_metadata_and_normalizes_milliseconds(self):
         rows = [(f"ses-{index:03d}", f"Session {index}", "/private/project", 1_700_000_000_000, 1_700_000_000_000 + index) for index in range(61)]
         with tempfile.TemporaryDirectory() as root:
@@ -122,6 +122,7 @@ class OpenCodeSessionRowsTest(unittest.TestCase):
                 mock.patch.object(sessions, "_claude_entries", return_value=[]),
                 mock.patch.object(sessions, "_antigravity_entries", return_value=[]),
             ):
+                sessions.refresh_sessions()
                 result = sessions.collect_sessions("needle")
 
         self.assertEqual([entry["title"] for entry in result["sessions"]], ["older needle"])

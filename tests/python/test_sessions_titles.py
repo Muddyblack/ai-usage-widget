@@ -15,7 +15,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from _support import REPO  # noqa: F401  (ensures TOOLS is on sys.path)
+from _support import IsolatedHomeTest, REPO  # noqa: F401  (ensures TOOLS is on sys.path)
 from aiusage import sessions
 
 
@@ -68,7 +68,7 @@ class ClaudePromptTitlesTest(unittest.TestCase):
         self.assertEqual(titles, {"s1": "fine"})
 
 
-class ClaudeEntriesTitleTest(unittest.TestCase):
+class ClaudeEntriesTitleTest(IsolatedHomeTest):
     def _write_session(self, root, project_dir, session_id):
         projects = os.path.join(root, "projects", project_dir)
         os.makedirs(projects, exist_ok=True)
@@ -135,6 +135,7 @@ class ClaudeEntriesTitleTest(unittest.TestCase):
                 mock.patch.object(sessions, "_opencode_entries", return_value=[]),
                 mock.patch.object(sessions, "_antigravity_entries", return_value=[]),
             ):
+                sessions.refresh_sessions()
                 result = sessions.collect_sessions("OLDER CLAUDE")
 
         self.assertEqual([entry["title"] for entry in result["sessions"]], ["find this older Claude session"])
