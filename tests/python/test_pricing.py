@@ -2,10 +2,13 @@
 
 import copy
 import json
+import os
+import tempfile
+import threading
 from unittest import mock
 
 from _support import IsolatedHomeTest, raw_fixture
-from aiusage import collect, pricing
+from aiusage import billing, collect, pricing, sessions
 from aiusage.http import HttpResult
 from aiusage.normalize.claude import normalize_claude
 from aiusage.normalize.openai import normalize_openai
@@ -54,6 +57,17 @@ class PricingTest(IsolatedHomeTest):
         self.assertAlmostEqual(tables["anthropic"]["claude-test"]["cached"], 0.2)
         self.assertEqual(tables["openai"], {"gpt-test": {"input": 4, "output": 12}})
 
+    def test_existing_billing_keeps_unknown_models_visible_and_unpriced(self):
+        result = billing.price_models(
+            [{"model": "known", "input_tokens": 1_000, "output_tokens": 200}, {"model": "unknown", "input_tokens": 50}],
+            {"known": {"input": 1, "output": 2}},
+        )
+
+        self.assertEqual(set(result["models"]), {"known", "unknown"})
+        self.assertTrue(result["models"]["known"]["priced"])
+        self.assertFalse(result["models"]["unknown"]["priced"])
+        self.assertGreater(result["totalCostUSD"], 0)
+
     def test_incomplete_and_invalid_rates_do_not_become_free_models(self):
         for value in (None, True, "0.001", -1, float("nan"), float("inf"), 10**400):
             with self.subTest(value=str(value)):
@@ -82,6 +96,143 @@ class PricingTest(IsolatedHomeTest):
         self.fetch.return_value = HttpResult(200, json.dumps(data))
         self.assertEqual(pricing.get_pricing("openai")["new-model"]["input"], 6)
         self.assertEqual(self.fetch.call_count, 2)
+
+    def test_normal_refresh_boundary_is_exactly_seven_days(self):
+        pricing.load_catalog()
+        self.clock.return_value += pricing.REFRESH_SECONDS - 1
+        pricing.load_catalog()
+        self.assertEqual(self.fetch.call_count, 1)
+        self.clock.return_value += 1
+        pricing.load_catalog()
+        self.assertEqual(self.fetch.call_count, 2)
+
+    def test_force_refresh_bypasses_a_fresh_cache(self):
+        pricing.load_catalog()
+        pricing.load_catalog(force=True)
+        self.assertEqual(self.fetch.call_count, 2)
+
+    def test_concurrent_forced_refreshes_share_one_upstream_fetch(self):
+        entered = threading.Event()
+        release = threading.Event()
+        calls = 0
+        calls_lock = threading.Lock()
+
+        def fetch(_url, timeout):
+            nonlocal calls
+            with calls_lock:
+                calls += 1
+            entered.set()
+            release.wait()
+            return HttpResult(200, json.dumps(catalog()))
+
+        self.fetch.side_effect = fetch
+        threads = [threading.Thread(target=lambda: pricing.load_catalog(force=True)) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        try:
+            self.assertTrue(entered.wait(2))
+        finally:
+            release.set()
+        for thread in threads:
+            thread.join(2)
+            self.assertFalse(thread.is_alive())
+        self.assertEqual(calls, 1)
+
+    def test_litellm_hit_does_not_consult_openrouter(self):
+        pricing.load_catalog(models={"anthropic": ["claude-test"]})
+        self.assertEqual(self.fetch.call_count, 1)
+
+    def test_fresh_cache_requested_miss_consults_openrouter_without_litellm_refetch(self):
+        pricing.load_catalog()
+        self.fetch.reset_mock()
+        self.fetch.return_value = HttpResult(200, json.dumps(raw_fixture("pricing-openrouter-response")))
+        result = pricing.load_catalog(models={"anthropic": ["claude-missing"]})
+        self.assertEqual(result["providers"]["anthropic"]["claude-test"]["input"], 2)
+        self.assertEqual(result["providers"]["anthropic"]["claude-missing"]["output"], 9.0)
+        self.fetch.assert_called_once_with(pricing.OPENROUTER_SOURCE_URL, timeout=10)
+
+    def test_openrouter_prices_an_exact_litellm_miss(self):
+        self.fetch.side_effect = [
+            HttpResult(200, json.dumps(catalog())),
+            HttpResult(200, json.dumps(raw_fixture("pricing-openrouter-response"))),
+        ]
+        result = pricing.load_catalog(models={"anthropic": ["claude-missing"]})
+        self.assertEqual(result["providers"]["anthropic"]["claude-missing"], {"input": 3.0, "output": 9.0, "cached": 0.3})
+        self.assertEqual(self.fetch.call_count, 2)
+
+    def test_openrouter_fallback_creates_provider_bucket_after_litellm_failure(self):
+        self.fetch.side_effect = [
+            HttpResult(503, ""),
+            HttpResult(200, json.dumps(raw_fixture("pricing-openrouter-response"))),
+        ]
+        result = pricing.load_catalog(models={"anthropic": ["claude-missing"]})
+        self.assertEqual(result["providers"]["anthropic"]["claude-missing"]["input"], 3.0)
+        self.assertEqual(result["providers"]["anthropic"]["claude-missing"]["output"], 9.0)
+        self.assertEqual(self.fetch.call_count, 2)
+
+    def test_both_pricing_sources_fail_without_cache(self):
+        self.fetch.side_effect = [HttpResult(503, ""), HttpResult(503, "")]
+        result = pricing.load_catalog(models={"anthropic": ["missing"]})
+        self.assertEqual(result["providers"], {})
+        self.assertTrue(result["error"])
+        self.assertEqual(self.fetch.call_count, 2)
+
+    def test_failed_requested_refresh_retains_last_good_rates(self):
+        pricing.load_catalog()
+        self.clock.return_value += pricing.REFRESH_SECONDS
+        self.fetch.side_effect = [HttpResult(503, ""), HttpResult(503, "")]
+        result = pricing.load_catalog(models={"anthropic": "missing"})
+        self.assertEqual(result["providers"]["openai"]["gpt-test"]["input"], 4)
+        self.assertTrue(result["error"])
+
+    def test_cached_token_math_and_unknown_model_status(self):
+        result = billing.aggregate_session_usage(
+            [
+                billing.UsageBucket("anthropic", "known", "session", 1_000, 200, 400),
+                billing.UsageBucket("anthropic", "unknown", "session", 100, 10),
+            ],
+            {"anthropic": {"known": {"input": 2, "output": 8, "cached": 0.2}}},
+        )
+        self.assertAlmostEqual(result["costUSD"], 0.00288)
+        self.assertEqual(result["costStatus"], "partial")
+
+    def test_missing_usage_is_unavailable(self):
+        result = billing.aggregate_session_usage([], {"anthropic": {}})
+        self.assertEqual(result, {"costStatus": "unavailable"})
+
+    def test_session_rows_keep_cost_out_of_redacted_detail(self):
+        with mock.patch.object(pricing, "cached_catalog", return_value={"anthropic": {"claude-test": {"input": 2, "output": 8}}}):
+            entry = sessions._entry("claude", "Title", 2_000, session_id="id", detail="$secret")
+            entry = sessions._with_usage_cost(entry, "anthropic", [billing.UsageBucket("anthropic", "claude-test", "id", 100, 50)])
+        self.assertEqual(entry["costStatus"], "exact")
+        self.assertAlmostEqual(entry["costUSD"], 0.0006)
+        self.assertEqual(entry["detail"], "$secret")
+
+    def test_claude_session_sums_multiple_models_and_marks_partial(self):
+        with tempfile.TemporaryDirectory() as root:
+            project = os.path.join(root, "projects", "-tmp-widget")
+            os.makedirs(project)
+            path = os.path.join(project, "session.jsonl")
+            with open(path, "w", encoding="utf-8") as stream:
+                stream.write(json.dumps({"message": {"model": "known-a", "usage": {"input_tokens": 100, "output_tokens": 50}}}) + "\n")
+                stream.write(json.dumps({"message": {"model": "known-b", "usage": {"input_tokens": 200, "output_tokens": 25}}}) + "\n")
+                stream.write(json.dumps({"message": {"model": "unknown", "usage": {"input_tokens": 1, "output_tokens": 1}}}) + "\n")
+            with (
+                mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": root}, clear=True),
+                mock.patch.object(
+                    pricing,
+                    "cached_catalog",
+                    return_value={"anthropic": {"known-a": {"input": 1, "output": 2}, "known-b": {"input": 3, "output": 4}}},
+                ),
+            ):
+                entry = sessions._claude_entries()[0]
+        self.assertEqual(entry["costStatus"], "partial")
+        self.assertAlmostEqual(entry["costUSD"], 0.0009)
+
+    def test_cache_write_failure_keeps_current_process_rates(self):
+        with mock.patch("aiusage.pricing.os.replace", side_effect=PermissionError):
+            pricing.load_catalog(force=True)
+        self.assertEqual(pricing.cached_catalog()["openai"]["gpt-test"]["input"], 4)
 
     def test_failed_refresh_retains_rates_and_backs_off(self):
         original = pricing.load_catalog()
