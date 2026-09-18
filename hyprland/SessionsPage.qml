@@ -19,11 +19,26 @@ ColumnLayout {
 
     readonly property var displayedSessions: sessions
 
+    function reconcileDisplayedSessions() {
+        if (typeof shell.reconcileSessions === "function")
+            shell.reconcileSessions(page.searchQuery);
+        else if (typeof shell.refreshSessions === "function")
+            shell.refreshSessions(page.searchQuery);
+    }
+
+    function refreshDisplayedSessionsOnVisibility() {
+        if (typeof shell.reconcileSessions === "function") {
+            if (shell.sessionsViewVisible === true && shell.sessionsLoading !== true)
+                shell.reconcileSessions(page.searchQuery);
+        } else if (typeof shell.refreshSessions === "function") {
+            shell.refreshSessions(page.searchQuery);
+        }
+    }
+
     onVisibleChanged: {
         if (visible) {
             clockMs = Date.now();
-            if (typeof shell.refreshSessions === "function")
-                shell.refreshSessions(searchQuery);
+            page.refreshDisplayedSessionsOnVisibility();
         }
     }
 
@@ -32,7 +47,9 @@ ColumnLayout {
         interval: 300
         repeat: false
         onTriggered: {
-            if (typeof shell.refreshSessions === "function")
+            if (typeof shell.querySessions === "function")
+                shell.querySessions(page.searchQuery);
+            else if (typeof shell.refreshSessions === "function")
                 shell.refreshSessions(page.searchQuery);
         }
     }
@@ -79,8 +96,7 @@ ColumnLayout {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    if (typeof shell.refreshSessions === "function")
-                        shell.refreshSessions(page.searchQuery);
+                    page.reconcileDisplayedSessions();
                 }
             }
         }

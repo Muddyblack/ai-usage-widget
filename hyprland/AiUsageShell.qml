@@ -333,11 +333,14 @@ ShellRoot {
     property int sessionsOffset: 0
     property int sessionsActiveOffset: 0
     property bool sessionsActiveAppend: false
+    property bool sessionsActiveRefresh: false
     property bool sessionsFollowup: false
     property int sessionsFollowupOffset: 0
     property bool sessionsFollowupAppend: false
+    property bool sessionsFollowupRefresh: false
     property bool sessionsResponseDone: false
     property bool sessionsProcessExited: false
+    readonly property bool sessionsViewVisible: root.popupOpen && !root.showSettings && root.activeId === "sessions"
     property string activeId: ""
     // The last real provider selected (never a feature tab id) — what the
     // panel pill shows while a feature tab (Overview/Spend/Sessions) is
@@ -643,20 +646,22 @@ ShellRoot {
         root.sessionsTotal = 0;
         root.sessionsHasMore = false;
         if (sessionsProcess.running)
-            root.queueSessionsRequest(0, false);
+            root.queueSessionsRequest(0, false, false);
     }
 
-    function queueSessionsRequest(offset, append) {
+    function queueSessionsRequest(offset, append, refreshMode) {
         root.sessionsFollowup = true;
         root.sessionsFollowupOffset = offset;
         root.sessionsFollowupAppend = append;
+        root.sessionsFollowupRefresh = refreshMode === true;
     }
 
-    function startSessionsRequest(offset, append) {
+    function startSessionsRequest(offset, append, refreshMode) {
         root.sessionsActiveQuery = root.sessionsQuery;
         root.sessionsActiveRequestId = root.sessionsRequestId;
         root.sessionsActiveOffset = offset;
         root.sessionsActiveAppend = append;
+        root.sessionsActiveRefresh = refreshMode === true;
         root.sessionsFollowup = false;
         root.sessionsResponseDone = false;
         root.sessionsProcessExited = false;
@@ -673,7 +678,7 @@ ShellRoot {
     }
 
     function sessionsCommand() {
-        var command = ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --sessions --query \"$3\"", "ai-usage", root.settings.pythonPath || "", root.backendCommand, root.sessionsActiveQuery];
+        var command = root.sessionsActiveRefresh ? ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --sessions --refresh --query \"$3\"", "ai-usage", root.settings.pythonPath || "", root.backendCommand, root.sessionsActiveQuery] : ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --sessions --query-only --query \"$3\"", "ai-usage", root.settings.pythonPath || "", root.backendCommand, root.sessionsActiveQuery];
         command[2] += " --limit \"$4\" --offset \"$5\"";
         command.push(String(root.sessionsLimit), String(root.sessionsActiveOffset));
         return command;
@@ -682,16 +687,29 @@ ShellRoot {
     function refreshSessions(query, offset, append) {
         root.setSessionsQuery(query);
         if (sessionsProcess.running) {
-            root.queueSessionsRequest(0, false);
+            root.queueSessionsRequest(0, false, true);
             return;
         }
-        root.startSessionsRequest(offset === undefined ? 0 : offset, append === true);
+        root.startSessionsRequest(offset === undefined ? 0 : offset, append === true, true);
+    }
+
+    function reconcileSessions(query) {
+        root.refreshSessions(query);
+    }
+
+    function querySessions(query, offset, append) {
+        root.setSessionsQuery(query);
+        if (sessionsProcess.running) {
+            root.queueSessionsRequest(offset === undefined ? 0 : offset, append === true, false);
+            return;
+        }
+        root.startSessionsRequest(offset === undefined ? 0 : offset, append === true, false);
     }
 
     function loadMoreSessions() {
         if (root.sessionsLoading || sessionsProcess.running || !root.sessionsHasMore)
             return;
-        root.startSessionsRequest(root.sessionsOffset + root.sessionsLimit, true);
+        root.querySessions(root.sessionsQuery, root.sessionsOffset + root.sessionsLimit, true);
     }
 
     Process {
@@ -736,11 +754,16 @@ ShellRoot {
         sessionsFollowup = false;
         var followupOffset = sessionsFollowupOffset;
         var followupAppend = sessionsFollowupAppend;
+        var followupRefresh = sessionsFollowupRefresh;
         sessionsFollowupOffset = 0;
         sessionsFollowupAppend = false;
+        sessionsFollowupRefresh = false;
         sessionsResponseDone = false;
         sessionsProcessExited = false;
-        refreshSessions(sessionsQuery, followupOffset, followupAppend);
+        if (followupRefresh)
+            refreshSessions(sessionsQuery, followupOffset, followupAppend);
+        else
+            querySessions(sessionsQuery, followupOffset, followupAppend);
     }
 
     // Rows with an empty openKey (Muse) render no button at all.
@@ -804,7 +827,11 @@ ShellRoot {
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: root.refresh()
+        onTriggered: {
+            root.refresh();
+            if (root.sessionsViewVisible)
+                root.reconcileSessions(root.sessionsQuery);
+        }
     }
 
     Timer {
