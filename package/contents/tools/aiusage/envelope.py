@@ -5,6 +5,7 @@ envelope: the JSON backend the QML frontends call, and the terminal frontend in
 aiusage.cli. See docs/provider-contract.md for the shape produced here.
 """
 
+import math
 import time
 from concurrent.futures import ThreadPoolExecutor
 
@@ -34,9 +35,119 @@ _CRASH_LABELS = {
 }
 
 
+# Shared with the Swift decoder: permit binary-float roundoff only, not a USD mismatch.
+_MIXED_COST_REL_TOLERANCE = 1e-9
+_MIXED_COST_ABS_TOLERANCE = 1e-12
+
+
+def _positive_finite(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    try:
+        number = float(value)
+    except (OverflowError, TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) and number > 0 else None
+
+
+def _non_negative_finite(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    try:
+        number = float(value)
+    except (OverflowError, TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) and number >= 0 else None
+
+
 def enabled(cfg):
     """Provider ids switched on in the shared settings file, in contract order."""
     return [id_ for id_ in config.ALL_PROVIDERS if config.provider_enabled(cfg, id_)]
+
+
+def _local_spend_group(sessions, provenance):
+    totals = {}
+    partial = set()
+    costs = []
+    for session in sessions:
+        if not isinstance(session, dict):
+            continue
+        session_provenance = session.get("costProvenance")
+        mixed = session_provenance == "mixed"
+        if session_provenance == provenance:
+            raw_cost = session.get("costUSD")
+        elif mixed:
+            parent_cost = _non_negative_finite(session.get("costUSD"))
+            breakdown = session.get("costBreakdown")
+            if not isinstance(breakdown, dict):
+                continue
+            actual_cost = _non_negative_finite(breakdown.get("actualUSD"))
+            estimated_cost = _non_negative_finite(breakdown.get("estimatedUSD"))
+            if (
+                parent_cost is None
+                or actual_cost is None
+                or estimated_cost is None
+                or not math.isclose(
+                    math.fsum((actual_cost, estimated_cost)),
+                    parent_cost,
+                    rel_tol=_MIXED_COST_REL_TOLERANCE,
+                    abs_tol=_MIXED_COST_ABS_TOLERANCE,
+                )
+            ):
+                continue
+            raw_cost = actual_cost if provenance == "actual" else estimated_cost
+        else:
+            continue
+        status = session.get("costStatus")
+        provider = session.get("provider")
+        cost = _non_negative_finite(raw_cost) if mixed else _positive_finite(raw_cost)
+        if status not in ("exact", "partial") or not isinstance(provider, str) or not provider:
+            continue
+        if provider == "cline" and provenance == "actual":
+            continue
+        if cost is None:
+            continue
+        totals[provider] = totals.get(provider, 0) + cost
+        costs.append(cost)
+        if status == "partial":
+            partial.add(provider)
+
+    if not totals:
+        return {"costStatus": "unavailable"}
+
+    total = math.fsum(costs)
+    if not math.isfinite(total) or any(not math.isfinite(cost) for cost in totals.values()):
+        return {"costStatus": "unavailable"}
+
+    return {
+        "totalUSD": total,
+        "costStatus": "partial" if partial else "exact",
+        "costProvenance": provenance,
+        "providers": {
+            provider: {
+                "costUSD": cost,
+                "costStatus": "partial" if provider in partial else "exact",
+                "costProvenance": provenance,
+            }
+            for provider, cost in totals.items()
+        },
+    }
+
+
+def _local_spend():
+    from .sessions import collect_sessions
+
+    try:
+        result = collect_sessions()
+        sessions = result.get("sessions") or []
+    except Exception:  # noqa: BLE001  # noqa: BROAD_EXCEPT_OK
+        sessions = []
+    if not isinstance(sessions, list):
+        sessions = []
+    return {
+        "actual": _local_spend_group(sessions, "actual"),
+        "estimated": _local_spend_group(sessions, "estimated"),
+    }
 
 
 def crashed(id_, now, exc):
@@ -59,7 +170,7 @@ def build(selected, now=None):
     def fetch_one(id_):
         try:
             return normalize(collect(id_, now))
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001  # noqa: BROAD_EXCEPT_OK
             return crashed(id_, now, exc)
 
     if selected:
@@ -79,4 +190,10 @@ def build(selected, now=None):
         if providers:
             active = providers[0].get("id") or ""
 
-    return {"schemaVersion": SCHEMA_VERSION, "updatedAt": int(now), "active": active, "providers": providers}
+    return {
+        "schemaVersion": SCHEMA_VERSION,
+        "updatedAt": int(now),
+        "active": active,
+        "providers": providers,
+        "localSpend": _local_spend(),
+    }
