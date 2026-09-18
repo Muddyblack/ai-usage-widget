@@ -6,8 +6,9 @@ import hashlib
 import json
 import os
 from dataclasses import dataclass
+
 from . import paths
-from .providers import opencode
+from .providers import opencode  # noqa: F401
 from .providers.grok import grok_home
 from .providers.muse import sessions_root as muse_sessions_root
 from .providers.openai_credentials import codex_home
