@@ -4,7 +4,7 @@ import json
 import unittest
 from unittest import mock
 
-from _support import IsolatedHomeTest, REPO  # noqa: F401  (ensures TOOLS is on sys.path)
+from _support import REPO, IsolatedHomeTest  # noqa: F401  (ensures TOOLS is on sys.path)
 from aiusage import __main__ as backend
 from aiusage import sessions
 
