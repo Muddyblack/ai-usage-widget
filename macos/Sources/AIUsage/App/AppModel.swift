@@ -14,6 +14,7 @@ final class AppModel: ObservableObject {
     @Published var showingSettings = false
     @Published var showingChart = false
     @Published var showingStats = false
+    private(set) var popoverVisible = false
     /// The feature view the popover is showing instead of a provider, or nil
     /// for the provider itself. Session-only on purpose: the popover always
     /// opens on the provider, the thing it was opened for.
@@ -69,6 +70,20 @@ final class AppModel: ObservableObject {
 
     var hasBackend: Bool { Backend.executable != nil }
 
+    func setPopoverVisible(_ visible: Bool) {
+        popoverVisible = visible
+        if visible, featureView == .sessions {
+            refreshSessions(query: sessionsQuery, refresh: true)
+        }
+    }
+
+    func refreshManually() {
+        refresh()
+        if popoverVisible, featureView == .sessions {
+            refreshSessions(query: sessionsQuery, refresh: true)
+        }
+    }
+
     // ── Feature views ────────────────────────────────────────────────────
 
     /// The feature views switched on in settings, in tab order.
@@ -81,7 +96,7 @@ final class AppModel: ObservableObject {
 
     func showFeature(_ view: FeatureView?) {
         featureView = view
-        if view == .sessions { refreshSessions() }
+        if view == .sessions { refreshSessions(query: "", refresh: true) }
     }
 
     /// Resume one listed session in the user's terminal; the result becomes
@@ -108,24 +123,24 @@ final class AppModel: ObservableObject {
                 return
             }
             guard !Task.isCancelled else { return }
-            self?.refreshSessions(query: query)
+            self?.refreshSessions(query: query, refresh: false)
         }
     }
 
-    func refreshSessions(query: String = "") {
+    func refreshSessions(query: String = "", refresh: Bool = true) {
         let normalizedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !(sessionsLoading && sessionsQuery == normalizedQuery) else { return }
-        refreshSessions(query: normalizedQuery, offset: 0, appending: false)
+        refreshSessions(query: normalizedQuery, offset: 0, appending: false, refresh: refresh)
     }
 
     func loadMoreSessions() {
         guard sessionsHasMore, !sessionsLoading else { return }
         let sessionsLimit = 60
         let nextOffset = sessionsOffset + sessionsLimit
-        refreshSessions(query: sessionsQuery, offset: nextOffset, appending: true)
+        refreshSessions(query: sessionsQuery, offset: nextOffset, appending: true, refresh: false)
     }
 
-    private func refreshSessions(query: String, offset: Int, appending: Bool) {
+    private func refreshSessions(query: String, offset: Int, appending: Bool, refresh: Bool) {
         sessionsFetchTask?.cancel()
         sessionsRequestID += 1
         let requestID = sessionsRequestID
@@ -144,12 +159,20 @@ final class AppModel: ObservableObject {
         let requestedLimit: Int? = 60
         sessionsFetchTask = Task.detached(priority: .userInitiated) { [weak self] in
             do {
-                let result = try Backend.sessions(
-                    query, limit: requestedLimit, offset: requestedOffset
-                )
+                let result: LocalSessions
+                if refresh {
+                    result = try Backend.refreshSessions(
+                        query, limit: requestedLimit, offset: requestedOffset
+                    )
+                } else {
+                    result = try Backend.sessions(
+                        query, limit: requestedLimit, offset: requestedOffset
+                    )
+                }
                 guard !Task.isCancelled else { return }
-                await MainActor.run {
-                    guard !Task.isCancelled, let self,
+                guard let self else { return }
+                await MainActor.run { [self] in
+                    guard !Task.isCancelled,
                           self.sessionsRequestID == requestID, self.sessionsQuery == query else { return }
                     if requestedOffset == 0 {
                         self.localSessions = result.sessions
@@ -168,8 +191,9 @@ final class AppModel: ObservableObject {
                 }
             } catch {
                 guard !Task.isCancelled else { return }
-                await MainActor.run {
-                    guard !Task.isCancelled, let self,
+                guard let self else { return }
+                await MainActor.run { [self] in
+                    guard !Task.isCancelled,
                           self.sessionsRequestID == requestID, self.sessionsQuery == query else { return }
                     self.sessionsError = error.localizedDescription
                     self.sessionsLoading = false
@@ -225,7 +249,14 @@ final class AppModel: ObservableObject {
             // concurrently, and the weak `self` it would otherwise read is a
             // mutable capture of the enclosing closure.
             guard let self else { return }
-            Task { @MainActor in self.refresh() }
+            Task { @MainActor in
+                self.refresh()
+                // Provider usage stays on its normal app-wide timer; local
+                // session stores are reconciled only while Sessions is shown.
+                if self.popoverVisible, self.featureView == .sessions {
+                    self.refreshSessions(query: self.sessionsQuery, refresh: true)
+                }
+            }
         }
         // A generous tolerance lets macOS coalesce this poll with whatever else
         // it is already waking the CPU for. On a laptop that is the difference
