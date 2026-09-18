@@ -194,6 +194,16 @@ msgstr "Quota"
 msgid "fallback if the plan reports none"
 msgstr "valeur de repli si le plan n'en indique aucun"
 
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "All sources"
+msgstr "Toutes les sources"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "%1 source selected"
+msgid_plural "%1 sources selected"
+msgstr[0] "%1 source sélectionnée"
+msgstr[1] "%1 sources sélectionnées"
+
 #: hyprland/SessionsPage.qml hyprland/SettingsPage.qml
 #: package/contents/ui/SessionsTab.qml package/contents/ui/SettingsPanel.qml
 msgid "Sessions"
@@ -212,6 +222,14 @@ msgstr[1] "%1 sessions locales"
 #: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
 msgid "Search sessions…"
 msgstr "Rechercher des sessions…"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Search sessions"
+msgstr "Rechercher des sessions"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Filter sessions by source"
+msgstr "Filtrer les sessions par source"
 
 #: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
 msgid ""
@@ -2911,6 +2929,12 @@ msgstr "Réinitialisation %1"
 #: macos/Sources/AIUsage/Views/SessionsView.swift
 msgid "Refresh sessions"
 msgstr "Actualiser les sessions"
+
+#: macos/Sources/AIUsage/Views/SessionsView.swift
+msgid "%1 source"
+msgid_plural "%1 sources"
+msgstr[0] "%1 source"
+msgstr[1] "%1 sources"
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Admin API key"
