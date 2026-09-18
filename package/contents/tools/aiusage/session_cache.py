@@ -29,9 +29,7 @@ class SessionCache:
     def __init__(self) -> None:
         self._index = SessionIndex(Path(config.cache_dir()) / "sessions.sqlite3")
 
-    def query(
-        self, query: str = "", limit: int | None = None, offset: int = 0
-    ) -> SessionQueryResult:
+    def query(self, query: str = "", limit: int | None = None, offset: int = 0) -> SessionQueryResult:
         """Return a page from the existing index without scanning session stores."""
         page_limit = 60 if limit is None else limit
         try:

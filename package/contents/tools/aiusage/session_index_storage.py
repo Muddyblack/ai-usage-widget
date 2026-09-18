@@ -6,7 +6,6 @@ import sqlite3
 from pathlib import Path
 from typing import Final
 
-
 _BUSY_TIMEOUT_MS: Final = 5_000
 _SCHEMA_VERSION: Final = 2
 

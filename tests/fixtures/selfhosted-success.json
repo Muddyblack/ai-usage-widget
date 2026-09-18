@@ -1,0 +1,11 @@
+{
+  "id": "selfhosted",
+  "now": 1785000000,
+  "inputs": {
+    "usage": {
+      "engine": "vllm",
+      "models": [{"id": "local-model"}],
+      "metrics": "vllm:gpu_cache_usage_factor 0.75\nvllm:num_requests_running 2\nvllm:prompt_tokens_total 100\nvllm:generation_tokens_total 40"
+    }
+  }
+}

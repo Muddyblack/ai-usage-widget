@@ -5,9 +5,9 @@ from __future__ import annotations
 import hashlib
 import sqlite3
 import time
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Callable, Final, Iterable, Mapping, Protocol, Sequence, TypedDict
-
+from typing import Callable, Final, Protocol, TypedDict
 
 _SEARCH_COLUMNS: Final = ("provider", "title", "session_name", "state", "detail")
 
@@ -99,28 +99,14 @@ class SessionIndex:
         try:
             with connection:
                 connection.execute("BEGIN IMMEDIATE")
-                stored = {
-                    str(row[0]): (int(row[1]), int(row[2]))
-                    for row in connection.execute(
-                        "SELECT source_key, mtime_ns, size FROM source_meta"
-                    )
-                }
-                stored_orders = {
-                    str(row[0]): int(row[1])
-                    for row in connection.execute(
-                        "SELECT source_key, source_order FROM source_meta"
-                    )
-                }
+                stored = {str(row[0]): (int(row[1]), int(row[2])) for row in connection.execute("SELECT source_key, mtime_ns, size FROM source_meta")}
+                stored_orders = {str(row[0]): int(row[1]) for row in connection.execute("SELECT source_key, source_order FROM source_meta")}
                 mutated = False
                 for key in stored:
                     if key not in source_map:
                         mutated = True
-                        connection.execute(
-                            "DELETE FROM session_rows WHERE source_key = ?", (key,)
-                        )
-                        connection.execute(
-                            "DELETE FROM source_meta WHERE source_key = ?", (key,)
-                        )
+                        connection.execute("DELETE FROM session_rows WHERE source_key = ?", (key,))
+                        connection.execute("DELETE FROM source_meta WHERE source_key = ?", (key,))
 
                 for source_order, (key, source) in enumerate(source_map.items()):
                     metadata = (source.mtime_ns, source.size)
@@ -141,9 +127,7 @@ class SessionIndex:
                         "source_order = excluded.source_order",
                         (key, source.mtime_ns, source.size, source_order),
                     )
-                    connection.execute(
-                        "DELETE FROM session_rows WHERE source_key = ?", (key,)
-                    )
+                    connection.execute("DELETE FROM session_rows WHERE source_key = ?", (key,))
                     connection.executemany(
                         "INSERT INTO session_rows (source_key, row_order, provider, "
                         "title, session_name, state, last_activity_at, detail, "
@@ -171,6 +155,7 @@ class SessionIndex:
                     pass
         finally:
             connection.close()
+
     def rows(self) -> list[SessionRow]:
         """Return the cached merged rows in their original collector order."""
         connection = self._open()
@@ -196,9 +181,7 @@ class SessionIndex:
             for row in page
         ]
 
-    def query(
-        self, query: str = "", limit: int = 60, offset: int = 0
-    ) -> SessionQueryResult:
+    def query(self, query: str = "", limit: int = 60, offset: int = 0) -> SessionQueryResult:
         """Return a literal, case-insensitive substring page of public rows."""
         needle = query.strip().casefold()
         connection = self._open()
@@ -206,9 +189,7 @@ class SessionIndex:
             where = ""
             search_parameters: tuple[str, ...] = ()
             if needle:
-                where = " WHERE " + " OR ".join(
-                    f"instr(casefold({column}), ?) > 0" for column in _SEARCH_COLUMNS
-                )
+                where = " WHERE " + " OR ".join(f"instr(casefold({column}), ?) > 0" for column in _SEARCH_COLUMNS)
                 search_parameters = (needle,) * len(_SEARCH_COLUMNS)
             total = int(
                 connection.execute(
@@ -218,12 +199,9 @@ class SessionIndex:
             )
             page = connection.execute(
                 "SELECT provider, title, session_name, state, last_activity_at, detail, open_key "
-                "FROM session_rows"
-                + where
-                + " ORDER BY last_activity_at DESC, "
+                "FROM session_rows" + where + " ORDER BY last_activity_at DESC, "
                 "(SELECT source_order FROM source_meta WHERE source_key = session_rows.source_key) ASC, "
-                "row_order ASC"
-                + " LIMIT ? OFFSET ?",
+                "row_order ASC" + " LIMIT ? OFFSET ?",
                 (*search_parameters, limit, offset),
             ).fetchall()
             sessions: list[SessionRow] = [

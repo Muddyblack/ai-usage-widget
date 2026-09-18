@@ -420,9 +420,7 @@ class Backend(QObject):
         previous_session_future = self._sessions_future
         if previous_session_future is not None:
             previous_session_future.cancel()
-        self._sessions_future = self._pool.submit(
-            self._refresh_sessions, normalized_query, request_id, offset, True
-        )
+        self._sessions_future = self._pool.submit(self._refresh_sessions, normalized_query, request_id, offset, True)
 
     def _refresh_sessions(self, query, request_id, offset, refresh=False):
         try:
