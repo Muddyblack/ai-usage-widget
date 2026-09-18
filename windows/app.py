@@ -40,7 +40,7 @@ sys.path.insert(0, str(ROOT / "package" / "contents" / "tools"))
 
 from aiusage import config, history, historyio, paths  # noqa: E402
 from aiusage.__main__ import snapshot  # noqa: E402
-from aiusage.sessions import collect_sessions, open_session  # noqa: E402
+from aiusage.sessions import collect_sessions, open_session, refresh_sessions  # noqa: E402
 
 APP_NAME = "AI Usage"
 
@@ -77,6 +77,15 @@ def collect_sessions_json(query: str = "", limit: int | None = 60, offset: int =
         saved = dict(os.environ)
         try:
             return json.dumps(collect_sessions(query, limit=limit, offset=offset), separators=(",", ":"), ensure_ascii=False)
+        finally:
+            _restore_environ(saved)
+
+
+def refresh_sessions_json(query: str = "", limit: int | None = 60, offset: int = 0) -> str:
+    with _env_lock:
+        saved = dict(os.environ)
+        try:
+            return json.dumps(refresh_sessions(query, limit=limit, offset=offset), separators=(",", ":"), ensure_ascii=False)
         finally:
             _restore_environ(saved)
 
@@ -399,9 +408,26 @@ class Backend(QObject):
             previous_session_future.cancel()
         self._sessions_future = self._pool.submit(self._refresh_sessions, normalized_query, request_id, offset)
 
-    def _refresh_sessions(self, query, request_id, offset):
+    @Slot()
+    @Slot(str)
+    @Slot(str, int)
+    @Slot(str, int, int)
+    def refreshSessionsAndQuery(self, query="", request_id=0, offset=0):
+        if request_id == 0:
+            self._sessions_request_id += 1
+            request_id = self._sessions_request_id
+        normalized_query = query.strip()
+        previous_session_future = self._sessions_future
+        if previous_session_future is not None:
+            previous_session_future.cancel()
+        self._sessions_future = self._pool.submit(
+            self._refresh_sessions, normalized_query, request_id, offset, True
+        )
+
+    def _refresh_sessions(self, query, request_id, offset, refresh=False):
         try:
-            result = collect_sessions_json(query, limit=60, offset=offset)
+            helper = refresh_sessions_json if refresh else collect_sessions_json
+            result = helper(query, limit=60, offset=offset)
         except Exception as exc:
             self._sessionsCompleted.emit("", str(exc), query, request_id)
         else:
