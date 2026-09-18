@@ -44,6 +44,8 @@ ColumnLayout {
     property string activeSourceSignature: ""
     property string sourceResetSignature: ""
     readonly property bool sourceSelectionIsAll: sessionsTab.selectedSourceIds.length === 0
+    property var pendingSourceIds: []
+    readonly property bool pendingSourceSelectionIsAll: sessionsTab.pendingSourceIds.length === 0
     readonly property var sourceOptions: {
         var options = [];
         if (sessionsTab.sessionSources.length > 1)
@@ -114,11 +116,24 @@ ColumnLayout {
         if (sessionsTab.sourceSignature(normalized) === sessionsTab.sourceSignature(sessionsTab.selectedSourceIds))
             return;
         sessionsTab.selectedSourceIds = normalized;
-        sessionsTab.sessions = [];
         sessionsTab.sessionsOffset = 0;
         sessionsTab.sessionsTotal = 0;
         sessionsTab.sessionsHasMore = false;
         sessionsTab.queryOnly();
+    }
+
+    function stageSourceSelection(ids) {
+        sessionsTab.pendingSourceIds = sessionsTab.normalizedSourceIds(ids, sessionsTab.sessionSources);
+    }
+
+    function stageToggleSource(id, checked) {
+        if (sessionsTab.sessionSources.length <= 1)
+            return;
+        sessionsTab.stageSourceSelection(SessionSources.toggled(sessionsTab.pendingSourceIds, id, checked, sessionsTab.sessionSources));
+    }
+
+    function commitSourceSelection() {
+        sessionsTab.setSourceSelection(sessionsTab.pendingSourceIds);
     }
 
     function toggleSource(id, checked) {
@@ -204,22 +219,31 @@ ColumnLayout {
                 x: Math.max(0, sourceSelectorButton.width - sourcePopup.width)
                 y: sourceSelectorButton.height + 4
                 width: Math.min(220, Math.max(150, sessionsTab.width))
+                height: Math.min(320, Math.max(1, sessionsTab.height - sourceSelectorButton.height - 8))
                 padding: 6
                 focus: true
                 modal: false
                 closePolicy: QQC2.Popup.CloseOnEscape | QQC2.Popup.CloseOnPressOutside
+                onOpened: sessionsTab.pendingSourceIds = sessionsTab.selectedSourceIds.slice(0)
+                onClosed: sessionsTab.commitSourceSelection()
 
-                contentItem: ColumnLayout {
-                    spacing: 0
-                    Repeater {
-                        model: sessionsTab.sourceOptions
-                        delegate: QQC2.CheckBox {
-                            required property var modelData
-                            Layout.fillWidth: true
-                            text: modelData.label
-                            checked: modelData.isAll ? sessionsTab.sourceSelectionIsAll : (sessionsTab.sourceSelectionIsAll || sessionsTab.selectedSourceIds.indexOf(modelData.id) >= 0)
-                            Accessible.name: modelData.label
-                            onClicked: modelData.isAll ? sessionsTab.setSourceSelection([]) : sessionsTab.toggleSource(modelData.id, checked)
+                contentItem: QQC2.ScrollView {
+                    clip: true
+                    QQC2.ScrollBar.horizontal.policy: QQC2.ScrollBar.AlwaysOff
+
+                    ColumnLayout {
+                        width: sourcePopup.availableWidth
+                        spacing: 0
+                        Repeater {
+                            model: sessionsTab.sourceOptions
+                            delegate: QQC2.CheckBox {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                text: modelData.label
+                                checked: modelData.isAll ? sessionsTab.pendingSourceSelectionIsAll : (sessionsTab.pendingSourceSelectionIsAll || sessionsTab.pendingSourceIds.indexOf(modelData.id) >= 0)
+                                Accessible.name: modelData.label
+                                onClicked: modelData.isAll ? sessionsTab.stageSourceSelection([]) : sessionsTab.stageToggleSource(modelData.id, checked)
+                            }
                         }
                     }
                 }
