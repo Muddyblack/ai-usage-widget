@@ -5,6 +5,7 @@ import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.plasma5support as Plasma5Support
 import "../code/Shell.js" as Shell
+import "../code/SessionSources.js" as SessionSources
 
 // Local agent sessions across Claude, Codex, Muse, Cline and Grok.
 // Paths and transcripts never leave the backend.
@@ -37,6 +38,41 @@ ColumnLayout {
     property double clockMs: Date.now()
 
     readonly property var displayedSessions: sessions || []
+    property var sessionSources: []
+    property var selectedSourceIds: []
+    property string requestedSourceSignature: ""
+    property string activeSourceSignature: ""
+    property string sourceResetSignature: ""
+    readonly property bool sourceSelectionIsAll: sessionsTab.selectedSourceIds.length === 0
+    readonly property var sourceOptions: {
+        var options = [];
+        if (sessionsTab.sessionSources.length > 1)
+            options.push({
+                id: "",
+                label: i18n("All sources"),
+                isAll: true
+            });
+        for (var i = 0; i < sessionsTab.sessionSources.length; i++)
+            options.push({
+                id: sessionsTab.sessionSources[i].id,
+                label: sessionsTab.sessionSources[i].label,
+                isAll: false
+            });
+        return options;
+    }
+    readonly property string sourceSummary: {
+        if (sessionsTab.sessionSources.length === 0 || sessionsTab.sourceSelectionIsAll) {
+            if (sessionsTab.sessionSources.length === 1)
+                return sessionsTab.sessionSources[0].label;
+            return i18n("All sources");
+        }
+        if (sessionsTab.selectedSourceIds.length === 1) {
+            for (var i = 0; i < sessionsTab.sessionSources.length; i++)
+                if (sessionsTab.sessionSources[i].id === sessionsTab.selectedSourceIds[0])
+                    return sessionsTab.sessionSources[i].label;
+        }
+        return i18np("%1 source selected", "%1 sources selected", sessionsTab.selectedSourceIds.length);
+    }
 
     onVisibleChanged: {
         if (visible) {
@@ -55,6 +91,40 @@ ColumnLayout {
             sessionsHasMore = false;
         }
         searchTimer.restart();
+    }
+
+    function normalizeSources(raw) {
+        return SessionSources.normalizeDescriptors(raw);
+    }
+
+    function normalizedSourceIds(ids, available) {
+        return SessionSources.normalizeIds(ids, available);
+    }
+
+    function sourceSignature(ids) {
+        return SessionSources.signature(ids);
+    }
+
+    function sourceSelectionHasStaleIds(available) {
+        return SessionSources.hasStaleIds(sessionsTab.selectedSourceIds, available);
+    }
+
+    function setSourceSelection(ids) {
+        var normalized = sessionsTab.normalizedSourceIds(ids, sessionsTab.sessionSources);
+        if (sessionsTab.sourceSignature(normalized) === sessionsTab.sourceSignature(sessionsTab.selectedSourceIds))
+            return;
+        sessionsTab.selectedSourceIds = normalized;
+        sessionsTab.sessions = [];
+        sessionsTab.sessionsOffset = 0;
+        sessionsTab.sessionsTotal = 0;
+        sessionsTab.sessionsHasMore = false;
+        sessionsTab.queryOnly();
+    }
+
+    function toggleSource(id, checked) {
+        if (sessionsTab.sessionSources.length <= 1)
+            return;
+        sessionsTab.setSourceSelection(SessionSources.toggled(sessionsTab.selectedSourceIds, id, checked, sessionsTab.sessionSources));
     }
 
     Timer {
@@ -103,12 +173,58 @@ ColumnLayout {
         }
     }
 
-    QQC2.TextField {
+    RowLayout {
         Layout.fillWidth: true
-        visible: sessionsTab.sessions.length > 0 || sessionsTab.searchQuery !== "" || searchTimer.running || sessionsTab.loading
-        placeholderText: i18n("Search sessions…")
-        text: sessionsTab.filterText
-        onTextChanged: sessionsTab.filterText = text
+        visible: sessionsTab.sessions.length > 0 || sessionsTab.searchQuery !== "" || searchTimer.running || sessionsTab.loading || sessionsTab.sessionSources.length > 0
+        spacing: 6
+
+        QQC2.TextField {
+            id: searchField
+            Layout.fillWidth: true
+            placeholderText: i18n("Search sessions…")
+            text: sessionsTab.filterText
+            onTextChanged: sessionsTab.filterText = searchField.text
+            Accessible.name: i18n("Search sessions")
+        }
+
+        PlasmaComponents.Button {
+            id: sourceSelectorButton
+            visible: sessionsTab.sessionSources.length > 0
+            Layout.preferredWidth: 112
+            Layout.minimumWidth: 78
+            Layout.maximumWidth: 132
+            text: sessionsTab.sourceSummary
+            onClicked: sourcePopup.open()
+            Accessible.name: i18n("Filter sessions by source")
+            PlasmaComponents.ToolTip.text: i18n("Filter sessions by source")
+            PlasmaComponents.ToolTip.visible: sourceSelectorButton.hovered
+
+            QQC2.Popup {
+                id: sourcePopup
+                x: Math.max(0, sourceSelectorButton.width - sourcePopup.width)
+                y: sourceSelectorButton.height + 4
+                width: Math.min(220, Math.max(150, sessionsTab.width))
+                padding: 6
+                focus: true
+                modal: false
+                closePolicy: QQC2.Popup.CloseOnEscape | QQC2.Popup.CloseOnPressOutside
+
+                contentItem: ColumnLayout {
+                    spacing: 0
+                    Repeater {
+                        model: sessionsTab.sourceOptions
+                        delegate: QQC2.CheckBox {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            text: modelData.label
+                            checked: modelData.isAll ? sessionsTab.sourceSelectionIsAll : (sessionsTab.sourceSelectionIsAll || sessionsTab.selectedSourceIds.indexOf(modelData.id) >= 0)
+                            Accessible.name: modelData.label
+                            onClicked: modelData.isAll ? sessionsTab.setSourceSelection([]) : sessionsTab.toggleSource(modelData.id, checked)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     PlasmaComponents.Label {
@@ -305,7 +421,9 @@ ColumnLayout {
     function requestSessions(offset, append, refreshMode) {
         requestSerial += 1;
         requestedQuery = searchQuery;
+        requestedSourceSignature = sourceSignature(selectedSourceIds);
         activeQuery = requestedQuery;
+        activeSourceSignature = requestedSourceSignature;
         activeRequestSerial = requestSerial;
         activeOffset = offset;
         activeAppend = append;
@@ -321,6 +439,8 @@ ColumnLayout {
         var mode = activeRefresh ? "--refresh" : "--query-only";
         var cmd = "cd " + Shell.quote(rootItem.scriptDir) + " && ./get-ai-usage --sessions " + mode + " --query " + Shell.quote(activeQuery);
         cmd += " --limit " + sessionsLimit + " --offset " + activeOffset;
+        if (selectedSourceIds.length > 0)
+            cmd += " --source " + Shell.quote(selectedSourceIds.join(","));
         activeCommand = cmd;
         sessionsSource.disconnectSource(cmd);
         sessionsSource.connectSource(cmd);
@@ -333,8 +453,6 @@ ColumnLayout {
     }
 
     function queryOnly(offset, append) {
-        if (loading)
-            return;
         requestSessions(offset === undefined ? 0 : offset, append === true, false);
     }
 
@@ -351,13 +469,9 @@ ColumnLayout {
         onNewData: function (sourceName, data) {
             sessionsSource.disconnectSource(sourceName);
             var current = sourceName === sessionsTab.activeCommand && sessionsTab.activeRequestSerial === sessionsTab.requestSerial && sessionsTab.activeQuery === sessionsTab.requestedQuery;
-            if (!current) {
-                if (sessionsTab.activeRequestSerial < sessionsTab.requestSerial) {
-                    sessionsTab.loading = false;
-                    searchTimer.restart();
-                }
+            current = current && sessionsTab.activeSourceSignature === sessionsTab.requestedSourceSignature;
+            if (!current)
                 return;
-            }
             sessionsTab.loading = false;
             var stdout = (data && data.stdout) ? data.stdout : "";
             // Plasma's executable DataSource reports the exit status under the
@@ -371,6 +485,23 @@ ColumnLayout {
             try {
                 var payload = JSON.parse(stdout);
                 var page = payload.sessions || [];
+                var responseSources = sessionsTab.normalizeSources(payload.sources);
+                var staleSelection = sessionsTab.sourceSelectionHasStaleIds(responseSources);
+                sessionsTab.sessionSources = responseSources;
+                if (staleSelection) {
+                    var staleSignature = sessionsTab.activeSourceSignature;
+                    if (sessionsTab.sourceResetSignature === staleSignature)
+                        return;
+                    sessionsTab.selectedSourceIds = [];
+                    sessionsTab.sourceResetSignature = staleSignature;
+                    sessionsTab.sessions = [];
+                    sessionsTab.sessionsOffset = 0;
+                    sessionsTab.sessionsTotal = 0;
+                    sessionsTab.sessionsHasMore = false;
+                    sessionsTab.requestSessions(0, false, false);
+                    return;
+                }
+                sessionsTab.sourceResetSignature = "";
                 sessionsTab.sessionsTotal = Number(payload.total) || 0;
                 sessionsTab.sessionsOffset = Number(payload.offset) || sessionsTab.activeOffset;
                 sessionsTab.sessionsHasMore = payload.hasMore === true;
