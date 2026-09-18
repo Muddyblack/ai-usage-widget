@@ -27,6 +27,7 @@ ColumnLayout {
     property string activeCommand: ""
     property int requestSerial: 0
     property int activeRequestSerial: 0
+    property bool activeRefresh: false
     readonly property int sessionsLimit: 60
     property int sessionsTotal: 0
     property bool sessionsHasMore: false
@@ -60,6 +61,13 @@ ColumnLayout {
         id: searchTimer
         interval: 300
         repeat: false
+        onTriggered: sessionsTab.queryOnly()
+    }
+
+    Timer {
+        interval: Math.max(30, rootItem.pollIntervalSec || 300) * 1000
+        repeat: true
+        running: sessionsTab.visible
         onTriggered: sessionsTab.refresh()
     }
 
@@ -294,13 +302,14 @@ ColumnLayout {
         return i18np("%1 d ago", "%1 d ago", Math.floor(age / 86400));
     }
 
-    function requestSessions(offset, append) {
+    function requestSessions(offset, append, refreshMode) {
         requestSerial += 1;
         requestedQuery = searchQuery;
         activeQuery = requestedQuery;
         activeRequestSerial = requestSerial;
         activeOffset = offset;
         activeAppend = append;
+        activeRefresh = refreshMode === true;
         if (!append) {
             sessionsOffset = 0;
             sessionsTotal = 0;
@@ -309,7 +318,8 @@ ColumnLayout {
         loading = true;
         errorText = "";
         notice = "";
-        var cmd = "cd " + Shell.quote(rootItem.scriptDir) + " && ./get-ai-usage --sessions --query " + Shell.quote(activeQuery);
+        var mode = activeRefresh ? "--refresh" : "--query-only";
+        var cmd = "cd " + Shell.quote(rootItem.scriptDir) + " && ./get-ai-usage --sessions " + mode + " --query " + Shell.quote(activeQuery);
         cmd += " --limit " + sessionsLimit + " --offset " + activeOffset;
         activeCommand = cmd;
         sessionsSource.disconnectSource(cmd);
@@ -319,13 +329,19 @@ ColumnLayout {
     function refresh() {
         if (loading)
             return;
-        requestSessions(0, false);
+        requestSessions(0, false, true);
+    }
+
+    function queryOnly(offset, append) {
+        if (loading)
+            return;
+        requestSessions(offset === undefined ? 0 : offset, append === true, false);
     }
 
     function loadMore() {
         if (loading || !sessionsHasMore)
             return;
-        requestSessions(sessionsOffset + sessionsLimit, true);
+        queryOnly(sessionsOffset + sessionsLimit, true);
     }
 
     Plasma5Support.DataSource {
