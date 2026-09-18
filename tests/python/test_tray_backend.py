@@ -71,12 +71,42 @@ class BackendThreadTest(unittest.TestCase):
 
         self.assertEqual(collect.call_args_list, [mock.call("query", limit=60, offset=3)])
 
+    def test_session_query_forwards_source_ids_through_windows_bridge(self):
+        with mock.patch("app.collect_sessions_json", return_value='{"sessions":[]}') as collect:
+            self.backend.refreshSessions("query", 1, 3, ["openai", "antigravity"])
+            self.backend._sessions_future.result(timeout=5)
+
+        self.assertEqual(
+            collect.call_args_list,
+            [mock.call(
+                "query",
+                source_ids=["openai", "antigravity"],
+                limit=60,
+                offset=3,
+            )],
+        )
+
     def test_explicit_session_refresh_uses_global_collection(self):
         with mock.patch("app.refresh_sessions", return_value={}) as refresh:
             self.backend.refreshSessionsAndQuery("query", 1, 3)
             self.backend._sessions_future.result(timeout=5)
 
         self.assertEqual(refresh.call_args_list, [mock.call("query", limit=60, offset=3)])
+
+    def test_explicit_session_refresh_forwards_source_ids_through_windows_bridge(self):
+        with mock.patch("app.refresh_sessions_json", return_value='{"sessions":[]}') as refresh:
+            self.backend.refreshSessionsAndQuery("query", 1, 3, ["openai", "opencode"])
+            self.backend._sessions_future.result(timeout=5)
+
+        self.assertEqual(
+            refresh.call_args_list,
+            [mock.call(
+                "query",
+                source_ids=["openai", "opencode"],
+                limit=60,
+                offset=3,
+            )],
+        )
 
     def test_session_refresh_cancels_queued_superseded_future(self):
         release = threading.Event()
