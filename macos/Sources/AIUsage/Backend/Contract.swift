@@ -159,9 +159,29 @@ enum SpendRows {
 // pattern as `Envelope` above, so an addition on the backend side never
 // breaks this app.
 
+struct SessionSource: Decodable, Identifiable, Equatable {
+    var id = ""
+    var label = ""
+
+    init(id: String, label: String) {
+        self.id = id
+        self.label = label
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = (try? c.decode(String.self, forKey: .id)) ?? ""
+        let decodedLabel = (try? c.decode(String.self, forKey: .label)) ?? ""
+        label = decodedLabel.isEmpty ? id : decodedLabel
+    }
+
+    enum CodingKeys: String, CodingKey { case id, label }
+}
+
 struct LocalSessions: Decodable {
     var updatedAt: Double
     var sessions: [LocalSession]
+    var sources: [SessionSource]
     var total: Int
     var offset: Int
     var limit: Int?
@@ -169,13 +189,15 @@ struct LocalSessions: Decodable {
     var totalExact: Bool
 
     enum CodingKeys: String, CodingKey {
-        case updatedAt, sessions, total, offset, limit, hasMore, totalExact
+        case updatedAt, sessions, sources, total, offset, limit, hasMore, totalExact
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         updatedAt = (try? c.decode(Double.self, forKey: .updatedAt)) ?? 0
         sessions = (try? c.decode([LocalSession].self, forKey: .sessions)) ?? []
+        sources = ((try? c.decode([SessionSource].self, forKey: .sources)) ?? [])
+            .filter { !$0.id.isEmpty }
         total = (try? c.decode(Int.self, forKey: .total)) ?? sessions.count
         offset = (try? c.decode(Int.self, forKey: .offset)) ?? 0
         limit = try? c.decode(Int.self, forKey: .limit)

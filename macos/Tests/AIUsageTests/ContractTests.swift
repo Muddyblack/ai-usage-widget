@@ -12,6 +12,10 @@ final class ContractTests: XCTestCase {
         try JSONDecoder().decode(Envelope.self, from: Data(json.utf8))
     }
 
+    private func decodeSessions(_ json: String) throws -> LocalSessions {
+        try JSONDecoder().decode(LocalSessions.self, from: Data(json.utf8))
+    }
+
     func testDecodesAFullProvider() throws {
         let envelope = try decode(
             """
@@ -96,5 +100,50 @@ final class ContractTests: XCTestCase {
                 #"{"providers":[{"id":"a","details":{"status":{"indicator":"\#(indicator)"}}}]}"#)
             XCTAssertEqual(envelope.providers.first?.status.isTrouble, trouble, "indicator \(indicator)")
         }
+    }
+
+    func testOlderSessionResultsDecodeWithoutSources() throws {
+        let result = try decodeSessions(#"{"sessions":[],"total":0}"#)
+        XCTAssertTrue(result.sources.isEmpty)
+    }
+
+    func testSessionSourcesDecodeBackendDescriptorsLeniently() throws {
+        let result = try decodeSessions(
+            #"{"sources":[{"id":"openai","label":"Codex"},{"id":"antigravity"}],"sessions":[]}"#)
+        XCTAssertEqual(result.sources, [
+            SessionSource(id: "openai", label: "Codex"),
+            SessionSource(id: "antigravity", label: "antigravity"),
+        ])
+    }
+
+    func testMalformedSessionSourcesDoNotBreakTheResponse() throws {
+        let result = try decodeSessions(#"{"sources":[{"id":7},"not-an-object"],"sessions":[]}"#)
+        XCTAssertTrue(result.sources.isEmpty)
+    }
+
+    func testRemovedSelectedSourceRequiresOneUnfilteredQuery() {
+        let available = [SessionSource(id: "antigravity", label: "Antigravity")]
+        let reconciliation = AppModel.reconciledSessionSourceIDs(
+            requested: ["openai"], available: available)
+        XCTAssertTrue(reconciliation.selected.isEmpty)
+        XCTAssertTrue(reconciliation.requiresAllQuery)
+    }
+
+    func testUnchangedSelectedSourcesDoNotRequireAFollowUpQuery() {
+        let available = [
+            SessionSource(id: "openai", label: "Codex"),
+            SessionSource(id: "antigravity", label: "Antigravity"),
+        ]
+        let reconciliation = AppModel.reconciledSessionSourceIDs(
+            requested: [" openai "], available: available)
+        XCTAssertEqual(reconciliation.selected, ["openai"])
+        XCTAssertFalse(reconciliation.requiresAllQuery)
+    }
+
+    func testBackendSourceIDsNormalizeAndDropEmptyInput() {
+        XCTAssertEqual(
+            Backend.normalizedSessionSourceIDs([" openai ", "", "openai", "antigravity"]),
+            ["openai", "antigravity"])
+        XCTAssertTrue(Backend.normalizedSessionSourceIDs([" ", ""]).isEmpty)
     }
 }
