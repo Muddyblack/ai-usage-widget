@@ -317,12 +317,16 @@ ShellRoot {
     }
 
     property var providers: []
+    property var localSpend: ({})
     // Local sessions for the optional Sessions tab.
     property var sessions: []
     property bool sessionsLoading: false
     property string sessionsError: ""
     // Last `--open-session` result, shown as a status line under the list.
     property string sessionsNotice: ""
+    property bool pricingLoading: false
+    property string pricingStatus: ""
+    property string pricingError: ""
     property string activeId: ""
     // The last real provider selected (never a feature tab id) — what the
     // panel pill shows while a feature tab (Overview/Spend/Sessions) is
@@ -590,6 +594,7 @@ ShellRoot {
         try {
             var data = JSON.parse((text || "").trim());
             root.providers = data.providers || [];
+            root.localSpend = data.localSpend || ({});
             root.updatedAt = data.updatedAt || 0;
             // Seed (or heal, if the remembered one got disabled) the pill's
             // fallback provider — needed even before the user ever leaves a
@@ -623,9 +628,52 @@ ShellRoot {
             return;
         root.sessionsLoading = true;
         root.sessionsError = "";
+        root.sessionsNotice = "";
         sessionsProcess.exec({
             command: ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --sessions", "ai-usage", root.settings.pythonPath || "", root.backendCommand]
         });
+    }
+
+    function refreshPricing() {
+        if (pricingProcess.running)
+            return;
+        root.pricingLoading = true;
+        pricingProcess.exec({
+            command: ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --refresh-pricing", "ai-usage", root.settings.pythonPath || "", root.backendCommand]
+        });
+    }
+
+    Process {
+        id: pricingProcess
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    var data = JSON.parse((this.text || "").trim());
+                    root.pricingStatus = data.status || (data.ok === true ? "refreshed" : "no-cache");
+                    root.pricingError = data.error || "";
+                    if (data.ok === true)
+                        root.refresh();
+                } catch (e) {
+                    root.pricingStatus = "no-cache";
+                    root.pricingError = root.i18n("Could not refresh pricing.");
+                }
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: {
+                var message = this.text.trim();
+                if (message !== "")
+                    root.pricingError = message.split("\n")[0];
+            }
+        }
+        onExited: function (exitCode) {
+            root.pricingLoading = false;
+            if (root.pricingStatus === "") {
+                root.pricingStatus = "no-cache";
+                if (root.pricingError === "")
+                    root.pricingError = root.i18n("Could not refresh pricing.");
+            }
+        }
     }
 
     Process {
