@@ -155,6 +155,7 @@ Window {
     property int sessionsActiveOffset: 0
     property bool sessionsActiveAppend: false
     property string activeId: ""
+    readonly property bool sessionsViewVisible: root.visible && !root.showSettings && root.activeId === "sessions"
     // The last real provider selected (never a feature tab id) — what the
     // panel pill shows while a feature tab (Overview/Spend/Sessions) is
     // active, since those have no percentage of their own to display.
@@ -345,7 +346,7 @@ Window {
         backend.refresh();
     }
 
-    function refreshSessions(query) {
+    function requestSessions(query, reconcile) {
         var normalizedQuery = (query || "").trim();
         root.sessionsQuery = normalizedQuery;
         root.sessionsOffset = 0;
@@ -357,7 +358,18 @@ Window {
         root.sessionsLoading = true;
         root.sessionsError = "";
         root.sessionsNotice = "";
-        backend.refreshSessions(normalizedQuery, root.sessionsRequestId, 0);
+        if (reconcile)
+            backend.refreshSessionsAndQuery(normalizedQuery, root.sessionsRequestId, 0);
+        else
+            backend.refreshSessions(normalizedQuery, root.sessionsRequestId, 0);
+    }
+
+    function refreshSessions(query) {
+        root.requestSessions(query, false);
+    }
+
+    function reconcileSessions(query) {
+        root.requestSessions(query, true);
     }
 
     function loadMoreSessions() {
@@ -395,7 +407,11 @@ Window {
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: root.refresh()
+        onTriggered: {
+            root.refresh();
+            if (root.sessionsViewVisible && !root.sessionsLoading)
+                root.reconcileSessions(root.sessionsQuery);
+        }
     }
 
     Timer {
