@@ -678,7 +678,6 @@ ShellRoot {
         root.sessionsOffset = 0;
         root.sessionsTotal = 0;
         root.sessionsHasMore = false;
-        root.sessions = [];
         if (sessionsProcess.running)
             root.queueSessionsRequest(0, false, false);
     }

@@ -20,6 +20,8 @@ ColumnLayout {
     readonly property var sessionSources: shell.sessionsSources || []
     readonly property var selectedSourceIds: shell.sessionsSourceIds || []
     readonly property bool sourceSelectionIsAll: selectedSourceIds.length === 0
+    property var pendingSourceIds: []
+    readonly property bool pendingSourceSelectionIsAll: page.pendingSourceIds.length === 0
     readonly property var sourceOptions: {
         var options = [];
         if (page.sessionSources.length > 1)
@@ -57,6 +59,22 @@ ColumnLayout {
             shell.setSessionsSourceIds(ids);
         if (typeof shell.querySessions === "function")
             shell.querySessions(page.searchQuery);
+    }
+
+    function stageSourceSelection(ids) {
+        page.pendingSourceIds = SessionSources.normalizeIds(ids, page.sessionSources);
+    }
+
+    function stageToggleSource(id, checked) {
+        if (page.sessionSources.length <= 1)
+            return;
+        page.stageSourceSelection(SessionSources.toggled(page.pendingSourceIds, id, checked, page.sessionSources));
+    }
+
+    function commitSourceSelection() {
+        if (SessionSources.signature(page.pendingSourceIds) === SessionSources.signature(page.selectedSourceIds))
+            return;
+        page.setSourceSelection(page.pendingSourceIds);
     }
 
     function toggleSource(id, checked) {
@@ -199,22 +217,31 @@ ColumnLayout {
                 x: Math.max(0, sourceSelectorButton.width - sourcePopup.width)
                 y: sourceSelectorButton.height + 4
                 width: Math.min(220, Math.max(150, page.width))
+                height: Math.min(320, Math.max(1, page.height - sourceSelectorButton.height - 8))
                 padding: 6
                 focus: true
                 modal: false
                 closePolicy: QC.Popup.CloseOnEscape | QC.Popup.CloseOnPressOutside
+                onOpened: page.pendingSourceIds = page.selectedSourceIds.slice(0)
+                onClosed: page.commitSourceSelection()
 
-                contentItem: ColumnLayout {
-                    spacing: 0
-                    Repeater {
-                        model: page.sourceOptions
-                        delegate: QC.CheckBox {
-                            required property var modelData
-                            Layout.fillWidth: true
-                            text: modelData.label
-                            checked: modelData.isAll ? page.sourceSelectionIsAll : (page.sourceSelectionIsAll || page.selectedSourceIds.indexOf(modelData.id) >= 0)
-                            Accessible.name: modelData.label
-                            onClicked: modelData.isAll ? page.setSourceSelection([]) : page.toggleSource(modelData.id, checked)
+                contentItem: QC.ScrollView {
+                    clip: true
+                    QC.ScrollBar.horizontal.policy: QC.ScrollBar.AlwaysOff
+
+                    ColumnLayout {
+                        width: sourcePopup.availableWidth
+                        spacing: 0
+                        Repeater {
+                            model: page.sourceOptions
+                            delegate: QC.CheckBox {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                text: modelData.label
+                                checked: modelData.isAll ? page.pendingSourceSelectionIsAll : (page.pendingSourceSelectionIsAll || page.pendingSourceIds.indexOf(modelData.id) >= 0)
+                                Accessible.name: modelData.label
+                                onClicked: modelData.isAll ? page.stageSourceSelection([]) : page.stageToggleSource(modelData.id, checked)
+                            }
                         }
                     }
                 }
