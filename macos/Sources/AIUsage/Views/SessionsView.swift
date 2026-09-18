@@ -74,7 +74,7 @@ struct SessionsView: View {
                 .disabled(model.sessionsLoading)
             }
         }
-        .onAppear { model.refreshSessions(query: filterText) }
+        .onAppear { model.refreshSessions(query: filterText, refresh: true) }
         .onChange(of: filterText) { model.scheduleSessionsRefresh(query: $0) }
     }
 
