@@ -48,25 +48,15 @@ def _matching_files(root: str, predicate, *, recursive: bool = True, excluded: s
         except OSError:
             entries = []
         records = [_stat_record(root, "directory")]
+        records.extend(_stat_record(os.path.join(root, name), "directory") for name in entries if os.path.isdir(os.path.join(root, name)))
         records.extend(
-            _stat_record(os.path.join(root, name), "directory")
-            for name in entries
-            if os.path.isdir(os.path.join(root, name))
-        )
-        records.extend(
-            _stat_record(os.path.join(root, name), "file")
-            for name in entries
-            if os.path.isfile(os.path.join(root, name)) and predicate(name)
+            _stat_record(os.path.join(root, name), "file") for name in entries if os.path.isfile(os.path.join(root, name)) and predicate(name)
         )
         return records
     for dirpath, dirnames, filenames in os.walk(root):
         if excluded:
             dirnames[:] = [name for name in dirnames if name not in excluded]
-        records.extend(
-            _stat_record(os.path.join(dirpath, name), "file")
-            for name in sorted(filenames)
-            if predicate(name)
-        )
+        records.extend(_stat_record(os.path.join(dirpath, name), "file") for name in sorted(filenames) if predicate(name))
     return records
 
 
@@ -123,9 +113,7 @@ def _opencode_records() -> list[tuple[str, str, int, int, int]]:
             except OSError:
                 continue
             records.extend(
-                _stat_record(os.path.join(directory, name), "file")
-                for name in entries
-                if name.startswith("opencode") and name.endswith(".db")
+                _stat_record(os.path.join(directory, name), "file") for name in entries if name.startswith("opencode") and name.endswith(".db")
             )
     return records
 
@@ -138,11 +126,7 @@ def _antigravity_records(root: str) -> list[tuple[str, str, int, int, int]]:
     ):
         records.extend(_directory_records(tree))
         for dirpath, _dirnames, filenames in os.walk(tree):
-            records.extend(
-                _stat_record(os.path.join(dirpath, name), "file")
-                for name in sorted(filenames)
-                if predicate(os.path.join(dirpath, name))
-            )
+            records.extend(_stat_record(os.path.join(dirpath, name), "file") for name in sorted(filenames) if predicate(os.path.join(dirpath, name)))
     return records
 
 

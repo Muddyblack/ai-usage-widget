@@ -107,9 +107,7 @@ def main(argv):
                 if normalized_source_id not in source_ids:
                     source_ids.append(normalized_source_id)
             selected_source_ids = set(source_ids)
-            source_ids = [
-                source_id for source_id, _label in SOURCE_REGISTRY if source_id in selected_source_ids
-            ]
+            source_ids = [source_id for source_id, _label in SOURCE_REGISTRY if source_id in selected_source_ids]
         elif arg == "--limit" or arg.startswith("--limit="):
             if arg == "--limit":
                 i += 1

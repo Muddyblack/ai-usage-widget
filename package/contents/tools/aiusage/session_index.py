@@ -100,11 +100,7 @@ def normalize_source_ids(source_ids: Sequence[str] | None) -> tuple[str, ...] | 
 def source_descriptors(providers: Iterable[str]) -> list[SessionSourceDescriptor]:
     """Return canonical, public descriptors for cached provider rows."""
     available = frozenset(providers)
-    return [
-        {"id": source_id, "label": label}
-        for source_id, label in SOURCE_REGISTRY
-        if source_id in available
-    ]
+    return [{"id": source_id, "label": label} for source_id, label in SOURCE_REGISTRY if source_id in available]
 
 
 def _valid_open_key(value: object) -> str:
@@ -136,28 +132,14 @@ class SessionIndex:
         try:
             with connection:
                 connection.execute("BEGIN IMMEDIATE")
-                stored = {
-                    str(row[0]): (int(row[1]), int(row[2]))
-                    for row in connection.execute(
-                        "SELECT source_key, mtime_ns, size FROM source_meta"
-                    )
-                }
-                stored_orders = {
-                    str(row[0]): int(row[1])
-                    for row in connection.execute(
-                        "SELECT source_key, source_order FROM source_meta"
-                    )
-                }
+                stored = {str(row[0]): (int(row[1]), int(row[2])) for row in connection.execute("SELECT source_key, mtime_ns, size FROM source_meta")}
+                stored_orders = {str(row[0]): int(row[1]) for row in connection.execute("SELECT source_key, source_order FROM source_meta")}
                 mutated = False
                 for key in stored:
                     if key not in source_map:
                         mutated = True
-                        connection.execute(
-                            "DELETE FROM session_rows WHERE source_key = ?", (key,)
-                        )
-                        connection.execute(
-                            "DELETE FROM source_meta WHERE source_key = ?", (key,)
-                        )
+                        connection.execute("DELETE FROM session_rows WHERE source_key = ?", (key,))
+                        connection.execute("DELETE FROM source_meta WHERE source_key = ?", (key,))
 
                 for source_order, (key, source) in enumerate(source_map.items()):
                     metadata = (source.mtime_ns, source.size)
@@ -178,9 +160,7 @@ class SessionIndex:
                         "source_order = excluded.source_order",
                         (key, source.mtime_ns, source.size, source_order),
                     )
-                    connection.execute(
-                        "DELETE FROM session_rows WHERE source_key = ?", (key,)
-                    )
+                    connection.execute("DELETE FROM session_rows WHERE source_key = ?", (key,))
                     connection.executemany(
                         "INSERT INTO session_rows (source_key, row_order, provider, "
                         "title, session_name, state, last_activity_at, detail, "
@@ -208,6 +188,7 @@ class SessionIndex:
                     pass
         finally:
             connection.close()
+
     def rows(self) -> list[SessionRow]:
         """Return the cached merged rows in their original collector order."""
         connection = self._open()
@@ -245,25 +226,14 @@ class SessionIndex:
         normalized_source_ids = normalize_source_ids(source_ids)
         connection = self._open()
         try:
-            available_providers = [
-                str(row[0])
-                for row in connection.execute(
-                    "SELECT DISTINCT provider FROM session_rows"
-                ).fetchall()
-            ]
+            available_providers = [str(row[0]) for row in connection.execute("SELECT DISTINCT provider FROM session_rows").fetchall()]
             predicates: list[str] = []
             parameters: list[str] = []
             if needle:
-                predicates.append(
-                    "(" + " OR ".join(
-                        f"instr(casefold({column}), ?) > 0" for column in _SEARCH_COLUMNS
-                    ) + ")"
-                )
+                predicates.append("(" + " OR ".join(f"instr(casefold({column}), ?) > 0" for column in _SEARCH_COLUMNS) + ")")
                 parameters.extend((needle,) * len(_SEARCH_COLUMNS))
             if normalized_source_ids is not None:
-                predicates.append(
-                    "(" + " OR ".join("provider = ?" for _ in normalized_source_ids) + ")"
-                )
+                predicates.append("(" + " OR ".join("provider = ?" for _ in normalized_source_ids) + ")")
                 parameters.extend(normalized_source_ids)
             where = " WHERE " + " AND ".join(predicates) if predicates else ""
             total = int(
@@ -274,12 +244,9 @@ class SessionIndex:
             )
             page = connection.execute(
                 "SELECT provider, title, session_name, state, last_activity_at, detail, open_key "
-                "FROM session_rows"
-                + where
-                + " ORDER BY last_activity_at DESC, "
+                "FROM session_rows" + where + " ORDER BY last_activity_at DESC, "
                 "(SELECT source_order FROM source_meta WHERE source_key = session_rows.source_key) ASC, "
-                "row_order ASC"
-                + " LIMIT ? OFFSET ?",
+                "row_order ASC" + " LIMIT ? OFFSET ?",
                 (*parameters, limit, offset),
             ).fetchall()
             sessions: list[SessionRow] = [
