@@ -1,0 +1,163 @@
+"""Metadata-only discovery for the local session collectors."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from dataclasses import dataclass
+from . import paths
+from .providers import opencode
+from .providers.grok import grok_home
+from .providers.muse import sessions_root as muse_sessions_root
+from .providers.openai_credentials import codex_home
+
+
+@dataclass(frozen=True, slots=True)
+class SessionManifest:
+    source_id: str
+    mtime_ns: int
+    size: int
+
+
+def _stat_record(path: str, kind: str) -> tuple[str, str, int, int, int]:
+    normalized = os.path.abspath(os.path.normpath(path))
+    try:
+        stat = os.stat(normalized)
+    except OSError:
+        return kind, normalized, 0, 0, 0
+    return kind, normalized, 1, stat.st_mtime_ns, stat.st_size
+
+
+def _directory_records(root: str, excluded: set[str] | None = None) -> list[tuple[str, str, int, int, int]]:
+    records = [_stat_record(root, "directory")]
+    for dirpath, dirnames, _filenames in os.walk(root):
+        if excluded:
+            dirnames[:] = [name for name in dirnames if name not in excluded]
+        dirnames.sort()
+        records.extend(_stat_record(os.path.join(dirpath, name), "directory") for name in dirnames)
+    return records
+
+
+def _matching_files(root: str, predicate, *, recursive: bool = True, excluded: set[str] | None = None) -> list[tuple[str, str, int, int, int]]:
+    records = _directory_records(root, excluded)
+    if not recursive:
+        try:
+            entries = sorted(os.listdir(root))
+        except OSError:
+            entries = []
+        records = [_stat_record(root, "directory")]
+        records.extend(
+            _stat_record(os.path.join(root, name), "directory")
+            for name in entries
+            if os.path.isdir(os.path.join(root, name))
+        )
+        records.extend(
+            _stat_record(os.path.join(root, name), "file")
+            for name in entries
+            if os.path.isfile(os.path.join(root, name)) and predicate(name)
+        )
+        return records
+    for dirpath, dirnames, filenames in os.walk(root):
+        if excluded:
+            dirnames[:] = [name for name in dirnames if name not in excluded]
+        records.extend(
+            _stat_record(os.path.join(dirpath, name), "file")
+            for name in sorted(filenames)
+            if predicate(name)
+        )
+    return records
+
+
+def _cline_records(root: str) -> list[tuple[str, str, int, int, int]]:
+    records = [_stat_record(root, "directory")]
+    try:
+        names = sorted(os.listdir(root))
+    except OSError:
+        return records
+    for name in names:
+        directory = os.path.join(root, name)
+        if not os.path.isdir(directory):
+            continue
+        records.append(_stat_record(directory, "directory"))
+        records.append(_stat_record(os.path.join(directory, name + ".json"), "file"))
+    return records
+
+
+def _claude_records(root: str) -> list[tuple[str, str, int, int, int]]:
+    projects = os.path.join(root, "projects")
+    records = [_stat_record(root, "directory"), _stat_record(os.path.join(root, "history.jsonl"), "file")]
+    records.append(_stat_record(projects, "directory"))
+    try:
+        project_names = sorted(os.listdir(projects))
+    except OSError:
+        return records
+    for name in project_names:
+        project = os.path.join(projects, name)
+        if not os.path.isdir(project):
+            continue
+        records.append(_stat_record(project, "directory"))
+        try:
+            entries = sorted(os.listdir(project))
+        except OSError:
+            continue
+        records.extend(
+            _stat_record(os.path.join(project, entry), "file")
+            for entry in entries
+            if entry.endswith(".jsonl") and os.path.isfile(os.path.join(project, entry))
+        )
+    return records
+
+
+def _opencode_records() -> list[tuple[str, str, int, int, int]]:
+    records: list[tuple[str, str, int, int, int]] = []
+    explicit = os.environ.get("OPENCODE_DB", "").strip()
+    if explicit:
+        records.append(_stat_record(os.path.expanduser(explicit), "file"))
+    for base in paths.data_home_dirs():
+        for directory in (base, os.path.join(base, "opencode")):
+            records.append(_stat_record(directory, "directory"))
+            try:
+                entries = sorted(os.listdir(directory))
+            except OSError:
+                continue
+            records.extend(
+                _stat_record(os.path.join(directory, name), "file")
+                for name in entries
+                if name.startswith("opencode") and name.endswith(".db")
+            )
+    return records
+
+
+def _antigravity_records(root: str) -> list[tuple[str, str, int, int, int]]:
+    records: list[tuple[str, str, int, int, int]] = []
+    for tree, predicate in (
+        (os.path.join(root, "antigravity-cli", "brain"), lambda path: path.endswith(os.path.join(".system_generated", "logs", "transcript.jsonl"))),
+        (os.path.join(root, "antigravity", "brain"), lambda path: path.endswith(".md")),
+    ):
+        records.extend(_directory_records(tree))
+        for dirpath, _dirnames, filenames in os.walk(tree):
+            records.extend(
+                _stat_record(os.path.join(dirpath, name), "file")
+                for name in sorted(filenames)
+                if predicate(os.path.join(dirpath, name))
+            )
+    return records
+
+
+def build_manifest() -> SessionManifest:
+    """Fingerprint all metadata inputs used by the seven session collectors."""
+    claude_root = os.environ.get("CLAUDE_CONFIG_DIR") or os.path.expanduser("~/.claude")
+    antigravity_root = os.environ.get("ANTIGRAVITY_HOME") or os.environ.get("GEMINI_HOME") or os.path.expanduser("~/.gemini")
+    groups = (
+        _cline_records(os.environ.get("CLINE_SESSIONS_DIR") or os.path.expanduser("~/.cline/data/sessions")),
+        _matching_files(muse_sessions_root(), lambda name: name == "session.jsonl", excluded={".msp-view-v1"}),
+        _matching_files(os.environ.get("CODEX_SESSIONS_DIR") or os.path.join(codex_home(), "sessions"), lambda name: name.endswith(".jsonl")),
+        _matching_files(os.path.join(grok_home(), "sessions"), lambda name: name == "signals.json"),
+        _claude_records(claude_root),
+        _opencode_records(),
+        _antigravity_records(antigravity_root),
+    )
+    encoded = json.dumps(groups, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    digest = hashlib.sha256(encoded).hexdigest()
+    return SessionManifest(digest, int(digest[:16], 16) & ((1 << 63) - 1), len(encoded))
