@@ -1,0 +1,19 @@
+{
+  "data": [
+    {
+      "id": "anthropic/claude-missing",
+      "pricing": {
+        "prompt": "0.000003",
+        "completion": "0.000009",
+        "input_cache_read": "0.0000003"
+      }
+    },
+    {
+      "id": "anthropic/claude-missing-alias",
+      "pricing": {
+        "prompt": "0.000001",
+        "completion": "0.000001"
+      }
+    }
+  ]
+}
