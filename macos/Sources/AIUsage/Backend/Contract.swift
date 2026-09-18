@@ -19,9 +19,10 @@ struct Envelope: Decodable {
     var updatedAt: Double
     var active: String
     var providers: [Provider]
+    var localSpend: LocalSpend
 
     enum CodingKeys: String, CodingKey {
-        case schemaVersion, updatedAt, active, providers
+        case schemaVersion, updatedAt, active, providers, localSpend
     }
 
     init(from decoder: Decoder) throws {
@@ -30,13 +31,19 @@ struct Envelope: Decodable {
         updatedAt = (try? c.decode(Double.self, forKey: .updatedAt)) ?? 0
         active = (try? c.decode(String.self, forKey: .active)) ?? ""
         providers = (try? c.decode([Provider].self, forKey: .providers)) ?? []
+        localSpend = (try? c.decode(LocalSpend.self, forKey: .localSpend)) ?? LocalSpend()
     }
 
-    init(providers: [Provider] = [], active: String = "", updatedAt: Double = 0) {
+    init(
+        providers: [Provider] = [],
+        active: String = "",
+        updatedAt: Double = 0,
+        localSpend: LocalSpend = LocalSpend()) {
         self.schemaVersion = 1
         self.updatedAt = updatedAt
         self.active = active
         self.providers = providers
+        self.localSpend = localSpend
     }
 
     func provider(id: String) -> Provider? {
@@ -93,12 +100,157 @@ enum FeatureView: String, CaseIterable, Identifiable {
 // already reported, with the range it covers. Ranges differ by source
 // (30-day, all-time, lifetime) — the same caveat the Linux Spend tabs print.
 struct SpendRow: Identifiable {
-    let provider: Provider
+    let provider: Provider?
+    let label: String
+    let accent: String
     let cost: Double
     let currency: String
     let note: String
+    let provenance: String?
 
-    var id: String { provider.id }
+    var id: String {
+        if let provider { return provider.id }
+        return provenance.map { "local-sessions-\($0)" } ?? "local-sessions"
+    }
+
+    init(provider: Provider, cost: Double, currency: String, note: String) {
+        self.provider = provider
+        self.label = provider.label
+        self.accent = provider.accent
+        self.cost = cost
+        self.currency = currency
+        self.note = note
+        self.provenance = nil
+    }
+
+    init(localCost: Double) {
+        self.init(localCost: localCost, label: i18n("Local sessions"), provenance: nil)
+    }
+
+    init(localCost: Double, label: String, provenance: String?) {
+        self.provider = nil
+        self.label = label
+        self.accent = "#34d399"
+        self.cost = localCost
+        self.currency = "USD"
+        self.note = i18n("local CLI logs")
+        self.provenance = provenance
+    }
+}
+
+struct LocalSpendProvider: Decodable, Equatable {
+    var costUSD = 0.0
+    var costStatus = "unavailable"
+    var costProvenance: String?
+
+    init(costUSD: Double = 0, costStatus: String = "unavailable", costProvenance: String? = nil) {
+        self.costUSD = costUSD
+        self.costStatus = ["exact", "partial", "unavailable"].contains(costStatus)
+            ? costStatus : "unavailable"
+        self.costProvenance = Self.validProvenance(costProvenance)
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let decodedCost = try? c.decode(Double.self, forKey: .costUSD)
+        let decodedStatus = (try? c.decode(String.self, forKey: .costStatus)) ?? "unavailable"
+        let decodedProvenance = try? c.decode(String.self, forKey: .costProvenance)
+        let validCost = decodedCost.flatMap { $0.isFinite && $0 >= 0 ? $0 : nil }
+        let validStatus = ["exact", "partial", "unavailable"].contains(decodedStatus)
+        let validOrigin = Self.validProvenance(decodedProvenance)
+        costUSD = validCost ?? 0
+        costStatus = validCost != nil && validStatus && (decodedProvenance == nil || validOrigin != nil)
+            ? decodedStatus : "unavailable"
+        costProvenance = costStatus == "unavailable" ? nil : validOrigin
+    }
+
+    enum CodingKeys: String, CodingKey { case costUSD, costStatus, costProvenance }
+
+    static func validProvenance(_ value: String?) -> String? {
+        guard let value, ["actual", "estimated", "mixed"].contains(value) else { return nil }
+        return value
+    }
+}
+
+struct LocalSpendTotal: Decodable, Equatable {
+    var totalUSD = 0.0
+    var costStatus = "unavailable"
+    var costProvenance: String?
+    var providers: [String: LocalSpendProvider] = [:]
+
+    init(totalUSD: Double = 0, costStatus: String = "unavailable", costProvenance: String? = nil,
+         providers: [String: LocalSpendProvider] = [:]) {
+        self.totalUSD = totalUSD
+        self.costStatus = ["exact", "partial", "unavailable"].contains(costStatus)
+            ? costStatus : "unavailable"
+        self.costProvenance = LocalSpendProvider.validProvenance(costProvenance)
+        self.providers = providers
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let decodedTotal = try? c.decode(Double.self, forKey: .totalUSD)
+        let decodedStatus = (try? c.decode(String.self, forKey: .costStatus)) ?? "unavailable"
+        let decodedProvenance = try? c.decode(String.self, forKey: .costProvenance)
+        let validTotal = decodedTotal.flatMap { $0.isFinite && $0 >= 0 ? $0 : nil }
+        let validStatus = ["exact", "partial", "unavailable"].contains(decodedStatus)
+        let validOrigin = LocalSpendProvider.validProvenance(decodedProvenance)
+        let valid = validTotal != nil && validStatus && (decodedProvenance == nil || validOrigin != nil)
+        totalUSD = validTotal ?? 0
+        costStatus = valid
+            ? decodedStatus : "unavailable"
+        costProvenance = valid && decodedStatus != "unavailable" ? validOrigin : nil
+        providers = (try? c.decode([String: LocalSpendProvider].self, forKey: .providers)) ?? [:]
+    }
+
+    enum CodingKeys: String, CodingKey { case totalUSD, costStatus, costProvenance, providers }
+}
+
+struct LocalSpend: Decodable, Equatable {
+    var actual = LocalSpendTotal()
+    var estimated = LocalSpendTotal()
+    var legacy: LocalSpendTotal?
+
+    init(totalUSD: Double = 0, costStatus: String = "unavailable",
+         providers: [String: LocalSpendProvider] = [:]) {
+        legacy = LocalSpendTotal(totalUSD: totalUSD, costStatus: costStatus, providers: providers)
+    }
+
+    init(actual: LocalSpendTotal = LocalSpendTotal(), estimated: LocalSpendTotal = LocalSpendTotal()) {
+        self.actual = Self.withDefaultProvenance(actual, value: "actual")
+        self.estimated = Self.withDefaultProvenance(estimated, value: "estimated")
+        legacy = nil
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let hasSeparateTotals = c.contains(.actual) || c.contains(.estimated)
+        if hasSeparateTotals {
+            actual = Self.withDefaultProvenance(
+                (try? c.decode(LocalSpendTotal.self, forKey: .actual)) ?? LocalSpendTotal(),
+                value: "actual")
+            estimated = Self.withDefaultProvenance(
+                (try? c.decode(LocalSpendTotal.self, forKey: .estimated)) ?? LocalSpendTotal(),
+                value: "estimated")
+            legacy = nil
+        } else if c.contains(.totalUSD) || c.contains(.costStatus) || c.contains(.providers) {
+            legacy = try? LocalSpendTotal(from: decoder)
+        } else {
+            legacy = nil
+        }
+    }
+
+    enum CodingKeys: String, CodingKey { case actual, estimated, totalUSD, costStatus, providers }
+
+    private static func withDefaultProvenance(_ total: LocalSpendTotal, value: String) -> LocalSpendTotal {
+        guard total.costProvenance == nil,
+              total.costStatus == "exact" || total.costStatus == "partial" else { return total }
+        return LocalSpendTotal(
+            totalUSD: total.totalUSD,
+            costStatus: total.costStatus,
+            costProvenance: value,
+            providers: total.providers)
+    }
 }
 
 // The per-provider cost numbers the backend already exposed, in the same
@@ -107,7 +259,7 @@ struct SpendRow: Identifiable {
 // spend, Muse/Cline local stats, Cursor on-demand spend. Costs are read out
 // of the generic details dictionary so no new per-provider contract is needed.
 enum SpendRows {
-    static func build(_ providers: [Provider]) -> [SpendRow] {
+    static func build(_ providers: [Provider], localSpend: LocalSpend = LocalSpend()) -> [SpendRow] {
         var out: [SpendRow] = []
         for provider in providers {
             let details = provider.costDetails
@@ -145,11 +297,29 @@ enum SpendRows {
             guard cost > 0 else { continue }
             out.append(SpendRow(provider: provider, cost: cost, currency: currency, note: note))
         }
+        if let legacy = localSpend.legacy {
+            appendLocal(legacy, label: i18n("Local sessions"), provenance: nil, to: &out)
+        } else {
+            appendLocal(localSpend.actual, label: i18n("Actual provider cost"), provenance: "actual", to: &out)
+            appendLocal(localSpend.estimated, label: i18n("Calculated estimate"), provenance: "estimated", to: &out)
+        }
         return out.sorted { $0.cost > $1.cost }
     }
 
     static func totalUSD(_ rows: [SpendRow]) -> Double {
-        rows.filter { $0.currency == "USD" }.reduce(0) { $0 + $1.cost }
+        rows.filter { $0.provider != nil && $0.currency == "USD" }.reduce(0) { $0 + $1.cost }
+    }
+
+    private static func appendLocal(
+        _ total: LocalSpendTotal,
+        label: String,
+        provenance: String?,
+        to rows: inout [SpendRow]) {
+        guard total.costProvenance == provenance,
+              total.costStatus == "exact" || total.costStatus == "partial",
+              total.totalUSD > 0,
+              total.totalUSD.isFinite else { return }
+        rows.append(SpendRow(localCost: total.totalUSD, label: label, provenance: provenance))
     }
 }
 
@@ -174,6 +344,40 @@ struct LocalSessions: Decodable {
     }
 }
 
+struct CostBreakdown: Decodable, Equatable {
+    let actualUSD: Double
+    let estimatedUSD: Double
+
+    init(actualUSD: Double, estimatedUSD: Double) {
+        self.actualUSD = actualUSD
+        self.estimatedUSD = estimatedUSD
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let actual = try c.decode(Double.self, forKey: .actualUSD)
+        let estimated = try c.decode(Double.self, forKey: .estimatedUSD)
+        guard actual.isFinite, actual >= 0, estimated.isFinite, estimated >= 0 else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .actualUSD,
+                in: c,
+                debugDescription: "cost breakdown values must be finite and non-negative")
+        }
+        actualUSD = actual
+        estimatedUSD = estimated
+    }
+
+    /// JSON decimal values can differ by binary floating-point roundoff. The
+    /// tolerance is relative at 1e-9 with a 1e-12 USD absolute floor.
+    func sums(to total: Double) -> Bool {
+        let sum = actualUSD + estimatedUSD
+        let scale = max(abs(sum), abs(total))
+        return abs(sum - total) <= max(1e-12, scale * 1e-9)
+    }
+
+    enum CodingKeys: String, CodingKey { case actualUSD, estimatedUSD }
+}
+
 struct LocalSession: Decodable, Identifiable {
     var provider: String
     var title: String
@@ -188,9 +392,13 @@ struct LocalSession: Decodable, Identifiable {
     /// Code's own opening prompt — see sessions.py). Empty otherwise; a row
     /// with an empty `fullTitle` offers no expand affordance.
     var fullTitle: String
+    var costUSD: Double?
+    var costStatus: String
+    var costProvenance: String?
+    var costBreakdown: CostBreakdown?
 
     enum CodingKeys: String, CodingKey {
-        case provider, title, sessionName, state, lastActivityAt, detail, openKey, fullTitle
+        case provider, title, sessionName, state, lastActivityAt, detail, openKey, fullTitle, costUSD, costStatus, costProvenance, costBreakdown
     }
 
     init(from decoder: Decoder) throws {
@@ -203,6 +411,24 @@ struct LocalSession: Decodable, Identifiable {
         detail = (try? c.decode(String.self, forKey: .detail)) ?? ""
         openKey = (try? c.decode(String.self, forKey: .openKey)) ?? ""
         fullTitle = (try? c.decode(String.self, forKey: .fullTitle)) ?? ""
+        let decodedCost = try? c.decode(Double.self, forKey: .costUSD)
+        let decodedStatus = (try? c.decode(String.self, forKey: .costStatus)) ?? "unavailable"
+        let decodedProvenance = try? c.decode(String.self, forKey: .costProvenance)
+        let validCost = decodedCost.flatMap { $0.isFinite && $0 >= 0 ? $0 : nil }
+        let validStatus = ["exact", "partial", "unavailable"].contains(decodedStatus)
+        let validOrigin = LocalSpendProvider.validProvenance(decodedProvenance)
+        let valid = validCost != nil && validStatus && (decodedProvenance == nil || validOrigin != nil)
+        costUSD = valid && decodedStatus != "unavailable" ? validCost : nil
+        costStatus = valid ? decodedStatus : "unavailable"
+        costProvenance = valid && decodedStatus != "unavailable" ? validOrigin : nil
+        if costProvenance == "mixed",
+           let cost = costUSD,
+           let breakdown = try? c.decode(CostBreakdown.self, forKey: .costBreakdown),
+           breakdown.sums(to: cost) {
+            costBreakdown = breakdown
+        } else {
+            costBreakdown = nil
+        }
     }
 
     var id: String { "\(provider)|\(title)|\(lastActivityAt)|\(openKey)" }
@@ -240,10 +466,13 @@ struct CostDetails {
     }
 
     private func number(_ value: Any?) -> Double? {
-        if let number = value as? Double { return number }
-        if let number = value as? Int { return Double(number) }
-        if let number = value as? NSNumber { return number.doubleValue }
-        if let text = value as? String, let parsed = Double(text) { return parsed }
+        if let number = value as? NSNumber {
+            if CFGetTypeID(number) == CFBooleanGetTypeID() { return nil }
+            let converted = number.doubleValue
+            return converted.isFinite && converted >= 0 ? converted : nil
+        }
+        if let number = value as? Double { return number.isFinite && number >= 0 ? number : nil }
+        if let number = value as? Int { return number >= 0 ? Double(number) : nil }
         return nil
     }
 }
