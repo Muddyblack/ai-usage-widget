@@ -38,6 +38,8 @@ struct SettingsView: View {
                 .tabItem { Label(i18n("Views"), systemImage: "rectangle.grid.2x2") }
             menuBarTab
                 .tabItem { Label(i18n("Menu Bar"), systemImage: "menubar.rectangle") }
+            dataTab
+                .tabItem { Label(i18n("Data"), systemImage: "externaldrive") }
             generalTab
                 .tabItem { Label(i18n("General"), systemImage: "gearshape") }
         }
@@ -206,6 +208,55 @@ struct SettingsView: View {
             .disabled(model.providers.isEmpty)
         }
         .formStyle(.grouped)
+    }
+
+    private var dataTab: some View {
+        Form {
+            Section {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(i18n("Pricing"))
+                        Text(i18n("Refresh the shared model pricing catalog now."))
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                    Button(model.pricingLoading ? i18n("Refreshing…") : i18n("Refresh pricing")) {
+                        model.refreshPricing()
+                    }
+                    .disabled(model.pricingLoading)
+                }
+                if model.pricingLoading || !model.pricingStatus.isEmpty || !model.pricingError.isEmpty {
+                    Text(pricingMessage)
+                        .font(.system(size: 10))
+                        .foregroundStyle(pricingMessageColor)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private var pricingMessage: String {
+        if model.pricingLoading { return i18n("Refreshing pricing…") }
+        switch model.pricingStatus {
+        case "refreshed": return i18n("Pricing updated.")
+        case "stale-good":
+            return i18n("Pricing refresh failed; using saved rates.")
+                + (model.pricingError.isEmpty ? "" : " " + model.pricingError)
+        case "no-cache":
+            return model.pricingError.isEmpty ? i18n("No pricing rates available; try again.") : model.pricingError
+        default: return model.pricingError
+        }
+    }
+
+    private var pricingMessageColor: Color {
+        switch model.pricingStatus {
+        case "refreshed": return .green
+        case "stale-good": return .orange
+        case "no-cache": return .red
+        default: return .secondary
+        }
     }
 
     /// "fr" → "français", in that language rather than in the current one, so
