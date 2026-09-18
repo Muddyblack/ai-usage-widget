@@ -99,24 +99,24 @@ class PricingRefreshCommandTest(IsolatedHomeTest):
         fetch.assert_called_once_with(pricing.SOURCE_URL, timeout=10)
 
     def test_following_all_reuses_the_refreshed_cache_without_pricing_fetch(self):
-        providers = dict.fromkeys(config.ALL_PROVIDERS, False)
-        providers["claude"] = True
-        self.write("config.json", {"providers": providers})
-        org_usage = self.write("claude-org.json", {"data": [{"model": "claude-test", "input_tokens": 10, "output_tokens": 5}]})
-        os.environ["WIDGET_CLAUDE_ADMIN_KEY"] = "test-key"
-        os.environ["CLAUDE_ORG_USAGE_RESPONSE_FILE"] = str(org_usage)
-        with (
-            mock.patch.object(pricing.time, "time", return_value=1_800_000_000),
-            mock.patch.object(
-                pricing,
-                "fetch_json",
-                return_value=HttpResult(200, json.dumps(_catalog())),
-            ) as fetch,
-            mock.patch("aiusage.collect.provider_status", return_value=None),
-        ):
-            self.assertEqual(self._run_backend("--refresh-pricing")[0], 0)
-            fetch.reset_mock()
-            code, result = self._run_backend("--all")
+        with mock.patch.object(config, "ALL_PROVIDERS", ["claude"]):
+            providers = {"claude": True}
+            self.write("config.json", {"providers": providers})
+            org_usage = self.write("claude-org.json", {"data": [{"model": "claude-test", "input_tokens": 10, "output_tokens": 5}]})
+            os.environ["WIDGET_CLAUDE_ADMIN_KEY"] = "test-key"
+            os.environ["CLAUDE_ORG_USAGE_RESPONSE_FILE"] = str(org_usage)
+            with (
+                mock.patch.object(pricing.time, "time", return_value=1_800_000_000),
+                mock.patch.object(
+                    pricing,
+                    "fetch_json",
+                    return_value=HttpResult(200, json.dumps(_catalog())),
+                ) as fetch,
+                mock.patch("aiusage.collect.provider_status", return_value=None),
+            ):
+                self.assertEqual(self._run_backend("--refresh-pricing")[0], 0)
+                fetch.reset_mock()
+                code, result = self._run_backend("--all")
 
         self.assertEqual(code, 0)
         self.assertEqual(result["providers"][0]["id"], "claude")

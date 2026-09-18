@@ -67,11 +67,13 @@ final class PricingContractTests: XCTestCase {
 
     func testStructuredSessionCostsDecodeWithoutASingularModel() throws {
         let data = Data(
-            #"{"sessions":[
+            #"""
+            {"sessions":[
                 {"provider":"openai","title":"multi","detail":"model-a + model-b","costUSD":0.1234,"costStatus":"exact"},
                 {"provider":"claude","title":"partial","costUSD":1.25,"costStatus":"partial","costProvenance":"estimated"},
                 {"provider":"muse","title":"unknown","costStatus":"unavailable"}
-            ]}"#.utf8)
+            ]}
+            """#.utf8)
         let sessions = try JSONDecoder().decode(LocalSessions.self, from: data).sessions
 
         XCTAssertEqual(sessions.map(\.costStatus), ["exact", "partial", "unavailable"])
@@ -111,11 +113,13 @@ final class PricingContractTests: XCTestCase {
 
     func testSessionCostProvenanceAndBreakdownAreOptionalAndMalformedDataIsUnavailable() throws {
         let data = Data(
-            #"{"sessions":[
+            #"""
+            {"sessions":[
                 {"provider":"legacy","title":"legacy","costUSD":0.5,"costStatus":"exact"},
                 {"provider":"bad","title":"bad","costUSD":0.5,"costStatus":"exact","costProvenance":"other","costBreakdown":{"actualUSD":0.2,"estimatedUSD":0.3}},
                 {"provider":"mixed","title":"mixed","costUSD":0.5,"costStatus":"partial","costProvenance":"mixed","costBreakdown":{"actualUSD":0.2,"estimatedUSD":"bad"}}
-            ]}"#.utf8)
+            ]}
+            """#.utf8)
         let sessions = try JSONDecoder().decode(LocalSessions.self, from: data).sessions
 
         XCTAssertNil(sessions[0].costProvenance)
