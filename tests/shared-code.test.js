@@ -6,6 +6,7 @@ const Format = require("../package/contents/code/Format.js");
 const PanelRotation = require("../package/contents/code/PanelRotation.js");
 const UsageHistory = require("../package/contents/code/UsageHistory.js");
 const Shell = require("../package/contents/code/Shell.js");
+const SessionSources = require("../package/contents/code/SessionSources.js");
 const { execFileSync } = require("node:child_process");
 
 test("panel rotation is opt-in and only runs with multiple pins", () => {
@@ -17,6 +18,35 @@ test("panel rotation is opt-in and only runs with multiple pins", () => {
     assert.equal(PanelRotation.isEnabled(1, ["claude", "openai"]), false);
     assert.equal(PanelRotation.isEnabled(30, ["claude"]), false);
     assert.equal(PanelRotation.isEnabled(30, ["claude", "openai"]), true);
+});
+
+test("normalizes session source descriptors without exposing malformed entries", () => {
+    assert.deepEqual(SessionSources.normalizeDescriptors([
+        { id: " codex ", label: " Codex " },
+        { id: "codex", label: "duplicate" },
+        { id: "", label: "empty id" },
+        { id: "muse", label: " " },
+        { id: 7, label: "not a descriptor" },
+        null
+    ]), [{ id: "codex", label: "Codex" }]);
+});
+
+test("normalizes source selection with All as the empty canonical selection", () => {
+    const sources = [{ id: "codex", label: "Codex" }, { id: "claude", label: "Claude" }];
+    assert.deepEqual(SessionSources.normalizeIds([" claude ", "unknown"], sources), ["claude"]);
+    assert.deepEqual(SessionSources.normalizeIds(["codex", "claude"], sources), []);
+    assert.equal(SessionSources.signature(["codex", "claude"]), "codex\u001fclaude");
+    assert.equal(SessionSources.hasStaleIds(["removed"], sources), true);
+    assert.equal(SessionSources.hasStaleIds(["codex"], sources), false);
+});
+
+test("toggles sources while preserving All, single, and multiple semantics", () => {
+    const sources = [{ id: "codex", label: "Codex" }, { id: "claude", label: "Claude" }, { id: "muse", label: "Muse" }];
+    assert.deepEqual(SessionSources.toggled([], "codex", false, sources), ["claude", "muse"]);
+    assert.deepEqual(SessionSources.toggled(["claude"], "codex", true, sources), ["codex", "claude"]);
+    assert.deepEqual(SessionSources.toggled(["codex", "claude"], "claude", false, sources), ["codex"]);
+    assert.deepEqual(SessionSources.toggled(["codex", "claude"], "muse", true, sources), []);
+    assert.deepEqual(SessionSources.toggled(["codex"], "codex", false, [sources[0]]), []);
 });
 
 test("panel rotation preserves valid selection and wraps in pin order", () => {

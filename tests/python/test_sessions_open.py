@@ -105,6 +105,105 @@ class OpenSessionResolvesAndSpawnsTest(unittest.TestCase):
         self.assertIn("claude", joined)
         self.assertIn("--resume", joined)
 
+    def test_terminal_environment_is_parsed_into_direct_argv(self):
+        provider, session_id, cwd = "claude", "abc-123", "/tmp"
+        entry = sessions._entry(provider, "Example", 1, session_id=session_id)
+        target_key = entry["openKey"]
+        captured = {}
+
+        def fake_popen(argv, **kwargs):
+            captured["argv"] = argv
+            captured["cwd"] = kwargs.get("cwd")
+            return mock.Mock()
+
+        def fake_which(name):
+            if name in ("claude", "sh"):
+                return f"/usr/bin/{name}"
+            if name == "fake-term":
+                return "/usr/bin/fake-term"
+            return None
+
+        with (
+            mock.patch.object(
+                sessions,
+                "collect_open_targets",
+                return_value={target_key: {"provider": provider, "id": session_id, "cwd": cwd}},
+            ),
+            mock.patch.dict("os.environ", {"TERMINAL": "fake-term --profile work"}, clear=False),
+            mock.patch.object(sessions.shutil, "which", side_effect=fake_which),
+            mock.patch.object(sessions.subprocess, "Popen", side_effect=fake_popen),
+        ):
+            ok, _message = sessions.open_session(target_key)
+
+        self.assertTrue(ok)
+        self.assertEqual(captured["argv"][:3], ["/usr/bin/fake-term", "--profile", "work"])
+        self.assertNotEqual(captured["argv"][:2], ["/usr/bin/sh", "-c"])
+
+    def test_unsafe_or_malformed_terminal_environment_falls_back_safely(self):
+        provider, session_id, cwd = "claude", "abc-123", "/tmp"
+        entry = sessions._entry(provider, "Example", 1, session_id=session_id)
+        target_key = entry["openKey"]
+        unsafe_values = ("fake-term; touch /tmp/pwned", 'fake-term "unterminated')
+
+        def fake_which(name):
+            if name in ("claude", "fake-term", "sh"):
+                return f"/usr/bin/{name}"
+            return None
+
+        for terminal in unsafe_values:
+            with self.subTest(terminal=terminal):
+                captured = {}
+
+                def fake_popen(argv, _captured=captured, **kwargs):
+                    _captured["argv"] = argv
+                    return mock.Mock()
+
+                with (
+                    mock.patch.object(
+                        sessions,
+                        "collect_open_targets",
+                        return_value={target_key: {"provider": provider, "id": session_id, "cwd": cwd}},
+                    ),
+                    mock.patch.dict("os.environ", {"TERMINAL": terminal}, clear=False),
+                    mock.patch.object(sessions.shutil, "which", side_effect=fake_which),
+                    mock.patch.object(sessions.subprocess, "Popen", side_effect=fake_popen),
+                    mock.patch.object(sessions, "_TERMINAL_TEMPLATES", [("fake-term", ["-e", "sh", "-c", "{cmd}"])]),
+                ):
+                    ok, _message = sessions.open_session(target_key)
+
+                self.assertTrue(ok)
+                self.assertEqual(captured["argv"][0], "/usr/bin/fake-term")
+                self.assertNotIn(terminal, captured["argv"])
+                self.assertNotIn("touch", captured["argv"])
+
+    def test_final_launch_error_does_not_expose_exception_details(self):
+        provider, session_id = "claude", "abc-123"
+        entry = sessions._entry(provider, "Example", 1, session_id=session_id)
+        target_key = entry["openKey"]
+        private_path = "/home/private-user/.config/secret/session.db"
+        error_text = f"cannot execute {private_path}"
+
+        def fake_which(name):
+            if name in ("claude", "fake-term"):
+                return f"/usr/bin/{name}"
+            return None
+
+        with (
+            mock.patch.object(
+                sessions,
+                "collect_open_targets",
+                return_value={target_key: {"provider": provider, "id": session_id, "cwd": ""}},
+            ),
+            mock.patch.object(sessions.shutil, "which", side_effect=fake_which),
+            mock.patch.object(sessions.subprocess, "Popen", side_effect=OSError(error_text)),
+            mock.patch.object(sessions, "_TERMINAL_TEMPLATES", [("fake-term", ["-e", "sh", "-c", "{cmd}"])]),
+        ):
+            ok, message = sessions.open_session(target_key)
+
+        self.assertFalse(ok)
+        self.assertNotIn(private_path, message)
+        self.assertNotIn(error_text, message)
+
     def test_no_resume_command_for_provider_fails_closed(self):
         key = sessions._open_key("muse", "some-id")
         with mock.patch.object(sessions, "collect_open_targets", return_value={key: {"provider": "muse", "id": "some-id", "cwd": ""}}):

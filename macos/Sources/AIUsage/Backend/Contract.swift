@@ -159,18 +159,50 @@ enum SpendRows {
 // pattern as `Envelope` above, so an addition on the backend side never
 // breaks this app.
 
+struct SessionSource: Decodable, Identifiable, Equatable {
+    var id = ""
+    var label = ""
+
+    init(id: String, label: String) {
+        self.id = id
+        self.label = label
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = (try? c.decode(String.self, forKey: .id)) ?? ""
+        let decodedLabel = (try? c.decode(String.self, forKey: .label)) ?? ""
+        label = decodedLabel.isEmpty ? id : decodedLabel
+    }
+
+    enum CodingKeys: String, CodingKey { case id, label }
+}
+
 struct LocalSessions: Decodable {
     var updatedAt: Double
     var sessions: [LocalSession]
+    var sources: [SessionSource]
+    var total: Int
+    var offset: Int
+    var limit: Int?
+    var hasMore: Bool
+    var totalExact: Bool
 
     enum CodingKeys: String, CodingKey {
-        case updatedAt, sessions
+        case updatedAt, sessions, sources, total, offset, limit, hasMore, totalExact
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         updatedAt = (try? c.decode(Double.self, forKey: .updatedAt)) ?? 0
         sessions = (try? c.decode([LocalSession].self, forKey: .sessions)) ?? []
+        sources = ((try? c.decode([SessionSource].self, forKey: .sources)) ?? [])
+            .filter { !$0.id.isEmpty }
+        total = (try? c.decode(Int.self, forKey: .total)) ?? sessions.count
+        offset = (try? c.decode(Int.self, forKey: .offset)) ?? 0
+        limit = try? c.decode(Int.self, forKey: .limit)
+        hasMore = (try? c.decode(Bool.self, forKey: .hasMore)) ?? false
+        totalExact = (try? c.decode(Bool.self, forKey: .totalExact)) ?? false
     }
 }
 
@@ -184,13 +216,9 @@ struct LocalSession: Decodable, Identifiable {
     /// Opaque, content-addressed handle for `--open-session`; empty when the
     /// provider (Muse) has no resume command, in which case no button shows.
     var openKey: String
-    /// The untruncated title, present only when `title` was clipped (Claude
-    /// Code's own opening prompt — see sessions.py). Empty otherwise; a row
-    /// with an empty `fullTitle` offers no expand affordance.
-    var fullTitle: String
 
     enum CodingKeys: String, CodingKey {
-        case provider, title, sessionName, state, lastActivityAt, detail, openKey, fullTitle
+        case provider, title, sessionName, state, lastActivityAt, detail, openKey
     }
 
     init(from decoder: Decoder) throws {
@@ -202,7 +230,6 @@ struct LocalSession: Decodable, Identifiable {
         lastActivityAt = (try? c.decode(Double.self, forKey: .lastActivityAt)) ?? 0
         detail = (try? c.decode(String.self, forKey: .detail)) ?? ""
         openKey = (try? c.decode(String.self, forKey: .openKey)) ?? ""
-        fullTitle = (try? c.decode(String.self, forKey: .fullTitle)) ?? ""
     }
 
     var id: String { "\(provider)|\(title)|\(lastActivityAt)|\(openKey)" }

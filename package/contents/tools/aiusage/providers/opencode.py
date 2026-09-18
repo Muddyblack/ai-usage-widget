@@ -97,7 +97,7 @@ def _text(value: object) -> str:
     return value if type(value) is str else ""
 
 
-def _read_database(database_path: str) -> list[OpenCodeSession]:
+def _read_database(database_path: str, *, include_all: bool = False) -> list[OpenCodeSession]:
     try:
         with _connect_readonly(database_path) as connection:
             if not _schema_is_supported(connection):
@@ -109,10 +109,11 @@ def _read_database(database_path: str) -> list[OpenCodeSession]:
 
             connection.set_progress_handler(interrupt_query, 1000)
             try:
-                rows = connection.execute(
-                    "SELECT id, title, directory, time_created, time_updated FROM session ORDER BY time_updated DESC LIMIT ?",
-                    (_MAX_ROWS,),
-                ).fetchall()
+                query = "SELECT id, title, directory, time_created, time_updated FROM session ORDER BY time_updated DESC"
+                if include_all:
+                    rows = connection.execute(query).fetchall()
+                else:
+                    rows = connection.execute(query + " LIMIT ?", (_MAX_ROWS,)).fetchall()
             finally:
                 connection.set_progress_handler(None, 0)
     except (OSError, sqlite3.Error, ValueError):
@@ -137,12 +138,12 @@ def _read_database(database_path: str) -> list[OpenCodeSession]:
     return records
 
 
-def read_recent_sessions() -> list[OpenCodeSession]:
+def read_recent_sessions(*, include_all: bool = False) -> list[OpenCodeSession]:
     records: list[OpenCodeSession] = []
     for database_path in discover_database_paths():
-        records.extend(_read_database(database_path))
+        records.extend(_read_database(database_path, include_all=include_all))
     return records
 
 
-def read_session_targets() -> list[OpenCodeSession]:
-    return read_recent_sessions()
+def read_session_targets(*, include_all: bool = True) -> list[OpenCodeSession]:
+    return read_recent_sessions(include_all=include_all)

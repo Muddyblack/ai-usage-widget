@@ -26,7 +26,7 @@ class QmlBackendTokensTest(unittest.TestCase):
             with self.subTest(frontend=relative):
                 with open(os.path.join(_support.REPO, relative), encoding="utf-8") as stream:
                     source = stream.read()
-                bindings = re.findall(r"text: [^\n]*modelData\.(?:fullTitle|sessionName|detail)[^\n]*\n([^{}]*)", source)
+                bindings = re.findall(r"text: [^\n]*modelData\.(?:title|sessionName|detail)[^\n]*\n([^{}]*)", source)
                 self.assertEqual(len(bindings), 3)
                 for properties in bindings:
                     self.assertRegex(properties, r"textFormat:\s*Text\.PlainText\b")

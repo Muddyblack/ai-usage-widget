@@ -171,11 +171,12 @@ The tab itself is off by default too: enable *Muse* in settings if you use Muse 
 ## Local sessions
 
 The optional Sessions tab (**Settings → Views**) lists recent local activity merged
-from Claude Code, Codex, Grok CLI, Cline, OpenCode, Antigravity and Muse: a title preview, the
-workspace/session name, active/idle state and recency (`get-ai-usage --sessions`).
-Source paths and raw session IDs are omitted from the output. Titles can contain
-prompt text or artifact headings; they are shortened, not scrubbed of secrets,
-and may expose sensitive text in the local UI.
+from Claude Code, Codex, Grok CLI, Cline, OpenCode, Antigravity and Muse: a redacted title
+preview, the workspace/session name, active/idle state and recency only — source paths,
+raw session IDs, and transcript contents never leave the backend
+(`get-ai-usage --sessions`). Claude's title is a clipped opening-prompt preview; raw prompt
+text never leaves the backend. Titles can contain prompt text or artifact headings; they are
+shortened, not scrubbed of secrets, and may expose sensitive text in the local UI.
 
 Rows for Claude Code, Codex, Grok CLI, Cline, OpenCode and Antigravity carry a ⧉ button that resumes that
 exact session in your terminal (`get-ai-usage --open-session <key>`, using each
@@ -194,6 +195,17 @@ at a record larger than 256 KiB. Editor title reads are limited to 2,000 charact
 The Sessions tab displays up to 60 characters of the first user prompt or artifact
 heading as plain text. Listing these sessions makes no network requests; choosing
 Resume launches `agy`, which can use its own network connections.
+
+Search is backend-powered, not a client-side-only filter. The command
+`get-ai-usage --sessions --query <text>` searches all underlying session records
+for a non-empty query, using only `provider`, `title`, `sessionName`, `state`,
+and `detail`. Empty, whitespace-only, and non-empty queries all return 60-row
+pages with exact totals and show **Load more** while another page exists.
+`fullTitle`, opaque resume keys, IDs, paths, and transcripts are not searchable or
+exposed. The KDE, Hyprland, and Windows frontends request
+the backend after their search input debounce, and macOS does the same through
+its debounced search task. Existing redaction and opaque resume-key handling
+remain unchanged.
 
 ## Usage history
 

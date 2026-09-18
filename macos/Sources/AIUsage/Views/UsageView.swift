@@ -107,7 +107,7 @@ struct UsageView: View {
 
     private var overflowMenu: some View {
         Menu {
-            Button(i18n("Refresh")) { model.refresh() }
+            Button(i18n("Refresh")) { model.refreshManually() }
                 .keyboardShortcut("r")
             Button(i18n("Settings") + "…") { model.showingSettings = true }
                 .keyboardShortcut(",")
@@ -257,7 +257,7 @@ struct UsageView: View {
                 .foregroundStyle(.secondary)
             Spacer()
             Button {
-                model.refresh()
+                model.refreshManually()
             } label: {
                 if model.isLoading {
                     ProgressView().controlSize(.small)
