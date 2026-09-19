@@ -96,7 +96,7 @@ class SwiftContractTest(unittest.TestCase):
         )
 
     def test_envelope_fields(self):
-        self.assert_decodes("Envelope", {"schemaVersion": 1, "updatedAt": 0, "active": "", "providers": []})
+        self.assert_decodes("Envelope", {"schemaVersion": 1, "updatedAt": 0, "active": "", "providers": [], "localSpend": {}})
 
     def test_provider_fields(self):
         self.assert_decodes("Provider", self.emitted["provider"])

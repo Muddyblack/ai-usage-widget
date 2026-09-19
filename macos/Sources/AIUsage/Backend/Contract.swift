@@ -19,9 +19,10 @@ struct Envelope: Decodable {
     var updatedAt: Double
     var active: String
     var providers: [Provider]
+    var localSpend: LocalSpend
 
     enum CodingKeys: String, CodingKey {
-        case schemaVersion, updatedAt, active, providers
+        case schemaVersion, updatedAt, active, providers, localSpend
     }
 
     init(from decoder: Decoder) throws {
@@ -30,13 +31,19 @@ struct Envelope: Decodable {
         updatedAt = (try? c.decode(Double.self, forKey: .updatedAt)) ?? 0
         active = (try? c.decode(String.self, forKey: .active)) ?? ""
         providers = (try? c.decode([Provider].self, forKey: .providers)) ?? []
+        localSpend = (try? c.decode(LocalSpend.self, forKey: .localSpend)) ?? LocalSpend()
     }
 
-    init(providers: [Provider] = [], active: String = "", updatedAt: Double = 0) {
+    init(
+        providers: [Provider] = [],
+        active: String = "",
+        updatedAt: Double = 0,
+        localSpend: LocalSpend = LocalSpend()) {
         self.schemaVersion = 1
         self.updatedAt = updatedAt
         self.active = active
         self.providers = providers
+        self.localSpend = localSpend
     }
 
     func provider(id: String) -> Provider? {
@@ -93,12 +100,248 @@ enum FeatureView: String, CaseIterable, Identifiable {
 // already reported, with the range it covers. Ranges differ by source
 // (30-day, all-time, lifetime) — the same caveat the Linux Spend tabs print.
 struct SpendRow: Identifiable {
-    let provider: Provider
+    let provider: Provider?
+    let source: String?
+    private let localIdentity: String?
+    let label: String
+    let accent: String
     let cost: Double
     let currency: String
     let note: String
+    let provenance: String?
+    let costStatus: String?
+    let costBreakdown: CostBreakdown?
 
-    var id: String { provider.id }
+    var id: String {
+        if let provider { return provider.id }
+        if let localIdentity { return "local-\(localIdentity)" }
+        if let source { return "local-\(source)" }
+        return "local-sessions"
+    }
+
+    init(provider: Provider, cost: Double, currency: String, note: String) {
+        self.provider = provider
+        self.source = nil
+        self.localIdentity = nil
+        self.label = provider.label
+        self.accent = provider.accent
+        self.cost = cost
+        self.currency = currency
+        self.note = note
+        self.provenance = nil
+        self.costStatus = nil
+        self.costBreakdown = nil
+    }
+
+    init(localCost: Double) {
+        self.init(localCost: localCost, label: i18n("Local sessions"), provenance: nil)
+    }
+
+    init(localCost: Double, label: String, provenance: String?, costStatus: String? = nil) {
+        self.provider = nil
+        self.source = nil
+        self.localIdentity = nil
+        self.label = label
+        self.accent = "#34d399"
+        self.cost = localCost
+        self.currency = "USD"
+        self.note = costStatus.map {
+            Self.localSpendNote(provenance ?? "legacy", costStatus: $0)
+        } ?? i18n("local CLI logs")
+        self.provenance = provenance
+        self.costStatus = costStatus
+        self.costBreakdown = nil
+    }
+
+    init(localSource: String, actualUSD: Double, estimatedUSD: Double,
+         provenance: String, costStatus: String, billingProvider: String? = nil,
+         identity: String? = nil, viaSource: String? = nil) {
+        let sourceKey = Self.localSourceKey(localSource)
+        let viaSourceKey = Self.localSourceKey(viaSource ?? "")
+        self.provider = nil
+        self.source = sourceKey
+        self.localIdentity = identity.map(Self.localSourceKey)
+        self.label = Self.localSourceLabel(sourceKey, upstream: billingProvider)
+        self.accent = "#34d399"
+        self.cost = actualUSD + estimatedUSD
+        self.currency = "USD"
+        self.note = Self.localSpendNote(provenance, costStatus: costStatus, source: viaSourceKey)
+        self.provenance = provenance
+        self.costStatus = costStatus
+        self.costBreakdown = CostBreakdown(actualUSD: actualUSD, estimatedUSD: estimatedUSD)
+    }
+
+    private static func localSourceKey(_ source: String) -> String {
+        source.trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .replacingOccurrences(of: "_", with: "-")
+    }
+
+    private static func localSourceLabel(_ source: String, upstream: String? = nil) -> String {
+        if source == "opencode", let upstream {
+            switch localSourceKey(upstream) {
+            case "anthropic": return i18n("Anthropic")
+            case "openai": return i18n("OpenAI")
+            case "openrouter": return i18n("OpenRouter")
+            case "ollama-cloud": return i18n("Ollama Cloud")
+            case "ollama": return i18n("Ollama")
+            case "github-copilot": return i18n("GitHub Copilot")
+            case "google": return i18n("Google")
+            case "zenmux": return i18n("ZenMux")
+            case "opencode": return i18n("OpenCode Zen")
+            default: break
+            }
+        }
+        switch localSourceKey(source) {
+        case "opencode": return i18n("OpenCode")
+        case "claude", "claude-code", "claude_code": return i18n("Claude Code")
+        case "openai", "codex": return i18n("Codex")
+        case "cline": return i18n("Cline")
+        case "grok", "grok-cli": return i18n("Grok CLI")
+        case "muse": return i18n("Muse")
+        case "antigravity": return i18n("Antigravity")
+        default:
+            let fallback = localSourceKey(source)
+                .replacingOccurrences(of: "-", with: " ")
+                .split(whereSeparator: { $0.isWhitespace })
+                .joined(separator: " ")
+            return fallback.isEmpty ? i18n("Local source") : fallback.capitalized
+        }
+    }
+
+    private static func localSpendNote(_ provenance: String, costStatus: String, source: String = "") -> String {
+        let prefix = source == "opencode" ? i18n("via OpenCode") : i18n("local CLI logs")
+        switch "\(provenance):\(costStatus)" {
+        case "legacy:exact": return "\(prefix) · exact"
+        case "legacy:partial": return "\(prefix) · partial"
+        case "actual:exact": return "\(prefix) · actual · exact"
+        case "actual:partial": return "\(prefix) · actual · partial"
+        case "estimated:exact": return "\(prefix) · estimated · exact"
+        case "estimated:partial": return "\(prefix) · estimated · partial"
+        case "mixed:exact": return "\(prefix) · mixed · exact"
+        case "mixed:partial": return "\(prefix) · mixed · partial"
+        default: return prefix
+        }
+    }
+}
+
+struct LocalSpendProvider: Decodable, Equatable {
+    var costUSD = 0.0
+    var costStatus = "unavailable"
+    var costProvenance: String?
+    var source: String?
+
+    init(costUSD: Double = 0, costStatus: String = "unavailable", costProvenance: String? = nil, source: String? = nil) {
+        self.costUSD = costUSD
+        self.costStatus = ["exact", "partial", "unavailable"].contains(costStatus)
+            ? costStatus : "unavailable"
+        self.costProvenance = Self.validProvenance(costProvenance)
+        self.source = source
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let decodedCost = try? c.decode(Double.self, forKey: .costUSD)
+        let decodedStatus = (try? c.decode(String.self, forKey: .costStatus)) ?? "unavailable"
+        let decodedProvenance = try? c.decode(String.self, forKey: .costProvenance)
+        let decodedSource = try? c.decode(String.self, forKey: .source)
+        let validCost = decodedCost.flatMap { $0.isFinite && $0 >= 0 ? $0 : nil }
+        let validStatus = ["exact", "partial", "unavailable"].contains(decodedStatus)
+        let validOrigin = Self.validProvenance(decodedProvenance)
+        costUSD = validCost ?? 0
+        costStatus = validCost != nil && validStatus && (decodedProvenance == nil || validOrigin != nil)
+            ? decodedStatus : "unavailable"
+        costProvenance = costStatus == "unavailable" ? nil : validOrigin
+        source = costStatus == "unavailable" ? nil : decodedSource
+    }
+
+    enum CodingKeys: String, CodingKey { case costUSD, costStatus, costProvenance, source }
+
+    static func validProvenance(_ value: String?) -> String? {
+        guard let value, ["actual", "estimated", "mixed"].contains(value) else { return nil }
+        return value
+    }
+}
+
+struct LocalSpendTotal: Decodable, Equatable {
+    var totalUSD = 0.0
+    var costStatus = "unavailable"
+    var costProvenance: String?
+    var providers: [String: LocalSpendProvider] = [:]
+
+    init(totalUSD: Double = 0, costStatus: String = "unavailable", costProvenance: String? = nil,
+         providers: [String: LocalSpendProvider] = [:]) {
+        self.totalUSD = totalUSD
+        self.costStatus = ["exact", "partial", "unavailable"].contains(costStatus)
+            ? costStatus : "unavailable"
+        self.costProvenance = LocalSpendProvider.validProvenance(costProvenance)
+        self.providers = providers
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let decodedTotal = try? c.decode(Double.self, forKey: .totalUSD)
+        let decodedStatus = (try? c.decode(String.self, forKey: .costStatus)) ?? "unavailable"
+        let decodedProvenance = try? c.decode(String.self, forKey: .costProvenance)
+        let validTotal = decodedTotal.flatMap { $0.isFinite && $0 >= 0 ? $0 : nil }
+        let validStatus = ["exact", "partial", "unavailable"].contains(decodedStatus)
+        let validOrigin = LocalSpendProvider.validProvenance(decodedProvenance)
+        let valid = validTotal != nil && validStatus && (decodedProvenance == nil || validOrigin != nil)
+        totalUSD = validTotal ?? 0
+        costStatus = valid
+            ? decodedStatus : "unavailable"
+        costProvenance = valid && decodedStatus != "unavailable" ? validOrigin : nil
+        providers = (try? c.decode([String: LocalSpendProvider].self, forKey: .providers)) ?? [:]
+    }
+
+    enum CodingKeys: String, CodingKey { case totalUSD, costStatus, costProvenance, providers }
+}
+
+struct LocalSpend: Decodable, Equatable {
+    var actual = LocalSpendTotal()
+    var estimated = LocalSpendTotal()
+    var legacy: LocalSpendTotal?
+
+    init(totalUSD: Double = 0, costStatus: String = "unavailable",
+         providers: [String: LocalSpendProvider] = [:]) {
+        legacy = LocalSpendTotal(totalUSD: totalUSD, costStatus: costStatus, providers: providers)
+    }
+
+    init(actual: LocalSpendTotal = LocalSpendTotal(), estimated: LocalSpendTotal = LocalSpendTotal()) {
+        self.actual = Self.withDefaultProvenance(actual, value: "actual")
+        self.estimated = Self.withDefaultProvenance(estimated, value: "estimated")
+        legacy = nil
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let hasSeparateTotals = c.contains(.actual) || c.contains(.estimated)
+        if hasSeparateTotals {
+            actual = Self.withDefaultProvenance(
+                (try? c.decode(LocalSpendTotal.self, forKey: .actual)) ?? LocalSpendTotal(),
+                value: "actual")
+            estimated = Self.withDefaultProvenance(
+                (try? c.decode(LocalSpendTotal.self, forKey: .estimated)) ?? LocalSpendTotal(),
+                value: "estimated")
+            legacy = nil
+        } else if c.contains(.totalUSD) || c.contains(.costStatus) || c.contains(.providers) {
+            legacy = try? LocalSpendTotal(from: decoder)
+        } else {
+            legacy = nil
+        }
+    }
+
+    enum CodingKeys: String, CodingKey { case actual, estimated, totalUSD, costStatus, providers }
+
+    private static func withDefaultProvenance(_ total: LocalSpendTotal, value: String) -> LocalSpendTotal {
+        guard total.costProvenance == nil,
+              total.costStatus == "exact" || total.costStatus == "partial" else { return total }
+        return LocalSpendTotal(
+            totalUSD: total.totalUSD,
+            costStatus: total.costStatus,
+            costProvenance: value,
+            providers: total.providers)
+    }
 }
 
 // The per-provider cost numbers the backend already exposed, in the same
@@ -107,7 +350,7 @@ struct SpendRow: Identifiable {
 // spend, Muse/Cline local stats, Cursor on-demand spend. Costs are read out
 // of the generic details dictionary so no new per-provider contract is needed.
 enum SpendRows {
-    static func build(_ providers: [Provider]) -> [SpendRow] {
+    static func build(_ providers: [Provider], localSpend: LocalSpend = LocalSpend()) -> [SpendRow] {
         var out: [SpendRow] = []
         for provider in providers {
             let details = provider.costDetails
@@ -145,11 +388,88 @@ enum SpendRows {
             guard cost > 0 else { continue }
             out.append(SpendRow(provider: provider, cost: cost, currency: currency, note: note))
         }
+        if let legacy = localSpend.legacy {
+            appendLocal(legacy, label: i18n("Local sessions"), provenance: nil, to: &out)
+        } else {
+            appendLocalProviders(actual: localSpend.actual, estimated: localSpend.estimated, to: &out)
+        }
         return out.sorted { $0.cost > $1.cost }
     }
 
     static func totalUSD(_ rows: [SpendRow]) -> Double {
-        rows.filter { $0.currency == "USD" }.reduce(0) { $0 + $1.cost }
+        rows.filter { $0.provider != nil && $0.currency == "USD" }.reduce(0) { $0 + $1.cost }
+    }
+
+    private static func appendLocal(
+        _ total: LocalSpendTotal,
+        label: String,
+        provenance: String?,
+        to rows: inout [SpendRow]) {
+        guard total.costProvenance == provenance,
+              total.costStatus == "exact" || total.costStatus == "partial",
+              total.totalUSD > 0,
+              total.totalUSD.isFinite else { return }
+        rows.append(SpendRow(
+            localCost: total.totalUSD,
+            label: label,
+            provenance: provenance,
+            costStatus: total.costStatus))
+    }
+
+    private static func appendLocalProviders(
+        actual: LocalSpendTotal,
+        estimated: LocalSpendTotal,
+        to rows: inout [SpendRow]) {
+        let sources = Set(actual.providers.keys.compactMap(localSourceKey))
+            .union(estimated.providers.keys.compactMap(localSourceKey))
+            .filter { !$0.isEmpty }
+            .sorted()
+        for source in sources {
+            let actualEntry = validLocalProvider(localProvider(source, in: actual.providers))
+            let estimatedEntry = validLocalProvider(localProvider(source, in: estimated.providers))
+            guard actualEntry != nil || estimatedEntry != nil else { continue }
+
+            let actualUSD = actualEntry?.cost ?? 0
+            let estimatedUSD = estimatedEntry?.cost ?? 0
+            let sourceMetadata = actualEntry?.source ?? estimatedEntry?.source ?? ""
+            let identityParts = source.split(separator: "::", maxSplits: 1).map(String.init)
+            let providerKey = identityParts.first ?? source
+            let localSource = sourceMetadata.isEmpty ? providerKey : sourceMetadata
+            let provenance = actualUSD > 0 && estimatedUSD > 0
+                ? "mixed" : actualUSD > 0 ? "actual" : "estimated"
+            let costStatus = actualEntry?.status == "partial" || estimatedEntry?.status == "partial"
+                ? "partial" : "exact"
+            let viaSource = sourceMetadata.isEmpty ? nil : sourceMetadata
+            rows.append(SpendRow(
+                localSource: localSource,
+                actualUSD: actualUSD,
+                estimatedUSD: estimatedUSD,
+                provenance: provenance,
+                costStatus: costStatus,
+                billingProvider: localSource == "opencode" && viaSource != nil ? providerKey : nil,
+                identity: source,
+                viaSource: viaSource))
+        }
+    }
+
+    private static func validLocalProvider(_ entry: LocalSpendProvider?) -> (cost: Double, status: String, source: String?)? {
+        guard let entry,
+              entry.costStatus == "exact" || entry.costStatus == "partial",
+              entry.costUSD > 0,
+              entry.costUSD.isFinite else { return nil }
+        return (entry.costUSD, entry.costStatus, entry.source)
+    }
+
+    private static func localProvider(
+        _ source: String,
+        in providers: [String: LocalSpendProvider]) -> LocalSpendProvider? {
+        providers.first { localSourceKey($0.key) == source }?.value
+    }
+
+    private static func localSourceKey(_ source: String) -> String {
+        source.trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .replacingOccurrences(of: "_", with: "-")
     }
 }
 
@@ -174,6 +494,40 @@ struct LocalSessions: Decodable {
     }
 }
 
+struct CostBreakdown: Decodable, Equatable {
+    let actualUSD: Double
+    let estimatedUSD: Double
+
+    init(actualUSD: Double, estimatedUSD: Double) {
+        self.actualUSD = actualUSD
+        self.estimatedUSD = estimatedUSD
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let actual = try c.decode(Double.self, forKey: .actualUSD)
+        let estimated = try c.decode(Double.self, forKey: .estimatedUSD)
+        guard actual.isFinite, actual >= 0, estimated.isFinite, estimated >= 0 else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .actualUSD,
+                in: c,
+                debugDescription: "cost breakdown values must be finite and non-negative")
+        }
+        actualUSD = actual
+        estimatedUSD = estimated
+    }
+
+    /// JSON decimal values can differ by binary floating-point roundoff. The
+    /// tolerance is relative at 1e-9 with a 1e-12 USD absolute floor.
+    func sums(to total: Double) -> Bool {
+        let sum = actualUSD + estimatedUSD
+        let scale = max(abs(sum), abs(total))
+        return abs(sum - total) <= max(1e-12, scale * 1e-9)
+    }
+
+    enum CodingKeys: String, CodingKey { case actualUSD, estimatedUSD }
+}
+
 struct LocalSession: Decodable, Identifiable {
     var provider: String
     var title: String
@@ -188,9 +542,13 @@ struct LocalSession: Decodable, Identifiable {
     /// Code's own opening prompt — see sessions.py). Empty otherwise; a row
     /// with an empty `fullTitle` offers no expand affordance.
     var fullTitle: String
+    var costUSD: Double?
+    var costStatus: String
+    var costProvenance: String?
+    var costBreakdown: CostBreakdown?
 
     enum CodingKeys: String, CodingKey {
-        case provider, title, sessionName, state, lastActivityAt, detail, openKey, fullTitle
+        case provider, title, sessionName, state, lastActivityAt, detail, openKey, fullTitle, costUSD, costStatus, costProvenance, costBreakdown
     }
 
     init(from decoder: Decoder) throws {
@@ -203,6 +561,24 @@ struct LocalSession: Decodable, Identifiable {
         detail = (try? c.decode(String.self, forKey: .detail)) ?? ""
         openKey = (try? c.decode(String.self, forKey: .openKey)) ?? ""
         fullTitle = (try? c.decode(String.self, forKey: .fullTitle)) ?? ""
+        let decodedCost = try? c.decode(Double.self, forKey: .costUSD)
+        let decodedStatus = (try? c.decode(String.self, forKey: .costStatus)) ?? "unavailable"
+        let decodedProvenance = try? c.decode(String.self, forKey: .costProvenance)
+        let validCost = decodedCost.flatMap { $0.isFinite && $0 >= 0 ? $0 : nil }
+        let validStatus = ["exact", "partial", "unavailable"].contains(decodedStatus)
+        let validOrigin = LocalSpendProvider.validProvenance(decodedProvenance)
+        let valid = validCost != nil && validStatus && (decodedProvenance == nil || validOrigin != nil)
+        costUSD = valid && decodedStatus != "unavailable" ? validCost : nil
+        costStatus = valid ? decodedStatus : "unavailable"
+        costProvenance = valid && decodedStatus != "unavailable" ? validOrigin : nil
+        if costProvenance == "mixed",
+           let cost = costUSD,
+           let breakdown = try? c.decode(CostBreakdown.self, forKey: .costBreakdown),
+           breakdown.sums(to: cost) {
+            costBreakdown = breakdown
+        } else {
+            costBreakdown = nil
+        }
     }
 
     var id: String { "\(provider)|\(title)|\(lastActivityAt)|\(openKey)" }
@@ -240,10 +616,13 @@ struct CostDetails {
     }
 
     private func number(_ value: Any?) -> Double? {
-        if let number = value as? Double { return number }
-        if let number = value as? Int { return Double(number) }
-        if let number = value as? NSNumber { return number.doubleValue }
-        if let text = value as? String, let parsed = Double(text) { return parsed }
+        if let number = value as? NSNumber {
+            if CFGetTypeID(number) == CFBooleanGetTypeID() { return nil }
+            let converted = number.doubleValue
+            return converted.isFinite && converted >= 0 ? converted : nil
+        }
+        if let number = value as? Double { return number.isFinite && number >= 0 ? number : nil }
+        if let number = value as? Int { return number >= 0 ? Double(number) : nil }
         return nil
     }
 }

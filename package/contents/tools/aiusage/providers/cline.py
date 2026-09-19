@@ -14,6 +14,7 @@ module exists to prevent.
 """
 
 import json
+import math
 import os
 
 from ..contract import epoch_of, num
@@ -26,12 +27,15 @@ def _sessions_dir():
 def _usage(meta):
     usage = meta.get("aggregateUsage") if isinstance(meta.get("aggregateUsage"), dict) else meta.get("usage")
     usage = usage if isinstance(usage, dict) else {}
+    cost = num(usage.get("totalCost", meta.get("totalCost")))
+    if type(cost) not in (int, float) or not math.isfinite(cost) or cost <= 0:
+        cost = None
     return {
         "input": num(usage.get("inputTokens")),
         "output": num(usage.get("outputTokens")),
         "cacheRead": num(usage.get("cacheReadTokens")),
         "cacheWrite": num(usage.get("cacheWriteTokens")),
-        "cost": num(usage.get("totalCost", meta.get("totalCost"))),
+        "cost": cost,
     }
 
 
@@ -72,6 +76,6 @@ def get_cline_sessions():
     for name in entries:
         record = _read_session(os.path.join(root, name, name + ".json"))
         if record is not None:
-            sessions.append(record)
-    sessions.sort(key=lambda s: s["startedAt"])
-    return {"sessions": sessions}
+            sessions.append((name, record))
+    sessions.sort(key=lambda pair: (pair[1]["startedAt"], pair[0]))
+    return {"sessions": [record for _name, record in sessions]}

@@ -26,6 +26,10 @@ final class AppModel: ObservableObject {
     /// The last `--open-session` result, shown as a status line and cleared
     /// on the next attempt or the next refresh.
     @Published private(set) var sessionsNotice = ""
+    @Published private(set) var pricingLoading = false
+    @Published private(set) var pricingStatus = ""
+    @Published private(set) var pricingError = ""
+    @Published private(set) var pricingFetchedAt: Date?
 
     /// The provider the popover and the menu bar are showing. Deliberately
     /// sticky: a menu bar reading that silently changed which service it meant
@@ -43,9 +47,17 @@ final class AppModel: ObservableObject {
 
     private var timer: Timer?
     private var wakeObserver: NSObjectProtocol?
+    private let snapshotOperation: () throws -> Envelope
+    private let pricingRefreshOperation: () throws -> PricingRefreshResult
 
-    init(settings: SettingsStore = SettingsStore()) {
+    init(
+        settings: SettingsStore = SettingsStore(),
+        snapshotOperation: @escaping () throws -> Envelope = { try Backend.snapshot() },
+        pricingRefreshOperation: @escaping () throws -> PricingRefreshResult = { try Backend.refreshPricing() }
+    ) {
         self.settings = settings
+        self.snapshotOperation = snapshotOperation
+        self.pricingRefreshOperation = pricingRefreshOperation
         selectedID = settings.menuBarProvider
         history.load()
         rearmTimer()
@@ -67,8 +79,10 @@ final class AppModel: ObservableObject {
         FeatureView.allCases.filter { settings.featureEnabled($0.rawValue) }
     }
 
-    /// The spend rows the Usage & Spend view totals.
-    var spendRows: [SpendRow] { SpendRows.build(envelope.providers) }
+    /// Provider rows plus distinct actual and calculated local-session totals.
+    /// Local rows never change the provider/API headline total or any
+    /// provider's own reported cost.
+    var spendRows: [SpendRow] { SpendRows.build(envelope.providers, localSpend: envelope.localSpend) }
 
     func showFeature(_ view: FeatureView?) {
         featureView = view
@@ -118,9 +132,10 @@ final class AppModel: ObservableObject {
     func refresh() {
         guard !isLoading else { return }
         isLoading = true
+        let operation = snapshotOperation
         Task.detached(priority: .userInitiated) {
             do {
-                let envelope = try Backend.snapshot()
+                let envelope = try operation()
                 await MainActor.run { self.apply(envelope) }
             } catch {
                 await MainActor.run {
@@ -129,6 +144,35 @@ final class AppModel: ObservableObject {
                 }
             }
         }
+    }
+
+    func refreshPricing() {
+        guard !pricingLoading else { return }
+        pricingLoading = true
+        let operation = pricingRefreshOperation
+        Task.detached(priority: .userInitiated) {
+            do {
+                let result = try operation()
+                await MainActor.run { self.applyPricingResult(result) }
+            } catch {
+                await MainActor.run { self.applyPricingFailure(error) }
+            }
+        }
+    }
+
+    func applyPricingResult(_ result: PricingRefreshResult) {
+        pricingLoading = false
+        pricingStatus = result.status.isEmpty ? (result.ok ? "refreshed" : "no-cache") : result.status
+        pricingError = result.error
+        pricingFetchedAt = result.fetchedAt > 0 ? Date(timeIntervalSince1970: result.fetchedAt) : nil
+        if result.ok { refresh() }
+    }
+
+    func applyPricingFailure(_ error: Error) {
+        pricingLoading = false
+        pricingStatus = "no-cache"
+        pricingError = error.localizedDescription
+        pricingFetchedAt = nil
     }
 
     private func apply(_ envelope: Envelope) {

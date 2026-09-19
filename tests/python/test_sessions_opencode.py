@@ -125,7 +125,7 @@ class OpenCodeSessionRowsTest(unittest.TestCase):
 
         encoded = json.dumps(entry)
         self.assertEqual(entry["provider"], "opencode")
-        self.assertEqual(entry["sessionName"], "OpenCode")
+        self.assertEqual(entry["sessionName"], "via OpenCode")
         self.assertNotIn(path, encoded)
         self.assertNotIn("ses-secret", encoded)
         self.assertNotIn("/private/project", encoded)

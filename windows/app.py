@@ -21,7 +21,9 @@ brings PySide6 (or `make run-windows`), else `pip install -r windows/requirement
                                          no credentials) — used by CI
 """
 
+import contextlib
 import getpass
+import io
 import json
 import os
 import re
@@ -39,7 +41,7 @@ ROOT = Path(getattr(sys, "_MEIPASS", "")) if FROZEN else Path(__file__).resolve(
 sys.path.insert(0, str(ROOT / "package" / "contents" / "tools"))
 
 from aiusage import config, history, historyio, paths  # noqa: E402
-from aiusage.__main__ import snapshot  # noqa: E402
+from aiusage.__main__ import _refresh_pricing, snapshot  # noqa: E402
 from aiusage.sessions import collect_sessions, open_session  # noqa: E402
 
 APP_NAME = "AI Usage"
@@ -100,6 +102,14 @@ def collect_snapshot():
             return json.dumps(snapshot(), separators=(",", ":"), ensure_ascii=False)
         finally:
             _restore_environ(saved)
+
+
+def refresh_pricing_json():
+    with _env_lock:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            _refresh_pricing()
+        return output.getvalue().strip()
 
 
 def _restore_environ(saved):
@@ -331,17 +341,22 @@ class Backend(QObject):
     settingRequested = Signal(str, str)
     popupToggleRequested = Signal()
     trayLabelsChanged = Signal()
+    pricingRefreshFinished = Signal(str)
+    pricingRefreshFailed = Signal(str)
+    pricingBusyChanged = Signal()
     # Workers only emit these private signals. Public QML signals and property
     # notifications are published by slots on this object's GUI thread.
     _refreshCompleted = Signal(str, str)
     _sessionsCompleted = Signal(str, str)
     _openSessionCompleted = Signal(str)
     _historyCompleted = Signal(str, str)
+    _pricingCompleted = Signal(str, str)
 
     def __init__(self, first_run=False):
         super().__init__()
         self._pool = ThreadPoolExecutor(max_workers=3, thread_name_prefix="aiusage")
         self._busy = False
+        self._pricing_busy = False
         self._autostart = autostart_enabled()
         self._first_run = first_run
         self._tray_labels = {}
@@ -349,12 +364,18 @@ class Backend(QObject):
         self._sessionsCompleted.connect(self._finish_sessions, Qt.QueuedConnection)
         self._openSessionCompleted.connect(self.openSessionFinished, Qt.QueuedConnection)
         self._historyCompleted.connect(self._finish_history, Qt.QueuedConnection)
+        self._pricingCompleted.connect(self._finish_pricing, Qt.QueuedConnection)
 
     # ── Data ──
     def _get_busy(self):
         return self._busy
 
     busy = Property(bool, _get_busy, notify=busyChanged)
+
+    def _get_pricing_busy(self):
+        return self._pricing_busy
+
+    pricingBusy = Property(bool, _get_pricing_busy, notify=pricingBusyChanged)
 
     @Slot()
     def refresh(self):
@@ -382,6 +403,33 @@ class Backend(QObject):
         finally:
             self._busy = False
             self.busyChanged.emit()
+
+    @Slot()
+    def refreshPricing(self):
+        if self._pricing_busy:
+            return
+        self._pricing_busy = True
+        self.pricingBusyChanged.emit()
+        self._pool.submit(self._refresh_pricing)
+
+    def _refresh_pricing(self):
+        try:
+            result = refresh_pricing_json()
+        except Exception as exc:
+            self._pricingCompleted.emit("", f"pricing backend failed: {exc}")
+        else:
+            self._pricingCompleted.emit(result, "")
+
+    @Slot(str, str)
+    def _finish_pricing(self, result, error):
+        try:
+            if error:
+                self.pricingRefreshFailed.emit(error)
+            else:
+                self.pricingRefreshFinished.emit(result)
+        finally:
+            self._pricing_busy = False
+            self.pricingBusyChanged.emit()
 
     @Slot()
     def refreshSessions(self):

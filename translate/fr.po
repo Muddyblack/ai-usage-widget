@@ -28,6 +28,10 @@ msgstr "Échec de l'export"
 msgid "usage backend returned no data"
 msgstr "le backend d'utilisation n'a renvoyé aucune donnée"
 
+#: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
+msgid "Could not refresh pricing."
+msgstr "Impossible d'actualiser les tarifs."
+
 #: hyprland/AiUsageShell.qml package/contents/ui/SessionsTab.qml
 #: windows/qml/Main.qml
 msgid "Could not load sessions."
@@ -199,7 +203,8 @@ msgstr "valeur de repli si le plan n'en indique aucun"
 msgid "Sessions"
 msgstr "Sessions"
 
-#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: hyprland/SessionsPage.qml hyprland/SettingsPage.qml
+#: package/contents/ui/SessionsTab.qml package/contents/ui/SettingsPanel.qml
 msgid "Refreshing…"
 msgstr "Actualisation…"
 
@@ -259,6 +264,59 @@ msgid "%1 d ago"
 msgid_plural "%1 d ago"
 msgstr[0] "il y a %1 j"
 msgstr[1] "il y a %1 j"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Cost unavailable"
+msgstr "Coût indisponible"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Actual provider cost: $%1 (exact)"
+msgstr "Coût réel du fournisseur : $%1 (exact)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Actual provider cost: $%1 (partial)"
+msgstr "Coût réel du fournisseur : $%1 (partiel)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Calculated estimate: $%1 (exact)"
+msgstr "Estimation calculée : $%1 (exacte)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Calculated estimate: $%1 (partial)"
+msgstr "Estimation calculée : $%1 (partielle)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Mixed cost: $%1 (exact)"
+msgstr "Coût mixte : $%1 (exact)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Mixed cost: $%1 (partial)"
+msgstr "Coût mixte : $%1 (partiel)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Cost: $%1 (exact)"
+msgstr "Coût : $%1 (exact)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Cost: $%1 (partial)"
+msgstr "Coût : $%1 (partiel)"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Refreshing pricing…"
+msgstr "Actualisation des tarifs…"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Pricing updated."
+msgstr "Tarifs mis à jour."
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Pricing refresh failed; using saved rates."
+msgstr ""
+"Échec de l'actualisation des tarifs ; utilisation des tarifs enregistrés."
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "No pricing rates available; try again."
+msgstr "Aucun tarif disponible ; réessayez."
 
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "Providers"
@@ -446,6 +504,14 @@ msgid "30 min"
 msgstr "30 min"
 
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Pricing"
+msgstr "Tarifs"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Refresh pricing"
+msgstr "Actualiser les tarifs"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "History"
 msgstr "Historique"
 
@@ -509,6 +575,10 @@ msgstr ""
 "Mêmes données que ce menu contextuel, sous forme de tableau dans un shell. "
 "Liez-le dans ~/.local/bin pour l'exécuter sous le nom ai-usage-cli, ou "
 "passez --compact pour une ligne de barre d'état."
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid "Provider/API total"
+msgstr "Total fournisseur/API"
 
 #: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
 msgid ""
@@ -2864,6 +2934,86 @@ msgstr ""
 msgid "AI Usage Settings"
 msgstr "Paramètres d'AI Usage"
 
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Local sessions"
+msgstr "Sessions locales"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "local CLI logs"
+msgstr "journaux CLI locaux"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Anthropic"
+msgstr "Anthropic"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "OpenAI"
+msgstr "OpenAI"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "OpenRouter"
+msgstr "OpenRouter"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Ollama Cloud"
+msgstr "Ollama Cloud"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Ollama"
+msgstr "Ollama"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "GitHub Copilot"
+msgstr "GitHub Copilot"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Google"
+msgstr "Google"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "ZenMux"
+msgstr "ZenMux"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "OpenCode Zen"
+msgstr "OpenCode Zen"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "OpenCode"
+msgstr "OpenCode"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Claude Code"
+msgstr "Claude Code"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Codex"
+msgstr "Codex"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Cline"
+msgstr "Cline"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Grok CLI"
+msgstr "Grok CLI"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Muse"
+msgstr "Muse"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Antigravity"
+msgstr "Antigravity"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Local source"
+msgstr "Source locale"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "via OpenCode"
+msgstr "via OpenCode"
+
 #: macos/Sources/AIUsage/Backend/SettingsStore.swift
 msgid "Monochrome"
 msgstr "Monochrome"
@@ -2906,6 +3056,22 @@ msgstr "Réinitialisation %1"
 #: macos/Sources/AIUsage/Views/SessionsView.swift
 msgid "Refresh sessions"
 msgstr "Actualiser les sessions"
+
+#: macos/Sources/AIUsage/Views/SessionsView.swift
+msgid "Actual %1 + estimate %2 (%3)"
+msgstr "Coût réel %1 + estimation %2 (%3)"
+
+#: macos/Sources/AIUsage/Views/SessionsView.swift
+msgid "Actual cost: %1 (%2)"
+msgstr "Coût réel : %1 (%2)"
+
+#: macos/Sources/AIUsage/Views/SessionsView.swift
+msgid "Calculated estimate: %1 (%2)"
+msgstr "Estimation calculée : %1 (%2)"
+
+#: macos/Sources/AIUsage/Views/SessionsView.swift
+msgid "Cost: %1 (%2)"
+msgstr "Coût : %1 (%2)"
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Admin API key"
@@ -2951,6 +3117,10 @@ msgstr ""
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Menu Bar"
 msgstr "Barre des menus"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Data"
+msgstr "Données"
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "General"
@@ -3011,6 +3181,10 @@ msgstr ""
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Provider"
 msgstr "Fournisseur"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Refresh the shared model pricing catalog now."
+msgstr "Actualiser le catalogue partagé des tarifs des modèles."
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Refresh every"
@@ -3083,6 +3257,15 @@ msgid ""
 msgstr ""
 "Partagé avec `ai-usage-cli` et avec les interfaces Linux de ce widget, pour "
 "qu'une clé collée ici ne soit collée qu'une seule fois."
+
+#: macos/Sources/AIUsage/Views/SpendView.swift
+msgid ""
+"Provider totals come from each provider's own usage APIs. Local source rows "
+"show actual, estimated, or mixed provenance and coverage separately."
+msgstr ""
+"Les totaux des fournisseurs proviennent de leurs propres API d'utilisation. "
+"Les lignes de source locale indiquent séparément la provenance réelle, "
+"estimée ou mixte ainsi que la couverture."
 
 #: macos/Sources/AIUsage/Views/StatsView.swift
 msgid "Messages"

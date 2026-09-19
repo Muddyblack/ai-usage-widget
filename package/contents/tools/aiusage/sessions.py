@@ -28,6 +28,7 @@ import subprocess
 import time
 import urllib.parse
 
+from . import billing, pricing
 from .contract import epoch_of, num
 from .providers import antigravity_sessions, opencode
 from .providers.cline import get_cline_sessions
@@ -86,7 +87,7 @@ def _state(last_activity, ended=False):
     return "active" if age <= _ACTIVE_WITHIN_SEC else "idle"
 
 
-def _entry(provider, title, last_activity, *, state="", session_name="", detail="", session_id="", full_title=""):
+def _entry(provider, title, last_activity, *, state="", session_name="", detail="", session_id="", full_title="", source=""):
     activity = int(last_activity or 0)
     if activity <= 0:
         return None
@@ -99,13 +100,38 @@ def _entry(provider, title, last_activity, *, state="", session_name="", detail=
         "detail": detail or "",
         # Opaque resume handle — "" when this provider has no known resume
         # command (Muse) or the session id could not be established.
-        "openKey": _open_key(provider, session_id) if session_id else "",
+        "openKey": _open_key(source or provider, session_id) if session_id else "",
+        "costStatus": "unavailable",
     }
+    if source:
+        entry["source"] = source
     # Only carried when the row's title was clipped, so a frontend can offer
     # to expand it; omitted rather than duplicating what's already the title.
     if full_title and full_title != entry["title"]:
         entry["fullTitle"] = full_title
     return entry
+
+
+def _with_usage_cost(entry, provider, buckets):
+    if entry is None:
+        return None
+    catalog = pricing.cached_catalog()
+    providers = {bucket.provider for bucket in buckets if bucket.provider}
+    rates = {rate_provider: catalog.get(rate_provider, {}) for rate_provider in providers or {provider}}
+    return {**entry, **billing.aggregate_session_usage(buckets, rates)}
+
+
+def _cline_catalog_identity(provider, model):
+    provider = pricing._safe_namespace(provider)
+    if not provider or not isinstance(model, str) or not model:
+        return None
+    if provider != "cline":
+        return (provider, model) if "/" not in model else None
+    native_provider, separator, native_model = model.partition("/")
+    native_provider = pricing._safe_namespace(native_provider)
+    if not native_provider or not separator or not native_model or "/" in native_model:
+        return None
+    return native_provider, native_model
 
 
 def _open_key(provider, session_id):
@@ -133,22 +159,39 @@ def _cline_entries():
         tokens = num(s.get("input")) + num(s.get("output"))
         if tokens > 0:
             bits.append(f"{_format_tokens(tokens)} tok")
-        cost = num(s.get("cost"))
-        if cost > 0:
-            bits.append(f"${cost:.2f}")
         model = s.get("model") or ""
         if model and model != title:
             bits.append(model)
         session_id = ids[index] if index < len(ids) else ""
+        catalog_identity = _cline_catalog_identity(s.get("provider"), model)
+        usage = []
+        token_values = (num(s.get("input")), num(s.get("output")), num(s.get("cacheRead")), num(s.get("cacheWrite")))
+        if sum(token_values) > 0 and catalog_identity is not None:
+            rate_provider, rate_model = catalog_identity
+            usage.append(
+                billing.UsageBucket(
+                    rate_provider,
+                    rate_model,
+                    session_id,
+                    input_tokens=token_values[0],
+                    output_tokens=token_values[1],
+                    cache_read_tokens=token_values[2],
+                    cache_write_tokens=token_values[3],
+                )
+            )
         out.append(
-            _entry(
-                "cline",
-                title,
-                last,
-                state=_state(last, ended=ended),
-                session_name=s.get("provider") or "",
-                detail=" · ".join(bits),
-                session_id=session_id,
+            _with_usage_cost(
+                _entry(
+                    "cline",
+                    title,
+                    last,
+                    state=_state(last, ended=ended),
+                    session_name=s.get("provider") or "",
+                    detail=" · ".join(bits),
+                    session_id=session_id,
+                ),
+                catalog_identity[0] if catalog_identity is not None else "",
+                usage,
             )
         )
     return [e for e in out if e]
@@ -179,9 +222,9 @@ def _cline_ids():
             continue
         # Resume wants the id the CLI itself recorded, not the dir name.
         session_id = data.get("session_id") if isinstance(data.get("session_id"), str) and data.get("session_id") else name
-        by_start.append((started, session_id))
-    by_start.sort()
-    return [sid for _started, sid in by_start]
+        by_start.append((started, name, session_id))
+    by_start.sort(key=lambda item: (item[0], item[1]))
+    return [sid for _started, _name, sid in by_start]
 
 
 def _muse_entries():
@@ -302,13 +345,17 @@ def _codex_entries():
         if model:
             bits.append(model)
         out.append(
-            _entry(
+            _with_usage_cost(
+                _entry(
+                    "openai",
+                    title,
+                    mtime,
+                    session_name="Codex",
+                    detail=" · ".join(bits),
+                    session_id=session_id,
+                ),
                 "openai",
-                title,
-                mtime,
-                session_name="Codex",
-                detail=" · ".join(bits),
-                session_id=session_id,
+                _codex_session_usage(path, session_id, model),
             )
         )
     return out
@@ -328,6 +375,94 @@ def _codex_id_from_path(path):
         stem,
     )
     return match.group(1) if match else ""
+
+
+def _claude_session_usage(path, session_id):
+    buckets = []
+    try:
+        with open(path, encoding="utf-8", errors="replace") as stream:
+            for index, line in enumerate(stream):
+                if index > 50000:
+                    break
+                if '"usage"' not in line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                if not isinstance(row, dict):
+                    continue
+                message = row.get("message") if isinstance(row.get("message"), dict) else {}
+                usage = message.get("usage") if isinstance(message.get("usage"), dict) else {}
+                model = (
+                    message.get("model") if isinstance(message.get("model"), str) else row.get("model") if isinstance(row.get("model"), str) else ""
+                )
+                buckets.append(
+                    billing.UsageBucket(
+                        "anthropic",
+                        model,
+                        session_id,
+                        num(usage.get("input_tokens")),
+                        num(usage.get("output_tokens")),
+                        num(usage.get("cache_read_input_tokens")),
+                        num(usage.get("cache_creation_input_tokens")),
+                        num(usage.get("reasoning_tokens")),
+                    )
+                )
+    except OSError:
+        return []
+    return buckets
+
+
+def _codex_usage_bucket(usage, model, session_id):
+    if not isinstance(usage, dict):
+        return None
+    bucket = billing.UsageBucket(
+        "openai",
+        model,
+        session_id,
+        num(usage.get("input_tokens")),
+        num(usage.get("output_tokens")),
+        num(usage.get("cached_input_tokens") or usage.get("cache_read_input_tokens")),
+        num(usage.get("cache_write_tokens")),
+        num(usage.get("reasoning_output_tokens") or usage.get("reasoning_tokens")),
+    )
+    return (
+        bucket
+        if sum((bucket.input_tokens, bucket.output_tokens, bucket.cache_read_tokens, bucket.cache_write_tokens, bucket.reasoning_tokens)) > 0
+        else None
+    )
+
+
+def _codex_session_usage(path, session_id, model_hint=""):
+    turns = []
+    cumulative = None
+    model = model_hint
+    try:
+        with open(path, encoding="utf-8", errors="replace") as stream:
+            for index, line in enumerate(stream):
+                if index > 50000:
+                    break
+                if '"token_count"' not in line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                if not isinstance(row, dict):
+                    continue
+                payload = row.get("payload") if isinstance(row.get("payload"), dict) else row
+                raw_model = payload.get("model")
+                if isinstance(raw_model, str) and raw_model:
+                    model = raw_model
+                info = payload.get("info") if isinstance(payload.get("info"), dict) else {}
+                last = _codex_usage_bucket(info.get("last_token_usage"), model, session_id)
+                if last is not None:
+                    turns.append(last)
+                cumulative = _codex_usage_bucket(info.get("total_token_usage"), model, session_id) or cumulative
+    except OSError:
+        return []
+    return turns or ([cumulative] if cumulative is not None else [])
 
 
 def _grok_entries():
@@ -398,21 +533,49 @@ def _opencode_records(reader):
     )[:_MAX_SESSIONS]
 
 
+def _provider_costs(buckets):
+    """Per-provider cost rollups for a multi-provider OpenCode session."""
+    catalog = pricing.cached_catalog()
+    by_provider = {}
+    for bucket in buckets:
+        by_provider.setdefault(bucket.provider, []).append(bucket)
+    costs = {}
+    for provider, provider_buckets in by_provider.items():
+        result = billing.aggregate_session_usage(provider_buckets, {provider: catalog.get(provider, {})})
+        if result.get("costStatus") != "unavailable":
+            costs[provider] = result
+    return costs
+
+
 def _opencode_entries():
     out = []
     for record in _opencode_records(opencode.read_recent_sessions):
         title = _clip_title(record.title) or _basename(record.directory) or "OpenCode"
-        out.append(
+        upstream = {bucket.provider for bucket in record.usage}
+        provider = next(iter(upstream)) if len(upstream) == 1 else "opencode"
+        entry = _with_usage_cost(
             _entry(
-                "opencode",
+                provider,
                 title,
                 record.last_activity,
-                session_name="OpenCode",
+                session_name="via OpenCode",
                 detail=_basename(record.directory),
                 session_id=_opencode_identity(record),
-            )
+                source="opencode",
+            ),
+            "opencode",
+            record.usage,
         )
-    return [entry for entry in out if entry]
+        if entry is None:
+            continue
+        if len(upstream) == 1:
+            entry["billingProvider"] = provider
+        else:
+            provider_costs = _provider_costs(record.usage)
+            if provider_costs:
+                entry["providerCosts"] = provider_costs
+        out.append(entry)
+    return out
 
 
 def _opencode_targets():
@@ -492,29 +655,10 @@ def _claude_session_tokens(path):
     records — the CLI's own per-message counters, never the message text
     itself. Capped generously; an unfinished sum from a huge file still beats
     none."""
-    total = 0
-    try:
-        with open(path, encoding="utf-8", errors="replace") as f:
-            for i, line in enumerate(f):
-                if i > 50000:
-                    break
-                if '"usage"' not in line:
-                    continue
-                try:
-                    row = json.loads(line)
-                except ValueError:
-                    continue
-                if not isinstance(row, dict):
-                    continue
-                message = row.get("message") if isinstance(row.get("message"), dict) else {}
-                usage = message.get("usage") if isinstance(message.get("usage"), dict) else {}
-                total += num(usage.get("input_tokens"))
-                total += num(usage.get("output_tokens"))
-                total += num(usage.get("cache_read_input_tokens"))
-                total += num(usage.get("cache_creation_input_tokens"))
-    except OSError:
-        return 0
-    return total
+    return sum(
+        sum(billing._bucket_tokens(bucket)[key] for key in ("input", "output", "cache_read", "cache_write"))
+        for bucket in _claude_session_usage(path, "")
+    )
 
 
 def _claude_entries():
@@ -555,21 +699,27 @@ def _claude_entries():
             session_id = newest_entry[: -len(".jsonl")] if newest_entry else ""
             full_title = prompt_titles.get(session_id, "")
             title = _clip_title(full_title) or folder_title
-            tokens = _claude_session_tokens(os.path.join(project, newest_entry)) if newest_entry else 0
+            transcript = os.path.join(project, newest_entry)
+            buckets = _claude_session_usage(transcript, session_id) if newest_entry else []
+            tokens = sum(sum(billing._bucket_tokens(bucket)[key] for key in ("input", "output", "cache_read", "cache_write")) for bucket in buckets)
             bits = []
             if folder_title != title:
                 bits.append(folder_title)
             if tokens > 0:
                 bits.append(f"{_format_tokens(tokens)} tok")
             out.append(
-                _entry(
-                    "claude",
-                    title,
-                    newest,
-                    session_name="Claude Code",
-                    detail=" · ".join(bits),
-                    session_id=session_id,
-                    full_title=full_title,
+                _with_usage_cost(
+                    _entry(
+                        "claude",
+                        title,
+                        newest,
+                        session_name="Claude Code",
+                        detail=" · ".join(bits),
+                        session_id=session_id,
+                        full_title=full_title,
+                    ),
+                    "anthropic",
+                    buckets,
                 )
             )
     except OSError:

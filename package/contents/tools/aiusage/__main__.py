@@ -14,16 +14,17 @@ presentation only; see docs/provider-contract.md for the schema.
 import json
 import sys
 
-from . import config, envelope
+from . import config, envelope, pricing
 from .contract import finalize
 from .normalize import normalize
 
-USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize | --sessions]
+USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize | --sessions | --refresh-pricing]
 
   --all                 fetch every provider enabled in the shared settings file
   --provider <ids>      fetch the named providers regardless of the toggles
   --normalize           read one raw envelope on stdin, print the provider object
   --sessions            list recent local agent sessions (no paths or transcripts)
+  --refresh-pricing     force one shared pricing catalog refresh
   --open-session <key>  resume one listed session (by its openKey) in a terminal
   --list                print the known provider ids, one per line
   -h, --help            show this help
@@ -47,6 +48,27 @@ def snapshot():
     return finalize(envelope.build(envelope.enabled(cfg)))
 
 
+def _refresh_pricing():
+    snapshot = pricing.load_catalog(force=True)
+    providers = snapshot.get("providers") or {}
+    usable = bool(providers.get("anthropic") or providers.get("openai"))
+    error = str(snapshot.get("error") or "")
+    if not usable:
+        error = (
+            f"{error}; no usable pricing rates; retry when pricing sources are available."
+            if error
+            else "No usable pricing rates; retry when pricing sources are available."
+        )
+    result = {
+        "ok": usable,
+        "status": "stale-good" if usable and error else "refreshed" if usable else "no-cache",
+        "fetchedAt": snapshot.get("fetchedAt", 0),
+        "error": error,
+    }
+    sys.stdout.write(json.dumps(result, separators=(",", ":"), ensure_ascii=False) + "\n")
+    return 0 if usable else 1
+
+
 def main(argv):
     mode = ""
     requested = ""
@@ -68,6 +90,8 @@ def main(argv):
             mode = "normalize"
         elif arg == "--sessions":
             mode = "sessions"
+        elif arg == "--refresh-pricing":
+            mode = "refresh-pricing"
         elif arg == "--open-session":
             mode = "open-session"
             i += 1
@@ -93,6 +117,9 @@ def main(argv):
 
         _emit(collect_sessions())
         return 0
+
+    if mode == "refresh-pricing":
+        return _refresh_pricing()
 
     if mode == "open-session":
         from .sessions import open_session

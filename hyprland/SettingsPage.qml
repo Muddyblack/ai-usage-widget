@@ -77,6 +77,30 @@ ColumnLayout {
         }
     }
 
+    function pricingMessage() {
+        var status = page.shell.pricingStatus || "";
+        if (page.shell.pricingLoading === true)
+            return page.shell.i18n("Refreshing pricing…");
+        if (status === "refreshed")
+            return page.shell.i18n("Pricing updated.");
+        if (status === "stale-good")
+            return page.shell.i18n("Pricing refresh failed; using saved rates.") + (page.shell.pricingError ? " " + page.shell.pricingError : "");
+        if (status === "no-cache")
+            return page.shell.pricingError || page.shell.i18n("No pricing rates available; try again.");
+        return page.shell.pricingError || "";
+    }
+
+    function pricingMessageColor() {
+        var status = page.shell.pricingStatus || "";
+        if (status === "no-cache" || (status === "" && page.shell.pricingError !== ""))
+            return "#f87171";
+        if (status === "stale-good")
+            return "#f5a623";
+        if (status === "refreshed")
+            return "#34d399";
+        return "#f8fafc";
+    }
+
     SegmentBar {
         accent: page.shell.activeAccent
         currentId: page.section
@@ -232,6 +256,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             SettingCombo {
                 id: languageCombo
@@ -279,6 +304,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             SettingCombo {
                 Layout.preferredWidth: 130
@@ -308,6 +334,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             SettingCombo {
                 Layout.preferredWidth: 130
@@ -337,6 +364,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             SettingCombo {
                 id: monitorCombo
@@ -382,6 +410,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             StyledToggle {
                 checked: page.shell.settings.showChart !== false
@@ -410,6 +439,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             SettingCombo {
                 Layout.preferredWidth: 130
@@ -439,6 +469,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             StyledToggle {
                 checked: page.shell.settings.floatingPill === true
@@ -481,6 +512,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             QC.ComboBox {
                 id: pollCombo
@@ -548,6 +580,43 @@ ColumnLayout {
                 Layout.preferredWidth: 7
                 Layout.preferredHeight: 7
                 radius: 3.5
+                color: page.shell.pricingLoading ? "#f5a623" : page.shell.pricingStatus === "" ? Qt.rgba(1, 1, 1, 0.3) : page.shell.pricingStatus === "stale-good" ? "#f5a623" : page.shell.pricingStatus === "no-cache" ? "#f87171" : "#34d399"
+                Layout.alignment: Qt.AlignVCenter
+            }
+            Text {
+                text: page.shell.i18n("Pricing")
+                font.pixelSize: 11
+                color: "#f8fafc"
+                Layout.preferredWidth: 90
+                elide: Text.ElideRight
+            }
+            SettingsButton {
+                text: page.shell.pricingLoading ? page.shell.i18n("Refreshing…") : page.shell.i18n("Refresh pricing")
+                enabled: !page.shell.pricingLoading
+                onClicked: page.shell.refreshPricing()
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+        }
+
+        Text {
+            visible: page.shell.pricingLoading || page.shell.pricingStatus !== "" || page.shell.pricingError !== ""
+            Layout.fillWidth: true
+            text: page.pricingMessage()
+            font.pixelSize: 9
+            opacity: 0.8
+            color: page.pricingMessageColor()
+            wrapMode: Text.WordWrap
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Rectangle {
+                Layout.preferredWidth: 7
+                Layout.preferredHeight: 7
+                radius: 3.5
                 color: page.shell.activeAccent
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -556,6 +625,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             SettingsButton {
                 text: page.shell.i18n("Export")
@@ -610,6 +680,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             StyledToggle {
                 checked: page.shell.autostart === true
@@ -643,6 +714,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
 
             Rectangle {
@@ -703,6 +775,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
 
             Rectangle {

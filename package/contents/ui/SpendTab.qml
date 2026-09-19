@@ -22,7 +22,7 @@ ColumnLayout {
         // Plasma keeps costs on root properties rather than a provider list.
         var out = [];
         function push(id, label, cost, note, currency) {
-            if (!(cost > 0))
+            if (typeof cost !== "number" || !isFinite(cost) || !(cost > 0))
                 return;
             out.push({
                 id: id,
@@ -40,6 +40,13 @@ ColumnLayout {
         push("muse", "Muse", rootItem.museCostUSD, i18n("local est."), rootItem.museCurrency || "USD");
         push("cline", "Cline", (rootItem.clineStats && rootItem.clineStats.totalCostUSD) || 0, i18n("local"));
         push("cursor", "Cursor", rootItem.cursorOnDemandUsed, i18n("on-demand"));
+        var localRows = FeatureTabs.localSpendRows(rootItem.localSpend);
+        for (var i = 0; i < localRows.length; i++) {
+            localRows[i].accent = FeatureTabs.accent("spend");
+            localRows[i].label = i18n(localRows[i].label);
+            localRows[i].note = i18n(localRows[i].note);
+            out.push(localRows[i]);
+        }
         out.sort(function (a, b) {
             return b.cost - a.cost;
         });
@@ -59,7 +66,7 @@ ColumnLayout {
         }
         PlasmaComponents.Label {
             visible: spendTab.totalUsd > 0
-            text: "Σ " + rootItem.formatMoney(spendTab.totalUsd, "USD")
+            text: i18n("Provider/API total") + " " + rootItem.formatMoney(spendTab.totalUsd, "USD")
             font.bold: true
             font.pixelSize: 13
             color: "#34d399"
@@ -90,7 +97,7 @@ ColumnLayout {
         Rectangle {
             required property var modelData
             Layout.fillWidth: true
-            implicitHeight: body.implicitHeight + 14
+            implicitHeight: body.implicitHeight + 16
             radius: 8
             color: Qt.rgba(1, 1, 1, 0.04)
             border.width: 1
@@ -112,12 +119,18 @@ ColumnLayout {
 
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     spacing: 1
                     PlasmaComponents.Label {
                         text: modelData.label
                         font.bold: true
                         font.pixelSize: 12
                         color: Kirigami.Theme.textColor
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        maximumLineCount: 1
+                        elide: Text.ElideRight
+                        wrapMode: Text.NoWrap
                     }
                     PlasmaComponents.Label {
                         visible: modelData.note !== ""
@@ -125,12 +138,20 @@ ColumnLayout {
                         font.pixelSize: 10
                         opacity: 0.45
                         color: Kirigami.Theme.textColor
+                        maximumLineCount: 1
+                        elide: Text.ElideRight
+                        wrapMode: Text.NoWrap
                     }
                 }
 
                 PlasmaComponents.Label {
+                    Layout.alignment: Qt.AlignVCenter
                     text: rootItem.formatMoney(modelData.cost, modelData.currency)
                     font.bold: true
+                    // Fixed-width digits keep the two-decimal amounts in one
+                    // column: every price ends in ".XX", so with equal digit
+                    // advances the decimal points line up across rows.
+                    font.family: "monospace"
                     font.pixelSize: 12
                     color: Kirigami.Theme.textColor
                 }
@@ -138,8 +159,11 @@ ColumnLayout {
 
             MouseArea {
                 anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: rootItem.selectTab(modelData.id)
+                cursorShape: modelData.local === true ? Qt.ArrowCursor : Qt.PointingHandCursor
+                onClicked: {
+                    if (modelData.local !== true)
+                        rootItem.selectTab(modelData.id);
+                }
             }
         }
     }
