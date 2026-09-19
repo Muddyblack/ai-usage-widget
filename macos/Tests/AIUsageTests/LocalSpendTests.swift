@@ -67,13 +67,12 @@ final class LocalSpendContractTests: XCTestCase {
         XCTAssertEqual(envelope.localSpend.estimated.costStatus, "unavailable")
     }
 
-    func testSeparateTotalsWithoutOptionalProvenanceRemainRenderable() throws {
+    func testSeparateTotalsWithoutProviderRollupsDoNotInventProviderRows() throws {
         let envelope = try decode(
             #"{"localSpend":{"actual":{"totalUSD":2,"costStatus":"exact"},"estimated":{"totalUSD":3,"costStatus":"partial"}}}"#)
 
         let rows = SpendRows.build([], localSpend: envelope.localSpend)
-        XCTAssertEqual(rows.map(\.label), ["Calculated estimate", "Actual provider cost"])
-        XCTAssertEqual(rows.map(\.cost), [3, 2])
+        XCTAssertTrue(rows.isEmpty)
         XCTAssertEqual(envelope.localSpend.actual.costProvenance, "actual")
         XCTAssertEqual(envelope.localSpend.estimated.costProvenance, "estimated")
     }
@@ -110,7 +109,8 @@ final class LocalSpendRowsTests: XCTestCase {
 
             XCTAssertEqual(localRows.count, 1)
             XCTAssertEqual(localRows.first?.label, "Local sessions")
-            XCTAssertEqual(localRows.first?.note, "local CLI logs")
+            XCTAssertEqual(localRows.first?.note, "local CLI logs · \(localSpend.legacy?.costStatus ?? "")")
+            XCTAssertEqual(localRows.first?.costStatus, localSpend.legacy?.costStatus)
             XCTAssertEqual(localRows.first?.currency, "USD")
             XCTAssertEqual(localRows.first?.id, "local-sessions")
             XCTAssertEqual(SpendRows.totalUSD(rows), 7)
@@ -144,17 +144,99 @@ final class LocalSpendRowsTests: XCTestCase {
         XCTAssertEqual(SpendRows.totalUSD(rows), 3)
     }
 
-    func testActualAndEstimatedLocalTotalsAreSeparateRows() {
+    func testActualAndEstimatedLocalTotalsMergeBySourceWithBreakdown() {
         let rows = SpendRows.build(
             providers,
             localSpend: LocalSpend(
-                actual: LocalSpendTotal(totalUSD: 4, costStatus: "exact", costProvenance: "actual"),
-                estimated: LocalSpendTotal(totalUSD: 5, costStatus: "partial", costProvenance: "estimated")))
+                actual: LocalSpendTotal(
+                    totalUSD: 4,
+                    costStatus: "exact",
+                    costProvenance: "actual",
+                    providers: [" OpenCode ": LocalSpendProvider(costUSD: 4, costStatus: "exact")]),
+                estimated: LocalSpendTotal(
+                    totalUSD: 5,
+                    costStatus: "partial",
+                    costProvenance: "estimated",
+                    providers: [
+                        "opencode": LocalSpendProvider(costUSD: 2, costStatus: "partial"),
+                        "cline": LocalSpendProvider(costUSD: 3, costStatus: "exact")
+                    ])))
 
         let localRows = rows.filter { $0.provider == nil }
-        XCTAssertEqual(Set(localRows.map(\.label)), ["Actual provider cost", "Calculated estimate"])
-        XCTAssertEqual(localRows.first(where: { $0.provenance == "actual" })?.cost, 4)
-        XCTAssertEqual(localRows.first(where: { $0.provenance == "estimated" })?.cost, 5)
+        XCTAssertEqual(Set(localRows.map(\.label)), ["OpenCode", "Cline"])
+        XCTAssertEqual(localRows.first(where: { $0.source == "opencode" })?.cost, 6)
+        XCTAssertEqual(localRows.first(where: { $0.source == "opencode" })?.provenance, "mixed")
+        XCTAssertEqual(localRows.first(where: { $0.source == "opencode" })?.costStatus, "partial")
+        XCTAssertEqual(localRows.first(where: { $0.source == "opencode" })?.costBreakdown?.actualUSD, 4)
+        XCTAssertEqual(localRows.first(where: { $0.source == "opencode" })?.costBreakdown?.estimatedUSD, 2)
+        XCTAssertEqual(localRows.first(where: { $0.source == "opencode" })?.note, "local CLI logs · mixed · partial")
+        XCTAssertEqual(localRows.first(where: { $0.source == "cline" })?.cost, 3)
+        XCTAssertEqual(SpendRows.totalUSD(rows), 5)
+    }
+
+    func testNativeAndOpenCodeSameProviderRemainDistinctAndTruthful() {
+        let rows = SpendRows.build([], localSpend: LocalSpend(
+            actual: LocalSpendTotal(
+                totalUSD: 0.63,
+                costStatus: "exact",
+                costProvenance: "actual",
+                providers: [
+                    "anthropic": LocalSpendProvider(costUSD: 0.21, costStatus: "exact"),
+                    "anthropic::opencode": LocalSpendProvider(
+                        costUSD: 0.42,
+                        costStatus: "exact",
+                        source: "opencode")
+                ])))
+
+        let localRows = rows.filter { $0.provider == nil }
+        XCTAssertEqual(localRows.count, 2)
+        XCTAssertEqual(Set(localRows.map(\.id)), ["local-anthropic", "local-anthropic::opencode"])
+        XCTAssertEqual(localRows.first(where: { $0.id == "local-anthropic" })?.source, "anthropic")
+        XCTAssertEqual(localRows.first(where: { $0.id == "local-anthropic" })?.note, "local CLI logs · actual · exact")
+        XCTAssertEqual(localRows.first(where: { $0.id == "local-anthropic::opencode" })?.source, "opencode")
+        XCTAssertEqual(localRows.first(where: { $0.id == "local-anthropic::opencode" })?.label, "Anthropic")
+        XCTAssertEqual(localRows.first(where: { $0.id == "local-anthropic::opencode" })?.note, "via OpenCode · actual · exact")
+        XCTAssertEqual(SpendRows.totalUSD(rows), 0)
+    }
+
+    func testLocalSourceLabelsUseNormalizedKnownIDsAndSafeFallback() {
+        let rows = SpendRows.build([], localSpend: LocalSpend(
+            actual: LocalSpendTotal(
+                totalUSD: 2,
+                costStatus: "exact",
+                providers: [" custom_source ": LocalSpendProvider(costUSD: 2, costStatus: "exact")]),
+            estimated: LocalSpendTotal(
+                totalUSD: 1,
+                costStatus: "exact",
+                providers: ["OPENAI": LocalSpendProvider(costUSD: 1, costStatus: "exact")])))
+
+        XCTAssertEqual(rows.first(where: { $0.source == "custom-source" })?.label, "Custom Source")
+        XCTAssertEqual(rows.first(where: { $0.source == "openai" })?.label, "Codex")
+    }
+
+    func testOpenCodeUpstreamLabelsCoverEveryRoutedProvider() {
+        let expected: [String: String] = [
+            "ollama-cloud::opencode": "Ollama Cloud",
+            "ollama::opencode": "Ollama",
+            "github-copilot::opencode": "GitHub Copilot",
+            "google::opencode": "Google",
+            "zenmux::opencode": "ZenMux",
+            "opencode::opencode": "OpenCode Zen",
+        ]
+        let providers = Dictionary(uniqueKeysWithValues: expected.keys.map {
+            ($0, LocalSpendProvider(costUSD: 1, costStatus: "exact", source: "opencode"))
+        })
+        let rows = SpendRows.build([], localSpend: LocalSpend(
+            actual: LocalSpendTotal(
+                totalUSD: 6,
+                costStatus: "exact",
+                costProvenance: "actual",
+                providers: providers)))
+
+        let localRows = rows.filter { $0.provider == nil }
+        for (key, label) in expected {
+            XCTAssertEqual(localRows.first(where: { $0.id == "local-\(key)" })?.label, label)
+        }
     }
 
     func testProviderSpendAcceptsFiniteNumbersButRejectsStringsBooleansAndNonFiniteValues() {
@@ -196,7 +278,11 @@ final class LocalSpendAppModelTests: XCTestCase {
         model.applyForDiagnostics(Envelope(
             providers: [provider],
             localSpend: LocalSpend(
-                actual: LocalSpendTotal(totalUSD: 6, costStatus: "partial", costProvenance: "actual"))))
+                actual: LocalSpendTotal(
+                    totalUSD: 6,
+                    costStatus: "partial",
+                    costProvenance: "actual",
+                    providers: ["opencode": LocalSpendProvider(costUSD: 6, costStatus: "partial")])))
 
         XCTAssertEqual(model.spendRows.first(where: { $0.provenance == "actual" })?.cost, 6)
         XCTAssertEqual(model.spendRows.first(where: { $0.provider?.id == "openai" })?.cost, 2)

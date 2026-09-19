@@ -57,6 +57,149 @@ class LocalSpendEnvelopeTest(unittest.TestCase):
             },
         )
 
+    def test_opencode_rollups_are_separate_by_trusted_upstream_provider(self):
+        result = self.build(
+            [
+                {
+                    "provider": "anthropic",
+                    "source": "opencode",
+                    "billingProvider": "anthropic",
+                    "costUSD": 0.42,
+                    "costStatus": "exact",
+                    "costProvenance": "estimated",
+                },
+                {
+                    "provider": "openai",
+                    "source": "opencode",
+                    "billingProvider": "openai",
+                    "costUSD": 0.13,
+                    "costStatus": "exact",
+                    "costProvenance": "actual",
+                },
+            ]
+        )
+
+        self.assertEqual(
+            result["localSpend"]["estimated"]["providers"],
+            {
+                "anthropic::opencode": {
+                    "costUSD": 0.42,
+                    "costStatus": "exact",
+                    "costProvenance": "estimated",
+                    "source": "opencode",
+                }
+            },
+        )
+        self.assertEqual(
+            result["localSpend"]["actual"]["providers"],
+            {
+                "openai::opencode": {
+                    "costUSD": 0.13,
+                    "costStatus": "exact",
+                    "costProvenance": "actual",
+                    "source": "opencode",
+                }
+            },
+        )
+
+    def test_native_and_opencode_same_provider_keep_distinct_rollups(self):
+        result = self.build(
+            [
+                {
+                    "provider": "anthropic",
+                    "costUSD": 0.21,
+                    "costStatus": "exact",
+                    "costProvenance": "estimated",
+                },
+                {
+                    "provider": "anthropic",
+                    "source": "opencode",
+                    "billingProvider": "anthropic",
+                    "costUSD": 0.42,
+                    "costStatus": "exact",
+                    "costProvenance": "estimated",
+                },
+            ]
+        )
+
+        self.assertEqual(
+            result["localSpend"]["estimated"]["providers"],
+            {
+                "anthropic": {
+                    "costUSD": 0.21,
+                    "costStatus": "exact",
+                    "costProvenance": "estimated",
+                },
+                "anthropic::opencode": {
+                    "costUSD": 0.42,
+                    "costStatus": "exact",
+                    "costProvenance": "estimated",
+                    "source": "opencode",
+                },
+            },
+        )
+
+    def test_multi_provider_opencode_session_rolls_up_per_provider(self):
+        result = self.build(
+            [
+                {
+                    "provider": "opencode",
+                    "source": "opencode",
+                    "costUSD": 0.55,
+                    "costStatus": "exact",
+                    "costProvenance": "actual",
+                    "providerCosts": {
+                        "ollama-cloud": {"costUSD": 0.42, "costStatus": "exact", "costProvenance": "actual"},
+                        "openai": {"costUSD": 0.13, "costStatus": "exact", "costProvenance": "actual"},
+                    },
+                }
+            ]
+        )
+
+        self.assertEqual(result["localSpend"]["actual"]["totalUSD"], 0.55)
+        self.assertEqual(
+            result["localSpend"]["actual"]["providers"],
+            {
+                "ollama-cloud::opencode": {
+                    "costUSD": 0.42,
+                    "costStatus": "exact",
+                    "costProvenance": "actual",
+                    "source": "opencode",
+                },
+                "openai::opencode": {
+                    "costUSD": 0.13,
+                    "costStatus": "exact",
+                    "costProvenance": "actual",
+                    "source": "opencode",
+                },
+            },
+        )
+
+    def test_multi_provider_opencode_mixed_provider_costs_split_by_origin(self):
+        result = self.build(
+            [
+                {
+                    "provider": "opencode",
+                    "source": "opencode",
+                    "costUSD": 0.62,
+                    "costStatus": "exact",
+                    "costProvenance": "mixed",
+                    "costBreakdown": {"actualUSD": 0.42, "estimatedUSD": 0.2},
+                    "providerCosts": {
+                        "ollama-cloud": {
+                            "costUSD": 0.62,
+                            "costStatus": "exact",
+                            "costProvenance": "mixed",
+                            "costBreakdown": {"actualUSD": 0.42, "estimatedUSD": 0.2},
+                        }
+                    },
+                }
+            ]
+        )
+
+        self.assertEqual(result["localSpend"]["actual"]["providers"]["ollama-cloud::opencode"]["costUSD"], 0.42)
+        self.assertEqual(result["localSpend"]["estimated"]["providers"]["ollama-cloud::opencode"]["costUSD"], 0.2)
+
     def test_exact_and_partial_sessions_sum_with_partial_status(self):
         result = self.build(
             [

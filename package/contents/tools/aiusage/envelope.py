@@ -65,52 +65,81 @@ def enabled(cfg):
     return [id_ for id_ in config.ALL_PROVIDERS if config.provider_enabled(cfg, id_)]
 
 
+def _local_contribution(provider, cost, status, provenance, source, billing_provider=None):
+    if status not in ("exact", "partial") or not isinstance(provider, str) or not provider:
+        return None
+    if provider == "cline" and provenance == "actual":
+        return None
+    if cost is None:
+        return None
+    rollup_provider = billing_provider if source == "opencode" and isinstance(billing_provider, str) and billing_provider else provider
+    rollup_source = source.strip().lower() if isinstance(source, str) and source.strip() else ""
+    rollup = f"{rollup_provider}::{rollup_source}" if rollup_source else rollup_provider
+    return rollup, cost, status
+
+
+def _local_contributions(session, provenance):
+    if not isinstance(session, dict):
+        return []
+    provider_costs = session.get("providerCosts")
+    if isinstance(provider_costs, dict) and provider_costs:
+        # Multi-provider OpenCode session: one contribution per upstream
+        # provider; the top-level aggregate is skipped so nothing is counted
+        # twice.
+        contributions = []
+        for provider, cost_row in provider_costs.items():
+            if not isinstance(cost_row, dict):
+                continue
+            contributions.extend(_local_contributions({**cost_row, "provider": provider, "source": session.get("source")}, provenance))
+        return contributions
+
+    session_provenance = session.get("costProvenance")
+    mixed = session_provenance == "mixed"
+    if session_provenance == provenance:
+        cost = _positive_finite(session.get("costUSD"))
+    elif mixed:
+        parent_cost = _non_negative_finite(session.get("costUSD"))
+        breakdown = session.get("costBreakdown")
+        if not isinstance(breakdown, dict):
+            return []
+        actual_cost = _non_negative_finite(breakdown.get("actualUSD"))
+        estimated_cost = _non_negative_finite(breakdown.get("estimatedUSD"))
+        if (
+            parent_cost is None
+            or actual_cost is None
+            or estimated_cost is None
+            or not math.isclose(
+                math.fsum((actual_cost, estimated_cost)),
+                parent_cost,
+                rel_tol=_MIXED_COST_REL_TOLERANCE,
+                abs_tol=_MIXED_COST_ABS_TOLERANCE,
+            )
+        ):
+            return []
+        cost = actual_cost if provenance == "actual" else estimated_cost
+    else:
+        return []
+    contribution = _local_contribution(
+        session.get("provider"),
+        cost,
+        session.get("costStatus"),
+        provenance,
+        session.get("source"),
+        billing_provider=session.get("billingProvider"),
+    )
+    return [contribution] if contribution is not None else []
+
+
 def _local_spend_group(sessions, provenance):
     totals = {}
     partial = set()
     costs = []
     for session in sessions:
-        if not isinstance(session, dict):
-            continue
-        session_provenance = session.get("costProvenance")
-        mixed = session_provenance == "mixed"
-        if session_provenance == provenance:
-            raw_cost = session.get("costUSD")
-        elif mixed:
-            parent_cost = _non_negative_finite(session.get("costUSD"))
-            breakdown = session.get("costBreakdown")
-            if not isinstance(breakdown, dict):
-                continue
-            actual_cost = _non_negative_finite(breakdown.get("actualUSD"))
-            estimated_cost = _non_negative_finite(breakdown.get("estimatedUSD"))
-            if (
-                parent_cost is None
-                or actual_cost is None
-                or estimated_cost is None
-                or not math.isclose(
-                    math.fsum((actual_cost, estimated_cost)),
-                    parent_cost,
-                    rel_tol=_MIXED_COST_REL_TOLERANCE,
-                    abs_tol=_MIXED_COST_ABS_TOLERANCE,
-                )
-            ):
-                continue
-            raw_cost = actual_cost if provenance == "actual" else estimated_cost
-        else:
-            continue
-        status = session.get("costStatus")
-        provider = session.get("provider")
-        cost = _non_negative_finite(raw_cost) if mixed else _positive_finite(raw_cost)
-        if status not in ("exact", "partial") or not isinstance(provider, str) or not provider:
-            continue
-        if provider == "cline" and provenance == "actual":
-            continue
-        if cost is None:
-            continue
-        totals[provider] = totals.get(provider, 0) + cost
-        costs.append(cost)
-        if status == "partial":
-            partial.add(provider)
+        for rollup, cost, status in _local_contributions(session, provenance):
+            totals[rollup] = totals.get(rollup, 0) + cost
+            costs.append(cost)
+            if status == "partial":
+                partial.add(rollup)
 
     if not totals:
         return {"costStatus": "unavailable"}
@@ -128,6 +157,7 @@ def _local_spend_group(sessions, provenance):
                 "costUSD": cost,
                 "costStatus": "partial" if provider in partial else "exact",
                 "costProvenance": provenance,
+                **({"source": provider.rsplit("::", 1)[1]} if "::" in provider else {}),
             }
             for provider, cost in totals.items()
         },

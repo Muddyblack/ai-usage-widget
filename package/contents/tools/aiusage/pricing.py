@@ -1,12 +1,13 @@
-"""Cached standard token rates from LiteLLM's public JSON catalog.
+"""Cached standard token rates from public model pricing catalogs.
 
-Only data is downloaded; LiteLLM is not a runtime dependency. Collection owns
-this IO so normalization and recorded fixtures remain completely offline.
+models.dev is the primary source for OpenCode provider/model IDs. LiteLLM and
+OpenRouter fill exact misses without becoming runtime dependencies.
 """
 
 import json
 import math
 import os
+import re
 import tempfile
 import threading
 import time
@@ -16,18 +17,71 @@ from .http import as_json, fetch_json
 from .pricing_lock import acquire as _acquire_lock
 from .pricing_lock import release as _release_lock
 
+MODELS_DEV_SOURCE_URL = "https://models.dev/api.json"
 SOURCE_URL = "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json"
 OPENROUTER_SOURCE_URL = "https://openrouter.ai/api/v1/models"
 REFRESH_SECONDS = 604800
 RETRY_SECONDS = 900
-PROVIDERS = ("anthropic", "openai")
+CACHE_FILENAME = "pricing-models-v2.json"
+CACHE_VERSION = 2
+MAX_PROVIDERS = 256
+MAX_MODELS_PER_PROVIDER = 1024
+MAX_MODEL_ID_LENGTH = 128
 _PROCESS_LOCK = threading.RLock()
 _CURRENT_SNAPSHOTS = {}
 _REFRESH_GENERATIONS = {}
+_CATALOG_CACHE = {}
 
 
 def valid_rate(value):
     return type(value) in (int, float) and 0 <= value <= 1_000_000 and math.isfinite(value)
+
+
+def _safe_namespace(value):
+    if not isinstance(value, str):
+        return ""
+    namespace = value.strip().lower()
+    return namespace if len(namespace) <= 64 and re.fullmatch(r"[a-z0-9._-]+", namespace) else ""
+
+
+def parse_models_dev_catalog(data):
+    """Normalize models.dev's USD-per-million-token catalog."""
+    if not isinstance(data, dict):
+        raise ValueError("models.dev pricing catalog must be a JSON object")
+    tables = {}
+    for raw_provider, provider_row in data.items():
+        if len(tables) >= MAX_PROVIDERS:
+            break
+        provider = _safe_namespace(raw_provider)
+        if not provider or not isinstance(provider_row, dict):
+            continue
+        models = provider_row.get("models")
+        if not isinstance(models, dict):
+            continue
+        table = {}
+        for model, model_row in models.items():
+            if len(table) >= MAX_MODELS_PER_PROVIDER:
+                break
+            if not isinstance(model, str) or not model or len(model) > MAX_MODEL_ID_LENGTH or not isinstance(model_row, dict):
+                continue
+            cost = model_row.get("cost")
+            if not isinstance(cost, dict):
+                continue
+            rates = {key: cost.get(key) for key in ("input", "output")}
+            if not all(valid_rate(value) for value in rates.values()):
+                continue
+            price = dict(rates)
+            cached = cost.get("cache_read")
+            if cached is not None:
+                if not valid_rate(cached):
+                    continue
+                price["cached"] = cached
+            table[model] = price
+        if table:
+            tables[provider] = table
+    if not tables:
+        raise ValueError("models.dev pricing catalog has no usable rates")
+    return tables
 
 
 def parse_catalog(data):
@@ -39,12 +93,13 @@ def parse_catalog(data):
     """
     if not isinstance(data, dict):
         raise ValueError("pricing catalog must be a JSON object")
-    tables = {provider: {} for provider in PROVIDERS}
+    tables = {}
     for model, row in data.items():
-        if not isinstance(model, str) or not model or "/" in model or not isinstance(row, dict):
+        if not isinstance(model, str) or not model or len(model) > MAX_MODEL_ID_LENGTH or "/" in model or not isinstance(row, dict):
             continue
         provider = row.get("litellm_provider")
-        if not isinstance(provider, str) or provider not in tables or row.get("mode") not in ("chat", "completion", "responses", "embedding"):
+        provider = _safe_namespace(provider)
+        if not provider or row.get("mode") not in ("chat", "completion", "responses", "embedding"):
             continue
         rates = {key: row.get(key + "_cost_per_token") for key in ("input", "output")}
         if not all(valid_rate(value) and value <= 1 for value in rates.values()):
@@ -55,25 +110,30 @@ def parse_catalog(data):
             if not valid_rate(cached) or cached > 1:
                 continue
             price["cached"] = cached * 1_000_000
-        tables[provider][model] = price
-    if not all(tables.values()):
-        raise ValueError("pricing catalog has no usable rates for one or both providers")
+        if provider not in tables and len(tables) >= MAX_PROVIDERS:
+            continue
+        table = tables.setdefault(provider, {})
+        if len(table) < MAX_MODELS_PER_PROVIDER:
+            table[model] = price
+    if not tables:
+        raise ValueError("pricing catalog has no usable rates")
     return tables
 
 
 def parse_openrouter_catalog(data):
     if not isinstance(data, dict) or not isinstance(data.get("data"), list):
         raise ValueError("OpenRouter pricing catalog must contain a data list")
-    tables = {provider: {} for provider in PROVIDERS}
+    tables = {}
     for row in data["data"]:
         if not isinstance(row, dict):
             continue
         model_id = row.get("id")
         pricing = row.get("pricing")
-        if not isinstance(model_id, str) or not model_id or not isinstance(pricing, dict):
+        if not isinstance(model_id, str) or not model_id or len(model_id) > MAX_MODEL_ID_LENGTH or not isinstance(pricing, dict):
             continue
-        provider, separator, _ = model_id.partition("/")
-        if not separator or provider not in tables:
+        provider, separator, model = model_id.partition("/")
+        provider = _safe_namespace(provider)
+        if not separator or not provider or not model:
             continue
         prompt = pricing.get("prompt")
         completion = pricing.get("completion")
@@ -98,19 +158,25 @@ def parse_openrouter_catalog(data):
             if not valid_rate(cached) or cached > 1:
                 continue
             price["cached"] = cached * 1_000_000
-        tables[provider][model_id] = price
+        if provider not in tables and len(tables) >= MAX_PROVIDERS:
+            continue
+        table = tables.setdefault(provider, {})
+        if len(table) < MAX_MODELS_PER_PROVIDER:
+            table[model_id] = price
     return tables
 
 
 def _requested_models(models):
     if not isinstance(models, dict):
         return []
-    return [
-        (provider, model)
-        for provider in PROVIDERS
-        for model in ((models.get(provider),) if isinstance(models.get(provider), str) else (models.get(provider) or ()))
-        if isinstance(model, str) and model
-    ]
+    requested = []
+    for raw_provider, values in models.items():
+        provider = _safe_namespace(raw_provider)
+        if not provider:
+            continue
+        candidates = (values,) if isinstance(values, str) else values if isinstance(values, (list, tuple, set)) else ()
+        requested.extend((provider, model) for model in candidates if isinstance(model, str) and model)
+    return requested
 
 
 def _merge_openrouter_missing(tables, fallback, models):
@@ -128,13 +194,21 @@ def _merge_openrouter_missing(tables, fallback, models):
 
 
 def _valid_tables(tables):
-    if not isinstance(tables, dict) or not tables or not set(tables) <= set(PROVIDERS):
+    if not isinstance(tables, dict) or not tables or len(tables) > MAX_PROVIDERS:
         return False
-    for table in tables.values():
-        if not isinstance(table, dict) or not table:
+    for provider, table in tables.items():
+        if provider != _safe_namespace(provider):
+            return False
+        if not isinstance(table, dict) or not table or len(table) > MAX_MODELS_PER_PROVIDER:
             return False
         for model, price in table.items():
-            if not isinstance(model, str) or not isinstance(price, dict) or not {"input", "output"} <= price.keys():
+            if (
+                not isinstance(model, str)
+                or not model
+                or len(model) > MAX_MODEL_ID_LENGTH
+                or not isinstance(price, dict)
+                or not {"input", "output"} <= price.keys()
+            ):
                 return False
             if not all(valid_rate(value) for value in price.values()):
                 return False
@@ -145,7 +219,7 @@ def _read_cache(path):
     try:
         with open(path, encoding="utf-8") as f:
             cached = json.load(f)
-        if not isinstance(cached, dict) or cached.get("source") != SOURCE_URL or cached.get("version") != 1:
+        if not isinstance(cached, dict) or cached.get("source") != MODELS_DEV_SOURCE_URL or cached.get("version") != CACHE_VERSION:
             return {}
         if not all(type(cached.get(key)) in (int, float) and 0 <= cached[key] <= 1e12 for key in ("fetchedAt", "checkedAt")):
             return {}
@@ -181,6 +255,26 @@ def _snapshot(path):
     return memory if memory.get("checkedAt", 0) >= disk.get("checkedAt", 0) else disk
 
 
+def _cache_file_identity(path):
+    try:
+        stat = os.stat(path)
+    except OSError:
+        return None
+    return stat.st_ino, stat.st_size, stat.st_mtime_ns
+
+
+def _catalog_memory_identity(path):
+    snapshot = _CURRENT_SNAPSHOTS.get(path)
+    if snapshot is None:
+        return 0, None, 0, 0
+    return (
+        _REFRESH_GENERATIONS.get(path, 0),
+        id(snapshot),
+        snapshot.get("checkedAt", 0),
+        snapshot.get("fetchedAt", 0),
+    )
+
+
 def _fetch_openrouter():
     response = fetch_json(OPENROUTER_SOURCE_URL, timeout=10)
     if response.status != 200:
@@ -189,9 +283,36 @@ def _fetch_openrouter():
     return parse_openrouter_catalog(data)
 
 
+def _fetch_models_dev():
+    response = fetch_json(
+        MODELS_DEV_SOURCE_URL,
+        headers={"Accept": "application/json", "User-Agent": "ai-usage-widget/1.0"},
+        timeout=10,
+    )
+    if response.status != 200:
+        raise ValueError(f"models.dev pricing download failed (HTTP {response.status})")
+    return parse_models_dev_catalog(as_json(response.body))
+
+
+def _fetch_litellm():
+    response = fetch_json(SOURCE_URL, timeout=10)
+    if response.status != 200:
+        raise ValueError(f"pricing download failed (HTTP {response.status})")
+    return parse_catalog(as_json(response.body))
+
+
+def _merge_tables(tables, fallback, providers=None):
+    for provider, models in fallback.items():
+        if providers is not None and provider not in providers:
+            continue
+        target = tables.setdefault(provider, {})
+        for model, price in models.items():
+            target.setdefault(model, price)
+
+
 def load_catalog(*, force=False, models=None):
     """Refresh weekly, retry failures after 15 minutes, and retain last-good rates."""
-    path = os.path.join(config.cache_dir(), "pricing-litellm-v1.json")
+    path = os.path.join(config.cache_dir(), CACHE_FILENAME)
     generation = _REFRESH_GENERATIONS.get(path, 0)
     with _PROCESS_LOCK:
         cached = _snapshot(path)
@@ -215,42 +336,42 @@ def load_catalog(*, force=False, models=None):
                 if not missing or cached.get("error"):
                     return cached
             snapshot = {
-                "version": 1,
-                "source": SOURCE_URL,
+                "version": CACHE_VERSION,
+                "source": MODELS_DEV_SOURCE_URL,
                 "fetchedAt": cached.get("fetchedAt", 0),
                 "checkedAt": now,
-                "providers": cached.get("providers", {}),
+                "providers": cached.get("providers", {}) if fresh else {},
                 "error": "",
             }
             primary_error = ""
+            source_loaded = False
             if not fresh:
                 try:
-                    response = fetch_json(SOURCE_URL, timeout=10)
-                    if response.status != 200:
-                        raise ValueError(f"pricing download failed (HTTP {response.status})")
-                    data = as_json(response.body)
-                    snapshot["providers"] = parse_catalog(data)
+                    snapshot["providers"] = _fetch_models_dev()
+                    source_loaded = True
                 except (OSError, ValueError) as error:
                     primary_error = str(error)
-
-            if not primary_error:
-                missing = _merge_openrouter_missing(snapshot["providers"], {}, models)
-                if missing:
-                    try:
-                        missing = _merge_openrouter_missing(snapshot["providers"], _fetch_openrouter(), models)
-                    except (OSError, ValueError):
-                        snapshot["error"] = "OpenRouter pricing fallback unavailable"
-                snapshot["error"] = "OpenRouter pricing fallback unavailable" if missing else snapshot["error"]
-            elif _requested_models(models):
                 try:
-                    fallback = _fetch_openrouter()
-                    missing = _merge_openrouter_missing(snapshot["providers"], fallback, models)
-                    if missing:
-                        snapshot["error"] = primary_error + "; OpenRouter pricing fallback unavailable"
+                    _merge_tables(snapshot["providers"], _fetch_litellm(), {"anthropic", "openai"})
+                    source_loaded = True
+                except (OSError, ValueError) as error:
+                    if primary_error:
+                        primary_error += "; " + str(error)
+                    else:
+                        primary_error = str(error)
+
+            missing = _merge_openrouter_missing(snapshot["providers"], {}, models)
+            if missing:
+                try:
+                    missing = _merge_openrouter_missing(snapshot["providers"], _fetch_openrouter(), models)
                 except (OSError, ValueError) as fallback_error:
-                    snapshot["error"] = primary_error + "; " + str(fallback_error)
-            else:
-                snapshot["error"] = primary_error
+                    snapshot["error"] = str(fallback_error)
+            if missing:
+                snapshot["error"] = "OpenRouter pricing fallback unavailable"
+            if not fresh:
+                _merge_tables(snapshot["providers"], cached.get("providers", {}))
+                if not snapshot["error"] and not source_loaded:
+                    snapshot["error"] = primary_error or "No usable pricing rates"
             if not snapshot["error"]:
                 snapshot["fetchedAt"] = now
             _CURRENT_SNAPSHOTS[path] = snapshot
@@ -262,8 +383,15 @@ def load_catalog(*, force=False, models=None):
 
 
 def cached_catalog():
-    path = os.path.join(config.cache_dir(), "pricing-litellm-v1.json")
-    return _snapshot(path).get("providers", {})
+    path = os.path.join(config.cache_dir(), CACHE_FILENAME)
+    with _PROCESS_LOCK:
+        identity = (_cache_file_identity(path), _catalog_memory_identity(path))
+        cached = _CATALOG_CACHE.get(path)
+        if cached is not None and cached[0] == identity:
+            return cached[1]
+        catalog = _snapshot(path).get("providers", {})
+        _CATALOG_CACHE[path] = (identity, catalog)
+        return catalog
 
 
 def get_pricing(provider, models=None):

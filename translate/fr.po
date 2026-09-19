@@ -2938,6 +2938,21 @@ msgstr "Sessions locales"
 msgid "local CLI logs"
 msgstr "journaux CLI locaux"
 
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "local CLI logs · exact"
+msgstr "journaux CLI locaux · exact"
+
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "local CLI logs · partial"
+msgstr "journaux CLI locaux · partiel"
+
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Local source"
+msgstr "Source locale"
+
 #: macos/Sources/AIUsage/Backend/Contract.swift
 msgid "Actual provider cost"
 msgstr "Coût réel du fournisseur"
@@ -2945,6 +2960,95 @@ msgstr "Coût réel du fournisseur"
 #: macos/Sources/AIUsage/Backend/Contract.swift
 msgid "Calculated estimate"
 msgstr "Estimation calculée"
+
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "OpenCode"
+msgstr "OpenCode"
+
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Claude Code"
+msgstr "Claude Code"
+
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Codex"
+msgstr "Codex"
+
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Cline"
+msgstr "Cline"
+
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Grok CLI"
+msgstr "Grok CLI"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Ollama Cloud"
+msgstr "Ollama Cloud"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Ollama"
+msgstr "Ollama"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "GitHub Copilot"
+msgstr "GitHub Copilot"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Google"
+msgstr "Google"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "ZenMux"
+msgstr "ZenMux"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "OpenCode Zen"
+msgstr "OpenCode Zen"
+
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "local CLI logs · actual · exact"
+msgstr "journaux CLI locaux · réel · exact"
+
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "local CLI logs · actual · partial"
+msgstr "journaux CLI locaux · réel · partiel"
+
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "local CLI logs · estimated · exact"
+msgstr "journaux CLI locaux · estimé · exact"
+
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "local CLI logs · estimated · partial"
+msgstr "journaux CLI locaux · estimé · partiel"
+
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "local CLI logs · mixed · exact"
+msgstr "journaux CLI locaux · mixte · exact"
+
+#: package/contents/code/FeatureTabs.js
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "local CLI logs · mixed · partial"
+msgstr "journaux CLI locaux · mixte · partiel"
+
+#: macos/Sources/AIUsage/Views/SpendView.swift
+msgid "Provider totals come from each provider's own usage APIs. Local source rows show actual, estimated, or mixed provenance and coverage separately."
+msgstr "Les totaux des fournisseurs proviennent de leurs propres API d'utilisation. Les lignes de source locale indiquent séparément la provenance réelle, estimée ou mixte ainsi que la couverture."
+
+#: package/contents/ui/SpendTab.qml
+#: hyprland/SpendPage.qml
+#: macos/Sources/AIUsage/Views/SpendView.swift
+msgid "Provider/API total"
+msgstr "Total fournisseur/API"
 
 #: macos/Sources/AIUsage/Backend/SettingsStore.swift
 msgid "Monochrome"

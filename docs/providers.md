@@ -4,17 +4,22 @@ What each provider tab reads, where it looks for credentials, and what the
 underlying API does or does not expose. For the JSON model these all produce,
 see [`provider-contract.md`](provider-contract.md).
 
-## Claude and OpenAI cost estimates
+## Token cost estimates
 
-Organization token costs use the community-maintained
-[LiteLLM JSON pricing catalog](https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json).
-The widget downloads data only, with no LiteLLM package dependency. Direct
-Anthropic and OpenAI standard token rates are selected by exact model ID;
-reseller and regional rates are excluded. Prices refresh automatically once
-every seven days, after the fixed 604800-second TTL expires, when organization
-usage needs pricing. A manual `--refresh-pricing` bypasses that TTL once, and
-concurrent forced refreshes share one in-flight refresh. No account credentials
-or usage are sent to the catalog host.
+Organization and local token estimates use the [models.dev JSON pricing
+catalog](https://models.dev/) first, keyed by OpenCode's exact provider and
+model IDs. The community-maintained [LiteLLM JSON pricing
+catalog](https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json)
+is an exact-match fallback for Anthropic and OpenAI, and OpenRouter remains a
+last-resort exact fallback for requested misses. Catalog prices are USD per
+million tokens (`input`, `output`, and optional cached-input rates); zero is a
+valid rate. No aliases, prefix stripping, regional inference, or near matches
+are used. The widget downloads data only, with no catalog package dependency.
+Prices refresh automatically once every seven days, after the fixed
+604800-second TTL expires. Failed refreshes retry after 900 seconds. A manual
+`--refresh-pricing` bypasses that TTL once, and concurrent forced refreshes
+share one in-flight refresh. No account credentials or usage are sent to the
+catalog hosts.
 
 A failed or malformed download retains the last good rates and their original
 `fetchedAt`. The refresh result is `refreshed` on success, `stale-good` when
@@ -44,15 +49,21 @@ invoices. `partial` indicates that at least one structured bucket was priced
 and another was not; `unavailable` is used when there is no trustworthy numeric
 result.
 
-The Usage & Spend tab shows **Actual provider cost** and **Calculated estimate**
-as separate Local session totals. They are not added to provider/API spend and
-must not be interpreted as one bill. Mixed rows feed each subtotal only when
+The Usage & Spend tab shows one non-navigable row per local source, such as
+**OpenCode**, **Claude Code**, **Codex**, or **Cline**. Actual and estimated
+rollups for the same source are merged into that source row, whose secondary
+text identifies the provenance (`actual`, `estimated`, or `mixed`) and coverage
+(`exact` or `partial`). Local rows are not added to provider/API spend and must
+not be interpreted as one bill. Mixed rows feed each source breakdown only when
 both origin-specific values are finite and non-negative and their sum matches
 the session total. Unknown or missing model, rate, or token data remains
-unavailable. OpenCode estimates are especially
-strict: the local model string must exactly match a key in the OpenAI catalog
-namespace. Aliases, normalized names, near matches, and metadata-only records
-do not produce estimates.
+unavailable. OpenCode reads every structured assistant message it routed,
+regardless of upstream provider, and aggregates them per provider and model,
+so no session is truncated at a fixed row count. Token-only estimates are
+strict: the local provider and model strings must exactly match a provider and
+model key in the dynamic catalog. Aliases, normalized names, near matches, and
+metadata-only records do not produce estimates. Multi-provider sessions roll up per upstream
+provider (for example `ollama-cloud::opencode`).
 
 ## Setup per provider
 

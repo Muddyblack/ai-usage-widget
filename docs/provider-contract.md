@@ -62,11 +62,20 @@ Plasma widget keeps its own toggles in the plasmoid configuration.
 
 ## Pricing catalog refresh
 
-The shared model pricing catalog has a fixed TTL of **604800 seconds**, exactly
-seven days. A normal catalog read reuses usable rates until that TTL expires.
-The `--refresh-pricing` operation is the manual force refresh: it bypasses the
-TTL once. Concurrent forced refreshes are single-flight, so they share one
-download and one result.
+The shared model pricing catalog uses [models.dev](https://models.dev/) as its
+primary source, keyed by OpenCode's exact provider ID and model ID. Prices are
+USD per million tokens: `input`, `output`, and optional `cache_read` become the
+internal `input`, `output`, and `cached` rates. LiteLLM is an exact-match
+fallback for Anthropic and OpenAI; OpenRouter remains a last-resort fallback for
+requested misses. No aliases, prefix stripping, or near matches are accepted,
+and a genuinely free zero rate is valid.
+
+The catalog has a fixed TTL of **604800 seconds**, exactly seven days. A normal
+catalog read reuses usable rates until that TTL expires; failed refreshes retry
+after **900 seconds**. The `--refresh-pricing` operation is the manual force
+refresh: it bypasses the TTL once. Concurrent forced refreshes are single-flight,
+so they share one download and one result. A versioned cache rejects malformed
+or incompatible snapshots.
 
 The refresh result is a compact object with only `ok`, `status`, `fetchedAt`,
 and `error`.
@@ -100,20 +109,34 @@ provider-level figures and are not session totals.
 | `mixed` | the session contains both actual and calculated amounts; `costBreakdown` contains finite non-negative `actualUSD` and `estimatedUSD` subtotals whose sum matches the session `costUSD` |
 
 An estimate is allowed only when the local usage fields and model identity are
-complete and the cached rate is exact. OpenCode may use the `openai` catalog
-namespace only when its model string exactly equals an OpenAI catalog key; no
-alias, normalization, or near-match is accepted. Unknown or missing model/rate
-data, incomplete or invalid token data, and metadata-only records remain
-`unavailable`. `partial` coverage means that some structured buckets were
-priced while others were not; it does not change an estimate into actual cost.
+complete and the cached rate is exact. OpenCode uses the upstream provider ID as
+the catalog namespace, and the model string must exactly equal that provider's
+catalog key; no alias, prefix stripping, or near-match is accepted. Unknown or
+missing model/rate data, incomplete or invalid token data, and metadata-only
+records remain `unavailable`. `partial` coverage means that some structured
+buckets were priced while others were not; it does not change an estimate into
+actual cost.
+
+OpenCode sessions aggregate every structured assistant message they routed,
+per provider and model, with no fixed row limit. A session whose messages
+span several upstream providers carries a `providerCosts` object with one
+entry per upstream provider (for example `ollama-cloud`), each with the same
+`costUSD`/`costStatus`/`costProvenance` shape as the session row; the session
+row itself keeps the aggregate across all providers. Single-provider sessions
+carry `billingProvider` instead.
 
 The envelope's `localSpend` object has two independent aggregate objects,
 `actual` and `estimated`. Each may contain `totalUSD`, `costStatus`,
-`costProvenance`, and provider rollups. These totals are displayed as
-**Actual provider cost** and **Calculated estimate**; neither is included in
-provider/API spend, and neither is a combined bill-like total. A mixed session
-contributes its two `costBreakdown` subtotals to the corresponding aggregate.
-When no qualifying numeric rows exist, the aggregate contains only
+`costProvenance`, and provider rollups keyed by local provider identity. A
+provider with explicit source metadata uses `provider::source` (for example,
+`anthropic::opencode`); a native or legacy row without source metadata keeps
+the plain provider/source key. Spend views merge actual and estimated values
+only when this full identity matches, so native Anthropic cannot inherit
+OpenCode's `via OpenCode` note. OpenCode rows retain the upstream provider
+label with `via OpenCode` secondary metadata. These local rows are never
+included in provider/API spend and are not invoice totals. A mixed session
+contributes its two `costBreakdown` subtotals to the corresponding identity
+rollup. When no qualifying numeric rows exist, the aggregate contains only
 `costStatus: "unavailable"`.
 
 Session activity is locally observed data. The contract does not promise parsing

@@ -46,7 +46,7 @@ ColumnLayout {
         }
         Text {
             visible: page.totalUsd > 0
-            text: "Σ " + page.money(page.totalUsd, "USD")
+            text: shell.i18n("Provider/API total") + " " + page.money(page.totalUsd, "USD")
             font.bold: true
             font.pixelSize: 13
             color: "#34d399"
@@ -112,12 +112,18 @@ ColumnLayout {
 
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     spacing: 1
                     Text {
                         text: modelData.label
                         font.bold: true
                         font.pixelSize: 12
                         color: "#f8fafc"
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        maximumLineCount: 1
+                        elide: Text.ElideRight
+                        wrapMode: Text.NoWrap
                     }
                     Text {
                         visible: modelData.note !== ""
@@ -125,12 +131,22 @@ ColumnLayout {
                         font.pixelSize: 10
                         opacity: 0.45
                         color: "#f8fafc"
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        maximumLineCount: 1
+                        elide: Text.ElideRight
+                        wrapMode: Text.NoWrap
                     }
                 }
 
                 Text {
+                    Layout.alignment: Qt.AlignVCenter
                     text: page.money(modelData.cost, modelData.currency || "USD")
                     font.bold: true
+                    // Fixed-width digits keep the two-decimal amounts in one
+                    // column: every price ends in ".XX", so with equal digit
+                    // advances the decimal points line up across rows.
+                    font.family: "monospace"
                     font.pixelSize: 12
                     color: "#f8fafc"
                 }

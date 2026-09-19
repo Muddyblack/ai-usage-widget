@@ -33,12 +33,256 @@ def catalog():
     }
 
 
+def models_dev_catalog():
+    return {
+        "ollama-cloud": {
+            "id": "ollama-cloud",
+            "models": {
+                "deepseek-v4.1-flash": {
+                    "id": "deepseek-v4.1-flash",
+                    "cost": {"input": 0.15, "output": 0.6, "cache_read": 0.003},
+                },
+                "deepseek-v4.1-flash-preview": {
+                    "id": "deepseek-v4.1-flash-preview",
+                    "cost": {"input": 0.2, "output": 0.8},
+                },
+            },
+        },
+        "google": {
+            "id": "google",
+            "models": {
+                "gemini-2.5-pro": {
+                    "id": "gemini-2.5-pro",
+                    "cost": {"input": 1.25, "output": 10},
+                },
+            },
+        },
+        "openai": {
+            "id": "openai",
+            "models": {
+                "gpt-test": {
+                    "id": "gpt-test",
+                    "cost": {"input": 0.25, "output": 0.75},
+                },
+            },
+        },
+        "opencode": {
+            "id": "opencode",
+            "models": {
+                "big-pickle": {
+                    "id": "big-pickle",
+                    "cost": {"input": 0, "output": 0},
+                },
+            },
+        },
+    }
+
+
 class PricingTest(IsolatedHomeTest):
     def setUp(self):
         super().setUp()
         self.clock = mock.patch("aiusage.pricing.time.time", return_value=1_800_000_000).start()
         self.addCleanup(mock.patch.stopall)
         self.fetch = mock.patch("aiusage.pricing.fetch_json", return_value=HttpResult(200, json.dumps(catalog()))).start()
+
+    def test_models_dev_parser_preserves_units_and_dynamic_provider_ids(self):
+        tables = pricing.parse_models_dev_catalog(models_dev_catalog())
+
+        self.assertEqual(
+            tables["ollama-cloud"]["deepseek-v4.1-flash"],
+            {"input": 0.15, "output": 0.6, "cached": 0.003},
+        )
+        self.assertEqual(tables["google"]["gemini-2.5-pro"], {"input": 1.25, "output": 10})
+        self.assertEqual(tables["opencode"]["big-pickle"], {"input": 0, "output": 0})
+
+    def test_models_dev_parser_rejects_malformed_catalogs(self):
+        for data in (None, [], {}, {"google": {"models": []}}):
+            with self.subTest(data=data):
+                with self.assertRaises(ValueError):
+                    pricing.parse_models_dev_catalog(data)
+
+    def test_catalog_parsers_enforce_provider_model_and_model_id_bounds(self):
+        provider_count = pricing.MAX_PROVIDERS + 1
+        models_dev = {
+            f"provider-{index}": {
+                "models": {
+                    "model": {"cost": {"input": 1, "output": 1}},
+                }
+            }
+            for index in range(provider_count)
+        }
+        parsed_models_dev = pricing.parse_models_dev_catalog(models_dev)
+        self.assertEqual(len(parsed_models_dev), pricing.MAX_PROVIDERS)
+
+        model_count = pricing.MAX_MODELS_PER_PROVIDER + 1
+        direct = {
+            f"model-{index}": {
+                "litellm_provider": "openai",
+                "mode": "chat",
+                "input_cost_per_token": 0.000001,
+                "output_cost_per_token": 0.000001,
+            }
+            for index in range(model_count)
+        }
+        parsed_direct = pricing.parse_catalog(direct)
+        self.assertEqual(len(parsed_direct["openai"]), pricing.MAX_MODELS_PER_PROVIDER)
+
+        long_model = "x" * (pricing.MAX_MODEL_ID_LENGTH + 1)
+        openrouter = {
+            "data": [{"id": f"openai/model-{index}", "pricing": {"prompt": 1, "completion": 1}} for index in range(model_count)]
+            + [{"id": f"openai/{long_model}", "pricing": {"prompt": 1, "completion": 1}}]
+        }
+        parsed_openrouter = pricing.parse_openrouter_catalog(openrouter)
+        self.assertEqual(len(parsed_openrouter["openai"]), pricing.MAX_MODELS_PER_PROVIDER)
+        self.assertNotIn(f"openai/{long_model}", parsed_openrouter["openai"])
+        self.assertEqual(
+            pricing.parse_openrouter_catalog({"data": [{"id": f"openai/{long_model}", "pricing": {"prompt": 1, "completion": 1}}]}),
+            {},
+        )
+
+        oversized = {f"provider-{index}": {"model": {"input": 1, "output": 1}} for index in range(provider_count)}
+        self.assertFalse(pricing._valid_tables(oversized))
+        self.assertFalse(pricing._valid_tables({"openai": {f"model-{index}": {"input": 1, "output": 1} for index in range(model_count)}}))
+        self.assertFalse(pricing._valid_tables({"openai": {long_model: {"input": 1, "output": 1}}}))
+
+    def test_dynamic_namespaces_are_requested_and_cache_validated(self):
+        requested = pricing._requested_models({"ollama-cloud": ["deepseek-v4.1-flash"], "google": ["gemini-2.5-pro"]})
+        self.assertEqual(
+            requested,
+            [("ollama-cloud", "deepseek-v4.1-flash"), ("google", "gemini-2.5-pro")],
+        )
+        self.assertTrue(pricing._valid_tables({"ollama-cloud": {"deepseek-v4.1-flash": {"input": 0.15, "output": 0.6}}}))
+
+    def test_exact_match_and_free_model_zero_rate_are_estimable(self):
+        bucket = billing.UsageBucket("opencode", "big-pickle", "session", 100, 50)
+        result = billing.aggregate_session_usage([bucket], {"opencode": {"big-pickle": {"input": 0, "output": 0}}})
+
+        self.assertEqual(result["costStatus"], "exact")
+        self.assertEqual(result["costProvenance"], "estimated")
+        self.assertEqual(result["costUSD"], 0)
+
+    def test_model_lookup_is_exact_without_near_match_aliases(self):
+        rates = pricing.parse_models_dev_catalog(models_dev_catalog())
+        result = billing.aggregate_session_usage(
+            [
+                billing.UsageBucket("ollama-cloud", "deepseek-v4.1-flash", "session", 100, 50),
+                billing.UsageBucket("ollama-cloud", "deepseek-v4.1", "session", 100, 50),
+            ],
+            rates,
+        )
+
+        self.assertEqual(result["costStatus"], "partial")
+        self.assertGreater(result["costUSD"], 0)
+
+    def test_cache_rejects_wrong_version_and_malformed_dynamic_tables(self):
+        path = self.home / "cache" / pricing.CACHE_FILENAME
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                {
+                    "version": pricing.CACHE_VERSION - 1,
+                    "source": pricing.MODELS_DEV_SOURCE_URL,
+                    "fetchedAt": 1,
+                    "checkedAt": 1,
+                    "providers": {"google": {"gemini": {"input": 1, "output": 2}}},
+                }
+            ),
+            encoding="utf-8",
+        )
+        self.assertEqual(pricing._read_cache(str(path)), {})
+        path.write_text(
+            json.dumps(
+                {
+                    "version": pricing.CACHE_VERSION,
+                    "source": pricing.MODELS_DEV_SOURCE_URL,
+                    "fetchedAt": 1,
+                    "checkedAt": 1,
+                    "providers": {"bad/provider": {"gemini": {"input": 1, "output": 2}}},
+                }
+            ),
+            encoding="utf-8",
+        )
+        self.assertEqual(pricing._read_cache(str(path)), {})
+
+    def test_cached_catalog_reuses_one_validated_disk_snapshot(self):
+        snapshot = {
+            "version": pricing.CACHE_VERSION,
+            "source": pricing.MODELS_DEV_SOURCE_URL,
+            "fetchedAt": 1,
+            "checkedAt": 1,
+            "providers": {"openai": {"gpt-test": {"input": 1, "output": 2}}},
+        }
+        with mock.patch.object(pricing, "_read_cache", return_value=snapshot) as read_cache:
+            first = pricing.cached_catalog()
+            second = pricing.cached_catalog()
+
+        self.assertEqual(first, second)
+        self.assertEqual(read_cache.call_count, 1)
+
+    def test_load_catalog_refresh_invalidates_cached_catalog(self):
+        path = self.write(
+            f"cache/{pricing.CACHE_FILENAME}",
+            {
+                "version": pricing.CACHE_VERSION,
+                "source": pricing.MODELS_DEV_SOURCE_URL,
+                "fetchedAt": 1,
+                "checkedAt": 1,
+                "providers": {"openai": {"old-model": {"input": 1, "output": 2}}},
+                "error": "",
+            },
+        )
+        self.assertEqual(pricing.cached_catalog(), {"openai": {"old-model": {"input": 1, "output": 2}}})
+        with (
+            mock.patch.object(pricing.time, "time", return_value=2),
+            mock.patch.object(pricing, "_fetch_models_dev", return_value={"openai": {"new-model": {"input": 3, "output": 4}}}),
+            mock.patch.object(pricing, "_fetch_litellm", return_value={}),
+        ):
+            pricing.load_catalog(force=True)
+
+        self.assertEqual(
+            pricing.cached_catalog(),
+            {
+                "openai": {
+                    "new-model": {"input": 3, "output": 4},
+                    "old-model": {"input": 1, "output": 2},
+                }
+            },
+        )
+        self.assertTrue(path.exists())
+
+    def test_cached_catalog_fails_closed_after_cache_replacement(self):
+        path = self.write(
+            f"cache/{pricing.CACHE_FILENAME}",
+            {
+                "version": pricing.CACHE_VERSION,
+                "source": pricing.MODELS_DEV_SOURCE_URL,
+                "fetchedAt": 1,
+                "checkedAt": 1,
+                "providers": {"openai": {"gpt-test": {"input": 1, "output": 2}}},
+            },
+        )
+        self.assertIn("openai", pricing.cached_catalog())
+        path.write_text("{malformed", encoding="utf-8")
+        self.assertEqual(pricing.cached_catalog(), {})
+
+    def test_models_dev_precedes_litellm_and_litellm_fills_exact_misses(self):
+        def fetch(url, timeout, headers=None):
+            self.assertEqual(timeout, 10)
+            if url == pricing.MODELS_DEV_SOURCE_URL:
+                self.assertEqual(headers, {"Accept": "application/json", "User-Agent": "ai-usage-widget/1.0"})
+                return HttpResult(200, json.dumps(models_dev_catalog()))
+            if url == pricing.SOURCE_URL:
+                fallback = catalog()
+                fallback["litellm-only"] = fallback["gpt-test"]
+                return HttpResult(200, json.dumps(fallback))
+            raise AssertionError(url)
+
+        self.fetch.side_effect = fetch
+        result = pricing.load_catalog(force=True, models={"openai": ["gpt-test", "litellm-only"]})
+
+        self.assertEqual(result["providers"]["openai"]["gpt-test"], {"input": 0.25, "output": 0.75})
+        self.assertEqual(result["providers"]["openai"]["litellm-only"]["input"], 4)
+        self.assertEqual(result["providers"]["google"]["gemini-2.5-pro"]["output"], 10)
 
     def test_units_and_provider_isolation(self):
         data = catalog()
@@ -81,35 +325,46 @@ class PricingTest(IsolatedHomeTest):
         data = catalog()
         data["free"] = {**data["gpt-test"], "input_cost_per_token": 0, "output_cost_per_token": 0}
         self.assertEqual(pricing.parse_catalog(data)["openai"]["free"], {"input": 0, "output": 0})
-        for data in (None, [], {}, {"model": {"litellm_provider": []}}, {"gpt-test": catalog()["gpt-test"]}):
+        for data in (None, [], {}, {"model": {"litellm_provider": []}}):
             with self.assertRaises(ValueError):
                 pricing.parse_catalog(data)
+        self.assertEqual(set(pricing.parse_catalog({"gpt-test": catalog()["gpt-test"]})), {"openai"})
 
     def test_shared_daily_cache_updates_new_models_and_prices(self):
         self.assertEqual(pricing.get_pricing("anthropic")["claude-test"]["input"], 2)
         self.assertEqual(pricing.get_pricing("openai")["gpt-test"]["output"], 12)
-        self.fetch.assert_called_once_with(pricing.SOURCE_URL, timeout=10)
+        self.assertEqual(
+            self.fetch.call_args_list,
+            [
+                mock.call(
+                    pricing.MODELS_DEV_SOURCE_URL,
+                    headers={"Accept": "application/json", "User-Agent": "ai-usage-widget/1.0"},
+                    timeout=10,
+                ),
+                mock.call(pricing.SOURCE_URL, timeout=10),
+            ],
+        )
         self.clock.return_value += pricing.REFRESH_SECONDS
         data = catalog()
         data["gpt-test"]["input_cost_per_token"] = 0.000006
         data["new-model"] = data["gpt-test"]
         self.fetch.return_value = HttpResult(200, json.dumps(data))
         self.assertEqual(pricing.get_pricing("openai")["new-model"]["input"], 6)
-        self.assertEqual(self.fetch.call_count, 2)
+        self.assertEqual(self.fetch.call_count, 4)
 
     def test_normal_refresh_boundary_is_exactly_seven_days(self):
         pricing.load_catalog()
         self.clock.return_value += pricing.REFRESH_SECONDS - 1
         pricing.load_catalog()
-        self.assertEqual(self.fetch.call_count, 1)
+        self.assertEqual(self.fetch.call_count, 2)
         self.clock.return_value += 1
         pricing.load_catalog()
-        self.assertEqual(self.fetch.call_count, 2)
+        self.assertEqual(self.fetch.call_count, 4)
 
     def test_force_refresh_bypasses_a_fresh_cache(self):
         pricing.load_catalog()
         pricing.load_catalog(force=True)
-        self.assertEqual(self.fetch.call_count, 2)
+        self.assertEqual(self.fetch.call_count, 4)
 
     def test_concurrent_forced_refreshes_share_one_upstream_fetch(self):
         entered = threading.Event()
@@ -117,7 +372,7 @@ class PricingTest(IsolatedHomeTest):
         calls = 0
         calls_lock = threading.Lock()
 
-        def fetch(_url, timeout):
+        def fetch(_url, timeout, headers=None):
             nonlocal calls
             with calls_lock:
                 calls += 1
@@ -136,11 +391,11 @@ class PricingTest(IsolatedHomeTest):
         for thread in threads:
             thread.join(2)
             self.assertFalse(thread.is_alive())
-        self.assertEqual(calls, 1)
+        self.assertEqual(calls, 2)
 
     def test_litellm_hit_does_not_consult_openrouter(self):
         pricing.load_catalog(models={"anthropic": ["claude-test"]})
-        self.assertEqual(self.fetch.call_count, 1)
+        self.assertEqual(self.fetch.call_count, 2)
 
     def test_fresh_cache_requested_miss_consults_openrouter_without_litellm_refetch(self):
         pricing.load_catalog()
@@ -153,34 +408,36 @@ class PricingTest(IsolatedHomeTest):
 
     def test_openrouter_prices_an_exact_litellm_miss(self):
         self.fetch.side_effect = [
+            HttpResult(200, json.dumps(models_dev_catalog())),
             HttpResult(200, json.dumps(catalog())),
             HttpResult(200, json.dumps(raw_fixture("pricing-openrouter-response"))),
         ]
         result = pricing.load_catalog(models={"anthropic": ["claude-missing"]})
         self.assertEqual(result["providers"]["anthropic"]["claude-missing"], {"input": 3.0, "output": 9.0, "cached": 0.3})
-        self.assertEqual(self.fetch.call_count, 2)
+        self.assertEqual(self.fetch.call_count, 3)
 
     def test_openrouter_fallback_creates_provider_bucket_after_litellm_failure(self):
         self.fetch.side_effect = [
+            HttpResult(503, ""),
             HttpResult(503, ""),
             HttpResult(200, json.dumps(raw_fixture("pricing-openrouter-response"))),
         ]
         result = pricing.load_catalog(models={"anthropic": ["claude-missing"]})
         self.assertEqual(result["providers"]["anthropic"]["claude-missing"]["input"], 3.0)
         self.assertEqual(result["providers"]["anthropic"]["claude-missing"]["output"], 9.0)
-        self.assertEqual(self.fetch.call_count, 2)
+        self.assertEqual(self.fetch.call_count, 3)
 
     def test_both_pricing_sources_fail_without_cache(self):
-        self.fetch.side_effect = [HttpResult(503, ""), HttpResult(503, "")]
+        self.fetch.side_effect = [HttpResult(503, ""), HttpResult(503, ""), HttpResult(503, "")]
         result = pricing.load_catalog(models={"anthropic": ["missing"]})
         self.assertEqual(result["providers"], {})
         self.assertTrue(result["error"])
-        self.assertEqual(self.fetch.call_count, 2)
+        self.assertEqual(self.fetch.call_count, 3)
 
     def test_failed_requested_refresh_retains_last_good_rates(self):
         pricing.load_catalog()
         self.clock.return_value += pricing.REFRESH_SECONDS
-        self.fetch.side_effect = [HttpResult(503, ""), HttpResult(503, "")]
+        self.fetch.side_effect = [HttpResult(503, ""), HttpResult(503, ""), HttpResult(503, "")]
         result = pricing.load_catalog(models={"anthropic": "missing"})
         self.assertEqual(result["providers"]["openai"]["gpt-test"]["input"], 4)
         self.assertTrue(result["error"])
@@ -251,11 +508,11 @@ class PricingTest(IsolatedHomeTest):
         self.assertEqual(pricing.load_catalog()["error"], "")
 
     def test_first_offline_fetch_and_corrupt_cache_remain_unpriced(self):
-        self.write("cache/pricing-litellm-v1.json", "broken")
+        self.write(f"cache/{pricing.CACHE_FILENAME}", "broken")
         self.fetch.return_value = HttpResult(503, "")
         self.assertEqual(pricing.get_pricing("anthropic"), {})
         self.assertEqual(pricing.get_pricing("openai"), {})
-        self.assertEqual(self.fetch.call_count, 1)
+        self.assertEqual(self.fetch.call_count, 2)
 
     def test_unwritable_cache_still_uses_download(self):
         with mock.patch("aiusage.pricing.os.replace", side_effect=PermissionError):
@@ -293,4 +550,4 @@ class PricingTest(IsolatedHomeTest):
             usage.return_value = HttpResult(200, '{"data": [{"model": "test"}]}')
             self.assertIn("claude-test", collect.collect_claude(1_800_000_000)["inputs"]["pricing"])
             self.assertIn("gpt-test", collect.collect_openai(1_800_000_000)["inputs"]["pricing"])
-            self.assertEqual(self.fetch.call_count, 1)
+            self.assertEqual(self.fetch.call_count, 2)

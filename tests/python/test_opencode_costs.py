@@ -73,19 +73,21 @@ def _assistant_message(
     message_id: str = "message-1",
     *,
     model: str = "gpt-test",
+    provider_id: str | None = "anthropic",
     tokens: TokenShape | None = None,
     cost: int | float | None = None,
+    session_id: str = "session-1",
 ) -> tuple[str, str, str]:
     data: dict[str, str | dict[str, str] | TokenShape | int | float] = {
         "role": "assistant",
         "modelID": model,
-        "providerID": "synthetic",
+        "providerID": provider_id,
     }
     if tokens is not None:
         data["tokens"] = tokens
     if cost is not None:
         data["cost"] = cost
-    return (message_id, "session-1", json.dumps(data, allow_nan=True))
+    return (message_id, session_id, json.dumps(data, allow_nan=True))
 
 
 def _part(part_id: str = "part-1", message_id: str = "message-1") -> tuple[str, str, str]:
@@ -126,7 +128,7 @@ def _create_v2_database(root: str) -> str:
                     1,
                     json.dumps(
                         {
-                            "model": {"providerID": "synthetic", "id": "gpt-test"},
+                            "model": {"providerID": "openai", "id": "gpt-test"},
                             "tokens": {"input": 3, "output": 4, "reasoning": 1, "cache": {"read": 2, "write": 0}},
                             "content": [{"type": "text", "text": "must not be parsed"}],
                         }
@@ -179,7 +181,7 @@ class OpenCodeUsageReaderTest(unittest.TestCase):
             1,
             json.dumps(
                 {
-                    "model": {"providerID": "synthetic", "id": "v2-model"},
+                    "model": {"providerID": "openai", "id": "v2-model"},
                     "tokens": {"input": 3, "output": 4, "reasoning": 1, "cache": {"read": 2, "write": 0}},
                 }
             ),
@@ -210,7 +212,7 @@ class OpenCodeUsageReaderTest(unittest.TestCase):
             record.usage,
             (
                 billing.UsageBucket(
-                    "opencode",
+                    "anthropic",
                     "gpt-test",
                     "session-1",
                     input_tokens=800,
@@ -218,9 +220,66 @@ class OpenCodeUsageReaderTest(unittest.TestCase):
                     cache_read_tokens=200,
                     cache_write_tokens=20,
                     reasoning_tokens=10,
+                    source="opencode",
                 ),
             ),
         )
+
+    def test_malformed_provider_id_is_unavailable(self):
+        for provider_id in (None, "bad provider!", "x" * 65):
+            with self.subTest(provider_id=provider_id), tempfile.TemporaryDirectory() as root:
+                record = _read_record(
+                    _create_database(
+                        root,
+                        messages=[_assistant_message(provider_id=provider_id, tokens={"output": 100})],
+                    )
+                )
+
+            self.assertEqual(record.usage, ())
+
+    def test_accepts_any_safely_normalized_provider_id(self):
+        for provider_id in ("ollama-cloud", "github-copilot", "zenmux"):
+            with self.subTest(provider_id=provider_id), tempfile.TemporaryDirectory() as root:
+                record = _read_record(
+                    _create_database(
+                        root,
+                        messages=[_assistant_message(provider_id=provider_id, tokens={"output": 100})],
+                    )
+                )
+
+            self.assertEqual(record.usage[0].provider, provider_id)
+            self.assertEqual(record.usage[0].source, "opencode")
+
+    def test_aggregates_more_than_240_messages_without_truncation(self):
+        messages = [_assistant_message(f"message-{index:03d}", tokens={"input": 10, "output": 5}, cost=0.01) for index in range(300)]
+        with tempfile.TemporaryDirectory() as root:
+            record = _read_record(_create_database(root, messages=messages))
+
+        self.assertEqual(len(record.usage), 1)
+        self.assertEqual(record.usage[0].input_tokens, 3000)
+        self.assertEqual(record.usage[0].output_tokens, 1500)
+        self.assertAlmostEqual(record.usage[0].provider_cost_usd, 3.0)
+
+    def test_late_provider_usage_is_not_truncated_by_earlier_rows(self):
+        messages = [_assistant_message(f"message-{index:03d}", provider_id="openai", tokens={"output": 1}) for index in range(240)]
+        messages.append(_assistant_message("message-late", provider_id="ollama-cloud", tokens={"output": 7}))
+        with tempfile.TemporaryDirectory() as root:
+            record = _read_record(_create_database(root, messages=messages))
+
+        self.assertEqual({bucket.provider for bucket in record.usage}, {"openai", "ollama-cloud"})
+        self.assertEqual(record.usage[1].provider, "ollama-cloud")
+
+    def test_provider_id_is_case_normalized_for_billing_identity(self):
+        with tempfile.TemporaryDirectory() as root:
+            record = _read_record(
+                _create_database(
+                    root,
+                    messages=[_assistant_message(provider_id=" OPENAI ", tokens={"output": 100})],
+                )
+            )
+
+        self.assertEqual(record.usage[0].provider, "openai")
+        self.assertEqual(record.usage[0].source, "opencode")
 
     def test_prices_tokens_only_when_cached_model_pricing_exists(self):
         message = _assistant_message(tokens={"input": 800, "output": 100, "reasoning": 10, "cache": {"read": 200, "write": 20}})
@@ -229,7 +288,7 @@ class OpenCodeUsageReaderTest(unittest.TestCase):
 
         result = billing.aggregate_session_usage(
             record.usage,
-            {"opencode": {"gpt-test": {"input": 2, "output": 8, "cached": 0.2}}},
+            {"anthropic": {"gpt-test": {"input": 2, "output": 8, "cached": 0.2}}},
         )
         self.assertEqual(result["costStatus"], "exact")
         self.assertEqual(result["costUSD"], 0.00216)
@@ -244,7 +303,7 @@ class OpenCodeUsageReaderTest(unittest.TestCase):
 
         result = billing.aggregate_session_usage(
             record.usage,
-            {"opencode": {"gpt-test": {"input": 2, "output": 8, "cached": 0.2}}},
+            {"anthropic": {"gpt-test": {"input": 2, "output": 8, "cached": 0.2}}},
         )
         self.assertEqual(result["costStatus"], "exact")
         self.assertEqual(result["costUSD"], 0.00216)
@@ -272,7 +331,7 @@ class OpenCodeUsageReaderTest(unittest.TestCase):
 
         result = billing.aggregate_session_usage(
             record.usage,
-            {"opencode": {"gpt-test": {"input": 0, "output": 8}}},
+            {"anthropic": {"gpt-test": {"input": 0, "output": 8}}},
         )
         self.assertEqual(result["costStatus"], "partial")
         self.assertEqual(result["costUSD"], 0.0008)
@@ -321,6 +380,83 @@ class OpenCodeUsageReaderTest(unittest.TestCase):
         self.assertEqual(record.title, "Synthetic session")
         self.assertEqual(record.usage, ())
 
+    def test_expired_per_session_query_does_not_starve_later_sessions(self):
+        messages = [
+            _assistant_message(tokens={"output": 50}),
+            _assistant_message("message-2", session_id="session-2", tokens={"output": 50}),
+        ]
+        with tempfile.TemporaryDirectory() as root:
+            path = _create_database(root, messages=messages)
+            connection = sqlite3.connect(path)
+            try:
+                with connection:
+                    connection.execute(
+                        "INSERT INTO session VALUES (?, ?, ?, ?, ?)",
+                        ("session-2", "Synthetic session 2", "/synthetic/project", 1, 1_000),
+                    )
+            finally:
+                connection.close()
+            calls = {"count": 0}
+
+            def fake_monotonic() -> float:
+                calls["count"] += 1
+                if calls["count"] == 4:
+                    return 100.0
+                return calls["count"] / 10
+
+            with mock.patch.object(opencode.time, "monotonic", side_effect=fake_monotonic):
+                with mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True):
+                    records = opencode.read_recent_sessions()
+
+        self.assertEqual(len(records), 2)
+        self.assertEqual(records[0].usage, ())
+        self.assertEqual(records[1].usage[0].output_tokens, 50)
+
+    def test_overall_budget_stops_reading_further_sessions(self):
+        messages = [
+            _assistant_message(tokens={"output": 50}),
+            _assistant_message("message-2", session_id="session-2", tokens={"output": 50}),
+            _assistant_message("message-3", session_id="session-3", tokens={"output": 50}),
+        ]
+        with tempfile.TemporaryDirectory() as root:
+            path = _create_database(root, messages=messages)
+            connection = sqlite3.connect(path)
+            try:
+                with connection:
+                    connection.executemany(
+                        "INSERT INTO session VALUES (?, ?, ?, ?, ?)",
+                        [
+                            ("session-2", "Synthetic session 2", "/synthetic/project", 1, 1_000),
+                            ("session-3", "Synthetic session 3", "/synthetic/project", 1, 500),
+                        ],
+                    )
+            finally:
+                connection.close()
+            calls = {"count": 0}
+
+            def fake_monotonic() -> float:
+                calls["count"] += 1
+                if calls["count"] in (6, 7):
+                    return 100.0
+                return calls["count"] / 10
+
+            with mock.patch.object(opencode.time, "monotonic", side_effect=fake_monotonic):
+                with mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True):
+                    records = opencode.read_recent_sessions()
+
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0].session_id, "session-1")
+
+    def test_expired_overall_budget_returns_no_records(self):
+        message = _assistant_message(tokens={"output": 50})
+        with tempfile.TemporaryDirectory() as root:
+            path = _create_database(root, messages=[message])
+            with mock.patch.object(opencode, "_READ_TIMEOUT_SECONDS", -1):
+                with mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True):
+                    records = opencode.read_recent_sessions()
+
+        self.assertEqual(records, [])
+
     def test_connection_is_read_only_and_query_only(self):
         with tempfile.TemporaryDirectory() as root:
             path = _create_database(root, include_usage_tables=False)
@@ -334,6 +470,8 @@ class OpenCodeUsageReaderTest(unittest.TestCase):
             record = _read_record(_create_v2_database(root))
 
         self.assertEqual(record.title, "Synthetic V2 session")
+        self.assertEqual(record.usage[0].provider, "openai")
+        self.assertEqual(record.usage[0].source, "opencode")
         self.assertEqual(record.usage[0].model, "gpt-test")
         self.assertEqual(record.usage[0].input_tokens, 3)
 

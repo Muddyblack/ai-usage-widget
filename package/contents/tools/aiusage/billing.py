@@ -20,6 +20,7 @@ class UsageBucket(NamedTuple):
     cache_write_tokens: int | float = 0
     reasoning_tokens: int | float = 0
     provider_cost_usd: int | float | None = None
+    source: str = ""
 
 
 def _token_count(value):

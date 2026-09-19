@@ -56,15 +56,25 @@ class PricingRefreshCommandTest(IsolatedHomeTest):
 
         self.assertEqual(code, 0)
         self.assertEqual(result, {"ok": True, "status": "refreshed", "fetchedAt": 1_800_000_000, "error": ""})
-        fetch.assert_called_once_with(pricing.SOURCE_URL, timeout=10)
+        self.assertEqual(
+            fetch.call_args_list,
+            [
+                mock.call(
+                    pricing.MODELS_DEV_SOURCE_URL,
+                    headers={"Accept": "application/json", "User-Agent": "ai-usage-widget/1.0"},
+                    timeout=10,
+                ),
+                mock.call(pricing.SOURCE_URL, timeout=10),
+            ],
+        )
 
     def test_failed_refresh_keeps_rates_and_reports_stale_good(self):
         fetched_at = 1_799_000_000
         self.write(
-            "cache/pricing-litellm-v1.json",
+            f"cache/{pricing.CACHE_FILENAME}",
             {
-                "version": 1,
-                "source": pricing.SOURCE_URL,
+                "version": pricing.CACHE_VERSION,
+                "source": pricing.MODELS_DEV_SOURCE_URL,
                 "fetchedAt": fetched_at,
                 "checkedAt": fetched_at,
                 "providers": {
@@ -85,7 +95,46 @@ class PricingRefreshCommandTest(IsolatedHomeTest):
         self.assertEqual(result["status"], "stale-good")
         self.assertEqual(result["fetchedAt"], fetched_at)
         self.assertIn("pricing download failed", result["error"])
-        fetch.assert_called_once_with(pricing.SOURCE_URL, timeout=10)
+        self.assertEqual(fetch.call_count, 2)
+
+    def test_partial_refresh_failure_retains_last_good_requested_rate(self):
+        fetched_at = 1_799_000_000
+        self.write(
+            f"cache/{pricing.CACHE_FILENAME}",
+            {
+                "version": pricing.CACHE_VERSION,
+                "source": pricing.MODELS_DEV_SOURCE_URL,
+                "fetchedAt": fetched_at,
+                "checkedAt": fetched_at,
+                "providers": {"openai": {"model-x": {"input": 4, "output": 12}}},
+                "error": "",
+            },
+        )
+        models_dev = {
+            "openai": {
+                "models": {
+                    "other-model": {"cost": {"input": 1, "output": 2}},
+                }
+            }
+        }
+        with (
+            mock.patch.object(pricing.time, "time", return_value=fetched_at + pricing.REFRESH_SECONDS),
+            mock.patch.object(
+                pricing,
+                "fetch_json",
+                side_effect=[
+                    HttpResult(200, json.dumps(models_dev)),
+                    HttpResult(200, json.dumps(_catalog())),
+                    HttpResult(503, ""),
+                ],
+            ) as fetch,
+        ):
+            result = pricing.load_catalog(force=True, models={"openai": ["model-x"]})
+
+        self.assertEqual(result["providers"]["openai"]["model-x"], {"input": 4, "output": 12})
+        self.assertEqual(result["providers"]["openai"]["other-model"], {"input": 1, "output": 2})
+        self.assertEqual(result["error"], "OpenRouter pricing fallback unavailable")
+        self.assertEqual(fetch.call_count, 3)
 
     def test_failed_refresh_without_cache_is_actionable_and_nonzero(self):
         with mock.patch.object(pricing, "fetch_json", return_value=HttpResult(503, "")) as fetch:
@@ -96,7 +145,7 @@ class PricingRefreshCommandTest(IsolatedHomeTest):
         self.assertEqual(result["status"], "no-cache")
         self.assertEqual(result["fetchedAt"], 0)
         self.assertIn("no usable pricing rates", result["error"])
-        fetch.assert_called_once_with(pricing.SOURCE_URL, timeout=10)
+        self.assertEqual(fetch.call_count, 2)
 
     def test_following_all_reuses_the_refreshed_cache_without_pricing_fetch(self):
         with mock.patch.object(config, "ALL_PROVIDERS", ["claude"]):
@@ -178,6 +227,7 @@ class SessionCostContractTest(IsolatedHomeTest):
         fetch = mock.Mock(
             side_effect=[
                 HttpResult(503, ""),
+                HttpResult(503, ""),
                 HttpResult(200, json.dumps(raw_fixture("pricing-openrouter-response"))),
             ]
         )
@@ -190,7 +240,7 @@ class SessionCostContractTest(IsolatedHomeTest):
 
         self.assertEqual(result["providers"]["anthropic"]["claude-missing"]["input"], 3.0)
         self.assertEqual(result["providers"]["anthropic"]["claude-missing"]["output"], 9.0)
-        self.assertEqual(fetch.call_count, 2)
+        self.assertEqual(fetch.call_count, 3)
 
 
 if __name__ == "__main__":

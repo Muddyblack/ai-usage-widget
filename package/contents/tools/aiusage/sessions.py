@@ -87,7 +87,7 @@ def _state(last_activity, ended=False):
     return "active" if age <= _ACTIVE_WITHIN_SEC else "idle"
 
 
-def _entry(provider, title, last_activity, *, state="", session_name="", detail="", session_id="", full_title=""):
+def _entry(provider, title, last_activity, *, state="", session_name="", detail="", session_id="", full_title="", source=""):
     activity = int(last_activity or 0)
     if activity <= 0:
         return None
@@ -100,9 +100,11 @@ def _entry(provider, title, last_activity, *, state="", session_name="", detail=
         "detail": detail or "",
         # Opaque resume handle — "" when this provider has no known resume
         # command (Muse) or the session id could not be established.
-        "openKey": _open_key(provider, session_id) if session_id else "",
+        "openKey": _open_key(source or provider, session_id) if session_id else "",
         "costStatus": "unavailable",
     }
+    if source:
+        entry["source"] = source
     # Only carried when the row's title was clipped, so a frontend can offer
     # to expand it; omitted rather than duplicating what's already the title.
     if full_title and full_title != entry["title"]:
@@ -114,20 +116,20 @@ def _with_usage_cost(entry, provider, buckets):
     if entry is None:
         return None
     catalog = pricing.cached_catalog()
-    rate_provider = "openai" if provider == "opencode" else provider
-    rates = catalog.get(rate_provider, {})
-    return {**entry, **billing.aggregate_session_usage(buckets, {provider: rates})}
+    providers = {bucket.provider for bucket in buckets if bucket.provider}
+    rates = {rate_provider: catalog.get(rate_provider, {}) for rate_provider in providers or {provider}}
+    return {**entry, **billing.aggregate_session_usage(buckets, rates)}
 
 
 def _cline_catalog_identity(provider, model):
-    if not isinstance(provider, str) or not isinstance(model, str) or not model:
+    provider = pricing._safe_namespace(provider)
+    if not provider or not isinstance(model, str) or not model:
         return None
-    if provider in pricing.PROVIDERS:
-        return (provider, model) if "/" not in model else None
     if provider != "cline":
-        return None
+        return (provider, model) if "/" not in model else None
     native_provider, separator, native_model = model.partition("/")
-    if native_provider not in pricing.PROVIDERS or not separator or not native_model or "/" in native_model:
+    native_provider = pricing._safe_namespace(native_provider)
+    if not native_provider or not separator or not native_model or "/" in native_model:
         return None
     return native_provider, native_model
 
@@ -531,25 +533,49 @@ def _opencode_records(reader):
     )[:_MAX_SESSIONS]
 
 
+def _provider_costs(buckets):
+    """Per-provider cost rollups for a multi-provider OpenCode session."""
+    catalog = pricing.cached_catalog()
+    by_provider = {}
+    for bucket in buckets:
+        by_provider.setdefault(bucket.provider, []).append(bucket)
+    costs = {}
+    for provider, provider_buckets in by_provider.items():
+        result = billing.aggregate_session_usage(provider_buckets, {provider: catalog.get(provider, {})})
+        if result.get("costStatus") != "unavailable":
+            costs[provider] = result
+    return costs
+
+
 def _opencode_entries():
     out = []
     for record in _opencode_records(opencode.read_recent_sessions):
         title = _clip_title(record.title) or _basename(record.directory) or "OpenCode"
-        out.append(
-            _with_usage_cost(
-                _entry(
-                    "opencode",
-                    title,
-                    record.last_activity,
-                    session_name="OpenCode",
-                    detail=_basename(record.directory),
-                    session_id=_opencode_identity(record),
-                ),
-                "opencode",
-                record.usage,
-            )
+        upstream = {bucket.provider for bucket in record.usage}
+        provider = next(iter(upstream)) if len(upstream) == 1 else "opencode"
+        entry = _with_usage_cost(
+            _entry(
+                provider,
+                title,
+                record.last_activity,
+                session_name="via OpenCode",
+                detail=_basename(record.directory),
+                session_id=_opencode_identity(record),
+                source="opencode",
+            ),
+            "opencode",
+            record.usage,
         )
-    return [entry for entry in out if entry]
+        if entry is None:
+            continue
+        if len(upstream) == 1:
+            entry["billingProvider"] = provider
+        else:
+            provider_costs = _provider_costs(record.usage)
+            if provider_costs:
+                entry["providerCosts"] = provider_costs
+        out.append(entry)
+    return out
 
 
 def _opencode_targets():

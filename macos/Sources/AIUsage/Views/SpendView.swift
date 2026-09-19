@@ -12,13 +12,13 @@ struct SpendView: View {
                 Text(FeatureView.spend.title).font(.system(size: 13, weight: .semibold))
                 Spacer(minLength: 8)
                 if total > 0 {
-                    Text("Σ " + Compact.money(total, currency: "USD"))
+                    Text(i18n("Provider/API total") + " " + Compact.money(total, currency: "USD"))
                         .font(.system(size: 12, weight: .semibold))
                         .monospacedDigit()
                         .foregroundStyle(Theme.accent("#34d399"))
                 }
             }
-            Text(i18n("Provider totals come from each provider's own usage APIs. Local session actual costs and calculated estimates are shown separately."))
+            Text(i18n("Provider totals come from each provider's own usage APIs. Local source rows show actual, estimated, or mixed provenance and coverage separately."))
                 .font(.system(size: 10))
                 .foregroundStyle(.secondary)
             if rows.isEmpty {
@@ -42,7 +42,11 @@ struct SpendView: View {
             Circle().fill(Theme.accent(row.accent)).frame(width: 8, height: 8)
             VStack(alignment: .leading, spacing: 1) {
                 Text(row.label).font(.system(size: 12, weight: .semibold))
-                Text(row.note).font(.system(size: 10)).foregroundStyle(.secondary)
+                Text(row.note)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
             }
             Spacer(minLength: 8)
             Text(Compact.money(row.cost, currency: row.currency))

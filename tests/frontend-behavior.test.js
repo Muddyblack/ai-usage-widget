@@ -27,6 +27,7 @@ function qmlFunction(file, name) {
 const plasma = qmlFunction("package/contents/ui/main.qml", "applyOpenAi");
 const plasmaCost = qmlFunction("package/contents/ui/SessionsTab.qml", "sessionCostText");
 const hyprlandCost = qmlFunction("hyprland/SessionsPage.qml", "sessionCostText");
+const spendTabSource = fs.readFileSync(path.join(rootDir, "package/contents/ui/SpendTab.qml"), "utf8");
 const windows = ["providerById", "activeProvider", "pillProvider", "publishTray"]
     .map(name => qmlFunction("windows/qml/Main.qml", name)
         + "\nroot." + name + " = " + name + ";")
@@ -94,10 +95,23 @@ test("Windows tray keeps provider usage while a feature tab is active", () => {
     }
 });
 
-test("local spend rows keep actual and calculated totals separate", () => {
+test("local spend rows merge actual and estimated costs by source", () => {
     const rows = FeatureTabs.localSpendRows({
-        actual: { totalUSD: 12.34, costStatus: "exact" },
-        estimated: { totalUSD: 2.5, costStatus: "partial" },
+        actual: {
+            totalUSD: 12.34,
+            costStatus: "exact",
+            providers: {
+                OpenCode: { costUSD: 12.34, costStatus: "exact" },
+            },
+        },
+        estimated: {
+            totalUSD: 2.5,
+            costStatus: "partial",
+            providers: {
+                " opencode ": { costUSD: 1.5, costStatus: "partial" },
+                cline: { costUSD: 1, costStatus: "exact" },
+            },
+        },
     });
 
     assert.deepEqual(JSON.parse(JSON.stringify(rows.map(row => ({
@@ -107,9 +121,29 @@ test("local spend rows keep actual and calculated totals separate", () => {
         local: row.local,
         provenance: row.provenance,
         costStatus: row.costStatus,
+        costBreakdown: row.costBreakdown,
+        note: row.note,
     })))), [
-        { id: "local-actual", label: "Actual provider cost", cost: 12.34, local: true, provenance: "actual", costStatus: "exact" },
-        { id: "local-estimated", label: "Calculated estimate", cost: 2.5, local: true, provenance: "estimated", costStatus: "partial" },
+        {
+            id: "local-opencode",
+            label: "OpenCode",
+            cost: 13.84,
+            local: true,
+            provenance: "mixed",
+            costStatus: "partial",
+            costBreakdown: { actualUSD: 12.34, estimatedUSD: 1.5 },
+            note: "local CLI logs · mixed · partial",
+        },
+        {
+            id: "local-cline",
+            label: "Cline",
+            cost: 1,
+            local: true,
+            provenance: "estimated",
+            costStatus: "exact",
+            costBreakdown: { actualUSD: 0, estimatedUSD: 1 },
+            note: "local CLI logs · estimated · exact",
+        },
     ]);
 
     assert.equal(FeatureTabs.spendTotal([
@@ -118,10 +152,45 @@ test("local spend rows keep actual and calculated totals separate", () => {
     ], "USD"), 4);
 });
 
+test("OpenCode local rows retain separate upstream billing providers", () => {
+    const rows = FeatureTabs.localSpendRows({
+        actual: {
+            totalUSD: 0.13,
+            costStatus: "exact",
+            providers: {
+                "openai::opencode": { costUSD: 0.13, costStatus: "exact", source: "opencode" },
+            },
+        },
+        estimated: {
+            totalUSD: 0.42,
+            costStatus: "exact",
+            providers: {
+                "anthropic::opencode": { costUSD: 0.42, costStatus: "exact", source: "opencode" },
+            },
+        },
+    });
+
+    assert.deepEqual(JSON.parse(JSON.stringify(rows.map(row => ({
+        id: row.id,
+        label: row.label,
+        cost: row.cost,
+        source: row.source,
+        note: row.note,
+    })))), [
+        { id: "local-opencode-openai", label: "OpenAI", cost: 0.13, source: "opencode", note: "via OpenCode · actual · exact" },
+        { id: "local-opencode-anthropic", label: "Anthropic", cost: 0.42, source: "opencode", note: "via OpenCode · estimated · exact" },
+    ]);
+});
+
 test("local spend rows keep legacy flat totals and reject unavailable groups", () => {
     assert.equal(FeatureTabs.localSpendRows({
         actual: { totalUSD: 1, costStatus: "unavailable" },
         estimated: { totalUSD: Infinity, costStatus: "exact" },
+    }).length, 0);
+
+    assert.equal(FeatureTabs.localSpendRows({
+        actual: { totalUSD: 1, costStatus: "exact" },
+        estimated: { totalUSD: 2, costStatus: "partial" },
     }).length, 0);
 
     const legacy = FeatureTabs.localSpendRows({ totalUSD: 3.5, costStatus: "partial" });
@@ -130,7 +199,7 @@ test("local spend rows keep legacy flat totals and reject unavailable groups", (
         label: "Local sessions",
         cost: 3.5,
         currency: "USD",
-        note: "local CLI logs",
+        note: "local CLI logs · partial",
         local: true,
         legacy: true,
         costStatus: "partial",
@@ -144,6 +213,33 @@ test("local spend rows keep legacy flat totals and reject unavailable groups", (
         null,
     ]) {
         assert.equal(FeatureTabs.localSpendRows(localSpend).length, 0);
+    }
+});
+
+test("local source labels normalize known IDs and safe fallbacks", () => {
+    assert.equal(FeatureTabs.localSourceLabel(" OPENAI "), "Codex");
+    assert.equal(FeatureTabs.localSourceLabel("claude_code"), "Claude Code");
+    assert.equal(FeatureTabs.localSourceLabel("custom_source"), "Custom Source");
+    assert.equal(FeatureTabs.localSourceLabel("  "), "Local source");
+});
+
+test("upstream provider labels cover every OpenCode-routed provider", () => {
+    assert.equal(FeatureTabs.upstreamProviderLabel("ollama-cloud"), "Ollama Cloud");
+    assert.equal(FeatureTabs.upstreamProviderLabel("ollama"), "Ollama");
+    assert.equal(FeatureTabs.upstreamProviderLabel("github-copilot"), "GitHub Copilot");
+    assert.equal(FeatureTabs.upstreamProviderLabel("google"), "Google");
+    assert.equal(FeatureTabs.upstreamProviderLabel("zenmux"), "ZenMux");
+    assert.equal(FeatureTabs.upstreamProviderLabel("opencode"), "OpenCode Zen");
+    assert.equal(FeatureTabs.upstreamProviderLabel("anthropic"), "Anthropic");
+});
+
+test("spend views identify provider totals and constrain local metadata", () => {
+    for (const file of ["package/contents/ui/SpendTab.qml", "hyprland/SpendPage.qml"]) {
+        const source = fs.readFileSync(path.join(rootDir, file), "utf8");
+        assert.match(source, /Provider\/API total/);
+        assert.match(source, /maximumLineCount: 1/);
+        assert.match(source, /elide: Text\.ElideRight/);
+        assert.match(source, /wrapMode: Text\.NoWrap/);
     }
 });
 
@@ -243,6 +339,30 @@ test("spend totals ignore non-numeric and non-finite row costs", () => {
     ];
     assert.equal(FeatureTabs.spendTotal(rows, "USD"), 6);
     assert.equal(FeatureTabs.spendTotal(rows, "EUR"), 99);
+});
+
+test("spend rows keep long text from moving the amount and center it vertically", () => {
+    const rowStart = spendTabSource.indexOf("        Rectangle {\n            required property var modelData");
+    assert.notEqual(rowStart, -1);
+    const row = spendTabSource.slice(rowStart);
+    const bodyStart = row.indexOf("            RowLayout {");
+    const bodyEnd = row.indexOf("            MouseArea {", bodyStart);
+    assert.notEqual(bodyStart, -1);
+    assert.notEqual(bodyEnd, -1);
+    const body = row.slice(bodyStart, bodyEnd);
+    assert.match(body, /ColumnLayout \{[\s\S]*Layout\.fillWidth: true\s+Layout\.minimumWidth: 0/);
+    assert.match(body, /PlasmaComponents\.Label \{[\s\S]*?text: rootItem\.formatMoney[\s\S]*font\.family: "monospace"/);
+});
+
+test("spend prices align their decimal points with fixed-width digits", () => {
+    // Two-decimal amounts plus fixed-width digits put "." in one column.
+    for (const file of ["package/contents/ui/SpendTab.qml", "hyprland/SpendPage.qml"]) {
+        const source = fs.readFileSync(path.join(rootDir, file), "utf8");
+        assert.match(source, /font\.family: "monospace"/);
+        assert.doesNotMatch(source, /Layout\.preferredWidth: 60/);
+        assert.doesNotMatch(source, /Layout\.maximumWidth: 60/);
+        assert.doesNotMatch(source, /horizontalAlignment: Text\.AlignLeft/);
+    }
 });
 
 test("session rows render provenance, coverage, unavailable, and legacy costs", () => {
