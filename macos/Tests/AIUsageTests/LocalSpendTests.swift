@@ -282,7 +282,7 @@ final class LocalSpendAppModelTests: XCTestCase {
                     totalUSD: 6,
                     costStatus: "partial",
                     costProvenance: "actual",
-                    providers: ["opencode": LocalSpendProvider(costUSD: 6, costStatus: "partial")])))
+                    providers: ["opencode": LocalSpendProvider(costUSD: 6, costStatus: "partial")]))))
 
         XCTAssertEqual(model.spendRows.first(where: { $0.provenance == "actual" })?.cost, 6)
         XCTAssertEqual(model.spendRows.first(where: { $0.provider?.id == "openai" })?.cost, 2)
