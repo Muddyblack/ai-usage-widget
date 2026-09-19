@@ -155,8 +155,9 @@ struct SpendRow: Identifiable {
 
     init(localSource: String, actualUSD: Double, estimatedUSD: Double,
          provenance: String, costStatus: String, billingProvider: String? = nil,
-         identity: String? = nil) {
+         identity: String? = nil, viaSource: String? = nil) {
         let sourceKey = Self.localSourceKey(localSource)
+        let viaSourceKey = Self.localSourceKey(viaSource ?? "")
         self.provider = nil
         self.source = sourceKey
         self.localIdentity = identity.map(Self.localSourceKey)
@@ -164,7 +165,7 @@ struct SpendRow: Identifiable {
         self.accent = "#34d399"
         self.cost = actualUSD + estimatedUSD
         self.currency = "USD"
-        self.note = Self.localSpendNote(provenance, costStatus: costStatus, source: sourceKey)
+        self.note = Self.localSpendNote(provenance, costStatus: costStatus, source: viaSourceKey)
         self.provenance = provenance
         self.costStatus = costStatus
         self.costBreakdown = CostBreakdown(actualUSD: actualUSD, estimatedUSD: estimatedUSD)
@@ -445,7 +446,8 @@ enum SpendRows {
                 provenance: provenance,
                 costStatus: costStatus,
                 billingProvider: localSource == "opencode" ? providerKey : nil,
-                identity: source))
+                identity: source,
+                viaSource: sourceMetadata.isEmpty ? nil : sourceMetadata))
         }
     }
 

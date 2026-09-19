@@ -203,7 +203,12 @@ def build(selected, now=None):
         except Exception as exc:  # noqa: BLE001  # noqa: BROAD_EXCEPT_OK
             return crashed(id_, now, exc)
 
-    if selected:
+    if len(selected) == 1:
+        # Avoid starting a worker for the common single-provider case. Apart
+        # from being cheaper, this keeps in-process callers on Windows from
+        # blocking while ThreadPoolExecutor starts its first thread.
+        providers = [fetch_one(selected[0])]
+    elif selected:
         with ThreadPoolExecutor(max_workers=len(selected)) as pool:
             providers = list(pool.map(fetch_one, selected))
     else:

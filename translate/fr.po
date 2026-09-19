@@ -577,6 +577,10 @@ msgstr ""
 "passez --compact pour une ligne de barre d'état."
 
 #: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid "Provider/API total"
+msgstr "Total fournisseur/API"
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
 msgid ""
 "Totals come from each provider's own usage APIs and local CLI logs. Ranges "
 "differ (30-day, all-time, lifetime)."
@@ -2938,53 +2942,17 @@ msgstr "Sessions locales"
 msgid "local CLI logs"
 msgstr "journaux CLI locaux"
 
-#: package/contents/code/FeatureTabs.js
 #: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "local CLI logs · exact"
-msgstr "journaux CLI locaux · exact"
-
-#: package/contents/code/FeatureTabs.js
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "local CLI logs · partial"
-msgstr "journaux CLI locaux · partiel"
-
-#: package/contents/code/FeatureTabs.js
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Local source"
-msgstr "Source locale"
+msgid "Anthropic"
+msgstr "Anthropic"
 
 #: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Actual provider cost"
-msgstr "Coût réel du fournisseur"
+msgid "OpenAI"
+msgstr "OpenAI"
 
 #: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Calculated estimate"
-msgstr "Estimation calculée"
-
-#: package/contents/code/FeatureTabs.js
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "OpenCode"
-msgstr "OpenCode"
-
-#: package/contents/code/FeatureTabs.js
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Claude Code"
-msgstr "Claude Code"
-
-#: package/contents/code/FeatureTabs.js
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Codex"
-msgstr "Codex"
-
-#: package/contents/code/FeatureTabs.js
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Cline"
-msgstr "Cline"
-
-#: package/contents/code/FeatureTabs.js
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Grok CLI"
-msgstr "Grok CLI"
+msgid "OpenRouter"
+msgstr "OpenRouter"
 
 #: macos/Sources/AIUsage/Backend/Contract.swift
 msgid "Ollama Cloud"
@@ -3010,45 +2978,41 @@ msgstr "ZenMux"
 msgid "OpenCode Zen"
 msgstr "OpenCode Zen"
 
-#: package/contents/code/FeatureTabs.js
 #: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "local CLI logs · actual · exact"
-msgstr "journaux CLI locaux · réel · exact"
+msgid "OpenCode"
+msgstr "OpenCode"
 
-#: package/contents/code/FeatureTabs.js
 #: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "local CLI logs · actual · partial"
-msgstr "journaux CLI locaux · réel · partiel"
+msgid "Claude Code"
+msgstr "Claude Code"
 
-#: package/contents/code/FeatureTabs.js
 #: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "local CLI logs · estimated · exact"
-msgstr "journaux CLI locaux · estimé · exact"
+msgid "Codex"
+msgstr "Codex"
 
-#: package/contents/code/FeatureTabs.js
 #: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "local CLI logs · estimated · partial"
-msgstr "journaux CLI locaux · estimé · partiel"
+msgid "Cline"
+msgstr "Cline"
 
-#: package/contents/code/FeatureTabs.js
 #: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "local CLI logs · mixed · exact"
-msgstr "journaux CLI locaux · mixte · exact"
+msgid "Grok CLI"
+msgstr "Grok CLI"
 
-#: package/contents/code/FeatureTabs.js
 #: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "local CLI logs · mixed · partial"
-msgstr "journaux CLI locaux · mixte · partiel"
+msgid "Muse"
+msgstr "Muse"
 
-#: macos/Sources/AIUsage/Views/SpendView.swift
-msgid "Provider totals come from each provider's own usage APIs. Local source rows show actual, estimated, or mixed provenance and coverage separately."
-msgstr "Les totaux des fournisseurs proviennent de leurs propres API d'utilisation. Les lignes de source locale indiquent séparément la provenance réelle, estimée ou mixte ainsi que la couverture."
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Antigravity"
+msgstr "Antigravity"
 
-#: package/contents/ui/SpendTab.qml
-#: hyprland/SpendPage.qml
-#: macos/Sources/AIUsage/Views/SpendView.swift
-msgid "Provider/API total"
-msgstr "Total fournisseur/API"
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Local source"
+msgstr "Source locale"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "via OpenCode"
+msgstr "via OpenCode"
 
 #: macos/Sources/AIUsage/Backend/SettingsStore.swift
 msgid "Monochrome"
@@ -3296,12 +3260,12 @@ msgstr ""
 
 #: macos/Sources/AIUsage/Views/SpendView.swift
 msgid ""
-"Provider totals come from each provider's own usage APIs. Local session "
-"actual costs and calculated estimates are shown separately."
+"Provider totals come from each provider's own usage APIs. Local source rows "
+"show actual, estimated, or mixed provenance and coverage separately."
 msgstr ""
-"Les totaux des fournisseurs proviennent des propres API d'utilisation de "
-"chaque fournisseur. Les coûts réels des sessions locales et les estimations "
-"calculées sont affichés séparément."
+"Les totaux des fournisseurs proviennent de leurs propres API d'utilisation. "
+"Les lignes de source locale indiquent séparément la provenance réelle, "
+"estimée ou mixte ainsi que la couverture."
 
 #: macos/Sources/AIUsage/Views/StatsView.swift
 msgid "Messages"
