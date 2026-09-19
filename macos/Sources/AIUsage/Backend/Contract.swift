@@ -439,15 +439,16 @@ enum SpendRows {
                 ? "mixed" : actualUSD > 0 ? "actual" : "estimated"
             let costStatus = actualEntry?.status == "partial" || estimatedEntry?.status == "partial"
                 ? "partial" : "exact"
+            let viaSource = sourceMetadata.isEmpty ? nil : sourceMetadata
             rows.append(SpendRow(
                 localSource: localSource,
                 actualUSD: actualUSD,
                 estimatedUSD: estimatedUSD,
                 provenance: provenance,
                 costStatus: costStatus,
-                billingProvider: localSource == "opencode" ? providerKey : nil,
+                billingProvider: localSource == "opencode" && viaSource != nil ? providerKey : nil,
                 identity: source,
-                viaSource: sourceMetadata.isEmpty ? nil : sourceMetadata))
+                viaSource: viaSource))
         }
     }
 

@@ -113,7 +113,7 @@ final class LocalSpendRowsTests: XCTestCase {
             XCTAssertEqual(localRows.first?.costStatus, localSpend.legacy?.costStatus)
             XCTAssertEqual(localRows.first?.currency, "USD")
             XCTAssertEqual(localRows.first?.id, "local-sessions")
-            XCTAssertEqual(SpendRows.totalUSD(rows), 7)
+            XCTAssertEqual(SpendRows.totalUSD(rows), 5)
         }
     }
 
