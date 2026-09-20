@@ -1,0 +1,44 @@
+name: Local session source / tool idea
+description: Suggest tracking for a local coding assistant, CLI agent, or IDE tool.
+title: "[Session Source]: "
+body:
+  - type: input
+    id: tool_name
+    attributes:
+      label: Tool name and repository
+      description: Name of the coding assistant or tool and link to its project page or repository.
+      placeholder: e.g. Aider (https://github.com/paul-gauthier/aider)
+    validations:
+      required: true
+  - type: textarea
+    id: storage
+    attributes:
+      label: Where does the tool store session data?
+      description: Mention file paths and format (e.g. SQLite database, JSON/JSONL transcripts, history logs). Include paths for Linux, macOS, or Windows if known.
+      placeholder: "~/.aider/analytics.json or ~/.aider/history"
+    validations:
+      required: true
+  - type: textarea
+    id: metrics
+    attributes:
+      label: What session metrics are recorded?
+      description: Describe what data can be extracted (e.g. token counts, model names, costs, session start/end times, prompt preview/title, tool calls).
+    validations:
+      required: true
+  - type: textarea
+    id: resume
+    attributes:
+      label: Session resume capability
+      description: Does the tool provide a CLI command to resume a past session (e.g. `tool --resume <id>` or `tool -s <file>`)?
+  - type: textarea
+    id: sample_schema
+    attributes:
+      label: Sanitized sample session data or schema
+      description: "Provide a small anonymized JSON snippet or database schema. ⚠️ Make sure no sensitive code, personal prompts, or credentials are included."
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I regularly use this tool and can provide test data or test changes
+        - label: I am interested in contributing code or submitting a pull request

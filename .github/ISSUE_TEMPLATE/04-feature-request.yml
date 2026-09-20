@@ -1,0 +1,39 @@
+name: Feature / UI idea
+description: Suggest a new feature, panel pill style, chart visualization, or desktop enhancement.
+title: "[Feature]: "
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Panel pill / sparklines / taskbar readout
+        - Popup view / segmented bars / cards
+        - Usage chart / history / burn-rate ETA
+        - Overview / Usage & Spend tab
+        - Sessions tab / Search / Resume
+        - Desktop integration (Plasma, Hyprland, macOS, Windows)
+        - CLI tool (ai-usage-cli / get-ai-usage)
+        - Settings / credentials / configuration
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to do?
+      description: Describe the feature or improvement and how it helps.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: How should it work?
+      description: Describe the desired behavior, visual styling, animations, or settings. Mention Plasma, Hyprland, macOS, Windows, or CLI if specific to one.
+    validations:
+      required: true
+  - type: textarea
+    id: examples
+    attributes:
+      label: Visual references, mockups, or prototypes
+      description: Share sketches, screenshots, GIFs, design references, or relevant code prototypes. If you have a workaround, describe it here.
