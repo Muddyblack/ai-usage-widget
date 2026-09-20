@@ -32,7 +32,7 @@ def test_vllm_metrics_and_llama_slots():
                 "usage": {
                     "engine": "vllm",
                     "models": [{"id": "m"}],
-                    "metrics": "vllm:gpu_cache_usage_factor 0.75\nvllm:num_requests_running 2\nvllm:prompt_tokens_total 100\nvllm:generation_tokens_total 40", #noqa: E501
+                    "metrics": "vllm:gpu_cache_usage_factor 0.75\nvllm:num_requests_running 2\nvllm:prompt_tokens_total 100\nvllm:generation_tokens_total 40",  # noqa: E501
                 }
             },
         }
