@@ -43,6 +43,8 @@ get-ai-usage --provider claude,openai     # several (KDE: active tab + pins)
 get-ai-usage --all                        # every enabled provider (Hyprland)
 get-ai-usage --normalize < envelope.json  # replay a raw envelope, no network
 get-ai-usage --list                       # known provider ids
+get-ai-usage --sessions --query <text>    # search local sessions through the backend
+get-ai-usage --sessions --source <ids>      # filter cached sessions by source
 ```
 
 The terminal frontend renders that same model, either fetching it itself or
@@ -58,6 +60,95 @@ get-ai-usage --all | ai-usage-cli   # render a fetched envelope, no second fetch
 (`$XDG_CONFIG_HOME/ai-usage-widget/hyprland-settings.json`, overridable with
 `AI_USAGE_CONFIG`). `--provider` fetches exactly what was asked for, because the
 Plasma widget keeps its own toggles in the plasmoid configuration.
+
+### Session search
+
+`get-ai-usage --sessions --query <text>` performs session search in the shared
+backend. Empty, whitespace-only, and non-empty queries all return 60-session
+pages by default; `--limit <n>` and `--offset <n>` select a page. The response
+includes the exact `total`, `totalExact`, `offset`, `limit`, and `hasMore`
+metadata, so frontends can append another page with **Load more** rather than
+loading every match in one response or filtering client-side. A non-empty query
+searches the underlying session records rather than filtering only that
+60-session result, using only the safe display fields
+`provider`, `title`, `sessionName`, `state`, and `detail`. It does not search
+`fullTitle`, opaque resume keys, IDs, paths, or transcripts. Claude's `title`
+is a clipped opening-prompt preview; raw prompt text never leaves the backend.
+Provider readers retain their existing safety limits while supplying records
+for the search.
+
+#### Session sources
+
+Session responses retain the existing fields and add the following field:
+
+```json
+{
+  "sources": [
+    { "id": "openai", "label": "Codex" },
+    { "id": "opencode", "label": "OpenCode" }
+  ]
+}
+```
+
+`sources` describes only providers that have cached, parsed session rows. It is
+returned independently of the active source filter, search text, page, and
+page size. Descriptors use this canonical order and these verified IDs and
+labels:
+
+| ID | Label |
+| --- | --- |
+| `cline` | Cline |
+| `muse` | Muse |
+| `openai` | Codex |
+| `grok` | Grok |
+| `claude` | Claude Code |
+| `opencode` | OpenCode |
+| `antigravity` | Antigravity |
+
+The command line accepts `--source <id[,id...]>` and
+`--source=<id[,id...]>`, only with `--sessions`. IDs are trimmed, validated
+against the registry, deduplicated, and sent in canonical order. Unknown IDs,
+empty tokens, and a source option without `--sessions` are errors. Omitting
+`--source`, or passing an empty source selection from a frontend, means All.
+
+Multiple source IDs are an OR filter. Text search is then applied to the
+matching rows, and `total`, `totalExact`, `offset`, `limit`, and `hasMore` are
+computed for that filtered result. Changing sources starts at offset zero.
+Refresh and Load more preserve the current source selection and search text;
+Load more appends the next page. If a refresh reports that a selected source
+is no longer available, frontends clear the stale selection and issue one
+query-only All request.
+
+The source list is view-local and is not persisted. In KDE Plasma,
+Hyprland, Windows, and macOS, the selector sits beside the Sessions search
+field and leaves the title row unchanged. It is hidden when there are no
+sources. With one source, it shows that source without an All option. With
+multiple sources, All appears first, selecting multiple entries is supported,
+and selecting every source normalizes back to All. These frontends share the
+same cache, canonical IDs, labels, OR semantics, pagination reset, refresh,
+Load more, stale-response, and stale-selection behavior.
+
+`--query-only` reads the already reconciled cache and does not scan provider
+stores, build a manifest, or collect new rows. A refresh may be incomplete if
+one or more local stores cannot be read. When a valid persisted cache is
+available, the backend preserves that cache; if all collectors fail, the
+direct fallback may instead contain no rows and no source descriptors. A cache
+read failure returns an empty `sources` list and an empty schema-complete
+result.
+
+The source metadata and searchable fields remain public, redacted data. They
+expose no filesystem paths, raw session IDs, transcripts, full titles, opaque
+resume keys, source fingerprints, or credentials. The existing row resume flow
+still passes only its opaque `openKey` back to `--open-session`; that key is not
+part of source metadata and remains subject to the existing row redaction and
+open-session boundary. Existing callers that do not send a source selection
+remain compatible; `sources` is additive to the session response.
+
+The session views in KDE, Hyprland, Windows, and macOS send search requests to
+this backend instead of filtering locally. Their search inputs are debounced
+before a request is started, including the macOS input. Session rows remain
+redacted, and existing opaque resume keys are still the only values passed back
+to `--open-session`.
 
 API keys come from `WIDGET_*` environment variables (what Plasma passes) or from
 the `keys` object of the settings file (what the Hyprland settings page writes).

@@ -19,6 +19,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
 
     var onRefresh: () -> Void = {}
     var onOpenSettings: () -> Void = {}
+    var onVisibilityChanged: (Bool) -> Void = { _ in }
 
     init(content: some View) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -96,6 +97,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         // the item on the display the menu bar is currently on — including a
         // second monitor, and below the notch on the machines that have one.
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        onVisibilityChanged(true)
         // A popover from a status item does not get key focus on its own, and
         // without it the text fields on the settings page cannot be typed into.
         popover.contentViewController?.view.window?.makeKey()
@@ -122,6 +124,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     // ── NSPopoverDelegate ────────────────────────────────────────────────
 
     func popoverDidClose(_ notification: Notification) {
+        onVisibilityChanged(false)
         statusItem.button?.highlight(false)
         if let monitor = escapeMonitor {
             NSEvent.removeMonitor(monitor)

@@ -74,12 +74,50 @@ enum Backend {
         }
     }
 
-    /// Recent local agent sessions for the optional Sessions view.
-    /// `get-ai-usage --sessions` prints a redacted envelope (titles and folder
-    /// names only — never paths or transcripts), and the frozen binary passes
-    /// `--sessions` straight through to the same `aiusage.__main__`.
-    static func sessions() throws -> LocalSessions {
-        let data = try run(arguments: ["--sessions"])
+    /// Recent local agent sessions for the optional Sessions view, from the
+    /// already-reconciled cache.
+    static func sessions(
+        _ query: String = "", limit: Int? = nil, offset: Int? = nil, sourceIds: [String] = []
+    ) throws -> LocalSessions {
+        var arguments = ["--sessions", "--query-only", "--query", query]
+        appendSessionArguments(to: &arguments, sourceIds: sourceIds, limit: limit, offset: offset)
+        return try decodeSessions(arguments: arguments)
+    }
+
+    /// Reconcile every local session provider, then return the requested page.
+    static func refreshSessions(
+        _ query: String = "", limit: Int? = nil, offset: Int? = nil, sourceIds: [String] = []
+    ) throws -> LocalSessions {
+        var arguments = ["--sessions", "--refresh", "--query", query]
+        appendSessionArguments(to: &arguments, sourceIds: sourceIds, limit: limit, offset: offset)
+        return try decodeSessions(arguments: arguments)
+    }
+
+    private static func appendSessionArguments(
+        to arguments: inout [String], sourceIds: [String], limit: Int?, offset: Int?
+    ) {
+        let normalizedSourceIds = normalizedSessionSourceIDs(sourceIds)
+        if !normalizedSourceIds.isEmpty {
+            arguments += ["--source", normalizedSourceIds.joined(separator: ",")]
+        }
+        if let limit {
+            arguments += ["--limit", String(limit)]
+        }
+        if let offset {
+            arguments += ["--offset", String(offset)]
+        }
+    }
+
+    static func normalizedSessionSourceIDs(_ sourceIds: [String]) -> [String] {
+        sourceIds.reduce(into: [String]()) { result, sourceId in
+            let normalized = sourceId.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !normalized.isEmpty, !result.contains(normalized) else { return }
+            result.append(normalized)
+        }
+    }
+
+    private static func decodeSessions(arguments: [String]) throws -> LocalSessions {
+        let data = try run(arguments: arguments)
         do {
             return try JSONDecoder().decode(LocalSessions.self, from: data)
         } catch {
