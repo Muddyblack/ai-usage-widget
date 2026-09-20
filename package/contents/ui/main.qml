@@ -237,6 +237,13 @@ PlasmoidItem {
     property string ollamaActivityCost: ""
     property string ollamaError: ""
     property real ollamaPct: 0
+    readonly property var ollamaWeeklyWindow: {
+        for (var i = 0; i < root.ollamaWindows.length; i++) {
+            if (root.ollamaWindows[i].key === "ollama_weekly")
+                return root.ollamaWindows[i];
+        }
+        return null;
+    }
     // ── Grok CLI / xAI data ──────────────────────────────────────────────────
     property bool grokHasKey: false
     property bool grokLoggedIn: false
@@ -2561,6 +2568,25 @@ PlasmoidItem {
                 showCost: root.ollamaWindows.length === 0
                 costText: "—"
                 tooltipText: "Ollama Cloud" + (root.ollamaWindows.length > 0 ? "\n" + root.ollamaWindows[0].label + ": " + Math.round(root.ollamaPct) + "%" : "\n" + root.ollamaError)
+            }
+
+            Rectangle {
+                visible: root.panelShows("ollama") && root.ollamaWindows.length > 0 && root.ollamaWindows[0].key === "ollama_session" && root.ollamaWeeklyWindow !== null
+                width: 1
+                height: 14
+                color: Qt.rgba(1, 1, 1, 0.16)
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            PanelSlot {
+                pct: root.ollamaWeeklyWindow ? root.ollamaWeeklyWindow.pct : 0
+                iconColor: "#f0f0f0"
+                iconTint: root.weeklyColor
+                iconSource: Qt.resolvedUrl("../icons/ollama.svg")
+                iconText: i18n("7D")
+                stale: root.stale && root.panelShows("ollama")
+                visible: root.panelShows("ollama") && root.ollamaWindows.length > 0 && root.ollamaWindows[0].key === "ollama_session" && root.ollamaWeeklyWindow !== null
+                tooltipText: "Ollama Cloud\n" + root.ollamaWeeklyWindow.label + ": " + Math.round(root.ollamaWeeklyWindow.pct) + "%"
             }
 
             PanelSlot {
