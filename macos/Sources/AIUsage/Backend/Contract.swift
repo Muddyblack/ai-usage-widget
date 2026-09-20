@@ -287,7 +287,7 @@ struct LocalSpendTotal: Decodable, Equatable {
         let validStatus = ["exact", "partial", "unavailable"].contains(decodedStatus)
         let validOrigin = LocalSpendProvider.validProvenance(decodedProvenance)
         let valid = validTotal != nil && validStatus && (decodedProvenance == nil || validOrigin != nil)
-        totalUSD = validTotal ?? 0
+        totalUSD = valid ? (validTotal ?? 0) : 0
         costStatus = valid
             ? decodedStatus : "unavailable"
         costProvenance = valid && decodedStatus != "unavailable" ? validOrigin : nil

@@ -74,7 +74,7 @@ class SessionCache:
             return rows
 
         try:
-            self._index.reconcile([manifest], parse, force=True)
+            self._index.reconcile([manifest], parse)
         except IncompleteRefresh as error:
             return redact_rows(error.rows)
         except (OSError, sqlite3.Error):

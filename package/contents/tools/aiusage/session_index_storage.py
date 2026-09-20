@@ -87,15 +87,25 @@ def _ensure_schema(connection: sqlite3.Connection) -> None:
             raise sqlite3.DatabaseError("session index schema is invalid")
 
 
+def _secure_permissions(cache_path: Path) -> None:
+    for suffix in ("", "-wal", "-shm"):
+        try:
+            os.chmod(str(cache_path) + suffix, 0o600)
+        except OSError:
+            pass
+
+
 def open_index(cache_path: Path) -> sqlite3.Connection:
     """Open a writable index connection, replacing a corrupt database."""
     connection: sqlite3.Connection | None = None
     try:
         connection = sqlite3.connect(str(cache_path), timeout=5.0)
+        _secure_permissions(cache_path)
         connection.execute(f"PRAGMA busy_timeout={_BUSY_TIMEOUT_MS}")
         connection.execute("PRAGMA foreign_keys=ON")
         connection.create_function("casefold", 1, str.casefold)
         _try_wal(connection)
+        _secure_permissions(cache_path)
         _ensure_schema(connection)
     except sqlite3.DatabaseError as error:
         if connection is not None:
@@ -108,9 +118,11 @@ def open_index(cache_path: Path) -> sqlite3.Connection:
             except FileNotFoundError:
                 continue
         connection = sqlite3.connect(str(cache_path), timeout=5.0)
+        _secure_permissions(cache_path)
         connection.execute(f"PRAGMA busy_timeout={_BUSY_TIMEOUT_MS}")
         connection.execute("PRAGMA foreign_keys=ON")
         connection.create_function("casefold", 1, str.casefold)
         _try_wal(connection)
+        _secure_permissions(cache_path)
         _ensure_schema(connection)
     return connection
