@@ -32,6 +32,7 @@ import shutil
 import subprocess
 import time
 import urllib.parse
+from collections.abc import Sequence
 
 from .contract import epoch_of, num
 from .providers import antigravity_sessions, opencode
@@ -40,6 +41,12 @@ from .providers.grok import grok_home
 from .providers.muse import sessions_root as muse_sessions_root
 from .providers.openai_credentials import codex_home
 from .session_cache import SessionCache
+from .session_index import (
+    SessionQueryResult,
+    SessionRow,
+    normalize_source_ids,
+    source_descriptors,
+)
 
 # Cap so a machine with years of logs stays snappy on a tab open.
 _MAX_SESSIONS = 60
@@ -638,14 +645,35 @@ def _collect_all_sessions():
     return merged, complete
 
 
-def collect_sessions(query="", limit=None, offset=0):
+def collect_sessions(
+    query: str = "",
+    limit: int | None = None,
+    offset: int = 0,
+    source_ids: Sequence[str] | None = None,
+) -> SessionQueryResult:
     """Return a page from the shared session index without collecting."""
-    return SessionCache().query(query, limit=limit, offset=offset)
+    return SessionCache().query(
+        query,
+        limit=limit,
+        offset=offset,
+        source_ids=source_ids,
+    )
 
 
-def _page_sessions(merged, query, limit, offset):
+def _page_sessions(
+    merged: Sequence[SessionRow],
+    query: str,
+    limit: int | None,
+    offset: int,
+    source_ids: Sequence[str] | None = None,
+) -> SessionQueryResult:
     normalized_query = (query or "").strip()
     merged = [s for s in merged if s]
+    sources = source_descriptors(entry["provider"] for entry in merged)
+    normalized_source_ids = normalize_source_ids(source_ids)
+    if normalized_source_ids is not None:
+        selected = frozenset(normalized_source_ids)
+        merged = [entry for entry in merged if entry["provider"] in selected]
     merged.sort(key=lambda s: s.get("lastActivityAt") or 0, reverse=True)
     matches = [entry for entry in merged if _matches_query(entry, normalized_query)] if normalized_query else merged
     total = len(matches)
@@ -660,16 +688,27 @@ def _page_sessions(merged, query, limit, offset):
         "offset": offset,
         "limit": page_limit,
         "hasMore": has_more,
+        "sources": sources,
     }
 
 
-def refresh_sessions(query="", limit=None, offset=0):
+def refresh_sessions(
+    query: str = "",
+    limit: int | None = None,
+    offset: int = 0,
+    source_ids: Sequence[str] | None = None,
+) -> SessionQueryResult:
     """Refresh all session providers, then return the requested page."""
     cache = SessionCache()
     direct_rows = cache.refresh(_collect_all_sessions)
     if direct_rows is not None:
-        return _page_sessions(direct_rows, query, limit, offset)
-    return cache.query(query, limit=limit, offset=offset)
+        return _page_sessions(direct_rows, query, limit, offset, source_ids)
+    return cache.query(
+        query,
+        limit=limit,
+        offset=offset,
+        source_ids=source_ids,
+    )
 
 
 def collect_open_targets():

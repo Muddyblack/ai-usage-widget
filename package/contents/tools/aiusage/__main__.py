@@ -17,6 +17,7 @@ import sys
 from . import config, envelope
 from .contract import finalize
 from .normalize import normalize
+from .session_index import SOURCE_REGISTRY
 
 USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize | --sessions]
 
@@ -27,6 +28,7 @@ USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize 
   --query-only          query the shared session index without refreshing
   --refresh             refresh all session providers before querying
   --query <text>        search all local session records by safe display fields
+  --source <ids>        restrict sessions to verified source ids
   --limit <n>           limit session results to a positive number of rows
   --offset <n>          skip a non-negative number of session rows
   --open-session <key>  resume one listed session (by its openKey) in a terminal
@@ -61,6 +63,7 @@ def main(argv):
     offset = None
     query_only = False
     refresh = False
+    source_ids = None
 
     i = 0
     while i < len(argv):
@@ -87,6 +90,24 @@ def main(argv):
             query = argv[i] if i < len(argv) else ""
         elif arg.startswith("--query="):
             query = arg[len("--query=") :]
+        elif arg == "--source" or arg.startswith("--source="):
+            if arg == "--source":
+                i += 1
+                raw_sources = argv[i] if i < len(argv) else ""
+            else:
+                raw_sources = arg[len("--source=") :]
+            source_ids = []
+            valid_source_ids = {source_id for source_id, _label in SOURCE_REGISTRY}
+            for source_id in raw_sources.split(","):
+                normalized_source_id = source_id.strip()
+                if not normalized_source_id or normalized_source_id not in valid_source_ids:
+                    sys.stderr.write(f"get-ai-usage: invalid session source id: {normalized_source_id or raw_sources}\n")
+                    sys.stderr.write(USAGE + "\n")
+                    return 2
+                if normalized_source_id not in source_ids:
+                    source_ids.append(normalized_source_id)
+            selected_source_ids = set(source_ids)
+            source_ids = [source_id for source_id, _label in SOURCE_REGISTRY if source_id in selected_source_ids]
         elif arg == "--limit" or arg.startswith("--limit="):
             if arg == "--limit":
                 i += 1
@@ -149,14 +170,28 @@ def main(argv):
         sys.stderr.write(USAGE + "\n")
         return 2
 
+    if source_ids is not None and mode != "sessions":
+        sys.stderr.write("get-ai-usage: --source requires --sessions\n")
+        sys.stderr.write(USAGE + "\n")
+        return 2
+
     if mode == "sessions":
         from .sessions import collect_sessions, refresh_sessions
 
         collect = collect_sessions if query_only else refresh_sessions
-        if limit is None and offset is None:
+        if limit is None and offset is None and source_ids is None:
             result = collect(query)
-        else:
+        elif limit is None and offset is None:
+            result = collect(query, source_ids=source_ids)
+        elif source_ids is None:
             result = collect(query, limit=limit if limit is not None else 60, offset=offset if offset is not None else 0)
+        else:
+            result = collect(
+                query,
+                source_ids=source_ids,
+                limit=limit if limit is not None else 60,
+                offset=offset if offset is not None else 0,
+            )
         _emit(result)
         return 0
 

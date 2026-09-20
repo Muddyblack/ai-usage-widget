@@ -4,6 +4,7 @@ import "../../hyprland"
 import "../../hyprland/ProviderRegistry.js" as ProviderRegistry
 import "../../package/contents/code/Format.js" as Format
 import "../../package/contents/code/FeatureTabs.js" as FeatureTabs
+import "../../package/contents/code/SessionSources.js" as SessionSources
 import "../../package/contents/code/UsageHistory.js" as UsageHistory
 import "../../package/contents/code/I18n.js" as I18n
 
@@ -147,6 +148,11 @@ Window {
     property string sessionsError: ""
     property string sessionsNotice: ""
     property string sessionsQuery: ""
+    property var sessionsSources: []
+    property var sessionsSourceIds: []
+    property string sessionsSourceSignature: ""
+    property var sessionsActiveSourceIds: []
+    property string sessionsActiveSourceSignature: ""
     property int sessionsRequestId: 0
     readonly property int sessionsLimit: 60
     property int sessionsTotal: 0
@@ -346,7 +352,33 @@ Window {
         backend.refresh();
     }
 
-    function requestSessions(query, reconcile) {
+    function normalizeSessionSources(raw) {
+        return SessionSources.normalizeDescriptors(raw);
+    }
+
+    function sessionSourceSignature(ids) {
+        return SessionSources.signature(ids);
+    }
+
+    function setSessionsSourceIds(ids) {
+        var normalized = SessionSources.normalizeIds(ids, root.sessionsSources);
+        var signature = root.sessionSourceSignature(normalized);
+        if (signature === root.sessionsSourceSignature)
+            return;
+        root.sessionsSourceIds = normalized;
+        root.sessionsSourceSignature = signature;
+        root.sessionsOffset = 0;
+        root.sessionsTotal = 0;
+        root.sessionsHasMore = false;
+    }
+
+    function sessionSourceSelectionHasStaleIds(available) {
+        return SessionSources.hasStaleIds(root.sessionsSourceIds, available);
+    }
+
+    function requestSessions(query, reconcile, sourceIds) {
+        if (sourceIds !== undefined)
+            root.setSessionsSourceIds(sourceIds);
         var normalizedQuery = (query || "").trim();
         root.sessionsQuery = normalizedQuery;
         root.sessionsOffset = 0;
@@ -354,22 +386,52 @@ Window {
         root.sessionsHasMore = false;
         root.sessionsActiveOffset = 0;
         root.sessionsActiveAppend = false;
+        root.sessionsActiveSourceIds = root.sessionsSourceIds.slice(0);
+        root.sessionsActiveSourceSignature = root.sessionsSourceSignature;
         root.sessionsRequestId += 1;
         root.sessionsLoading = true;
         root.sessionsError = "";
         root.sessionsNotice = "";
-        if (reconcile)
-            backend.refreshSessionsAndQuery(normalizedQuery, root.sessionsRequestId, 0);
-        else
+        if (reconcile) {
+            if (root.sessionsActiveSourceIds.length > 0)
+                backend.refreshSessionsAndQuery(normalizedQuery, root.sessionsRequestId, 0, root.sessionsActiveSourceIds);
+            else
+                backend.refreshSessionsAndQuery(normalizedQuery, root.sessionsRequestId, 0);
+        } else if (root.sessionsActiveSourceIds.length > 0) {
+            backend.refreshSessions(normalizedQuery, root.sessionsRequestId, 0, root.sessionsActiveSourceIds);
+        } else {
             backend.refreshSessions(normalizedQuery, root.sessionsRequestId, 0);
+        }
     }
 
-    function refreshSessions(query) {
-        root.requestSessions(query, false);
+    function refreshSessions(query, offset, append, sourceIds) {
+        root.requestSessions(query, false, sourceIds);
     }
 
-    function reconcileSessions(query) {
-        root.requestSessions(query, true);
+    function querySessions(query, offset, append, sourceIds) {
+        if (append !== true) {
+            root.requestSessions(query, false, sourceIds);
+            return;
+        }
+        if (sourceIds !== undefined)
+            root.setSessionsSourceIds(sourceIds);
+        root.sessionsQuery = (query || "").trim();
+        root.sessionsActiveOffset = offset === undefined ? 0 : offset;
+        root.sessionsActiveAppend = true;
+        root.sessionsActiveSourceIds = root.sessionsSourceIds.slice(0);
+        root.sessionsActiveSourceSignature = root.sessionsSourceSignature;
+        root.sessionsRequestId += 1;
+        root.sessionsLoading = true;
+        root.sessionsError = "";
+        root.sessionsNotice = "";
+        if (root.sessionsActiveSourceIds.length > 0)
+            backend.refreshSessions(root.sessionsQuery, root.sessionsRequestId, root.sessionsActiveOffset, root.sessionsActiveSourceIds);
+        else
+            backend.refreshSessions(root.sessionsQuery, root.sessionsRequestId, root.sessionsActiveOffset);
+    }
+
+    function reconcileSessions(query, sourceIds) {
+        root.requestSessions(query, true, sourceIds);
     }
 
     function loadMoreSessions() {
@@ -378,11 +440,16 @@ Window {
         var offset = root.sessionsOffset + root.sessionsLimit;
         root.sessionsActiveOffset = offset;
         root.sessionsActiveAppend = true;
+        root.sessionsActiveSourceIds = root.sessionsSourceIds.slice(0);
+        root.sessionsActiveSourceSignature = root.sessionsSourceSignature;
         root.sessionsRequestId += 1;
         root.sessionsLoading = true;
         root.sessionsError = "";
         root.sessionsNotice = "";
-        backend.refreshSessions(root.sessionsQuery, root.sessionsRequestId, offset);
+        if (root.sessionsSourceIds.length > 0)
+            backend.refreshSessions(root.sessionsQuery, root.sessionsRequestId, offset, root.sessionsSourceIds);
+        else
+            backend.refreshSessions(root.sessionsQuery, root.sessionsRequestId, offset);
     }
 
     // Rows with an empty openKey (Muse) render no button at all.
@@ -498,7 +565,7 @@ Window {
         }
 
         function onSessionsReady(text, query, requestId) {
-            if (requestId !== root.sessionsRequestId || query !== root.sessionsQuery)
+            if (requestId !== root.sessionsRequestId || query !== root.sessionsQuery || root.sessionsActiveSourceSignature !== root.sessionsSourceSignature)
                 return;
             root.sessionsLoading = false;
             try {
@@ -508,6 +575,21 @@ Window {
                     root.sessions = data.sessions || [];
                 } else {
                     var page = data.sessions || [];
+                    var responseSources = root.normalizeSessionSources(data.sources);
+                    var staleSelection = root.sessionSourceSelectionHasStaleIds(responseSources);
+                    root.sessionsSources = responseSources;
+                    if (staleSelection) {
+                        root.sessionsSourceIds = [];
+                        root.sessionsSourceSignature = "";
+                        root.sessionsRequestId += 1;
+                        root.sessions = [];
+                        root.sessionsOffset = 0;
+                        root.sessionsTotal = 0;
+                        root.sessionsHasMore = false;
+                        root.sessionsLoading = true;
+                        root.requestSessions(root.sessionsQuery, false, []);
+                        return;
+                    }
                     root.sessionsTotal = Number(data.total) || 0;
                     root.sessionsOffset = Number(data.offset) || root.sessionsActiveOffset;
                     root.sessionsHasMore = data.hasMore === true;

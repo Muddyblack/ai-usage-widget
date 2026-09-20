@@ -77,30 +77,42 @@ enum Backend {
     /// Recent local agent sessions for the optional Sessions view, from the
     /// already-reconciled cache.
     static func sessions(
-        _ query: String = "", limit: Int? = nil, offset: Int? = nil
+        _ query: String = "", limit: Int? = nil, offset: Int? = nil, sourceIds: [String] = []
     ) throws -> LocalSessions {
         var arguments = ["--sessions", "--query-only", "--query", query]
-        appendSessionPagination(to: &arguments, limit: limit, offset: offset)
+        appendSessionArguments(to: &arguments, sourceIds: sourceIds, limit: limit, offset: offset)
         return try decodeSessions(arguments: arguments)
     }
 
     /// Reconcile every local session provider, then return the requested page.
     static func refreshSessions(
-        _ query: String = "", limit: Int? = nil, offset: Int? = nil
+        _ query: String = "", limit: Int? = nil, offset: Int? = nil, sourceIds: [String] = []
     ) throws -> LocalSessions {
         var arguments = ["--sessions", "--refresh", "--query", query]
-        appendSessionPagination(to: &arguments, limit: limit, offset: offset)
+        appendSessionArguments(to: &arguments, sourceIds: sourceIds, limit: limit, offset: offset)
         return try decodeSessions(arguments: arguments)
     }
 
-    private static func appendSessionPagination(
-        to arguments: inout [String], limit: Int?, offset: Int?
+    private static func appendSessionArguments(
+        to arguments: inout [String], sourceIds: [String], limit: Int?, offset: Int?
     ) {
+        let normalizedSourceIds = normalizedSessionSourceIDs(sourceIds)
+        if !normalizedSourceIds.isEmpty {
+            arguments += ["--source", normalizedSourceIds.joined(separator: ",")]
+        }
         if let limit {
             arguments += ["--limit", String(limit)]
         }
         if let offset {
             arguments += ["--offset", String(offset)]
+        }
+    }
+
+    static func normalizedSessionSourceIDs(_ sourceIds: [String]) -> [String] {
+        sourceIds.reduce(into: [String]()) { result, sourceId in
+            let normalized = sourceId.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !normalized.isEmpty, !result.contains(normalized) else { return }
+            result.append(normalized)
         }
     }
 

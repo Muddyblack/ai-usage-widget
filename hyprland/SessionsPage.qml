@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic as QC
+import "../package/contents/code/SessionSources.js" as SessionSources
 
 ColumnLayout {
     id: page
@@ -16,22 +17,85 @@ ColumnLayout {
     readonly property string searchQuery: (filterText || "").trim()
     readonly property int sessionsTotal: shell.sessionsTotal || 0
     property double clockMs: Date.now()
+    readonly property var sessionSources: shell.sessionsSources || []
+    readonly property var selectedSourceIds: shell.sessionsSourceIds || []
+    readonly property bool sourceSelectionIsAll: selectedSourceIds.length === 0
+    property var pendingSourceIds: []
+    readonly property bool pendingSourceSelectionIsAll: page.pendingSourceIds.length === 0
+    readonly property var sourceOptions: {
+        var options = [];
+        if (page.sessionSources.length > 1)
+            options.push({
+                id: "",
+                label: shell.i18n("All sources"),
+                isAll: true
+            });
+        for (var i = 0; i < page.sessionSources.length; i++)
+            options.push({
+                id: page.sessionSources[i].id,
+                label: page.sessionSources[i].label,
+                isAll: false
+            });
+        return options;
+    }
+    readonly property string sourceSummary: {
+        if (page.sessionSources.length === 0 || page.sourceSelectionIsAll) {
+            if (page.sessionSources.length === 1)
+                return page.sessionSources[0].label;
+            return shell.i18n("All sources");
+        }
+        if (page.selectedSourceIds.length === 1) {
+            for (var i = 0; i < page.sessionSources.length; i++)
+                if (page.sessionSources[i].id === page.selectedSourceIds[0])
+                    return page.sessionSources[i].label;
+        }
+        return page.shell.i18np("%1 source selected", "%1 sources selected", page.selectedSourceIds.length);
+    }
 
     readonly property var displayedSessions: sessions
 
+    function setSourceSelection(ids) {
+        if (typeof shell.setSessionsSourceIds === "function")
+            shell.setSessionsSourceIds(ids);
+        if (typeof shell.querySessions === "function")
+            shell.querySessions(page.searchQuery);
+    }
+
+    function stageSourceSelection(ids) {
+        page.pendingSourceIds = SessionSources.normalizeIds(ids, page.sessionSources);
+    }
+
+    function stageToggleSource(id, checked) {
+        if (page.sessionSources.length <= 1)
+            return;
+        page.stageSourceSelection(SessionSources.toggled(page.pendingSourceIds, id, checked, page.sessionSources));
+    }
+
+    function commitSourceSelection() {
+        if (SessionSources.signature(page.pendingSourceIds) === SessionSources.signature(page.selectedSourceIds))
+            return;
+        page.setSourceSelection(page.pendingSourceIds);
+    }
+
+    function toggleSource(id, checked) {
+        if (page.sessionSources.length <= 1)
+            return;
+        page.setSourceSelection(SessionSources.toggled(page.selectedSourceIds, id, checked, page.sessionSources));
+    }
+
     function reconcileDisplayedSessions() {
         if (typeof shell.reconcileSessions === "function")
-            shell.reconcileSessions(page.searchQuery);
+            shell.reconcileSessions(page.searchQuery, page.selectedSourceIds);
         else if (typeof shell.refreshSessions === "function")
-            shell.refreshSessions(page.searchQuery);
+            shell.refreshSessions(page.searchQuery, undefined, false, page.selectedSourceIds);
     }
 
     function refreshDisplayedSessionsOnVisibility() {
         if (typeof shell.reconcileSessions === "function") {
             if (shell.sessionsViewVisible === true && shell.sessionsLoading !== true)
-                shell.reconcileSessions(page.searchQuery);
+                shell.reconcileSessions(page.searchQuery, page.selectedSourceIds);
         } else if (typeof shell.refreshSessions === "function") {
-            shell.refreshSessions(page.searchQuery);
+            shell.refreshSessions(page.searchQuery, undefined, false, page.selectedSourceIds);
         }
     }
 
@@ -47,10 +111,10 @@ ColumnLayout {
         interval: 300
         repeat: false
         onTriggered: {
-            if (typeof shell.querySessions === "function")
-                shell.querySessions(page.searchQuery);
-            else if (typeof shell.refreshSessions === "function")
-                shell.refreshSessions(page.searchQuery);
+            if (typeof page.shell.querySessions === "function")
+                page.shell.querySessions(page.searchQuery, undefined, false, page.selectedSourceIds);
+            else if (typeof page.shell.refreshSessions === "function")
+                page.shell.refreshSessions(page.searchQuery, undefined, false, page.selectedSourceIds);
         }
     }
 
@@ -102,33 +166,85 @@ ColumnLayout {
         }
     }
 
-    Rectangle {
-        visible: page.sessions.length > 0 || page.searchQuery !== "" || searchTimer.running || page.loading
+    RowLayout {
+        visible: page.sessions.length > 0 || page.searchQuery !== "" || searchTimer.running || page.loading || page.sessionSources.length > 0
         Layout.fillWidth: true
-        Layout.preferredHeight: 28
-        radius: 6
-        color: Qt.rgba(1, 1, 1, 0.06)
-        border.width: 1
-        border.color: searchField.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.6) : Qt.rgba(1, 1, 1, 0.12)
+        spacing: 6
 
-        QC.TextField {
-            id: searchField
-            anchors.fill: parent
-            anchors.leftMargin: 8
-            anchors.rightMargin: 8
-            text: page.filterText
-            font.pixelSize: 11
-            color: "#f8fafc"
-            placeholderText: shell.i18n("Search sessions…")
-            placeholderTextColor: Qt.rgba(1, 1, 1, 0.35)
-            verticalAlignment: TextInput.AlignVCenter
-            background: null
-            selectByMouse: true
-            onTextEdited: {
-                page.filterText = text;
-                if (typeof shell.setSessionsQuery === "function")
-                    shell.setSessionsQuery(page.searchQuery);
-                searchTimer.restart();
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            radius: 6
+            color: Qt.rgba(1, 1, 1, 0.06)
+            border.width: 1
+            border.color: searchField.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.6) : Qt.rgba(1, 1, 1, 0.12)
+
+            QC.TextField {
+                id: searchField
+                anchors.fill: parent
+                anchors.leftMargin: 8
+                anchors.rightMargin: 8
+                text: page.filterText
+                font.pixelSize: 11
+                color: "#f8fafc"
+                placeholderText: page.shell.i18n("Search sessions…")
+                placeholderTextColor: Qt.rgba(1, 1, 1, 0.35)
+                verticalAlignment: TextInput.AlignVCenter
+                background: null
+                selectByMouse: true
+                Accessible.name: page.shell.i18n("Search sessions")
+                onTextEdited: {
+                    page.filterText = searchField.text;
+                    if (typeof page.shell.setSessionsQuery === "function")
+                        page.shell.setSessionsQuery(page.searchQuery);
+                    searchTimer.restart();
+                }
+            }
+        }
+
+        SettingsButton {
+            id: sourceSelectorButton
+            visible: page.sessionSources.length > 0
+            Layout.preferredWidth: 112
+            Layout.minimumWidth: 78
+            Layout.maximumWidth: 132
+            text: page.sourceSummary
+            Accessible.name: page.shell.i18n("Filter sessions by source")
+            onClicked: sourcePopup.open()
+
+            QC.Popup {
+                id: sourcePopup
+                x: Math.max(0, sourceSelectorButton.width - sourcePopup.width)
+                y: sourceSelectorButton.height + 4
+                width: Math.min(220, Math.max(150, page.width))
+                height: Math.min(320, Math.max(1, page.height - sourceSelectorButton.height - 8))
+                padding: 6
+                focus: true
+                modal: false
+                closePolicy: QC.Popup.CloseOnEscape | QC.Popup.CloseOnPressOutside
+                onOpened: page.pendingSourceIds = page.selectedSourceIds.slice(0)
+                onClosed: page.commitSourceSelection()
+
+                contentItem: QC.ScrollView {
+                    clip: true
+                    QC.ScrollBar.horizontal.policy: QC.ScrollBar.AlwaysOff
+
+                    ColumnLayout {
+                        width: sourcePopup.availableWidth
+                        spacing: 0
+                        Repeater {
+                            model: page.sourceOptions
+                            delegate: QC.CheckBox {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                text: modelData.label
+                                checked: modelData.isAll ? page.pendingSourceSelectionIsAll : (page.pendingSourceSelectionIsAll || page.pendingSourceIds.indexOf(modelData.id) >= 0)
+                                Accessible.name: modelData.label
+                                onClicked: modelData.isAll ? page.stageSourceSelection([]) : page.stageToggleSource(modelData.id, checked)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

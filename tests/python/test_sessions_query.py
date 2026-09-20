@@ -9,9 +9,9 @@ from aiusage import __main__ as backend
 from aiusage import sessions
 
 
-def _entry(title: str, activity: int, *, open_key: str = ""):
+def _entry(title: str, activity: int, *, provider: str = "test", open_key: str = ""):
     return {
-        "provider": "test",
+        "provider": provider,
         "title": title,
         "sessionName": "Test",
         "state": "idle",
@@ -37,6 +37,85 @@ def _empty_collectors() -> contextlib.ExitStack:
 
 
 class SessionQueryTest(IsolatedHomeTest):
+    def test_no_source_filter_adds_canonical_cached_source_descriptors(self):
+        rows = [
+            _entry("Codex preview", 5, provider="openai"),
+            _entry("Antigravity preview", 4, provider="antigravity"),
+            _entry("OpenCode preview", 3, provider="opencode"),
+            _entry("Claude preview", 2, provider="claude"),
+            _entry("Cline preview", 1, provider="cline"),
+        ]
+        with _empty_collectors(), mock.patch.object(sessions, "_claude_entries", return_value=rows):
+            sessions.refresh_sessions()
+            result = sessions.collect_sessions("")
+
+        self.assertEqual(result["total"], 5)
+        self.assertEqual(len(result["sessions"]), 5)
+        self.assertEqual(
+            result["sources"],
+            [
+                {"id": "cline", "label": "Cline"},
+                {"id": "openai", "label": "Codex"},
+                {"id": "claude", "label": "Claude Code"},
+                {"id": "opencode", "label": "OpenCode"},
+                {"id": "antigravity", "label": "Antigravity"},
+            ],
+        )
+
+    def test_one_source_filter_uses_empty_source_selection_as_all(self):
+        rows = [
+            _entry("Codex", 3, provider="openai"),
+            _entry("Antigravity", 2, provider="antigravity"),
+            _entry("OpenCode", 1, provider="opencode"),
+        ]
+        with _empty_collectors(), mock.patch.object(sessions, "_claude_entries", return_value=rows):
+            sessions.refresh_sessions()
+            all_rows = sessions.collect_sessions("", source_ids=[])
+            selected = sessions.collect_sessions("", source_ids=["openai"])
+
+        self.assertEqual(all_rows["total"], 3)
+        self.assertEqual([row["provider"] for row in selected["sessions"]], ["openai"])
+        self.assertEqual(selected["total"], 1)
+        self.assertEqual(selected["offset"], 0)
+        self.assertEqual(selected["limit"], 60)
+        self.assertFalse(selected["hasMore"])
+        self.assertEqual(
+            selected["sources"],
+            [
+                {"id": "openai", "label": "Codex"},
+                {"id": "opencode", "label": "OpenCode"},
+                {"id": "antigravity", "label": "Antigravity"},
+            ],
+        )
+
+    def test_multiple_sources_or_with_text_search_and_exact_pagination(self):
+        rows = [
+            _entry("needle Codex", 5, provider="openai"),
+            _entry("needle Antigravity", 4, provider="antigravity"),
+            _entry("needle OpenCode", 3, provider="opencode"),
+            _entry("needle Claude", 2, provider="claude"),
+            _entry("other Codex", 1, provider="openai"),
+        ]
+        with _empty_collectors(), mock.patch.object(sessions, "_claude_entries", return_value=rows):
+            sessions.refresh_sessions()
+            result = sessions.collect_sessions("NEEDLE", source_ids=["openai", "antigravity", "opencode"], limit=2, offset=1)
+
+        self.assertEqual([row["provider"] for row in result["sessions"]], ["antigravity", "opencode"])
+        self.assertEqual(result["total"], 3)
+        self.assertTrue(result["totalExact"])
+        self.assertEqual(result["offset"], 1)
+        self.assertEqual(result["limit"], 2)
+        self.assertFalse(result["hasMore"])
+        self.assertEqual(
+            result["sources"],
+            [
+                {"id": "openai", "label": "Codex"},
+                {"id": "claude", "label": "Claude Code"},
+                {"id": "opencode", "label": "OpenCode"},
+                {"id": "antigravity", "label": "Antigravity"},
+            ],
+        )
+
     def test_empty_and_whitespace_queries_keep_newest_sixty_rows(self):
         rows = [_entry(f"row-{index}", index) for index in range(61)]
         results = []
@@ -138,6 +217,50 @@ class SessionQueryTest(IsolatedHomeTest):
 
 
 class SessionQueryCliTest(unittest.TestCase):
+    def test_source_forms_are_normalized_deduplicated_and_forwarded(self):
+        for argv in (
+            ("--sessions", "--source", "antigravity,openai,opencode,openai"),
+            ("--sessions", "--source=antigravity,openai,opencode,openai"),
+        ):
+            with (
+                self.subTest(argv=argv),
+                mock.patch(
+                    "aiusage.sessions.refresh_sessions",
+                    return_value={"updatedAt": 1, "sessions": []},
+                ) as refresh,
+                mock.patch("sys.stdout", new=io.StringIO()),
+            ):
+                self.assertEqual(backend.main([*argv, "--query=old", "--limit=5", "--offset=7"]), 0)
+
+            refresh.assert_called_once_with("old", source_ids=["openai", "opencode", "antigravity"], limit=5, offset=7)
+
+    def test_invalid_source_ids_and_source_mode_are_rejected(self):
+        for source_value in ("unknown", "", "openai,,antigravity", "openai;antigravity"):
+            with (
+                self.subTest(source_value=source_value),
+                mock.patch("aiusage.sessions.refresh_sessions") as refresh,
+                mock.patch("sys.stdout", new=io.StringIO()),
+                mock.patch("sys.stderr", new=io.StringIO()) as error,
+            ):
+                result = backend.main(["--sessions", "--source=" + source_value])
+
+            self.assertEqual(result, 2)
+            self.assertIn("source", error.getvalue())
+            self.assertNotIn("unknown argument", error.getvalue())
+            refresh.assert_not_called()
+
+        with (
+            mock.patch("aiusage.sessions.refresh_sessions") as refresh,
+            mock.patch("sys.stdout", new=io.StringIO()),
+            mock.patch("sys.stderr", new=io.StringIO()) as error,
+        ):
+            result = backend.main(["--source", "openai"])
+
+        self.assertEqual(result, 2)
+        self.assertIn("--sessions", error.getvalue())
+        self.assertNotIn("unknown argument", error.getvalue())
+        refresh.assert_not_called()
+
     def test_space_and_equals_query_forms_are_forwarded_to_sessions(self):
         for argv in (("--sessions", "--query", "old"), ("--sessions", "--query=old")):
             with (
@@ -231,7 +354,11 @@ class SessionQueryCliTest(unittest.TestCase):
         with (
             mock.patch(
                 "aiusage.sessions.refresh_sessions",
-                return_value={"updatedAt": 1, "sessions": [entry]},
+                return_value={
+                    "updatedAt": 1,
+                    "sessions": [entry],
+                    "sources": [{"id": "openai", "label": "Codex"}],
+                },
             ),
             mock.patch("sys.stdout", new=io.StringIO()) as output,
         ):

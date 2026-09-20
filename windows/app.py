@@ -72,20 +72,28 @@ _env_lock = threading.Lock()
 _DEMO_ENVELOPE: str | None = None
 
 
-def collect_sessions_json(query: str = "", limit: int | None = 60, offset: int = 0) -> str:
+def collect_sessions_json(query: str = "", limit: int | None = 60, offset: int = 0, source_ids=None) -> str:
     with _env_lock:
         saved = dict(os.environ)
         try:
-            return json.dumps(collect_sessions(query, limit=limit, offset=offset), separators=(",", ":"), ensure_ascii=False)
+            if source_ids is None:
+                result = collect_sessions(query, limit=limit, offset=offset)
+            else:
+                result = collect_sessions(query, limit=limit, offset=offset, source_ids=source_ids)
+            return json.dumps(result, separators=(",", ":"), ensure_ascii=False)
         finally:
             _restore_environ(saved)
 
 
-def refresh_sessions_json(query: str = "", limit: int | None = 60, offset: int = 0) -> str:
+def refresh_sessions_json(query: str = "", limit: int | None = 60, offset: int = 0, source_ids=None) -> str:
     with _env_lock:
         saved = dict(os.environ)
         try:
-            return json.dumps(refresh_sessions(query, limit=limit, offset=offset), separators=(",", ":"), ensure_ascii=False)
+            if source_ids is None:
+                result = refresh_sessions(query, limit=limit, offset=offset)
+            else:
+                result = refresh_sessions(query, limit=limit, offset=offset, source_ids=source_ids)
+            return json.dumps(result, separators=(",", ":"), ensure_ascii=False)
         finally:
             _restore_environ(saved)
 
@@ -398,34 +406,47 @@ class Backend(QObject):
     @Slot(str)
     @Slot(str, int)
     @Slot(str, int, int)
-    def refreshSessions(self, query="", request_id=0, offset=0):
+    @Slot(str, int, int, list)
+    def refreshSessions(self, query="", request_id=0, offset=0, source_ids=None):
         if request_id == 0:
             self._sessions_request_id += 1
             request_id = self._sessions_request_id
+        elif request_id <= self._sessions_request_id:
+            return
+        else:
+            self._sessions_request_id = request_id
         normalized_query = query.strip()
         previous_session_future = self._sessions_future
         if previous_session_future is not None:
             previous_session_future.cancel()
-        self._sessions_future = self._pool.submit(self._refresh_sessions, normalized_query, request_id, offset)
+        self._sessions_future = self._pool.submit(self._refresh_sessions, normalized_query, request_id, offset, False, source_ids)
 
     @Slot()
     @Slot(str)
     @Slot(str, int)
     @Slot(str, int, int)
-    def refreshSessionsAndQuery(self, query="", request_id=0, offset=0):
+    @Slot(str, int, int, list)
+    def refreshSessionsAndQuery(self, query="", request_id=0, offset=0, source_ids=None):
         if request_id == 0:
             self._sessions_request_id += 1
             request_id = self._sessions_request_id
+        elif request_id <= self._sessions_request_id:
+            return
+        else:
+            self._sessions_request_id = request_id
         normalized_query = query.strip()
         previous_session_future = self._sessions_future
         if previous_session_future is not None:
             previous_session_future.cancel()
-        self._sessions_future = self._pool.submit(self._refresh_sessions, normalized_query, request_id, offset, True)
+        self._sessions_future = self._pool.submit(self._refresh_sessions, normalized_query, request_id, offset, True, source_ids)
 
-    def _refresh_sessions(self, query, request_id, offset, refresh=False):
+    def _refresh_sessions(self, query, request_id, offset, refresh=False, source_ids=None):
         try:
             helper = refresh_sessions_json if refresh else collect_sessions_json
-            result = helper(query, limit=60, offset=offset)
+            if source_ids is None:
+                result = helper(query, limit=60, offset=offset)
+            else:
+                result = helper(query, source_ids=source_ids, limit=60, offset=offset)
         except Exception as exc:
             self._sessionsCompleted.emit("", str(exc), query, request_id)
         else:
@@ -433,6 +454,8 @@ class Backend(QObject):
 
     @Slot(str, str, str, int)
     def _finish_sessions(self, result, error, query, request_id):
+        if request_id != self._sessions_request_id:
+            return
         if error:
             self.sessionsReady.emit(json.dumps({"error": error, "sessions": []}), query, request_id)
         else:

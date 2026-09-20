@@ -8,6 +8,7 @@ not part of this module.
 
 import hashlib
 import importlib
+import json
 import sqlite3
 import tempfile
 import unittest
@@ -88,6 +89,85 @@ def _connection(
 
 
 class SessionIndexTest(unittest.TestCase):
+    def test_source_filtering_returns_canonical_descriptors_and_exact_page_metadata(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / "sessions.sqlite3"
+            source_ids = ("antigravity", "openai", "cline", "opencode", "claude")
+            sources = [_source(root, f"{source_id}.jsonl", source_id, index + 1) for index, source_id in enumerate(source_ids)]
+
+            def parse(source: Source) -> list[Row]:
+                return [
+                    {
+                        "provider": source.source_id,
+                        "title": f"Safe {source.source_id} preview",
+                        "sessionName": "Fixture",
+                        "state": "idle",
+                        "lastActivityAt": source.mtime_ns,
+                        "detail": "safe detail",
+                        "openKey": "opaque-key",
+                    }
+                ]
+
+            index = _index_class()(cache)
+            index.reconcile(sources, parse)
+            result = index.query("preview", source_ids=["opencode", "openai"], limit=1, offset=1)
+
+        self.assertEqual(
+            result["sources"],
+            [
+                {"id": "cline", "label": "Cline"},
+                {"id": "openai", "label": "Codex"},
+                {"id": "claude", "label": "Claude Code"},
+                {"id": "opencode", "label": "OpenCode"},
+                {"id": "antigravity", "label": "Antigravity"},
+            ],
+        )
+        self.assertEqual([row["provider"] for row in result["sessions"]], ["openai"])
+        self.assertEqual(result["total"], 2)
+        self.assertTrue(result["totalExact"])
+        self.assertEqual(result["offset"], 1)
+        self.assertEqual(result["limit"], 1)
+        self.assertFalse(result["hasMore"])
+
+    def test_source_metadata_and_rows_exclude_private_fixture_values(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = _source(root, "private-transcript.jsonl", "raw-session-id")
+            index = _index_class()(root / "sessions.sqlite3")
+            index.reconcile(
+                [source],
+                lambda _source: [
+                    {
+                        "provider": "openai",
+                        "title": "Safe preview",
+                        "sessionName": "Codex",
+                        "state": "idle",
+                        "lastActivityAt": 1,
+                        "detail": "Safe detail",
+                        "openKey": "opaque-key",
+                        "fullTitle": "private full title transcript",
+                        "path": "/private/session/path",
+                        "rawId": "raw-session-id",
+                        "transcript": "private transcript body",
+                        "credential": "secret-token",
+                    }
+                ],
+            )
+            result = index.query(source_ids=[])
+
+        encoded = json.dumps(result, sort_keys=True)
+        for private_value in (
+            "/private/session/path",
+            "raw-session-id",
+            "private transcript body",
+            "private full title transcript",
+            "secret-token",
+            "opaque-key",
+        ):
+            self.assertNotIn(private_value, encoded)
+        self.assertEqual(result["sources"], [{"id": "openai", "label": "Codex"}])
+
     def test_unchanged_manifest_does_not_run_checkpoint_maintenance(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
