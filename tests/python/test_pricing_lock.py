@@ -41,9 +41,15 @@ class PricingLockTest(IsolatedHomeTest):
             with (
                 mock.patch.object(pricing_lock.time, "monotonic", side_effect=[0, 31]),
                 mock.patch.object(pricing_lock.time, "time", return_value=100),
-                mock.patch.object(os, "kill", side_effect=ProcessLookupError),
+                mock.patch.object(pricing_lock, "_is_process_alive", return_value=False),
             ):
                 self.assertIsNone(pricing_lock.acquire(path))
             self.assertFalse(os.path.exists(path + ".lock"))
             handle = pricing_lock.acquire(path)
             pricing_lock.release(path, handle)
+
+    def test_is_process_alive(self):
+        self.assertTrue(pricing_lock._is_process_alive(os.getpid()))
+        with mock.patch.object(os, "kill", side_effect=ProcessLookupError):
+            if os.name != "nt":
+                self.assertFalse(pricing_lock._is_process_alive(999999999))

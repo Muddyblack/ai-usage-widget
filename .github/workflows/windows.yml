@@ -90,18 +90,6 @@ jobs:
         run: python -m pip install -r windows/requirements.txt
 
       - name: unit tests
-        id: unit-tests
-        continue-on-error: true
-        env:
-          REQUIRE_FRONTEND_QT: '1'
-        run: python -m unittest discover -s tests/python -v
-
-      # Windows runners occasionally drop the job mid-run with a spurious
-      # KeyboardInterrupt unrelated to the tests themselves (it lands at a
-      # random point, e.g. inside unittest.mock's __init__) — a rerun always
-      # passes. Retry once in place rather than requiring a manual rerun.
-      - name: retry unit tests
-        if: steps.unit-tests.outcome == 'failure'
         env:
           REQUIRE_FRONTEND_QT: '1'
         run: python -m unittest discover -s tests/python -v
