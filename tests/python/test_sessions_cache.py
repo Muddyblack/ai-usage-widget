@@ -183,6 +183,21 @@ class SessionCacheIntegrationTest(unittest.TestCase):
         self.assertFalse(result["hasMore"])
         self.assertEqual(result["sources"], [])
 
+    def test_unchanged_manifest_does_not_recollect_on_refresh(self):
+        with tempfile.TemporaryDirectory() as directory:
+            rows = [_row("first", 2)]
+            with (
+                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch.object(session_cache, "build_manifest", return_value=self._manifest(1)),
+                mock.patch.object(sessions, "_collect_all_sessions", return_value=(rows, True)) as collect,
+            ):
+                sessions.refresh_sessions()
+                with mock.patch.object(sessions, "_collect_all_sessions", side_effect=AssertionError("cache miss")):
+                    result = sessions.refresh_sessions()
+
+        collect.assert_called_once()
+        self.assertEqual([row["title"] for row in result["sessions"]], ["first"])
+
     def test_manifest_does_not_use_opencode_cli_discovery(self):
         with mock.patch.object(
             session_manifest.opencode,

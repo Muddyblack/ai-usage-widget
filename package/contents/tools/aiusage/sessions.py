@@ -37,7 +37,7 @@ from collections.abc import Sequence
 from . import billing, pricing
 from .contract import epoch_of, num
 from .providers import antigravity_sessions, opencode
-from .providers.cline import get_cline_sessions
+from .providers.cline import get_cline_session_records
 from .providers.grok import grok_home
 from .providers.muse import sessions_root as muse_sessions_root
 from .providers.openai_credentials import codex_home
@@ -160,13 +160,11 @@ def _open_key(provider, session_id):
 
 
 def _cline_entries(*, include_all=False):
-    raw = get_cline_sessions().get("sessions") or []
-    ids = _cline_ids()
+    raw = get_cline_session_records()
     if not include_all:
         raw = raw[-_MAX_SESSIONS:]
-        ids = ids[-_MAX_SESSIONS:]
     out = []
-    for index, s in enumerate(raw):
+    for s in raw:
         ended = num(s.get("endedAt")) > 0
         last = num(s.get("endedAt")) or num(s.get("startedAt"))
         title = s.get("workspace") or s.get("model") or "Cline"
@@ -177,7 +175,7 @@ def _cline_entries(*, include_all=False):
         model = s.get("model") or ""
         if model and model != title:
             bits.append(model)
-        session_id = ids[index] if index < len(ids) else ""
+        session_id = s.get("sessionId") or ""
         catalog_identity = _cline_catalog_identity(s.get("provider"), model)
         usage = []
         token_values = (num(s.get("input")), num(s.get("output")), num(s.get("cacheRead")), num(s.get("cacheWrite")))
@@ -210,36 +208,6 @@ def _cline_entries(*, include_all=False):
             )
         )
     return [e for e in out if e]
-
-
-def _cline_ids():
-    """Cline session ids (recorded session_id), oldest first.
-
-    Mirrors get_cline_sessions()' ordering (sorted by startedAt) so index i
-    here is index i there. Keeps the redacted entry dict free of ids.
-    """
-    root = os.environ.get("CLINE_SESSIONS_DIR") or os.path.expanduser("~/.cline/data/sessions")
-    try:
-        entries = os.listdir(root)
-    except OSError:
-        return []
-    by_start = []
-    for name in entries:
-        try:
-            with open(os.path.join(root, name, name + ".json"), encoding="utf-8") as f:
-                data = json.load(f)
-        except (OSError, ValueError):
-            continue
-        if not isinstance(data, dict):
-            continue
-        started = epoch_of(data.get("started_at") or "")
-        if started <= 0:
-            continue
-        # Resume wants the id the CLI itself recorded, not the dir name.
-        session_id = data.get("session_id") if isinstance(data.get("session_id"), str) and data.get("session_id") else name
-        by_start.append((started, name, session_id))
-    by_start.sort(key=lambda item: (item[0], item[1]))
-    return [sid for _started, _name, sid in by_start]
 
 
 def _muse_entries(*, include_all=False):

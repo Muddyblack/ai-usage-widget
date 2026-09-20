@@ -157,8 +157,11 @@ class OpenCodeSessionCostTest(IsolatedHomeTest):
                     "cached_catalog",
                     return_value={"anthropic": {"gpt-test": {}, "claude-sonnet-4.5": {"input": 2, "output": 8}}, "openai": {}, "openrouter": {}},
                 ),
-                mock.patch.object(sessions, "get_cline_sessions", return_value={"sessions": [cline_record]}),
-                mock.patch.object(sessions, "_cline_ids", return_value=["cline-session"]),
+                mock.patch.object(
+                    sessions,
+                    "get_cline_session_records",
+                    return_value=[{**cline_record, "sessionId": "cline-session"}],
+                ),
                 mock.patch.object(sessions, "_muse_entries", return_value=[]),
                 mock.patch.object(sessions, "_codex_entries", return_value=[]),
                 mock.patch.object(sessions, "_grok_entries", return_value=[]),

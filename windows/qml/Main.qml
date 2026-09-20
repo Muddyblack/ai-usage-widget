@@ -155,6 +155,7 @@ Window {
     property var sessionsSources: []
     property var sessionsSourceIds: []
     property string sessionsSourceSignature: ""
+    property string sessionsSourceResetSignature: ""
     property var sessionsActiveSourceIds: []
     property string sessionsActiveSourceSignature: ""
     property int sessionsRequestId: 0
@@ -590,8 +591,12 @@ Window {
                     var staleSelection = root.sessionSourceSelectionHasStaleIds(responseSources);
                     root.sessionsSources = responseSources;
                     if (staleSelection) {
+                        var staleSignature = root.sessionsSourceSignature;
+                        if (root.sessionsSourceResetSignature === staleSignature)
+                            return;
                         root.sessionsSourceIds = [];
                         root.sessionsSourceSignature = "";
+                        root.sessionsSourceResetSignature = staleSignature;
                         root.sessionsRequestId += 1;
                         root.sessions = [];
                         root.sessionsOffset = 0;
@@ -601,6 +606,7 @@ Window {
                         root.requestSessions(root.sessionsQuery, false, []);
                         return;
                     }
+                    root.sessionsSourceResetSignature = "";
                     root.sessionsTotal = Number(data.total) || 0;
                     root.sessionsOffset = Number(data.offset) || root.sessionsActiveOffset;
                     root.sessionsHasMore = data.hasMore === true;

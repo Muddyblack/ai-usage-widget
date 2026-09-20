@@ -66,8 +66,11 @@ class ClineRegressionTest(unittest.TestCase):
         }
         provider = normalize_cline({"now": 1_789_047_600, "inputs": {"usage": {"sessions": [record]}}})
         with (
-            mock.patch.object(sessions, "get_cline_sessions", return_value={"sessions": [record]}),
-            mock.patch.object(sessions, "_cline_ids", return_value=["synthetic-session"]),
+            mock.patch.object(
+                sessions,
+                "get_cline_session_records",
+                return_value=[{**record, "sessionId": "synthetic-session"}],
+            ),
             mock.patch.object(
                 sessions.pricing,
                 "cached_catalog",

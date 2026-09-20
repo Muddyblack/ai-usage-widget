@@ -68,8 +68,14 @@ function toggled(ids, id, checked, available) {
     var index = next.indexOf(id);
     if (checked && index < 0)
         next.push(id);
-    else if (!checked && index >= 0)
+    else if (!checked && index >= 0) {
+        if (next.length === 1)
+            // Unchecking the last explicitly-selected source would normalize
+            // back to [], which is the same sentinel as "all sources" — keep
+            // at least one source selected so that state stays representable.
+            return current;
         next.splice(index, 1);
+    }
     return normalizeIds(next, sources);
 }
 

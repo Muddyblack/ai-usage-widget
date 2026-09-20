@@ -94,9 +94,10 @@ class ClaudeSessionTokensTest(unittest.TestCase):
 
 class ClineSessionCostTest(unittest.TestCase):
     def _entry_for_record(self, record):
-        with (
-            mock.patch.object(sessions, "get_cline_sessions", return_value={"sessions": [record]}),
-            mock.patch.object(sessions, "_cline_ids", return_value=["synthetic-session"]),
+        with mock.patch.object(
+            sessions,
+            "get_cline_session_records",
+            return_value=[{**record, "sessionId": "synthetic-session"}],
         ):
             return sessions._cline_entries()[0]
 
