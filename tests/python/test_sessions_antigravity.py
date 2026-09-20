@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import tempfile
@@ -29,6 +30,37 @@ def _write_ide(root: str, session_id: str, content: str, name: str = "task.md") 
 
 
 class AntigravityDiscoveryTest(unittest.TestCase):
+    def test_transcript_reads_stop_at_line_or_total_byte_budget(self):
+        first = json.dumps({"step_index": 0, "type": "USER_INPUT", "content": "Safe title"}).encode() + b"\n"
+        for oversized_line in (False, True):
+            with self.subTest(oversized_line=oversized_line):
+                tail = b"x" * 10_000 if oversized_line else first * 100
+                stream = io.BytesIO(first + tail)
+                reader = mock.MagicMock(wraps=stream)
+                reader.__enter__.return_value = reader
+                budget = 2 * len(first)
+                with (
+                    mock.patch.object(Path, "open", return_value=reader),
+                    mock.patch.object(antigravity_sessions, "_mtime", return_value=100),
+                    mock.patch.object(antigravity_sessions, "_MAX_LINE_BYTES", len(first)),
+                    mock.patch.object(antigravity_sessions, "_MAX_TRANSCRIPT_BYTES", budget),
+                ):
+                    record = antigravity_sessions._read_cli(_CLI_ID, Path("unused.jsonl"))
+                self.assertEqual(record.title, "Safe title")
+                self.assertLessEqual(stream.tell(), budget + 1)
+                self.assertEqual(reader.readline.call_count, 2)
+
+    def test_editor_reads_only_title_prefix(self):
+        with tempfile.TemporaryDirectory() as root:
+            artifact = Path(_write_ide(root, _IDE_ID, "# Safe heading\n"))
+            stream = io.StringIO("# Safe heading\n" + "x" * 100_000)
+            reader = mock.MagicMock(wraps=stream)
+            reader.__enter__.return_value = reader
+            with mock.patch.object(Path, "open", return_value=reader):
+                record = antigravity_sessions._read_editor(_IDE_ID, artifact.parent)
+            self.assertEqual(record.title, "Safe heading")
+            self.assertLessEqual(stream.tell(), antigravity_sessions._MAX_TITLE_CHARS)
+
     def test_reads_cli_transcript_and_ide_artifact_without_claiming_foreign_jsonl(self):
         transcript = "\n".join(
             [

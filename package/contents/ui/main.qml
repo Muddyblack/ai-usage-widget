@@ -8,6 +8,7 @@ import org.kde.plasma.plasma5support as Plasma5Support
 import org.kde.plasma.plasmoid
 import "../code/FeatureTabs.js" as FeatureTabs
 import "../code/Format.js" as Format
+import "../code/PanelRotation.js" as PanelRotation
 import "../code/Shell.js" as Shell
 import "../code/UsageHistory.js" as UsageHistory
 
@@ -42,6 +43,8 @@ PlasmoidItem {
     // pinned service; without pins it mirrors the in-popup active tab — but
     // never a feature view, which has no panel meter of its own.
     readonly property string panelTab: {
+        if (root.panelRotationEnabled)
+            return root.panelRotationProviderId !== "" ? root.panelRotationProviderId : root.pinnedTabs[0];
         if (root.pinnedTabs.length > 0)
             return root.pinnedTabs[0];
 
@@ -684,6 +687,20 @@ PlasmoidItem {
         }
         return pins;
     }
+    property int panelRotationIntervalSec: PanelRotation.normalizeIntervalSec(Plasmoid.configuration.panelRotationIntervalSec)
+    property string panelRotationProviderId: ""
+    readonly property bool panelRotationEnabled: PanelRotation.isEnabled(root.panelRotationIntervalSec, root.pinnedTabs)
+
+    function normalizePanelRotation() {
+        root.panelRotationProviderId = PanelRotation.normalizeSelection(root.pinnedTabs, root.panelRotationProviderId);
+    }
+
+    function rotatePanelProvider() {
+        root.panelRotationProviderId = PanelRotation.nextSelection(root.pinnedTabs, root.panelRotationProviderId);
+    }
+
+    onPinnedTabsChanged: root.normalizePanelRotation()
+    onPanelRotationIntervalSecChanged: root.normalizePanelRotation()
     // ── Cost aggregation ─────────────────────────────────────────────────────────
     // Combined spend across paid API surfaces. Claude/OpenAI are 30-day org usage;
     // OpenRouter reports all-time credit spend, so the total is a rough combined figure.
@@ -1239,7 +1256,9 @@ PlasmoidItem {
     }
 
     function panelShows(tabId) {
-        return root.pinnedTabs.length > 0 ? root.isPinned(tabId) : root.panelTab === tabId;
+        if (root.pinnedTabs.length === 0)
+            return root.panelTab === tabId;
+        return root.panelRotationEnabled ? root.panelTab === tabId : root.isPinned(tabId);
     }
 
     function togglePin(tabId) {
@@ -2200,6 +2219,7 @@ PlasmoidItem {
     Component.onDestruction: root.flushHistoryConfig()
     Component.onCompleted: {
         root.loadUsageHistory();
+        root.normalizePanelRotation();
         // Honor the first pinned service on startup by selecting its tab.
         if (root.pinnedTabs.length > 0) {
             var idx = root.enabledTabs.indexOf(root.pinnedTabs[0]);
@@ -2397,6 +2417,17 @@ PlasmoidItem {
                     }
                 }
             }
+        }
+
+        Timer {
+            id: panelRotationTimer
+
+            interval: root.panelRotationIntervalSec * 1000
+            running: root.panelRotationEnabled && !root.expanded
+            repeat: true
+            onIntervalChanged: if (running)
+                restart()
+            onTriggered: root.rotatePanelProvider()
         }
 
         RowLayout {
@@ -3078,7 +3109,8 @@ PlasmoidItem {
                             QQC2.ToolTip.delay: 400
                             onClicked: function (mouse) {
                                 if (mouse.button === Qt.RightButton) {
-                                    root.togglePin(modelData);
+                                    if (!FeatureTabs.isFeatureTab(modelData))
+                                        root.togglePin(modelData);
                                     return;
                                 }
                                 root.activeTab = index;
@@ -3155,7 +3187,7 @@ PlasmoidItem {
                             height: 11
                             source: "pin"
                             isMask: true
-                            visible: root.isPinned(modelData) || tabMouse.containsMouse || pinMouse.containsMouse
+                            visible: !FeatureTabs.isFeatureTab(modelData) && (root.isPinned(modelData) || tabMouse.containsMouse || pinMouse.containsMouse)
                             color: root.isPinned(modelData) ? root.tabColor(modelData) : Kirigami.Theme.textColor
                             opacity: root.isPinned(modelData) ? 1 : 0.4
 
