@@ -10,7 +10,17 @@ from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any, Callable, Final, Protocol, TypedDict
 
-_SEARCH_COLUMNS: Final = ("provider", "title", "session_name", "state", "detail")
+# Single source of truth for which public fields are searchable, shared with
+# the fallback (`sessions.py`) search path so the two never drift apart.
+SEARCH_FIELDS: Final = ("provider", "title", "sessionName", "state", "detail")
+_COLUMN_BY_FIELD: Final = {
+    "provider": "provider",
+    "title": "title",
+    "sessionName": "session_name",
+    "state": "state",
+    "detail": "detail",
+}
+_SEARCH_COLUMNS: Final = tuple(_COLUMN_BY_FIELD[field] for field in SEARCH_FIELDS)
 SOURCE_REGISTRY: Final = (
     ("cline", "Cline"),
     ("muse", "Muse"),
@@ -204,7 +214,11 @@ class SessionIndex:
 
     def __init__(self, cache_path: str | Path) -> None:
         self._cache_path = Path(cache_path)
-        self._cache_path.parent.mkdir(parents=True, exist_ok=True)
+        self._cache_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        try:
+            self._cache_path.parent.chmod(0o700)
+        except OSError:
+            pass
 
     def _open(self) -> sqlite3.Connection:
         from .session_index_storage import open_index
@@ -296,12 +310,14 @@ class SessionIndex:
         connection = self._open()
         try:
             page = connection.execute(
-                "SELECT provider, title, session_name, state, last_activity_at, "
-                "detail, open_key, full_title, source, cost_usd, cost_status, "
-                "cost_provenance, cost_breakdown, billing_provider, provider_costs "
+                "SELECT session_rows.provider, session_rows.title, session_rows.session_name, "
+                "session_rows.state, session_rows.last_activity_at, session_rows.detail, "
+                "session_rows.open_key, session_rows.full_title, session_rows.source, "
+                "session_rows.cost_usd, session_rows.cost_status, session_rows.cost_provenance, "
+                "session_rows.cost_breakdown, session_rows.billing_provider, session_rows.provider_costs "
                 "FROM session_rows "
-                "ORDER BY (SELECT source_order FROM source_meta "
-                "WHERE source_key = session_rows.source_key), row_order"
+                "LEFT JOIN source_meta ON source_meta.source_key = session_rows.source_key "
+                "ORDER BY source_meta.source_order, session_rows.row_order"
             ).fetchall()
         finally:
             connection.close()
@@ -336,12 +352,14 @@ class SessionIndex:
                 ).fetchone()[0]
             )
             page = connection.execute(
-                "SELECT provider, title, session_name, state, last_activity_at, detail, open_key, "
-                "full_title, source, cost_usd, cost_status, cost_provenance, cost_breakdown, "
-                "billing_provider, provider_costs "
-                "FROM session_rows" + where + " ORDER BY last_activity_at DESC, "
-                "(SELECT source_order FROM source_meta WHERE source_key = session_rows.source_key) ASC, "
-                "row_order ASC" + " LIMIT ? OFFSET ?",
+                "SELECT session_rows.provider, session_rows.title, session_rows.session_name, "
+                "session_rows.state, session_rows.last_activity_at, session_rows.detail, "
+                "session_rows.open_key, session_rows.full_title, session_rows.source, "
+                "session_rows.cost_usd, session_rows.cost_status, session_rows.cost_provenance, "
+                "session_rows.cost_breakdown, session_rows.billing_provider, session_rows.provider_costs "
+                "FROM session_rows "
+                "LEFT JOIN source_meta ON source_meta.source_key = session_rows.source_key" + where + " ORDER BY session_rows.last_activity_at DESC, "
+                "source_meta.source_order ASC, session_rows.row_order ASC LIMIT ? OFFSET ?",
                 (*parameters, limit, offset),
             ).fetchall()
             sessions: list[SessionRow] = [_row_from_columns(row) for row in page]

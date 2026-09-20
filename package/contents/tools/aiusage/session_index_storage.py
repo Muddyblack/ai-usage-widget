@@ -57,6 +57,8 @@ def _ensure_schema(connection: sqlite3.Connection) -> None:
         "provider_costs TEXT, "
         "PRIMARY KEY (source_key, row_order))"
     )
+    connection.execute("CREATE INDEX IF NOT EXISTS idx_session_rows_activity ON session_rows (last_activity_at DESC)")
+    connection.execute("CREATE INDEX IF NOT EXISTS idx_session_rows_provider ON session_rows (provider)")
     required = {
         "source_meta": {"source_key", "mtime_ns", "size", "source_order"},
         "session_rows": {
