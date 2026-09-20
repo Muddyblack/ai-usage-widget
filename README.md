@@ -18,6 +18,7 @@
     <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.pling.com%2Focs%2Fv1%2Fcontent%2Fdata%2F%3Fformat%3Djson%26user%3DMuddyblack%26pagesize%3D20%26sortmode%3Dalpha&query=%24.data%5B0%5D.downloads&label=KDE%20Downloads&style=for-the-badge&color=1d99f3&logo=kde&logoColor=white" alt="KDE Store Downloads" />
   </a>
   <img src="https://img.shields.io/github/downloads/Muddyblack/ai-usage-widget/total?style=for-the-badge&logo=github&logoColor=white&label=GitHub%20Downloads&color=blue" alt="GitHub Downloads" />
+  <img src="https://img.shields.io/badge/Started-May_2026-9c27b0?style=for-the-badge" alt="Project started May 2026" />
 </p>
 
 A KDE Plasma 6 panel widget for tracking AI API quota usage across multiple services. Monitor your **Claude** subscription windows and local activity stats, **Antigravity/Google AI Studio**, **OpenAI API and Codex plan limits**, **Grok CLI**, **Kiro**, **Mistral AI**, **OpenRouter**, **Ollama Cloud**, **Z.AI**, **GitHub Copilot**, **DeepSeek**, **Kimi / Moonshot AI**, and **Muse** usage or balance at a glance with animated segmented bars, live countdown timers, account status, and per-model breakdowns.
@@ -111,6 +112,10 @@ depend on the data and exact cached model pricing available on the machine.
 For the full contract and provider details, see
 [docs/provider-contract.md](docs/provider-contract.md) and
 [docs/providers.md](docs/providers.md).
+
+Session search is handled by the backend with `get-ai-usage --sessions --query <text>`. Empty, whitespace-only, and non-empty searches all return 60-session pages with exact totals and offer **Load more** when additional sessions exist. The Sessions view offers a cache-backed source filter beside the search field. It uses `--source <id[,id...]>` or `--source=<id[,id...]>`; omitting it means All, and multiple sources are combined with OR semantics. The filter is view-local, resets pagination when changed, and is preserved by refresh and **Load more**. All appears only when more than one cached source is available.
+
+The backend returns the additive `sources` descriptor list with verified IDs and labels, in canonical order: Cline (`cline`), Muse (`muse`), Codex (`openai`), Grok (`grok`), Claude Code (`claude`), OpenCode (`opencode`), and Antigravity (`antigravity`). Only sources with cached parsed rows appear. Query-only searches read that cache and do not scan local stores. Non-empty searches check all underlying session records using only `provider`, `title`, `sessionName`, `state`, and `detail`; `fullTitle`, opaque resume keys, IDs, paths, and transcripts are not searchable or exposed. Claude titles are clipped opening-prompt previews; raw prompt text never leaves the backend. See the [provider contract](docs/provider-contract.md#session-search) for response, refresh, incomplete-cache, privacy, and cross-platform details.
 
 Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on macOS](docs/macos.md) and [in a terminal](docs/cli.md) — every frontend shares one backend.
 

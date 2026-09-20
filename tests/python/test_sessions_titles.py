@@ -15,7 +15,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from _support import REPO  # noqa: F401  (ensures TOOLS is on sys.path)
+from _support import REPO, IsolatedHomeTest  # noqa: F401  (ensures TOOLS is on sys.path)
 from aiusage import sessions
 
 
@@ -68,7 +68,7 @@ class ClaudePromptTitlesTest(unittest.TestCase):
         self.assertEqual(titles, {"s1": "fine"})
 
 
-class ClaudeEntriesTitleTest(unittest.TestCase):
+class ClaudeEntriesTitleTest(IsolatedHomeTest):
     def _write_session(self, root, project_dir, session_id):
         projects = os.path.join(root, "projects", project_dir)
         os.makedirs(projects, exist_ok=True)
@@ -99,6 +99,8 @@ class ClaudeEntriesTitleTest(unittest.TestCase):
         entry = entries[0]
         self.assertTrue(entry["title"].endswith("…"))
         self.assertEqual(entry["fullTitle"], long_prompt)
+        self.assertRegex(entry["openKey"], r"^[0-9a-f]{64}$")
+        self.assertNotEqual(entry["openKey"], "session-1")
 
     def test_no_history_entry_falls_back_to_folder_name(self):
         with tempfile.TemporaryDirectory() as root:
@@ -109,6 +111,31 @@ class ClaudeEntriesTitleTest(unittest.TestCase):
         self.assertEqual(entry["title"], "widget")
         self.assertEqual(entry["detail"], "")
         self.assertNotIn("fullTitle", entry)
+
+    def test_query_scan_exposes_an_older_transcript_in_the_same_project(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._write_session(root, "-mnt-projects-widget", "old-session")
+            self._write_session(root, "-mnt-projects-widget", "new-session")
+            old_path = os.path.join(root, "projects", "-mnt-projects-widget", "old-session.jsonl")
+            new_path = os.path.join(root, "projects", "-mnt-projects-widget", "new-session.jsonl")
+            os.utime(old_path, (1_000, 1_000))
+            os.utime(new_path, (2_000, 2_000))
+            with open(os.path.join(root, "history.jsonl"), "w", encoding="utf-8") as f:
+                f.write(json.dumps({"sessionId": "old-session", "display": "find this older Claude session"}) + "\n")
+                f.write(json.dumps({"sessionId": "new-session", "display": "newer session"}) + "\n")
+            with (
+                mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": root}),
+                mock.patch.object(sessions, "_cline_entries", return_value=[]),
+                mock.patch.object(sessions, "_muse_entries", return_value=[]),
+                mock.patch.object(sessions, "_codex_entries", return_value=[]),
+                mock.patch.object(sessions, "_grok_entries", return_value=[]),
+                mock.patch.object(sessions, "_opencode_entries", return_value=[]),
+                mock.patch.object(sessions, "_antigravity_entries", return_value=[]),
+            ):
+                sessions.refresh_sessions()
+                result = sessions.collect_sessions("OLDER CLAUDE")
+
+        self.assertEqual([entry["title"] for entry in result["sessions"]], ["find this older Claude session"])
 
 
 class ClineNeverUsesItsPromptFieldTest(unittest.TestCase):

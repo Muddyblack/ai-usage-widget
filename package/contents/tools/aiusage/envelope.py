@@ -24,6 +24,7 @@ _CRASH_LABELS = {
     "mistral": ("Mistral", "#ff7000"),
     "openrouter": ("OpenRouter", "#9333ea"),
     "ollama": ("Ollama Cloud", "#f0f0f0"),
+    "selfhosted": ("Local Models", "#38bdf8"),
     "grok": ("Grok", "#e6e6e6"),
     "zai": ("Z.AI", "#126ef4"),
     "copilot": ("Copilot", "#8b5cf6"),

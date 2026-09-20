@@ -13,6 +13,7 @@ from .muse import normalize_muse
 from .ollama import normalize_ollama
 from .openai import normalize_openai
 from .openrouter import normalize_openrouter
+from .selfhosted import normalize_selfhosted
 from .zai import normalize_zai
 
 _DISPATCH = {
@@ -24,6 +25,7 @@ _DISPATCH = {
     "muse": normalize_muse,
     "openrouter": normalize_openrouter,
     "ollama": normalize_ollama,
+    "selfhosted": normalize_selfhosted,
     "grok": normalize_grok,
     "zai": normalize_zai,
     "copilot": normalize_copilot,

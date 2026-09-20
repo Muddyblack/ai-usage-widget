@@ -245,6 +245,10 @@ _SIMPLE = {
 
 
 def collect(id_, now):
+    if id_ == "selfhosted":
+        from .providers.selfhosted import get_selfhosted_usage
+
+        return {"id": id_, "now": now, "inputs": {"usage": get_selfhosted_usage()}}
     if id_ == "claude":
         return collect_claude(now)
     if id_ == "openai":

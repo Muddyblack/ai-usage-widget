@@ -195,7 +195,11 @@ ColumnLayout {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: shell.refresh()
+                onClicked: {
+                    shell.refresh();
+                    if (shell.sessionsViewVisible && typeof shell.reconcileSessions === "function")
+                        shell.reconcileSessions(shell.sessionsQuery || "");
+                }
             }
         }
     }
@@ -248,12 +252,17 @@ ColumnLayout {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
+                        var wasSessions = modelData.id === "sessions" && shell.activeId === "sessions";
                         shell.activeId = modelData.id;
                         // A shell may throttle what a tab switch fetches
                         // (the Windows app does); the ⟳ button always refreshes.
                         if (modelData.feature) {
-                            if (modelData.id === "sessions" && typeof shell.refreshSessions === "function")
-                                shell.refreshSessions();
+                            if (wasSessions) {
+                                if (typeof shell.reconcileSessions === "function")
+                                    shell.reconcileSessions();
+                                else if (modelData.id === "sessions" && typeof shell.refreshSessions === "function")
+                                    shell.refreshSessions();
+                            }
                             return;
                         }
                         if (typeof shell.refreshTab === "function")

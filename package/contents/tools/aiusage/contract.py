@@ -33,6 +33,7 @@ PROVIDER_ICONS = {
     "muse": "muse-color.svg",
     "openai": "openai.svg",
     "ollama": "ollama.svg",
+    "selfhosted": "local-models.svg",
     "openrouter": "openrouter.svg",
     "zai": "zai.svg",
 }

@@ -26,7 +26,7 @@ class QmlBackendTokensTest(unittest.TestCase):
             with self.subTest(frontend=relative):
                 with open(os.path.join(_support.REPO, relative), encoding="utf-8") as stream:
                     source = stream.read()
-                bindings = re.findall(r"text: [^\n]*modelData\.(?:fullTitle|sessionName|detail)[^\n]*\n([^{}]*)", source)
+                bindings = re.findall(r"text: [^\n]*modelData\.(?:title|sessionName|detail)[^\n]*\n([^{}]*)", source)
                 self.assertEqual(len(bindings), 3)
                 for properties in bindings:
                     self.assertRegex(properties, r"textFormat:\s*Text\.PlainText\b")
@@ -41,6 +41,12 @@ class QmlBackendTokensTest(unittest.TestCase):
         args.update(local={}, credits={}, billing={}, local_billing={}, free_usage={"limit": 10, "used": 1}, team_blocked=False, blocked_reasons=[])
         window = grok._assemble(**args)["quotaWindow"]
         self.assertIn(f'root.grokQuotaWindow === "{window}"', main_qml())
+
+    def test_ollama_panel_exposes_weekly_window(self):
+        source = main_qml()
+        self.assertIn('root.ollamaWindows[i].key === "ollama_weekly"', source)
+        self.assertIn('iconText: i18n("7D")', source)
+        self.assertIn('root.ollamaWindows[0].key === "ollama_session" && root.ollamaWeeklyWindow !== null', source)
 
 
 if __name__ == "__main__":

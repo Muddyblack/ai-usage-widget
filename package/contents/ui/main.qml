@@ -237,10 +237,18 @@ PlasmoidItem {
     property var openrouterRateLimit: ({})
     property string openrouterError: ""
     property var ollamaWindows: []
+    property var selfhostedProvider: ({})
     property var ollamaModels: ({})
     property string ollamaActivityCost: ""
     property string ollamaError: ""
     property real ollamaPct: 0
+    readonly property var ollamaWeeklyWindow: {
+        for (var i = 0; i < root.ollamaWindows.length; i++) {
+            if (root.ollamaWindows[i].key === "ollama_weekly")
+                return root.ollamaWindows[i];
+        }
+        return null;
+    }
     // ── Grok CLI / xAI data ──────────────────────────────────────────────────
     property bool grokHasKey: false
     property bool grokLoggedIn: false
@@ -579,6 +587,12 @@ PlasmoidItem {
             icon: "ollama.svg",
             keyConfig: "ollamaApiKey",
             keyPlaceholder: i18n("optional — OpenCode login or $OLLAMA_API_KEY")
+        },
+        {
+            id: "selfhosted",
+            label: i18n("Local Models"),
+            color: "#38bdf8",
+            icon: "local-models.svg"
         },
         {
             id: "grok",
@@ -1474,6 +1488,9 @@ PlasmoidItem {
         env += root.envAssign("WIDGET_MISTRAL_API_KEY", Plasmoid.configuration.mistralApiKey);
         env += root.envAssign("WIDGET_OPENROUTER_API_KEY", Plasmoid.configuration.openrouterApiKey);
         env += root.envAssign("WIDGET_OLLAMA_API_KEY", Plasmoid.configuration.ollamaApiKey);
+        env += root.envAssign("WIDGET_SELFHOSTED_ENDPOINT", Plasmoid.configuration.selfhostedEndpoint);
+        env += root.envAssign("WIDGET_SELFHOSTED_ENGINE", Plasmoid.configuration.selfhostedEngine);
+        env += root.envAssign("WIDGET_SELFHOSTED_KEY", Plasmoid.configuration.selfhostedKey);
         env += root.envAssign("WIDGET_GROK_API_KEY", Plasmoid.configuration.grokApiKey);
         env += root.envAssign("WIDGET_ZAI_TOKEN", Plasmoid.configuration.zaiToken);
         env += root.envAssign("WIDGET_GITHUB_TOKEN", Plasmoid.configuration.githubToken);
@@ -1564,6 +1581,8 @@ PlasmoidItem {
             root.applyOpenRouter(details, provider.error || "");
         else if (provider.id === "ollama")
             root.applyOllama(provider);
+        else if (provider.id === "selfhosted")
+            root.selfhostedProvider = provider;
         else if (provider.id === "grok")
             root.applyGrok(details, provider.error || "");
         else if (provider.id === "zai")
@@ -2630,6 +2649,37 @@ PlasmoidItem {
                 tooltipText: "Ollama Cloud" + (root.ollamaWindows.length > 0 ? "\n" + root.ollamaWindows[0].label + ": " + Math.round(root.ollamaPct) + "%" : "\n" + root.ollamaError)
             }
 
+            Rectangle {
+                visible: root.panelShows("ollama") && root.ollamaWindows.length > 0 && root.ollamaWindows[0].key === "ollama_session" && root.ollamaWeeklyWindow !== null
+                width: 1
+                height: 14
+                color: Qt.rgba(1, 1, 1, 0.16)
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            PanelSlot {
+                pct: root.ollamaWeeklyWindow ? root.ollamaWeeklyWindow.pct : 0
+                iconColor: "#f0f0f0"
+                iconTint: root.weeklyColor
+                iconSource: Qt.resolvedUrl("../icons/ollama.svg")
+                iconText: i18n("7D")
+                stale: root.stale && root.panelShows("ollama")
+                visible: root.panelShows("ollama") && root.ollamaWindows.length > 0 && root.ollamaWindows[0].key === "ollama_session" && root.ollamaWeeklyWindow !== null
+                tooltipText: "Ollama Cloud\n" + root.ollamaWeeklyWindow.label + ": " + Math.round(root.ollamaWeeklyWindow.pct) + "%"
+            }
+
+            PanelSlot {
+                pct: root.selfhostedProvider.summary ? (root.selfhostedProvider.summary.pct || 0) : 0
+                iconColor: "#38bdf8"
+                iconSource: Qt.resolvedUrl("../icons/local-models.svg")
+                iconText: "LM"
+                stale: root.stale && root.panelShows("selfhosted")
+                visible: root.panelShows("selfhosted") && !root.showSettings
+                showCost: !root.selfhostedProvider.summary || !root.selfhostedProvider.summary.hasChart
+                costText: root.selfhostedProvider.summary ? root.selfhostedProvider.summary.text : "—"
+                tooltipText: i18n("Local Models") + "\n" + (root.selfhostedProvider.error || (root.selfhostedProvider.summary ? root.selfhostedProvider.summary.text + " · " + root.selfhostedProvider.summary.detail : i18n("Checking…")))
+            }
+
             PanelSlot {
                 pct: root.grokPct
                 iconColor: root.grokWhite
@@ -2967,6 +3017,8 @@ PlasmoidItem {
 
                             if (tab === "ollama")
                                 return i18n("Ollama Cloud Usage");
+                            if (tab === "selfhosted")
+                                return i18n("Local Models");
 
                             if (tab === "grok")
                                 return i18n("Grok Usage");
@@ -3271,6 +3323,10 @@ PlasmoidItem {
             }
 
             OllamaTab {
+                rootItem: root
+            }
+
+            SelfhostedTab {
                 rootItem: root
             }
 

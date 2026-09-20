@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from _support import REPO  # noqa: F401  (ensures TOOLS is on sys.path)
+from _support import REPO, IsolatedHomeTest  # noqa: F401  (ensures TOOLS is on sys.path)
 from aiusage import sessions
 from test_opencode_costs import _assistant_message, _create_database
 
@@ -19,7 +19,7 @@ def _read_entry(path, rates=None, openai_rates=None):
         return sessions._opencode_entries()[0]
 
 
-class OpenCodeSessionCostTest(unittest.TestCase):
+class OpenCodeSessionCostTest(IsolatedHomeTest):
     def test_finite_provider_cost_is_serialized_on_the_public_session_row(self):
         messages = [
             _assistant_message(tokens={"input": 0, "output": 0}, cost=0.42),
@@ -151,7 +151,7 @@ class OpenCodeSessionCostTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             path = _create_database(root, messages=[message])
             with (
-                mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True),
+                mock.patch.dict(os.environ, {"OPENCODE_DB": path}),
                 mock.patch.object(
                     sessions.pricing,
                     "cached_catalog",
@@ -165,7 +165,7 @@ class OpenCodeSessionCostTest(unittest.TestCase):
                 mock.patch.object(sessions, "_claude_entries", return_value=[]),
                 mock.patch.object(sessions, "_antigravity_entries", return_value=[]),
             ):
-                result = sessions.collect_sessions()
+                result = sessions.refresh_sessions()
 
         entries = {entry["provider"]: entry for entry in result["sessions"]}
         self.assertEqual(entries["anthropic"]["costStatus"], "exact")
