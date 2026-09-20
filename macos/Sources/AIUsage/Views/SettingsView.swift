@@ -88,6 +88,24 @@ struct SettingsView: View {
                 }
                 .padding(.leading, 22)
             }
+            if id == "selfhosted" {
+                VStack(alignment: .leading, spacing: 4) {
+                    TextField(i18n("Server URLs, comma separated (empty: auto detect)"), text: Binding(
+                        get: { model.settings.string("selfhostedEndpoint") },
+                        set: { value in model.changeSettings { $0.set("selfhostedEndpoint", value) } }
+                    ))
+                    TextField(i18n("Engine: auto, ollama, vllm, llama.cpp"), text: Binding(
+                        get: { model.settings.string("selfhostedEngine", default: "auto") },
+                        set: { value in model.changeSettings { $0.set("selfhostedEngine", value) } }
+                    ))
+                    SecureField(i18n("Optional bearer token"), text: Binding(
+                        get: { model.settings.key("selfhosted") },
+                        set: { value in model.changeSettings { $0.setKey("selfhosted", value) } }
+                    ))
+                }
+                .textFieldStyle(.roundedBorder)
+                .padding(.leading, 22)
+            }
         }
     }
 

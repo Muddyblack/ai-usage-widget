@@ -170,6 +170,18 @@ msgstr "clé définie"
 msgid "API key"
 msgstr "Clé API"
 
+#: hyprland/ProviderSettingRow.qml
+msgid "Server URL"
+msgstr "URL du serveur"
+
+#: hyprland/ProviderSettingRow.qml
+msgid "Server URLs, separated by commas"
+msgstr "URLs du serveur, séparées par des virgules"
+
+#: hyprland/ProviderSettingRow.qml
+msgid "Engine"
+msgstr "Moteur"
+
 #: hyprland/ProviderSettingRow.qml package/contents/ui/ProviderSettingRow.qml
 msgid ""
 "Live: plan windows come from a billed model call (~130 tokens per refresh, "
@@ -1992,8 +2004,42 @@ msgid "Hide options"
 msgstr "Masquer les options"
 
 #: package/contents/ui/ProviderSettingRow.qml
+msgid "Server URL and options"
+msgstr "URL du serveur et options"
+
+#: package/contents/ui/ProviderSettingRow.qml
 msgid "Key and options"
 msgstr "Clé et options"
+
+#: package/contents/ui/ProviderSettingRow.qml
+msgid "Local runtime (Ollama, vLLM, or llama.cpp)"
+msgstr "Exécution locale (Ollama, vLLM ou llama.cpp)"
+
+#: package/contents/ui/ProviderSettingRow.qml
+msgid "Server URLs, separated by commas (empty: auto-detect)"
+msgstr ""
+"URLs du serveur, séparées par des virgules (vide : détection automatique)"
+
+#: package/contents/ui/ProviderSettingRow.qml
+msgid "Optional bearer token"
+msgstr "Jeton d'authentification optionnel"
+
+#: package/contents/ui/SelfhostedTab.qml package/contents/ui/main.qml
+msgid "Local Models"
+msgstr "Modèles locaux"
+
+#: package/contents/ui/SelfhostedTab.qml
+msgid "Since server start: %1 prompt · %2 generated tokens"
+msgstr ""
+"Depuis le démarrage du serveur : %1 jetons de prompt · %2 jetons générés"
+
+#: package/contents/ui/SelfhostedTab.qml
+msgid "Generation: %1 tokens/s"
+msgstr "Génération : %1 jetons/s"
+
+#: package/contents/ui/SelfhostedTab.qml
+msgid "Slot %1: %2 · %3 / %4 context tokens"
+msgstr "Emplacement %1 : %2 · %3 / %4 jetons de contexte"
 
 #: package/contents/ui/SessionsTab.qml
 msgid "Resume session"
@@ -2700,6 +2746,10 @@ msgid "Used: $%1"
 msgstr "Utilisé : $%1"
 
 #: package/contents/ui/main.qml
+msgid "Checking…"
+msgstr "Vérification…"
+
+#: package/contents/ui/main.qml
 msgid "Grok CLI connected; billing quota is not exposed"
 msgstr "Grok CLI connecté ; le quota de facturation n'est pas exposé"
 
@@ -2984,6 +3034,15 @@ msgstr "Barre des menus"
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "General"
 msgstr "Général"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Server URLs, comma separated (empty: auto detect)"
+msgstr ""
+"URLs du serveur, séparées par des virgules (vide : détection automatique)"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Engine: auto, ollama, vllm, llama.cpp"
+msgstr "Moteur : auto, ollama, vllm, llama.cpp"
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Optional tabs that sit ahead of your providers in the popover."

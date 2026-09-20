@@ -17,6 +17,7 @@ ALL_PROVIDERS = [
     "mistral",
     "openrouter",
     "ollama",
+    "selfhosted",
     "grok",
     "zai",
     "copilot",
@@ -31,7 +32,7 @@ ALL_PROVIDERS = [
 # has to paste, so defaulting them on would only produce error rows. Muse,
 # Cursor and Cline need no token at all — they are opt-in because a machine
 # without the tool installed should not grow a tab for it.
-OPT_IN_PROVIDERS = {"zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "ollama"}
+OPT_IN_PROVIDERS = {"zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "ollama", "selfhosted"}
 
 _KEY_EXPORTS = [
     ("WIDGET_CLAUDE_ADMIN_KEY", "claudeAdmin"),
@@ -39,6 +40,7 @@ _KEY_EXPORTS = [
     ("WIDGET_MISTRAL_API_KEY", "mistral"),
     ("WIDGET_OPENROUTER_API_KEY", "openrouter"),
     ("WIDGET_OLLAMA_API_KEY", "ollama"),
+    ("WIDGET_SELFHOSTED_KEY", "selfhosted"),
     ("WIDGET_GROK_API_KEY", "grok"),
     ("WIDGET_ZAI_TOKEN", "zai"),
     ("WIDGET_GITHUB_TOKEN", "github"),
@@ -107,6 +109,10 @@ def apply_widget_env(cfg):
 
     if not os.environ.get("WIDGET_MUSE_QUOTA"):
         os.environ["WIDGET_MUSE_QUOTA"] = "1" if cfg.get("museQuota", False) is True else "0"
+
+    for var, key in (("WIDGET_SELFHOSTED_ENDPOINT", "selfhostedEndpoint"), ("WIDGET_SELFHOSTED_ENGINE", "selfhostedEngine")):
+        if not os.environ.get(var) and cfg.get(key):
+            os.environ[var] = str(cfg[key])
 
 
 def muse_quota_enabled():

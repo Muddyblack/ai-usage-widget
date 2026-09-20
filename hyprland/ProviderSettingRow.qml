@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls.Basic as QC
 
 // One provider's settings, whole: the on/off control plus — folded away until
 // asked for — its API key and any provider-specific extra. Mirrors the Plasma
@@ -104,7 +105,7 @@ ColumnLayout {
         }
 
         Text {
-            visible: prow.serviceOn && (prow.hasDetails || prow.tristate)
+            visible: (prow.serviceOn || prow.providerId === "selfhosted") && (prow.hasDetails || prow.tristate)
             text: prow.expanded ? "▴" : "▾"
             font.pixelSize: 12
             color: "#f8fafc"
@@ -127,7 +128,7 @@ ColumnLayout {
         Layout.leftMargin: 13
         Layout.bottomMargin: visible ? 4 : 0
         spacing: 4
-        visible: prow.expanded && prow.serviceOn
+        visible: prow.expanded && (prow.serviceOn || prow.providerId === "selfhosted")
 
         KeyField {
             visible: prow.keySetting !== ""
@@ -135,6 +136,42 @@ ColumnLayout {
             label: prow.shell.i18n("API key")
             placeholder: prow.provider && prow.provider.keyPlaceholder ? prow.provider.keyPlaceholder : ""
             settingKey: prow.keySetting
+        }
+
+        RowLayout {
+            visible: prow.providerId === "selfhosted"
+            Layout.fillWidth: true
+            Text {
+                text: prow.shell.i18n("Server URL")
+                color: "#f8fafc"
+                font.pixelSize: 11
+            }
+            QC.TextField {
+                Layout.fillWidth: true
+                text: prow.shell.settings.selfhostedEndpoint || ""
+                placeholderText: prow.shell.i18n("Server URLs, separated by commas")
+                onEditingFinished: {
+                    prow.shell.setSetting2("selfhostedEndpoint", text.trim());
+                    prow.shell.refresh();
+                }
+            }
+        }
+        RowLayout {
+            visible: prow.providerId === "selfhosted"
+            Layout.fillWidth: true
+            Text {
+                text: prow.shell.i18n("Engine")
+                color: "#f8fafc"
+                font.pixelSize: 11
+            }
+            QC.ComboBox {
+                model: ["auto", "ollama", "vllm", "llama.cpp"]
+                currentIndex: Math.max(0, model.indexOf(prow.shell.settings.selfhostedEngine || "auto"))
+                onActivated: {
+                    prow.shell.setSetting2("selfhostedEngine", currentText);
+                    prow.shell.refresh();
+                }
+            }
         }
 
         // Every other tab reads its quota for free. Muse cannot, so the price

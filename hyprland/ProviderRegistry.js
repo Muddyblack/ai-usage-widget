@@ -53,6 +53,13 @@ var providers = [
         keyPlaceholder: "optional — OpenCode login or $OLLAMA_API_KEY"
     },
     {
+        id: "selfhosted",
+        label: "Local Models",
+        accent: "#38bdf8",
+        keySetting: "selfhosted",
+        keyPlaceholder: "optional server token"
+    },
+    {
         id: "grok",
         label: "Grok",
         accent: "#e6e6e6",
@@ -108,7 +115,7 @@ var providers = [
 
 // Mirrors OPT_IN_PROVIDERS in aiusage/config.py: these stay off until switched
 // on, the rest stay on until switched off.
-var OPT_IN = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "ollama"];
+var OPT_IN = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "ollama", "selfhosted"];
 
 function enabled(settings, id) {
     var toggles = (settings && settings.providers) || {};
