@@ -100,7 +100,7 @@ Column {
         Image {
             width: 56
             height: 56
-            source: Qt.resolvedUrl("../package/icon.png")
+            source: (info.shell && info.shell.iconSource) ? info.shell.iconSource : Qt.resolvedUrl("../package/icon.png")
             sourceSize.width: 112
             sourceSize.height: 112
             fillMode: Image.PreserveAspectFit
