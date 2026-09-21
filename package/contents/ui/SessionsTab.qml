@@ -337,7 +337,8 @@ ColumnLayout {
                                 Rectangle {
                                     id: itemRow
                                     Layout.fillWidth: true
-                                    height: 30
+                                    implicitHeight: 30
+                                    Layout.preferredHeight: 30
                                     radius: 6
                                     color: itemMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
 
@@ -425,7 +426,8 @@ ColumnLayout {
                                     Layout.fillWidth: true
                                     Layout.topMargin: 4
                                     Layout.bottomMargin: 4
-                                    height: 1
+                                    implicitHeight: 1
+                                    Layout.preferredHeight: 1
                                     color: Qt.rgba(1, 1, 1, 0.08)
                                 }
                             }

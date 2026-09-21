@@ -5,6 +5,7 @@ envelope: the JSON backend the QML frontends call, and the terminal frontend in
 aiusage.cli. See docs/provider-contract.md for the shape produced here.
 """
 
+import datetime
 import math
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -117,18 +118,53 @@ def _billing_mode(session):
     return mode if mode in ("subscription", "api") else "api"
 
 
+def _session_date(session):
+    """Local calendar day a session's cost lands on, or "" when unknown.
+
+    Local, not UTC, for the same reason the per-provider stats use local days:
+    "which day did I spend that" is a question about the user's own calendar.
+    """
+    activity = finite_number(session.get("lastActivityAt"), minimum=0) if isinstance(session, dict) else None
+    if not activity:
+        return ""
+    try:
+        return datetime.datetime.fromtimestamp(activity).strftime("%Y-%m-%d")
+    except (OverflowError, OSError, ValueError):
+        return ""
+
+
 def _local_spend_group(sessions, provenance, billing="api"):
     totals = {}
     partial = set()
     costs = []
+    # Per-provider, per-day cost, from the same contributions the totals are
+    # summed from — so a provider's daily series always adds up to exactly the
+    # total shown next to it. Provider-agnostic on purpose: every provider that
+    # produces session rows gets a daily series with no per-provider code.
+    daily = {}
+    daily_tokens = {}
     for session in sessions:
         if _billing_mode(session) != billing:
             continue
-        for rollup, cost, status in _local_contributions(session, provenance):
+        date = _session_date(session)
+        tokens = finite_number(session.get("tokens"), minimum=0) or 0
+        contributions = _local_contributions(session, provenance)
+        for rollup, cost, status in contributions:
             totals[rollup] = totals.get(rollup, 0) + cost
             costs.append(cost)
             if status == "partial":
                 partial.add(rollup)
+            if date:
+                per_provider = daily.setdefault(rollup, {})
+                per_provider[date] = per_provider.get(date, 0) + cost
+        # Tokens belong to the session, not to each of its cost rollups, so a
+        # multi-provider session splits them rather than counting them once
+        # per upstream provider.
+        if date and tokens and contributions:
+            share = tokens / len(contributions)
+            for rollup, _cost, _status in contributions:
+                per_provider_tokens = daily_tokens.setdefault(rollup, {})
+                per_provider_tokens[date] = per_provider_tokens.get(date, 0) + share
 
     if not totals:
         return {"costStatus": "unavailable"}
@@ -146,6 +182,16 @@ def _local_spend_group(sessions, provenance, billing="api"):
                 "costUSD": cost,
                 "costStatus": "partial" if provider in partial else "exact",
                 "costProvenance": provenance,
+                # Omitted, not sent empty, when no session carried a usable
+                # timestamp — the frontends treat absent and empty alike.
+                **({"dailyUSD": [{"date": date, "usd": usd} for date, usd in sorted(daily[provider].items())]} if daily.get(provider) else {}),
+                # Same days, same source as the cost above, so the Spend
+                # chart's two lines always cover the same window.
+                **(
+                    {"dailyTokens": [{"date": date, "total": round(total)} for date, total in sorted(daily_tokens[provider].items())]}
+                    if daily_tokens.get(provider)
+                    else {}
+                ),
                 **({"source": provider.rsplit("::", 1)[1]} if "::" in provider else {}),
             }
             for provider, cost in totals.items()

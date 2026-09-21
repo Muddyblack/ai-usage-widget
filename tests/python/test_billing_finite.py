@@ -124,3 +124,46 @@ class FiniteBillingTest(unittest.TestCase):
         self.assertEqual(result["totalOutputTokens"], 50)
         self.assertEqual(result["models"]["unknown"]["input_tokens"], 0)
         self.assertTrue(math.isfinite(result["totalCostUSD"]))
+
+
+class CacheReadBillingTest(unittest.TestCase):
+    """Anthropic reports cache reads *alongside* input, not inside it, so
+    clamping the billed amount to the input count dropped the bulk of a
+    cache-heavy session's tokens and priced it at a fraction of its real
+    cost (a four-figure month read as tens of dollars)."""
+
+    PRICE = {"input": 3.0, "output": 15.0, "cached": 0.30}
+
+    def test_cache_reads_beyond_input_are_billed_not_discarded(self):
+        # Shape of a real Claude Code session: a small prompt against a very
+        # large cache.
+        bucket = billing.UsageBucket(
+            "anthropic",
+            "claude-sonnet-5",
+            "id",
+            input_tokens=429_000,
+            output_tokens=606_200,
+            cache_read_tokens=155_200_000,
+            cache_write_tokens=2_800_000,
+        )
+        cost = billing._bucket_cost(bucket, self.PRICE)
+
+        # Every cache-read token is billed at the cached rate.
+        self.assertAlmostEqual(cost, (2_800_000 / 1e6) * 3.0 + (155_200_000 / 1e6) * 0.30 + (606_200 / 1e6) * 15.0, places=6)
+        # The old clamp produced this; anything near it means tokens vanished.
+        self.assertGreater(cost, 20.0)
+
+    def test_cache_reads_inside_input_are_not_double_billed(self):
+        # OpenAI-style: cached tokens are a subset of the prompt, so the
+        # full-rate remainder is input minus cached, never negative.
+        bucket = billing.UsageBucket(
+            "openai",
+            "gpt-5",
+            "id",
+            input_tokens=1_000_000,
+            output_tokens=0,
+            cache_read_tokens=400_000,
+        )
+        cost = billing._bucket_cost(bucket, self.PRICE)
+
+        self.assertAlmostEqual(cost, (600_000 / 1e6) * 3.0 + (400_000 / 1e6) * 0.30, places=6)

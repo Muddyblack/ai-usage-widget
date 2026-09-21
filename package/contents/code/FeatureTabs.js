@@ -188,7 +188,13 @@ function localProviderCost(group, source) {
     if (!entry || (entry.costStatus !== "exact" && entry.costStatus !== "partial") ||
             typeof entry.costUSD !== "number" || !isFinite(entry.costUSD) || !(entry.costUSD > 0))
         return null;
-    return { cost: entry.costUSD, status: entry.costStatus, source: localSourceKey(entry.source) };
+    return {
+        cost: entry.costUSD,
+        status: entry.costStatus,
+        source: localSourceKey(entry.source),
+        daily: entry.dailyUSD || [],
+        dailyTokens: entry.dailyTokens || []
+    };
 }
 
 function localProviderKey(identity) {
@@ -197,7 +203,135 @@ function localProviderKey(identity) {
     return separator > 0 ? key.slice(0, separator) : key;
 }
 
-function localSpendRows(localSpend, providerRows) {
+// Per-day cost for every provider, from the session rows the spend totals
+// are summed from (envelope.py's _local_spend_group emits dailyUSD per
+// provider). Provider-agnostic by construction: a provider appears here
+// because it produced session rows, not because it was special-cased. This
+// is also the only daily cost that matches a plan-covered row — a Pro/Max
+// plan reports $0 of real API cost, so the "would cost on API" estimate
+// lives on the sessions, not in the provider's own usage stats.
+// Sum any number of [{date, usd}] series into one sorted series.
+function mergeDailySeries() {
+    var totals = {};
+    for (var a = 0; a < arguments.length; a++) {
+        var series = arguments[a];
+        if (!series || !series.length)
+            continue;
+        for (var i = 0; i < series.length; i++) {
+            var point = series[i] || {};
+            if (!point.date)
+                continue;
+            var usd = typeof point.usd === "number" && isFinite(point.usd) ? point.usd : 0;
+            totals[point.date] = (totals[point.date] || 0) + usd;
+        }
+    }
+    return Object.keys(totals).sort().map(function (date) {
+        return { date: date, usd: this[date] };
+    }, totals);
+}
+
+// Per-day tokens by provider, from the same session rollups the cost comes
+// from (envelope.py emits dailyTokens beside dailyUSD). Preferred over a
+// provider's own dailySeries because that aggregate often covers a different,
+// much older span than the sessions do — plotting the two together drew a
+// token line that stopped exactly where the cost line started.
+function sessionDailyTokensByProvider(localSpend) {
+    var byProvider = {};
+    var groups = ["actual", "estimated", "subscription", "subscriptionActual"];
+    for (var g = 0; g < groups.length; g++) {
+        var group = localSpend && localSpend[groups[g]];
+        var providers = group && group.providers;
+        if (!providers)
+            continue;
+        var keys = Object.keys(providers);
+        for (var i = 0; i < keys.length; i++) {
+            var series = (providers[keys[i]] || {}).dailyTokens;
+            if (!series || !series.length)
+                continue;
+            var key = localProviderKey(keys[i]);
+            var totals = byProvider[key] || (byProvider[key] = {});
+            for (var j = 0; j < series.length; j++) {
+                var point = series[j] || {};
+                if (!point.date)
+                    continue;
+                var total = typeof point.total === "number" && isFinite(point.total) ? point.total : 0;
+                totals[point.date] = (totals[point.date] || 0) + total;
+            }
+        }
+    }
+    var out = {};
+    var providerKeys = Object.keys(byProvider);
+    for (var k = 0; k < providerKeys.length; k++) {
+        var dates = Object.keys(byProvider[providerKeys[k]]).sort();
+        out[providerKeys[k]] = dates.map(function (date) {
+            return { date: date, total: this[date] };
+        }, byProvider[providerKeys[k]]);
+    }
+    return out;
+}
+
+function dailyCostByProvider(localSpend) {
+    var byProvider = {};
+    var groups = ["actual", "estimated", "subscription", "subscriptionActual"];
+    for (var g = 0; g < groups.length; g++) {
+        var group = localSpend && localSpend[groups[g]];
+        var providers = group && group.providers;
+        if (!providers)
+            continue;
+        var keys = Object.keys(providers);
+        for (var i = 0; i < keys.length; i++) {
+            var entry = providers[keys[i]] || {};
+            var series = entry.dailyUSD;
+            if (!series || !series.length)
+                continue;
+            var key = localProviderKey(keys[i]);
+            var totals = byProvider[key] || (byProvider[key] = {});
+            for (var j = 0; j < series.length; j++) {
+                var point = series[j] || {};
+                if (!point.date)
+                    continue;
+                var usd = typeof point.usd === "number" && isFinite(point.usd) ? point.usd : 0;
+                totals[point.date] = (totals[point.date] || 0) + usd;
+            }
+        }
+    }
+    var out = {};
+    var providerKeys = Object.keys(byProvider);
+    for (var k = 0; k < providerKeys.length; k++) {
+        var dates = Object.keys(byProvider[providerKeys[k]]).sort();
+        out[providerKeys[k]] = dates.map(function (date) {
+            return { date: date, usd: this[date] };
+        }, byProvider[providerKeys[k]]);
+    }
+    return out;
+}
+
+// Per-day token counts by provider id, from each provider's own stats blob.
+// Session rows carry cost but no token counts, so the two halves of a row's
+// chart come from different places: cost from the sessions (which is what
+// the totals are summed from), tokens from the provider's dailySeries.
+function dailyTokensByProvider(rawProviders) {
+    var out = {};
+    var list = rawProviders || [];
+    for (var i = 0; i < list.length; i++) {
+        var p = list[i];
+        if (!p || !p.id)
+            continue;
+        var stats = (p.details && p.details.stats) || {};
+        var series = stats.dailySeries || stats.dailyTokens;
+        if (series && series.length)
+            out[p.id] = series;
+    }
+    return out;
+}
+
+function localSpendRows(localSpend, providerRows, rawProviders) {
+    var statsTokens = dailyTokensByProvider(rawProviders);
+    var sessionTokens = sessionDailyTokensByProvider(localSpend);
+    function tokensFor(providerKey) {
+        var fromSessions = sessionTokens[providerKey];
+        return (fromSessions && fromSessions.length) ? fromSessions : (statsTokens[providerKey] || []);
+    }
     var rows = [];
     var hasOpenCodeProvider = false;
     for (var providerIndex = 0; providerIndex < (providerRows || []).length; providerIndex++) {
@@ -258,7 +392,10 @@ function localSpendRows(localSpend, providerRows) {
             provenance: provenance,
             costStatus: costStatus,
             costBreakdown: { actualUSD: actualUSD, estimatedUSD: estimatedUSD },
-            accent: providerAccent(providerKey)
+            accent: providerAccent(providerKey),
+            // Both halves of this row's own total, by day.
+            dailyCost: mergeDailySeries(actual && actual.daily, estimated && estimated.daily),
+            dailyTokens: tokensFor(providerKey)
         });
     }
 
@@ -301,7 +438,9 @@ function localSpendRows(localSpend, providerRows) {
             source: planSource || planProviderKey,
             provenance: "estimated",
             costStatus: planStatus,
-            accent: providerAccent(planProviderKey)
+            accent: providerAccent(planProviderKey),
+            dailyCost: mergeDailySeries(planActual && planActual.daily, planEstimated && planEstimated.daily),
+            dailyTokens: tokensFor(planProviderKey)
         });
     }
 
@@ -342,9 +481,14 @@ function sessionCostInfo(entry) {
 
 // Build the per-provider cost rows the Spend tab shows from a provider list
 // that already carries details. Only numbers the backend already exposed.
-function spendProviderRows(providers) {
+// `localSpend` is optional and supplies each row's per-day cost history from
+// the session rows (see dailyCostByProvider) — the provider blobs themselves
+// carry only totals, never a daily cost.
+function spendProviderRows(providers, localSpend) {
     var rows = [];
     var list = providers || [];
+    var dailyByProvider = dailyCostByProvider(localSpend);
+    var sessionTokens = sessionDailyTokensByProvider(localSpend);
     for (var i = 0; i < list.length; i++) {
         var p = list[i] || {};
         var d = p.details || {};
@@ -393,13 +537,79 @@ function spendProviderRows(providers) {
             icon: p.icon || "",
             cost: cost,
             currency: currency,
-            note: note
+            note: note,
+            // For the per-row expandable timeline chart: cost by day from the
+            // session rows, tokens by day from the provider's own stats.
+            dailyCost: dailyByProvider[id] || [],
+            dailyTokens: (sessionTokens[id] && sessionTokens[id].length)
+                ? sessionTokens[id]
+                : ((d.stats && (d.stats.dailySeries || d.stats.dailyTokens)) || [])
         });
     }
     rows.sort(function (a, b) {
         return b.cost - a.cost;
     });
     return rows;
+}
+
+// Zip one provider's own dailyCost/dailyTokens series into one chart-ready
+// timeline, optionally trimmed to the trailing `windowDays` (0/undefined =
+// everything). Deliberately per-provider, not merged across providers:
+// providers report on wildly different ranges (a 30-day API window vs.
+// all-time local logs), so summing them produced a chart that was mostly
+// flat with one misleading spike.
+function spendTimeline(costSeries, tokenSeries, windowDays) {
+    var byDate = {};
+    var costs = costSeries || [];
+    var tokens = tokenSeries || [];
+    var costFrom = "";
+    var costTo = "";
+    for (var i = 0; i < costs.length; i++) {
+        var c = costs[i] || {};
+        if (!c.date)
+            continue;
+        if (costFrom === "" || c.date < costFrom)
+            costFrom = c.date;
+        if (costTo === "" || c.date > costTo)
+            costTo = c.date;
+        byDate[c.date] = byDate[c.date] || { date: c.date, usd: 0, total: 0 };
+        byDate[c.date].usd = typeof c.usd === "number" && isFinite(c.usd) ? c.usd : 0;
+    }
+    for (var j = 0; j < tokens.length; j++) {
+        var t = tokens[j] || {};
+        if (!t.date)
+            continue;
+        // The two halves come from different stores with different retention:
+        // cost from the session rows (recent), tokens from the provider's own
+        // aggregate (often much older). Plotting the union drew a token line
+        // that "stopped" exactly where the cost line began — two disjoint
+        // histories glued to one axis. This is the Spend view, so the cost
+        // history defines the window and tokens are context inside it.
+        if (costFrom !== "" && (t.date < costFrom || t.date > costTo))
+            continue;
+        byDate[t.date] = byDate[t.date] || { date: t.date, usd: 0, total: 0 };
+        byDate[t.date].total = typeof t.total === "number" && isFinite(t.total) ? t.total : 0;
+    }
+    var points = Object.keys(byDate).sort().map(function (date) {
+        return byDate[date];
+    });
+    if (!windowDays || windowDays <= 0 || points.length === 0)
+        return points;
+    var cutoff = new Date(points[points.length - 1].date + "T00:00:00Z").getTime() - (windowDays - 1) * 86400000;
+    return points.filter(function (p) {
+        return new Date(p.date + "T00:00:00Z").getTime() >= cutoff;
+    });
+}
+
+function formatMoney(value, currency) {
+    var cur = currency || "USD";
+    var num = typeof value === "number" && isFinite(value) ? value : 0;
+    var amount = num.toFixed(2);
+    if (cur === "USD")
+        return "$" + amount;
+    if (cur === "CNY")
+        return "¥" + amount;
+    return amount + (cur ? " " + cur : "");
 }
 
 function spendTotal(rows, currency) {
@@ -411,6 +621,92 @@ function spendTotal(rows, currency) {
             sum += rows[i].cost;
     }
     return sum;
+}
+
+function spendMeteredTotal(rows, currency) {
+    var sum = 0;
+    var cur = currency || "USD";
+    for (var i = 0; i < (rows || []).length; i++) {
+        var r = rows[i];
+        if (r && r.billing !== "subscription" && (r.currency || "USD") === cur &&
+                typeof r.cost === "number" && isFinite(r.cost) && r.cost > 0)
+            sum += r.cost;
+    }
+    return sum;
+}
+
+function spendPlanTotal(rows, currency) {
+    var sum = 0;
+    var cur = currency || "USD";
+    for (var i = 0; i < (rows || []).length; i++) {
+        var r = rows[i];
+        if (r && r.billing === "subscription" && (r.currency || "USD") === cur &&
+                typeof r.cost === "number" && isFinite(r.cost) && r.cost > 0)
+            sum += r.cost;
+    }
+    return sum;
+}
+
+function spendAllTotal(rows, currency) {
+    var sum = 0;
+    var cur = currency || "USD";
+    for (var i = 0; i < (rows || []).length; i++) {
+        var r = rows[i];
+        if (r && (r.currency || "USD") === cur &&
+                typeof r.cost === "number" && isFinite(r.cost) && r.cost > 0)
+            sum += r.cost;
+    }
+    return sum;
+}
+
+function spendSummaryText(rows, currency, i18nFn) {
+    var cur = currency || "USD";
+    var metered = spendMeteredTotal(rows, cur);
+    var plan = spendPlanTotal(rows, cur);
+    if (metered <= 0 && plan <= 0)
+        return "";
+
+    var t = function (fmt, a, b) {
+        if (!i18nFn) {
+            var s = fmt;
+            if (a !== undefined) s = s.replace("%1", a);
+            if (b !== undefined) s = s.replace("%2", b);
+            return s;
+        }
+        return b !== undefined ? i18nFn(fmt, a, b) : (a !== undefined ? i18nFn(fmt, a) : i18nFn(fmt));
+    };
+
+    var meteredStr = formatMoney(metered, cur);
+    var allStr = formatMoney(metered + plan, cur);
+    var planStr = formatMoney(plan, cur);
+
+    if (plan > 0 && metered > 0)
+        return t("Metered: %1 · Incl. plan: %2", meteredStr, allStr);
+    if (plan > 0)
+        return t("Incl. plan: %1", planStr);
+    return t("Metered: %1", meteredStr);
+}
+
+function spendSummaryTooltip(rows, currency, i18nFn) {
+    var cur = currency || "USD";
+    var metered = spendMeteredTotal(rows, cur);
+    var plan = spendPlanTotal(rows, cur);
+    if (metered <= 0 && plan <= 0)
+        return "";
+
+    var t = function (fmt, a) {
+        if (!i18nFn) return a !== undefined ? fmt.replace("%1", a) : fmt;
+        return a !== undefined ? i18nFn(fmt, a) : i18nFn(fmt);
+    };
+
+    var lines = [];
+    if (metered > 0)
+        lines.push(t("Metered (out-of-pocket): %1", formatMoney(metered, cur)));
+    if (plan > 0)
+        lines.push(t("Covered by plan (subscription): %1", formatMoney(plan, cur)));
+    if (metered > 0 && plan > 0)
+        lines.push(t("Total including plan: %1", formatMoney(metered + plan, cur)));
+    return lines.join("\n");
 }
 
 // ── Model rate table ───────────────────────────────────────────────────────

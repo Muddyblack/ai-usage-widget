@@ -58,8 +58,16 @@ def _bucket_cost(bucket, price):
     if cached_rate is None:
         return None
     tokens = _bucket_tokens(bucket)
-    cached = min(tokens["cache_read"], tokens["input"])
-    uncached = tokens["input"] - cached + tokens["cache_write"]
+    # Providers disagree on whether cache reads are counted inside the input
+    # total (OpenAI) or reported alongside it (Anthropic). Bill every cache
+    # read at the cached rate either way, and only subtract the part that was
+    # actually inside input, so neither convention drops tokens or leaves a
+    # negative full-rate remainder. Clamping the billed amount to input, as
+    # this once did, made a cache-heavy Claude session priced at a fraction
+    # of its real cost — the bulk of its tokens vanished from the bill.
+    cached = tokens["cache_read"]
+    inside_input = min(cached, tokens["input"])
+    uncached = tokens["input"] - inside_input + tokens["cache_write"]
     output = tokens["output"] + tokens["reasoning"]
     cost = (uncached / 1_000_000) * input_rate
     cost += (cached / 1_000_000) * cached_rate
@@ -153,11 +161,13 @@ def price_models(entries, pricing):
         m["input_tokens"] += in_
         m["output_tokens"] += out_
         if price is not None:
-            # Cached tokens are a discounted subset of the prompt; clamp so a
-            # provider that reports them *alongside* input rather than inside
-            # it can never produce a negative full-rate remainder.
-            billable_cached = min(cached, in_) if price.get("cached") is not None else 0
-            m["cost_usd"] += ((in_ - billable_cached) / 1000000) * num(price["input"]) + (out_ / 1000000) * num(price["output"])
+            # Bill every cached token at the cached rate, subtracting only the
+            # part that was inside the input total — providers differ on
+            # whether cached tokens are counted inside input or alongside it,
+            # and clamping the billed amount to input dropped the difference.
+            billable_cached = cached if price.get("cached") is not None else 0
+            inside_input = min(billable_cached, in_)
+            m["cost_usd"] += ((in_ - inside_input) / 1000000) * num(price["input"]) + (out_ / 1000000) * num(price["output"])
             if billable_cached:
                 m["cost_usd"] += (billable_cached / 1000000) * num(price["cached"])
             m["priced"] = True

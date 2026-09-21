@@ -333,3 +333,98 @@ final class LocalSpendAppModelTests: XCTestCase {
         XCTAssertEqual(model.spendRows.first(where: { $0.provider?.id == "openai" })?.cost, 2)
     }
 }
+
+/// The Spend tab's expandable per-row chart. Its two series come from the
+/// session rows the totals are summed from — the provider's own usage stats
+/// report $0 for plan-covered work, which is what made an earlier version of
+/// this chart sit flat at zero under a four-figure total.
+final class SpendHistoryContractTests: XCTestCase {
+    private func decode(_ json: String) throws -> Envelope {
+        try JSONDecoder().decode(Envelope.self, from: Data(json.utf8))
+    }
+
+    func testProviderEntryDecodesItsDailyCostAndTokenSeries() throws {
+        let envelope = try decode(
+            #"{"localSpend":{"subscription":{"totalUSD":12,"costStatus":"exact","costProvenance":"estimated","providers":{"claude":{"costUSD":12,"costStatus":"exact","costProvenance":"estimated","dailyUSD":[{"date":"2026-01-01","usd":5},{"date":"2026-01-02","usd":7}],"dailyTokens":[{"date":"2026-01-01","total":500}]}}}}}"#)
+
+        let claude = envelope.localSpend.subscription.providers["claude"]
+        XCTAssertEqual(claude?.dailyUSD, [
+            DailyCostPoint(date: "2026-01-01", usd: 5),
+            DailyCostPoint(date: "2026-01-02", usd: 7)
+        ])
+        XCTAssertEqual(claude?.dailyTokens, [DailyPoint(date: "2026-01-01", total: 500)])
+    }
+
+    func testAnAbsentSeriesDecodesAsEmptyRatherThanFailing() throws {
+        let envelope = try decode(
+            #"{"localSpend":{"estimated":{"totalUSD":2,"costStatus":"exact","costProvenance":"estimated","providers":{"cline":{"costUSD":2,"costStatus":"exact","costProvenance":"estimated"}}}}}"#)
+
+        let cline = envelope.localSpend.estimated.providers["cline"]
+        XCTAssertEqual(cline?.costUSD, 2)
+        XCTAssertEqual(cline?.dailyUSD, [])
+        XCTAssertEqual(cline?.dailyTokens, [])
+    }
+
+    func testAPlanRowsDailySeriesAddsUpToTheTotalShownOnIt() {
+        let rows = SpendRows.build([], localSpend: LocalSpend(
+            subscription: LocalSpendTotal(
+                totalUSD: 100,
+                costStatus: "exact",
+                providers: [
+                    "claude": LocalSpendProvider(
+                        costUSD: 100,
+                        costStatus: "exact",
+                        dailyUSD: [
+                            DailyCostPoint(date: "2026-01-01", usd: 60),
+                            DailyCostPoint(date: "2026-01-02", usd: 40)
+                        ],
+                        dailyTokens: [DailyPoint(date: "2026-01-01", total: 500)])
+                ])))
+
+        let claude = rows.first { $0.source == "claude" }
+        XCTAssertNotNil(claude)
+        XCTAssertTrue(claude?.canExpand == true)
+        XCTAssertEqual(claude?.dailyCost.reduce(0) { $0 + $1.usd }, claude?.cost)
+        XCTAssertEqual(claude?.dailyTokens, [DailyPoint(date: "2026-01-01", total: 500)])
+    }
+
+    func testARowWithNoHistoryDoesNotOfferToExpand() {
+        let rows = SpendRows.build([], localSpend: LocalSpend(
+            estimated: LocalSpendTotal(
+                totalUSD: 2,
+                costStatus: "exact",
+                costProvenance: "estimated",
+                providers: ["cline": LocalSpendProvider(costUSD: 2, costStatus: "exact")])))
+
+        XCTAssertEqual(rows.count, 1)
+        XCTAssertFalse(rows[0].canExpand)
+    }
+
+    func testTheActualAndEstimatedHalvesOfOneProviderMergePerDay() {
+        let rows = SpendRows.build([], localSpend: LocalSpend(
+            actual: LocalSpendTotal(
+                totalUSD: 3,
+                costStatus: "exact",
+                costProvenance: "actual",
+                providers: [
+                    "mistral": LocalSpendProvider(
+                        costUSD: 3,
+                        costStatus: "exact",
+                        dailyUSD: [DailyCostPoint(date: "2026-01-01", usd: 3)])
+                ]),
+            estimated: LocalSpendTotal(
+                totalUSD: 1,
+                costStatus: "exact",
+                costProvenance: "estimated",
+                providers: [
+                    "mistral": LocalSpendProvider(
+                        costUSD: 1,
+                        costStatus: "exact",
+                        dailyUSD: [DailyCostPoint(date: "2026-01-01", usd: 1)])
+                ])))
+
+        let mistral = rows.first { $0.source == "mistral" }
+        XCTAssertEqual(mistral?.cost, 4)
+        XCTAssertEqual(mistral?.dailyCost, [DailyCostPoint(date: "2026-01-01", usd: 4)])
+    }
+}

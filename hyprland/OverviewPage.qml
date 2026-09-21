@@ -111,7 +111,8 @@ ColumnLayout {
                     }
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 6
+                        implicitHeight: 6
+                        Layout.preferredHeight: 6
                         radius: 3
                         color: Qt.rgba(1, 1, 1, 0.08)
                         visible: pct >= 0

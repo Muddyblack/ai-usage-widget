@@ -11,8 +11,8 @@ ColumnLayout {
     spacing: 12
 
     readonly property var rows: {
-        var out = FeatureTabs.spendProviderRows(shell.providers);
-        var localRows = FeatureTabs.localSpendRows(shell.localSpend, out);
+        var out = FeatureTabs.spendProviderRows(shell.providers, shell.localSpend);
+        var localRows = FeatureTabs.localSpendRows(shell.localSpend, out, shell.providers);
         for (var i = 0; i < localRows.length; i++) {
             localRows[i].label = shell.i18n(localRows[i].label);
             localRows[i].note = shell.i18n(localRows[i].note);
@@ -24,6 +24,21 @@ ColumnLayout {
         return out;
     }
     readonly property real totalUsd: FeatureTabs.spendTotal(rows, "USD")
+    readonly property real meteredTotalUsd: FeatureTabs.spendMeteredTotal(rows, "USD")
+    readonly property real planTotalUsd: FeatureTabs.spendPlanTotal(rows, "USD")
+    readonly property real allTotalUsd: FeatureTabs.spendAllTotal(rows, "USD")
+    readonly property string summaryText: FeatureTabs.spendSummaryText(rows, "USD", shell.i18n)
+    readonly property string summaryTooltip: FeatureTabs.spendSummaryTooltip(rows, "USD", shell.i18n)
+
+    // Which provider rows are expanded, by row id — a plain object so
+    // reassigning it (not mutating in place) fires the property-changed
+    // signal QML needs to notice. Each expanded row gets its own trend
+    // chart (see the Repeater below) rather than one merged chart across
+    // every provider: providers report on wildly different ranges (30-day
+    // API window vs. all-time local logs), so summing them into one line
+    // produced a chart that was mostly flat with one misleading spike.
+    property var expandedProviders: ({})
+    property var expandedWindowDays: ({})
 
     function money(value, currency) {
         var amount = Number(value || 0).toFixed(2);
@@ -119,18 +134,38 @@ ColumnLayout {
         model: page.rows
 
         Rectangle {
+            id: rowCard
             required property var modelData
+            readonly property bool canExpand: !!((modelData.dailyCost && modelData.dailyCost.length > 1) || (modelData.dailyTokens && modelData.dailyTokens.length > 1))
+            readonly property bool isExpanded: page.expandedProviders[modelData.id] === true
+            readonly property int windowDays: page.expandedWindowDays[modelData.id] !== undefined ? page.expandedWindowDays[modelData.id] : 0
+
             Layout.fillWidth: true
-            implicitHeight: body.implicitHeight + 14
+            implicitHeight: body.implicitHeight + 14 + (canExpand && isExpanded ? detail.implicitHeight + 10 : 0)
             radius: 8
             color: Qt.rgba(1, 1, 1, 0.04)
             border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.08)
+            clip: true
+
+            Behavior on implicitHeight {
+                NumberAnimation {
+                    duration: 150
+                    easing.type: Easing.OutCubic
+                }
+            }
 
             MouseArea {
                 anchors.fill: parent
-                cursorShape: modelData.local === true ? Qt.ArrowCursor : Qt.PointingHandCursor
+                anchors.bottomMargin: rowCard.canExpand && rowCard.isExpanded ? detail.implicitHeight + 10 : 0
+                cursorShape: modelData.local === true && !rowCard.canExpand ? Qt.ArrowCursor : Qt.PointingHandCursor
                 onClicked: {
+                    if (rowCard.canExpand) {
+                        var next = Object.assign({}, page.expandedProviders);
+                        next[modelData.id] = !rowCard.isExpanded;
+                        page.expandedProviders = next;
+                        return;
+                    }
                     if (modelData.local === true)
                         return;
                     shell.activeId = modelData.id;
@@ -139,59 +174,93 @@ ColumnLayout {
                 }
             }
 
-            RowLayout {
-                id: body
-                anchors.fill: parent
+            ColumnLayout {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
                 anchors.margins: 8
                 spacing: 8
 
-                Rectangle {
-                    width: 8
-                    height: 8
-                    radius: 4
-                    color: modelData.accent || "#34d399"
-                    Layout.alignment: Qt.AlignVCenter
-                }
-
-                ColumnLayout {
+                RowLayout {
+                    id: body
                     Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    spacing: 1
+                    spacing: 8
+
+                    Rectangle {
+                        implicitWidth: 8
+                        implicitHeight: 8
+                        Layout.preferredWidth: 8
+                        Layout.preferredHeight: 8
+                        radius: 4
+                        color: modelData.accent || "#34d399"
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        spacing: 1
+                        Text {
+                            text: modelData.label
+                            font.bold: true
+                            font.pixelSize: 12
+                            color: "#f8fafc"
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            maximumLineCount: 1
+                            elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                        }
+                        Text {
+                            visible: modelData.note !== ""
+                            text: shell.i18n(modelData.note)
+                            font.pixelSize: 10
+                            opacity: 0.45
+                            color: "#f8fafc"
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            maximumLineCount: 1
+                            elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                        }
+                    }
+
                     Text {
-                        text: modelData.label
+                        visible: rowCard.canExpand
+                        text: rowCard.isExpanded ? "▾" : "▸"
+                        font.pixelSize: 11
+                        opacity: 0.5
+                        color: "#f8fafc"
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    Text {
+                        Layout.alignment: Qt.AlignVCenter
+                        text: page.money(modelData.cost, modelData.currency || "USD")
                         font.bold: true
+                        // Fixed-width digits keep the two-decimal amounts in one
+                        // column: every price ends in ".XX", so with equal digit
+                        // advances the decimal points line up across rows.
+                        font.family: "monospace"
                         font.pixelSize: 12
                         color: "#f8fafc"
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        maximumLineCount: 1
-                        elide: Text.ElideRight
-                        wrapMode: Text.NoWrap
-                    }
-                    Text {
-                        visible: modelData.note !== ""
-                        text: shell.i18n(modelData.note)
-                        font.pixelSize: 10
-                        opacity: 0.45
-                        color: "#f8fafc"
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        maximumLineCount: 1
-                        elide: Text.ElideRight
-                        wrapMode: Text.NoWrap
                     }
                 }
 
-                Text {
-                    Layout.alignment: Qt.AlignVCenter
-                    text: page.money(modelData.cost, modelData.currency || "USD")
-                    font.bold: true
-                    // Fixed-width digits keep the two-decimal amounts in one
-                    // column: every price ends in ".XX", so with equal digit
-                    // advances the decimal points line up across rows.
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                    color: "#f8fafc"
+                SpendTimelineChart {
+                    id: detail
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 16
+                    visible: rowCard.canExpand && rowCard.isExpanded
+                    shell: page.shell
+                    points: FeatureTabs.spendTimeline(modelData.dailyCost, modelData.dailyTokens, rowCard.windowDays)
+                    costColor: modelData.accent || "#34d399"
+                    windowDays: rowCard.windowDays
+                    onWindowDaysSelected: days => {
+                        var next = Object.assign({}, page.expandedWindowDays);
+                        next[modelData.id] = days;
+                        page.expandedWindowDays = next;
+                    }
                 }
             }
         }

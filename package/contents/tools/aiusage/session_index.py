@@ -68,6 +68,7 @@ class SessionRow(_SessionRowCore, total=False):
     billingProvider: str
     providerCosts: dict
     costBilling: str
+    tokens: int
 
 
 class SessionSourceDescriptor(TypedDict):
@@ -154,6 +155,9 @@ def _redact(rows: Sequence[Mapping[str, Any]]) -> list[SessionRow]:
         provider_costs = row.get("providerCosts")
         if isinstance(provider_costs, dict):
             entry["providerCosts"] = provider_costs
+        tokens = finite_number(row.get("tokens"), minimum=0)
+        if tokens:
+            entry["tokens"] = int(tokens)
         redacted.append(entry)
     return redacted
 
@@ -169,7 +173,7 @@ def _row_from_columns(row: Sequence[Any]) -> SessionRow:
     Column order must match every ``SELECT ... FROM session_rows`` above:
     provider, title, session_name, state, last_activity_at, detail, open_key,
     full_title, source, cost_usd, cost_status, cost_provenance, cost_breakdown,
-    billing_provider, provider_costs.
+    billing_provider, provider_costs, cost_billing, tokens.
     """
     entry: SessionRow = {
         "provider": _text(row[0]),
@@ -201,6 +205,8 @@ def _row_from_columns(row: Sequence[Any]) -> SessionRow:
     provider_costs = _decode_json_or_none(row[14])
     if provider_costs is not None:
         entry["providerCosts"] = provider_costs
+    if len(row) > 16 and row[16]:
+        entry["tokens"] = int(row[16])
     return entry
 
 
@@ -256,6 +262,15 @@ class SessionIndex:
                 }
                 stored = {key: (mtime_ns, size) for key, (mtime_ns, size, _order) in meta.items()}
                 stored_orders = {key: order for key, (_mtime_ns, _size, order) in meta.items()}
+                # A source that cached no rows is never taken at its word. A
+                # parse that succeeds but yields nothing — a collector run
+                # somewhere it could not see the store, e.g. from a desktop
+                # shell with a different HOME — otherwise writes a fingerprint
+                # that makes the source look up to date forever, hiding every
+                # one of its sessions until those files happen to change.
+                cached_rows = {
+                    str(row[0]): int(row[1]) for row in connection.execute("SELECT source_key, COUNT(*) FROM session_rows GROUP BY source_key")
+                }
                 mutated = False
                 for key in stored:
                     if key not in source_map:
@@ -265,7 +280,7 @@ class SessionIndex:
 
                 for source_order, (key, source) in enumerate(source_map.items()):
                     metadata = (source.mtime_ns, source.size)
-                    if not force and stored.get(key) == metadata:
+                    if not force and stored.get(key) == metadata and cached_rows.get(key, 0) > 0:
                         if key in stored_orders and stored_orders[key] != source_order:
                             mutated = True
                         connection.execute(
@@ -291,7 +306,7 @@ class SessionIndex:
                         "title, session_name, state, last_activity_at, detail, "
                         "open_key, full_title, source, cost_usd, cost_status, "
                         "cost_provenance, cost_breakdown, billing_provider, "
-                        "provider_costs, cost_billing) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        "provider_costs, cost_billing, tokens) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (
                             (
                                 key,
@@ -312,6 +327,7 @@ class SessionIndex:
                                 row.get("billingProvider", ""),
                                 _json_or_none(row.get("providerCosts")),
                                 row.get("costBilling", "api"),
+                                int(row.get("tokens") or 0),
                             )
                             for row_order, row in enumerate(rows)
                         ),
@@ -335,7 +351,7 @@ class SessionIndex:
                 "session_rows.open_key, session_rows.full_title, session_rows.source, "
                 "session_rows.cost_usd, session_rows.cost_status, session_rows.cost_provenance, "
                 "session_rows.cost_breakdown, session_rows.billing_provider, session_rows.provider_costs, "
-                "session_rows.cost_billing "
+                "session_rows.cost_billing, session_rows.tokens "
                 "FROM session_rows "
                 "LEFT JOIN source_meta ON source_meta.source_key = session_rows.source_key "
                 "ORDER BY source_meta.source_order, session_rows.row_order"
@@ -378,7 +394,7 @@ class SessionIndex:
                 "session_rows.open_key, session_rows.full_title, session_rows.source, "
                 "session_rows.cost_usd, session_rows.cost_status, session_rows.cost_provenance, "
                 "session_rows.cost_breakdown, session_rows.billing_provider, session_rows.provider_costs, "
-                "session_rows.cost_billing "
+                "session_rows.cost_billing, session_rows.tokens "
                 "FROM session_rows "
                 "LEFT JOIN source_meta ON source_meta.source_key = session_rows.source_key" + where + " ORDER BY session_rows.last_activity_at DESC, "
                 "source_meta.source_order ASC, session_rows.row_order ASC LIMIT ? OFFSET ?",

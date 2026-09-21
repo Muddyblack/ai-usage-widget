@@ -466,3 +466,73 @@ class LocalSpendPagingTest(unittest.TestCase):
                 envelope._local_spend()
 
         unpaged.assert_called_once_with()
+
+
+class LocalSpendDailyTest(unittest.TestCase):
+    """The per-day series feeds the Spend tab's expandable row chart, so it
+    has to add up to exactly the total shown on that row — it is built from
+    the same contributions rather than re-derived from provider stats, which
+    report $0 for plan-covered work."""
+
+    def _rows(self, *stamps):
+        return [
+            {
+                "provider": "cline",
+                "source": "cline",
+                "costUSD": 1.5,
+                "costStatus": "exact",
+                "costProvenance": "estimated",
+                "lastActivityAt": stamp,
+            }
+            for stamp in stamps
+        ]
+
+    def test_daily_series_buckets_by_local_day_and_sums_to_the_total(self):
+        # Two sessions on one day, one on the next.
+        day_one = 1_789_046_340
+        rows = self._rows(day_one, day_one + 600, day_one + 86_400)
+        with mock.patch("aiusage.sessions.all_session_rows", return_value=rows):
+            spend = envelope._local_spend()
+
+        entry = spend["estimated"]["providers"]["cline::cline"]
+        daily = entry["dailyUSD"]
+        self.assertEqual(len(daily), 2)
+        self.assertEqual([point["usd"] for point in daily], [3.0, 1.5])
+        self.assertEqual(sum(point["usd"] for point in daily), entry["costUSD"])
+        self.assertEqual([point["date"] for point in daily], sorted(point["date"] for point in daily))
+
+    def test_sessions_without_a_timestamp_omit_the_series_but_keep_the_total(self):
+        rows = [
+            {
+                "provider": "cline",
+                "source": "cline",
+                "costUSD": 2.0,
+                "costStatus": "exact",
+                "costProvenance": "estimated",
+            }
+        ]
+        with mock.patch("aiusage.sessions.all_session_rows", return_value=rows):
+            spend = envelope._local_spend()
+
+        entry = spend["estimated"]["providers"]["cline::cline"]
+        self.assertEqual(entry["costUSD"], 2.0)
+        self.assertNotIn("dailyUSD", entry)
+
+    def test_plan_covered_work_gets_its_own_daily_series(self):
+        rows = [
+            {
+                "provider": "claude",
+                "source": "claude",
+                "costUSD": 12.0,
+                "costStatus": "exact",
+                "costProvenance": "estimated",
+                "costBilling": "subscription",
+                "lastActivityAt": 1_789_046_340,
+            }
+        ]
+        with mock.patch("aiusage.sessions.all_session_rows", return_value=rows):
+            spend = envelope._local_spend()
+
+        entry = spend["subscription"]["providers"]["claude::claude"]
+        self.assertEqual([point["usd"] for point in entry["dailyUSD"]], [12.0])
+        self.assertEqual(spend["estimated"]["costStatus"], "unavailable")

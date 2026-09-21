@@ -131,6 +131,10 @@ def _with_usage_cost(entry, provider, buckets):
     providers = {bucket.provider for bucket in buckets if bucket.provider}
     rates = {rate_provider: catalog.get(rate_provider, {}) for rate_provider in providers or {provider}}
     costed = {**entry, **billing.aggregate_session_usage(buckets, rates)}
+    # Structured, not just baked into the detail string: the Spend view's
+    # per-day token series is built from these, the same way its cost series
+    # is, so both halves of that chart cover the same days.
+    costed["tokens"] = billing.total_tokens(buckets)
     # What the figure means: money owed on a metered key, or the API-equivalent
     # of work a plan already covers. See billing_mode for why they never mix.
     costed["costBilling"] = billing_mode.mode_for(entry.get("provider") or provider)
@@ -418,11 +422,20 @@ def _codex_id_from_path(path):
 
 def _claude_session_usage(path, session_id):
     buckets = []
+    latest_cost_state = None
+    seen_msg_ids = set()
     try:
         with open(path, encoding="utf-8", errors="replace") as stream:
             for index, line in enumerate(stream):
                 if index > 50000:
                     break
+                if '"cost-state"' in line:
+                    try:
+                        row = json.loads(line)
+                        if isinstance(row, dict) and row.get("type") == "cost-state":
+                            latest_cost_state = row
+                    except ValueError:
+                        pass
                 if '"usage"' not in line:
                     continue
                 try:
@@ -432,6 +445,13 @@ def _claude_session_usage(path, session_id):
                 if not isinstance(row, dict):
                     continue
                 message = row.get("message") if isinstance(row.get("message"), dict) else {}
+                msg_id = (message.get("id") if isinstance(message.get("id"), str) else "") or (
+                    row.get("requestId") if isinstance(row.get("requestId"), str) else ""
+                )
+                if msg_id:
+                    if msg_id in seen_msg_ids:
+                        continue
+                    seen_msg_ids.add(msg_id)
                 usage = message.get("usage") if isinstance(message.get("usage"), dict) else {}
                 model = (
                     message.get("model") if isinstance(message.get("model"), str) else row.get("model") if isinstance(row.get("model"), str) else ""
@@ -450,6 +470,83 @@ def _claude_session_usage(path, session_id):
                 )
     except OSError:
         return []
+
+    if latest_cost_state is not None:
+        model_usage = latest_cost_state.get("modelUsage")
+        if isinstance(model_usage, dict):
+            cost_buckets = []
+            for model, usage in model_usage.items():
+                if not isinstance(usage, dict):
+                    continue
+                cost_buckets.append(
+                    billing.UsageBucket(
+                        "anthropic",
+                        model,
+                        session_id,
+                        num(usage.get("inputTokens")),
+                        num(usage.get("outputTokens")),
+                        num(usage.get("cacheReadInputTokens")),
+                        num(usage.get("cacheCreationInputTokens")),
+                        num(usage.get("thinkingTokens")),
+                        provider_cost_usd=num(usage.get("costUSD")),
+                    )
+                )
+            if cost_buckets or latest_cost_state.get("totalCostUSD", 0) == 0:
+                return cost_buckets
+
+    subagents_dir = os.path.join(os.path.splitext(path)[0], "subagents")
+    if os.path.isdir(subagents_dir):
+        try:
+            for sub_name in sorted(os.listdir(subagents_dir)):
+                if not sub_name.endswith(".jsonl"):
+                    continue
+                sub_path = os.path.join(subagents_dir, sub_name)
+                try:
+                    with open(sub_path, encoding="utf-8", errors="replace") as sub_stream:
+                        for sub_index, sub_line in enumerate(sub_stream):
+                            if sub_index > 10000:
+                                break
+                            if '"usage"' not in sub_line:
+                                continue
+                            try:
+                                sub_row = json.loads(sub_line)
+                            except ValueError:
+                                continue
+                            if not isinstance(sub_row, dict):
+                                continue
+                            sub_msg = sub_row.get("message") if isinstance(sub_row.get("message"), dict) else {}
+                            sub_id = (sub_msg.get("id") if isinstance(sub_msg.get("id"), str) else "") or (
+                                sub_row.get("requestId") if isinstance(sub_row.get("requestId"), str) else ""
+                            )
+                            if sub_id:
+                                if sub_id in seen_msg_ids:
+                                    continue
+                                seen_msg_ids.add(sub_id)
+                            sub_usage = sub_msg.get("usage") if isinstance(sub_msg.get("usage"), dict) else {}
+                            sub_model = (
+                                sub_msg.get("model")
+                                if isinstance(sub_msg.get("model"), str)
+                                else sub_row.get("model")
+                                if isinstance(sub_row.get("model"), str)
+                                else ""
+                            )
+                            buckets.append(
+                                billing.UsageBucket(
+                                    "anthropic",
+                                    sub_model,
+                                    session_id,
+                                    num(sub_usage.get("input_tokens")),
+                                    num(sub_usage.get("output_tokens")),
+                                    num(sub_usage.get("cache_read_input_tokens")),
+                                    num(sub_usage.get("cache_creation_input_tokens")),
+                                    num(sub_usage.get("reasoning_tokens")),
+                                )
+                            )
+                except OSError:
+                    continue
+        except OSError:
+            pass
+
     return buckets
 
 

@@ -126,9 +126,10 @@ ColumnLayout {
                     if (shell.activeId === "sessions")
                         return shell.sessionsLoading ? shell.i18n("Refreshing…") : shell.i18np("%1 local session", "%1 local sessions", shell.sessionsTotal || 0);
                     if (shell.activeId === "spend") {
-                        var providerRows = FeatureTabs.spendProviderRows(shell.providers);
-                        var total = FeatureTabs.spendTotal(providerRows.concat(FeatureTabs.localSpendRows(shell.localSpend, providerRows)), "USD");
-                        return total > 0 ? (shell.i18n("Provider/API total: %1", "$" + total.toFixed(2))) : "";
+                        // Provider/API total: metered spend and plan-inclusive spend
+                        var providerRows = FeatureTabs.spendProviderRows(shell.providers, shell.localSpend);
+                        var allRows = providerRows.concat(FeatureTabs.localSpendRows(shell.localSpend, providerRows, shell.providers));
+                        return FeatureTabs.spendSummaryText(allRows, "USD", shell.i18n);
                     }
                     return "";
                 }

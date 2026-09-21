@@ -535,6 +535,10 @@ PlasmoidItem {
     // drift apart. Enabled state lives in Plasmoid.configuration under a fixed
     // "<id>Enabled" key. Icon filenames are listed rather than derived: the
     // "-color" suffix is inconsistent upstream artwork, not a convention.
+    // The raw envelope's provider array (id, details.stats, ...) from the
+    // latest backend snapshot — distinct from `providers` below, which is a
+    // static UI registry (label/color/icon) and never carries live stats.
+    property var rawProviders: []
     readonly property var providers: [
         {
             id: "claude",
@@ -1522,6 +1526,7 @@ PlasmoidItem {
             return;
         }
         var providers = snapshot.providers || [];
+        root.rawProviders = providers;
         root.localSpend = snapshot.localSpend || ({});
         var active = root.enabledTabs[root.activeTab] || "";
         var activeSeen = false;
@@ -2501,8 +2506,10 @@ PlasmoidItem {
 
             Rectangle {
                 visible: root.errorMsg !== ""
-                width: 6
-                height: 6
+                implicitWidth: 6
+                implicitHeight: 6
+                Layout.preferredWidth: 6
+                Layout.preferredHeight: 6
                 radius: 3
                 color: root.dangerColor
                 Layout.alignment: Qt.AlignVCenter
@@ -2537,8 +2544,10 @@ PlasmoidItem {
 
             Rectangle {
                 visible: root.panelShows("claude") && root.sessionAvailable && root.weeklyAvailable
-                width: 1
-                height: 14
+                implicitWidth: 1
+                implicitHeight: 14
+                Layout.preferredWidth: 1
+                Layout.preferredHeight: 14
                 color: Qt.rgba(1, 1, 1, 0.16)
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -2566,8 +2575,10 @@ PlasmoidItem {
 
             Rectangle {
                 visible: root.panelShows("antigravity")
-                width: 1
-                height: 14
+                implicitWidth: 1
+                implicitHeight: 14
+                Layout.preferredWidth: 1
+                Layout.preferredHeight: 14
                 color: Qt.rgba(1, 1, 1, 0.16)
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -2598,8 +2609,10 @@ PlasmoidItem {
 
             Rectangle {
                 visible: root.panelShows("openai") && root.codexSessionAvailable && root.codexWeeklyAvailable
-                width: 1
-                height: 14
+                implicitWidth: 1
+                implicitHeight: 14
+                Layout.preferredWidth: 1
+                Layout.preferredHeight: 14
                 color: Qt.rgba(1, 1, 1, 0.16)
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -2666,8 +2679,10 @@ PlasmoidItem {
 
             Rectangle {
                 visible: root.panelShows("ollama") && root.ollamaWindows.length > 0 && root.ollamaWindows[0].key === "ollama_session" && root.ollamaWeeklyWindow !== null
-                width: 1
-                height: 14
+                implicitWidth: 1
+                implicitHeight: 14
+                Layout.preferredWidth: 1
+                Layout.preferredHeight: 14
                 color: Qt.rgba(1, 1, 1, 0.16)
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -2953,8 +2968,10 @@ PlasmoidItem {
                 visible: !root._exportHideHeader
 
                 Item {
-                    width: 22
-                    height: 22
+                    implicitWidth: 22
+                    implicitHeight: 22
+                    Layout.preferredWidth: 22
+                    Layout.preferredHeight: 22
 
                     // Brand logo of the active provider, falling back to the
                     // tinted widget logo for providers without artwork.
@@ -3099,13 +3116,26 @@ PlasmoidItem {
                             }
                             if (tab === "sessions")
                                 return sessionsTabView.loading ? i18n("Refreshing…") : i18np("%1 local session", "%1 local sessions", sessionsTabView.sessionsTotal || 0);
-                            if (tab === "spend")
-                                return spendTabView && spendTabView.totalUsd > 0 ? i18n("Provider/API total: %1", FeatureTabs.formatMoney(spendTabView.totalUsd, "USD")) : "";
+                            if (tab === "spend") {
+                                // Provider/API total: metered spend and plan-inclusive spend
+                                return spendTabView ? spendTabView.summaryText : "";
+                            }
                             return "";
                         }
                         font.pixelSize: 10
                         opacity: 0.5
                         color: Kirigami.Theme.textColor
+
+                        MouseArea {
+                            id: subtitleMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            acceptedButtons: Qt.NoButton
+                        }
+
+                        QQC2.ToolTip.visible: subtitleMouseArea.containsMouse && root.enabledTabs[root.activeTab] === "spend" && spendTabView && spendTabView.summaryTooltip !== ""
+                        QQC2.ToolTip.delay: 300
+                        QQC2.ToolTip.text: spendTabView ? spendTabView.summaryTooltip : ""
                     }
                 }
 
@@ -3192,8 +3222,10 @@ PlasmoidItem {
                     model: root.enabledTabs
 
                     Rectangle {
+                        id: tabPillItem
                         Layout.fillWidth: true
-                        height: 32
+                        implicitHeight: 32
+                        Layout.preferredHeight: 32
                         radius: 6
                         clip: true
                         color: root.activeTab === index ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
@@ -3224,7 +3256,7 @@ PlasmoidItem {
 
                             Rectangle {
                                 anchors.fill: parent
-                                radius: parent.parent.radius
+                                radius: tabPillItem.radius
                                 color: parent.containsMouse && root.activeTab !== index ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
                             }
                         }
@@ -3320,7 +3352,8 @@ PlasmoidItem {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
+                implicitHeight: 1
+                Layout.preferredHeight: 1
                 color: Qt.rgba(1, 1, 1, 0.08)
             }
 
@@ -3421,8 +3454,10 @@ PlasmoidItem {
 
                 Rectangle {
                     visible: root.errorMsg !== ""
-                    width: 6
-                    height: 6
+                    implicitWidth: 6
+                    implicitHeight: 6
+                    Layout.preferredWidth: 6
+                    Layout.preferredHeight: 6
                     radius: 3
                     color: root.dangerColor
                     Layout.alignment: Qt.AlignVCenter

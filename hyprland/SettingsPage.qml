@@ -224,7 +224,8 @@ ColumnLayout {
 
         Rectangle {
             Layout.fillWidth: true
-            height: 1
+            implicitHeight: 1
+            Layout.preferredHeight: 1
             color: Qt.rgba(1, 1, 1, 0.08)
         }
 
@@ -375,8 +376,10 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 8
                 Rectangle {
-                    width: 7
-                    height: 7
+                    implicitWidth: 7
+                    implicitHeight: 7
+                    Layout.preferredWidth: 7
+                    Layout.preferredHeight: 7
                     radius: 3.5
                     color: modelData.accent
                     Layout.alignment: Qt.AlignVCenter

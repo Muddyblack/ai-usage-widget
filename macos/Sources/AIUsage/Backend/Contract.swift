@@ -112,6 +112,13 @@ struct SpendRow: Identifiable {
     let costStatus: String?
     let costBreakdown: CostBreakdown?
     let billing: String?
+    /// Per-day history for the expandable chart. Cost comes from the session
+    /// rows the total is summed from, tokens from the same rows, so the two
+    /// always cover the same days.
+    let dailyCost: [DailyCostPoint]
+    let dailyTokens: [DailyPoint]
+
+    var canExpand: Bool { dailyCost.count > 1 || dailyTokens.count > 1 }
 
     var id: String {
         if let provider { return provider.id }
@@ -125,7 +132,10 @@ struct SpendRow: Identifiable {
         return "local-sessions"
     }
 
-    init(provider: Provider, cost: Double, currency: String, note: String) {
+    init(provider: Provider, cost: Double, currency: String, note: String,
+         dailyCost: [DailyCostPoint] = [], dailyTokens: [DailyPoint] = []) {
+        self.dailyCost = dailyCost
+        self.dailyTokens = dailyTokens
         self.provider = provider
         self.source = nil
         self.localIdentity = nil
@@ -145,6 +155,8 @@ struct SpendRow: Identifiable {
     }
 
     init(localCost: Double, label: String, provenance: String?, costStatus: String? = nil) {
+        self.dailyCost = []
+        self.dailyTokens = []
         self.provider = nil
         self.source = nil
         self.localIdentity = nil
@@ -163,7 +175,10 @@ struct SpendRow: Identifiable {
 
     init(localSource: String, actualUSD: Double, estimatedUSD: Double,
          provenance: String, costStatus: String, billingProvider: String? = nil,
-         identity: String? = nil, viaSource: String? = nil, billing: String? = nil) {
+         identity: String? = nil, viaSource: String? = nil, billing: String? = nil,
+         dailyCost: [DailyCostPoint] = [], dailyTokens: [DailyPoint] = []) {
+        self.dailyCost = dailyCost
+        self.dailyTokens = dailyTokens
         let sourceKey = Self.localSourceKey(localSource)
         let viaSourceKey = Self.localSourceKey(viaSource ?? "")
         self.provider = nil
@@ -245,18 +260,48 @@ struct SpendRow: Identifiable {
     }
 }
 
+/// One day of a provider's spend, from the session rows the totals are summed
+/// from — so a provider's series always adds up to the figure beside it. A
+/// plan-covered provider reports no real API cost, which is why this cannot
+/// come from the provider's own usage stats.
+struct DailyCostPoint: Decodable, Equatable, Identifiable {
+    var date = ""
+    var usd = 0.0
+    var id: String { date }
+
+    init(date: String = "", usd: Double = 0) {
+        self.date = date
+        self.usd = usd.isFinite && usd >= 0 ? usd : 0
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        date = (try? c.decode(String.self, forKey: .date)) ?? ""
+        let decoded = (try? c.decode(Double.self, forKey: .usd)) ?? 0
+        usd = decoded.isFinite && decoded >= 0 ? decoded : 0
+    }
+
+    enum CodingKeys: String, CodingKey { case date, usd }
+}
+
 struct LocalSpendProvider: Decodable, Equatable {
     var costUSD = 0.0
     var costStatus = "unavailable"
     var costProvenance: String?
     var source: String?
+    /// Both halves of the expandable row chart, over the same days.
+    var dailyUSD: [DailyCostPoint] = []
+    var dailyTokens: [DailyPoint] = []
 
-    init(costUSD: Double = 0, costStatus: String = "unavailable", costProvenance: String? = nil, source: String? = nil) {
+    init(costUSD: Double = 0, costStatus: String = "unavailable", costProvenance: String? = nil, source: String? = nil,
+         dailyUSD: [DailyCostPoint] = [], dailyTokens: [DailyPoint] = []) {
         self.costUSD = costUSD
         self.costStatus = ["exact", "partial", "unavailable"].contains(costStatus)
             ? costStatus : "unavailable"
         self.costProvenance = Self.validProvenance(costProvenance)
         self.source = source
+        self.dailyUSD = dailyUSD
+        self.dailyTokens = dailyTokens
     }
 
     init(from decoder: Decoder) throws {
@@ -273,9 +318,11 @@ struct LocalSpendProvider: Decodable, Equatable {
             ? decodedStatus : "unavailable"
         costProvenance = costStatus == "unavailable" ? nil : validOrigin
         source = costStatus == "unavailable" ? nil : decodedSource
+        dailyUSD = (try? c.decode([DailyCostPoint].self, forKey: .dailyUSD)) ?? []
+        dailyTokens = (try? c.decode([DailyPoint].self, forKey: .dailyTokens)) ?? []
     }
 
-    enum CodingKeys: String, CodingKey { case costUSD, costStatus, costProvenance, source }
+    enum CodingKeys: String, CodingKey { case costUSD, costStatus, costProvenance, source, dailyUSD, dailyTokens }
 
     static func validProvenance(_ value: String?) -> String? {
         guard let value, ["actual", "estimated", "mixed"].contains(value) else { return nil }
@@ -385,6 +432,7 @@ struct LocalSpend: Decodable, Equatable {
 enum SpendRows {
     static func build(_ providers: [Provider], localSpend: LocalSpend = LocalSpend()) -> [SpendRow] {
         var out: [SpendRow] = []
+        let dailyByProvider = dailyByProvider(localSpend)
         for provider in providers {
             let details = provider.costDetails
             let cost: Double
@@ -423,7 +471,14 @@ enum SpendRows {
                 continue
             }
             guard cost > 0 else { continue }
-            out.append(SpendRow(provider: provider, cost: cost, currency: currency, note: note))
+            let history = dailyByProvider[provider.id]
+            out.append(SpendRow(
+                provider: provider,
+                cost: cost,
+                currency: currency,
+                note: note,
+                dailyCost: history?.cost ?? [],
+                dailyTokens: history?.tokens ?? []))
         }
         if let legacy = localSpend.legacy {
             appendLocal(legacy, label: i18n("Local sessions"), provenance: nil, to: &out)
@@ -434,8 +489,46 @@ enum SpendRows {
         return out.sorted { $0.cost > $1.cost }
     }
 
+    /// Per-day cost and tokens for every provider that produced session rows,
+    /// merged across the four billing groups. Provider-agnostic: a provider
+    /// shows up here because it has sessions, not because it was named.
+    private static func dailyByProvider(
+        _ localSpend: LocalSpend
+    ) -> [String: (cost: [DailyCostPoint], tokens: [DailyPoint])] {
+        var cost: [String: [DailyCostPoint]] = [:]
+        var tokens: [String: [DailyPoint]] = [:]
+        for group in [localSpend.actual, localSpend.estimated, localSpend.subscription, localSpend.subscriptionActual] {
+            for (key, entry) in group.providers {
+                let providerKey = key.split(separator: "::", maxSplits: 1).map(String.init).first ?? key
+                if !entry.dailyUSD.isEmpty {
+                    cost[providerKey, default: []].append(contentsOf: entry.dailyUSD)
+                }
+                if !entry.dailyTokens.isEmpty {
+                    tokens[providerKey, default: []].append(contentsOf: entry.dailyTokens)
+                }
+            }
+        }
+        var out: [String: (cost: [DailyCostPoint], tokens: [DailyPoint])] = [:]
+        for key in Set(cost.keys).union(tokens.keys) {
+            out[key] = (mergeDaily(cost[key] ?? []), mergeDailyTokens(tokens[key] ?? []))
+        }
+        return out
+    }
+
     static func totalUSD(_ rows: [SpendRow]) -> Double {
         rows.filter { $0.provider != nil && $0.currency == "USD" }.reduce(0) { $0 + $1.cost }
+    }
+
+    static func meteredTotalUSD(_ rows: [SpendRow]) -> Double {
+        rows.filter { $0.billing != "subscription" && $0.currency == "USD" && $0.cost > 0 && $0.cost.isFinite }.reduce(0) { $0 + $1.cost }
+    }
+
+    static func planTotalUSD(_ rows: [SpendRow]) -> Double {
+        rows.filter { $0.billing == "subscription" && $0.currency == "USD" && $0.cost > 0 && $0.cost.isFinite }.reduce(0) { $0 + $1.cost }
+    }
+
+    static func allTotalUSD(_ rows: [SpendRow]) -> Double {
+        rows.filter { $0.currency == "USD" && $0.cost > 0 && $0.cost.isFinite }.reduce(0) { $0 + $1.cost }
     }
 
     private static func appendLocal(
@@ -488,7 +581,9 @@ enum SpendRows {
                 costStatus: costStatus,
                 billingProvider: localSource == "opencode" && viaSource != nil ? providerKey : nil,
                 identity: source,
-                viaSource: viaSource))
+                viaSource: viaSource,
+                dailyCost: mergeDaily(actualEntry?.daily ?? [], estimatedEntry?.daily ?? []),
+                dailyTokens: mergeDailyTokens(actualEntry?.dailyTokens ?? [], estimatedEntry?.dailyTokens ?? [])))
         }
     }
 
@@ -525,16 +620,42 @@ enum SpendRows {
                 billingProvider: localSource == "opencode" && viaSource != nil ? providerKey : nil,
                 identity: source,
                 viaSource: viaSource,
-                billing: "subscription"))
+                billing: "subscription",
+                dailyCost: mergeDaily(actualEntry?.daily ?? [], estimatedEntry?.daily ?? []),
+                dailyTokens: mergeDailyTokens(actualEntry?.dailyTokens ?? [], estimatedEntry?.dailyTokens ?? [])))
         }
     }
 
-    private static func validLocalProvider(_ entry: LocalSpendProvider?) -> (cost: Double, status: String, source: String?)? {
+    private static func validLocalProvider(
+        _ entry: LocalSpendProvider?
+    ) -> (cost: Double, status: String, source: String?, daily: [DailyCostPoint], dailyTokens: [DailyPoint])? {
         guard let entry,
               entry.costStatus == "exact" || entry.costStatus == "partial",
               entry.costUSD > 0,
               entry.costUSD.isFinite else { return nil }
-        return (entry.costUSD, entry.costStatus, entry.source)
+        return (entry.costUSD, entry.costStatus, entry.source, entry.dailyUSD, entry.dailyTokens)
+    }
+
+    /// Sum per-day series into one sorted series — a row can be fed by both
+    /// the actual and estimated halves of the same provider.
+    static func mergeDaily(_ series: [DailyCostPoint]...) -> [DailyCostPoint] {
+        var totals: [String: Double] = [:]
+        for one in series {
+            for point in one where !point.date.isEmpty {
+                totals[point.date, default: 0] += point.usd
+            }
+        }
+        return totals.keys.sorted().map { DailyCostPoint(date: $0, usd: totals[$0] ?? 0) }
+    }
+
+    static func mergeDailyTokens(_ series: [DailyPoint]...) -> [DailyPoint] {
+        var totals: [String: Double] = [:]
+        for one in series {
+            for point in one where !point.date.isEmpty {
+                totals[point.date, default: 0] += point.total
+            }
+        }
+        return totals.keys.sorted().map { DailyPoint(date: $0, total: totals[$0] ?? 0) }
     }
 
     private static func localProvider(
@@ -1049,6 +1170,11 @@ struct DailyPoint: Decodable, Equatable, Identifiable {
     var date = ""
     var total: Double = 0
     var id: String { date }
+
+    init(date: String = "", total: Double = 0) {
+        self.date = date
+        self.total = total.isFinite && total >= 0 ? total : 0
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)

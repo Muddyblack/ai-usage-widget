@@ -408,7 +408,7 @@ test("provider spend rows and totals remain provider-only", () => {
         },
     ]);
 
-    assert.deepEqual(Array.from(rows, row => ({ ...row })), [
+    assert.deepEqual(Array.from(rows, row => ({ ...row, dailyCost: [...row.dailyCost], dailyTokens: [...row.dailyTokens] })), [
         {
             id: "claude",
             label: "Claude",
@@ -417,6 +417,8 @@ test("provider spend rows and totals remain provider-only", () => {
             cost: 4.5,
             currency: "USD",
             note: "30d API",
+            dailyCost: [],
+            dailyTokens: [],
         },
         {
             id: "openrouter",
@@ -426,6 +428,8 @@ test("provider spend rows and totals remain provider-only", () => {
             cost: 3,
             currency: "USD",
             note: "all-time",
+            dailyCost: [],
+            dailyTokens: [],
         },
         {
             id: "openai",
@@ -435,9 +439,124 @@ test("provider spend rows and totals remain provider-only", () => {
             cost: 2,
             currency: "USD",
             note: "30d API",
+            dailyCost: [],
+            dailyTokens: [],
         },
     ]);
     assert.equal(FeatureTabs.spendTotal(rows, "USD"), 9.5);
+});
+
+test("provider spend rows take cost-by-day from sessions and tokens-by-day from stats", () => {
+    // A provider blob only ever carries totals; per-day cost lives on the
+    // session rollups, which is also the only place plan-covered work has a
+    // non-zero figure.
+    const rows = FeatureTabs.spendProviderRows(
+        [
+            {
+                id: "claude",
+                label: "Claude",
+                details: {
+                    organizationUsage: { totalCostUSD: 4.5 },
+                    stats: { dailySeries: [{ date: "2026-01-01", total: 100 }] },
+                },
+            },
+            {
+                id: "openai",
+                label: "OpenAI",
+                details: { organizationUsage: { totalCostUSD: 2 } },
+            },
+        ],
+        {
+            subscription: {
+                costStatus: "exact",
+                providers: {
+                    claude: {
+                        costUSD: 4.5,
+                        costStatus: "exact",
+                        dailyUSD: [{ date: "2026-01-01", usd: 4.5 }],
+                    },
+                },
+            },
+        },
+    );
+    assert.deepEqual(Array.from(rows[0].dailyCost, x => ({ ...x })), [{ date: "2026-01-01", usd: 4.5 }]);
+    assert.deepEqual(Array.from(rows[0].dailyTokens, x => ({ ...x })), [{ date: "2026-01-01", total: 100 }]);
+    // No sessions for this provider, so no cost history — not a fake zero line.
+    assert.deepEqual(Array.from(rows[1].dailyCost), []);
+    assert.deepEqual(Array.from(rows[1].dailyTokens), []);
+});
+
+test("dailyCostByProvider merges every billing group and needs no per-provider code", () => {
+    const daily = FeatureTabs.dailyCostByProvider({
+        estimated: {
+            providers: {
+                grok: { dailyUSD: [{ date: "2026-01-01", usd: 1 }, { date: "2026-01-02", usd: 2 }] },
+                "anthropic::opencode": { dailyUSD: [{ date: "2026-01-01", usd: 0.5 }] },
+            },
+        },
+        subscription: {
+            providers: { grok: { dailyUSD: [{ date: "2026-01-01", usd: 0.25 }] } },
+        },
+    });
+    // Same provider in two groups sums per day; the "::source" rollup key
+    // collapses onto the provider it belongs to.
+    assert.deepEqual(Array.from(daily.grok, x => ({ ...x })), [
+        { date: "2026-01-01", usd: 1.25 },
+        { date: "2026-01-02", usd: 2 },
+    ]);
+    assert.deepEqual(Array.from(daily.anthropic, x => ({ ...x })), [{ date: "2026-01-01", usd: 0.5 }]);
+});
+
+test("spendTimeline zips cost and token series and can trim to a trailing window", () => {
+    const cost = [
+        { date: "2026-01-01", usd: 1 },
+        { date: "2026-01-02", usd: 2 },
+        { date: "2026-01-03", usd: 3 },
+    ];
+    const tokens = [
+        { date: "2026-01-02", total: 20 },
+        { date: "2026-01-03", total: 30 },
+    ];
+    assert.deepEqual(Array.from(FeatureTabs.spendTimeline(cost, tokens, 0), x => ({ ...x })), [
+        { date: "2026-01-01", usd: 1, total: 0 },
+        { date: "2026-01-02", usd: 2, total: 20 },
+        { date: "2026-01-03", usd: 3, total: 30 },
+    ]);
+    assert.deepEqual(Array.from(FeatureTabs.spendTimeline(cost, tokens, 2), x => ({ ...x })), [
+        { date: "2026-01-02", usd: 2, total: 20 },
+        { date: "2026-01-03", usd: 3, total: 30 },
+    ]);
+    assert.deepEqual(Array.from(FeatureTabs.spendTimeline([], [], 30)), []);
+});
+
+test("spendTimeline clips tokens to the cost window so two histories never share one axis", () => {
+    // Cost comes from session rows (recent), tokens from the provider's own
+    // aggregate (older). Plotting the union drew a token line that stopped
+    // exactly where the cost line started.
+    const cost = [
+        { date: "2026-08-22", usd: 5 },
+        { date: "2026-08-23", usd: 7 },
+    ];
+    const tokens = [
+        { date: "2026-04-07", total: 900 },
+        { date: "2026-07-06", total: 800 },
+        { date: "2026-08-23", total: 100 },
+    ];
+    const points = FeatureTabs.spendTimeline(cost, tokens, 0);
+
+    assert.deepEqual(Array.from(points, x => ({ ...x })), [
+        { date: "2026-08-22", usd: 5, total: 0 },
+        { date: "2026-08-23", usd: 7, total: 100 },
+    ]);
+});
+
+test("spendTimeline keeps the token range when a row has no cost history at all", () => {
+    const points = FeatureTabs.spendTimeline([], [{ date: "2026-09-10", total: 5 }, { date: "2026-09-14", total: 9 }], 0);
+
+    assert.deepEqual(Array.from(points, x => ({ ...x })), [
+        { date: "2026-09-10", usd: 0, total: 5 },
+        { date: "2026-09-14", usd: 0, total: 9 },
+    ]);
 });
 
 test("provider spend rows reject non-finite and non-numeric reported values", () => {
@@ -479,7 +598,7 @@ test("spend totals ignore non-numeric and non-finite row costs", () => {
 });
 
 test("spend rows keep long text from moving the amount and center it vertically", () => {
-    const rowStart = spendTabSource.indexOf("        Rectangle {\n            required property var modelData");
+    const rowStart = spendTabSource.indexOf("        Rectangle {\n            id: rowCard\n            required property var modelData");
     assert.notEqual(rowStart, -1);
     const row = spendTabSource.slice(rowStart);
     const bodyStart = row.indexOf("            RowLayout {");
@@ -594,6 +713,82 @@ test("plan-covered spend is its own row and never joins the metered total", () =
     assert.equal(metered.cost, 2);
     // Local rows never count toward the provider/API total either way.
     assert.equal(FeatureTabs.spendTotal(rows, "USD"), 0);
+});
+
+test("spend summary computes metered, plan-covered and all-inclusive totals", () => {
+    const rows = [
+        { id: "cursor", cost: 2.10, currency: "USD" },
+        { id: "local-grok", cost: 2.37, currency: "USD", local: true },
+        { id: "plan-claude", cost: 3966.35, currency: "USD", local: true, billing: "subscription" },
+        { id: "plan-codex", cost: 1457.64, currency: "USD", local: true, billing: "subscription" },
+    ];
+
+    assert.equal(Math.round(FeatureTabs.spendMeteredTotal(rows, "USD") * 100) / 100, 4.47);
+    assert.equal(Math.round(FeatureTabs.spendPlanTotal(rows, "USD") * 100) / 100, 5423.99);
+    assert.equal(Math.round(FeatureTabs.spendAllTotal(rows, "USD") * 100) / 100, 5428.46);
+    assert.equal(FeatureTabs.spendSummaryText(rows, "USD"), "Metered: $4.47 · Incl. plan: $5428.46");
+
+    // Only plan-covered
+    assert.equal(FeatureTabs.spendSummaryText([rows[2]], "USD"), "Incl. plan: $3966.35");
+
+    // Only metered
+    assert.equal(FeatureTabs.spendSummaryText([rows[0], rows[1]], "USD"), "Metered: $4.47");
+
+    // Empty
+    assert.equal(FeatureTabs.spendSummaryText([], "USD"), "");
+
+    // Tooltip breakdown
+    const tooltip = FeatureTabs.spendSummaryTooltip(rows, "USD");
+    assert.match(tooltip, /Metered \(out-of-pocket\): \$4\.47/);
+    assert.match(tooltip, /Covered by plan \(subscription\): \$5423\.99/);
+    assert.match(tooltip, /Total including plan: \$5428\.46/);
+});
+
+test("a plan-covered row's daily cost adds up to the total shown on it", () => {
+    // The whole point of sourcing cost from sessions: a Pro/Max plan reports
+    // $0 of real API cost, so a chart built from provider stats sat flat at
+    // zero under a four-figure total.
+    const rawProviders = [
+        { id: "claude", details: { stats: { dailySeries: [{ date: "2026-01-01", total: 500 }] } } },
+    ];
+    const rows = FeatureTabs.localSpendRows(
+        {
+            subscription: {
+                costStatus: "exact",
+                totalUSD: 100,
+                providers: {
+                    claude: {
+                        costUSD: 100,
+                        costStatus: "exact",
+                        costProvenance: "estimated",
+                        dailyUSD: [{ date: "2026-01-01", usd: 60 }, { date: "2026-01-02", usd: 40 }],
+                    },
+                },
+            },
+        },
+        [],
+        rawProviders,
+    );
+    const plan = rows.find((row) => row.billing === "subscription");
+    assert.ok(plan, "expected a plan-covered row");
+    assert.deepEqual(Array.from(plan.dailyCost, x => ({ ...x })), [
+        { date: "2026-01-01", usd: 60 },
+        { date: "2026-01-02", usd: 40 },
+    ]);
+    assert.equal(plan.dailyCost.reduce((sum, point) => sum + point.usd, 0), plan.cost);
+    assert.deepEqual(Array.from(plan.dailyTokens, x => ({ ...x })), [{ date: "2026-01-01", total: 500 }]);
+});
+
+test("local rows fall back to empty dailyCost/dailyTokens when rawProviders is omitted", () => {
+    const rows = FeatureTabs.localSpendRows({
+        estimated: {
+            costStatus: "exact",
+            totalUSD: 2,
+            providers: { cline: { costUSD: 2, costStatus: "exact", costProvenance: "estimated" } },
+        },
+    });
+    assert.deepEqual(Array.from(rows[0].dailyCost), []);
+    assert.deepEqual(Array.from(rows[0].dailyTokens), []);
 });
 
 test("session cost info reports the billing mode it was priced under", () => {

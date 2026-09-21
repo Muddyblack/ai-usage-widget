@@ -95,6 +95,65 @@ class ClaudeSessionTokensTest(unittest.TestCase):
         self.assertEqual(entry["costStatus"], "exact")
         self.assertAlmostEqual(entry["costUSD"], 0.0006)
 
+    def test_deduplicates_streaming_messages_with_same_id(self):
+        with tempfile.TemporaryDirectory() as root:
+            path = os.path.join(root, "t.jsonl")
+            with open(path, "w", encoding="utf-8") as f:
+                # Two chunks from the same streaming message / tool call sharing requestId and id
+                chunk1 = {"requestId": "req_1", "message": {"id": "msg_1", "usage": {"input_tokens": 100, "output_tokens": 50}}}
+                chunk2 = {"requestId": "req_1", "message": {"id": "msg_1", "usage": {"input_tokens": 100, "output_tokens": 50}}}
+                # Different message
+                msg2 = {"requestId": "req_2", "message": {"id": "msg_2", "usage": {"input_tokens": 20, "output_tokens": 10}}}
+                f.write(json.dumps(chunk1) + "\n")
+                f.write(json.dumps(chunk2) + "\n")
+                f.write(json.dumps(msg2) + "\n")
+            self.assertEqual(_claude_session_tokens(path), 150 + 30)
+
+    def test_prefers_cost_state_when_present(self):
+        with tempfile.TemporaryDirectory() as root:
+            projects = os.path.join(root, "projects", "-mnt-projects-widget")
+            os.makedirs(projects, exist_ok=True)
+            path = os.path.join(projects, "session-1.jsonl")
+            with open(path, "w", encoding="utf-8") as f:
+                # Raw message lines that would otherwise have different un-deduplicated counts
+                f.write(json.dumps({"message": {"usage": {"input_tokens": 9999}}}) + "\n")
+                cost_state = {
+                    "type": "cost-state",
+                    "sessionId": "session-1",
+                    "totalCostUSD": 65.08,
+                    "modelUsage": {
+                        "claude-opus-5": {
+                            "inputTokens": 400,
+                            "outputTokens": 100,
+                            "cacheReadInputTokens": 85000,
+                            "cacheCreationInputTokens": 500,
+                            "thinkingTokens": 30,
+                            "costUSD": 65.08,
+                        }
+                    },
+                }
+                f.write(json.dumps(cost_state) + "\n")
+            with mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": root}):
+                entry = sessions._claude_entries()[0]
+        self.assertEqual(entry["costStatus"], "exact")
+        self.assertEqual(entry["costProvenance"], "actual")
+        self.assertAlmostEqual(entry["costUSD"], 65.08)
+        self.assertEqual(entry["tokens"], 400 + 100 + 85000 + 500)
+
+    def test_subagents_counted_when_no_cost_state(self):
+        with tempfile.TemporaryDirectory() as root:
+            projects = os.path.join(root, "projects", "-mnt-projects-widget")
+            session_dir = os.path.join(projects, "session-1")
+            subagents_dir = os.path.join(session_dir, "subagents")
+            os.makedirs(subagents_dir, exist_ok=True)
+            main_path = os.path.join(projects, "session-1.jsonl")
+            with open(main_path, "w", encoding="utf-8") as f:
+                f.write(json.dumps({"requestId": "req_1", "message": {"usage": {"input_tokens": 100}}}) + "\n")
+            sub_path = os.path.join(subagents_dir, "agent-1.jsonl")
+            with open(sub_path, "w", encoding="utf-8") as f:
+                f.write(json.dumps({"requestId": "sub_1", "message": {"usage": {"input_tokens": 50}}}) + "\n")
+            self.assertEqual(_claude_session_tokens(main_path), 150)
+
 
 class ClineSessionCostTest(unittest.TestCase):
     def _entry_for_record(self, record):

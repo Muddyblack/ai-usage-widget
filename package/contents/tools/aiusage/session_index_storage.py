@@ -2,18 +2,53 @@
 
 from __future__ import annotations
 
+import functools
+import hashlib
 import os
 import sqlite3
 from pathlib import Path
 from typing import Final
 
 _BUSY_TIMEOUT_MS: Final = 5_000
-# Bump whenever a collector's *output* changes shape or content, not just when
-# a column is added: cached rows are the product of the parser that produced
-# them, so a parser improvement has to invalidate them. Without this, a better
-# title or a newly priced cost never reached a store whose files had not
-# happened to change since.
-_SCHEMA_VERSION: Final = 5
+
+# Cached rows are the *product* of the code that parsed and priced them, so
+# they have to be discarded whenever that code changes — a better title or a
+# corrected rate must not be stuck behind a store whose files never changed.
+# That used to be a hand-incremented integer, which meant every such fix
+# depended on remembering to bump it. Instead the cache key is derived from
+# the code itself: change any of these modules and every row re-collects on
+# the next reconcile, with nothing to remember.
+_CONTENT_SOURCES: Final = (
+    "sessions.py",  # the collectors: what a row *is*
+    "billing.py",  # what a row costs
+    "pricing.py",  # the rates that cost is computed against
+    "billing_mode.py",  # metered vs. plan-covered
+    "session_index.py",  # how rows are stored and read back
+)
+_CONTENT_PACKAGES: Final = ("providers",)
+
+
+@functools.cache
+def _schema_version() -> int:
+    """A fingerprint of the code that produces cached rows.
+
+    SQLite's ``user_version`` is a signed 32-bit int, so the digest is
+    truncated to 31 bits. Collisions would only mean a missed invalidation,
+    and at 31 bits that is not a practical concern.
+    """
+    here = Path(__file__).resolve().parent
+    digest = hashlib.blake2b(digest_size=8)
+    paths = [here / name for name in _CONTENT_SOURCES]
+    for package in _CONTENT_PACKAGES:
+        paths.extend(sorted((here / package).glob("*.py")))
+    for path in paths:
+        try:
+            digest.update(path.read_bytes())
+        except OSError:
+            # A module that cannot be read is simply not part of the key;
+            # a failure here must never stop the index from opening.
+            digest.update(b"\0")
+    return int.from_bytes(digest.digest()[:4], "big") & 0x7FFF_FFFF
 
 
 def _is_corrupt(error: sqlite3.DatabaseError) -> bool:
@@ -41,22 +76,34 @@ def _try_wal(connection: sqlite3.Connection) -> str:
 
 
 def _discard_stale_rows(connection: sqlite3.Connection) -> None:
-    """Drop rows parsed by an older build so every source re-collects once."""
+    """Throw away an index built by different code so every source re-collects.
+
+    The tables are dropped rather than emptied: the cache is pure derived
+    data, so rebuilding it costs one re-collect and removes the need for
+    migration logic entirely — a changed column list is handled by the same
+    path as a changed parser, with nothing to write and nothing to get wrong.
+    """
     row = connection.execute("PRAGMA user_version").fetchone()
     stored = int(row[0]) if row else 0
-    if stored == _SCHEMA_VERSION:
+    version = _schema_version()
+    if stored == version:
         return
-    connection.execute("DELETE FROM session_rows")
-    connection.execute("DELETE FROM source_meta")
-    # The DELETEs opened an implicit transaction. Close it before touching
+    connection.execute("DROP TABLE IF EXISTS session_rows")
+    connection.execute("DROP TABLE IF EXISTS source_meta")
+    # The DROPs opened an implicit transaction. Close it before touching
     # user_version: a PRAGMA write inside a transaction does not stick, and
     # leaving one open makes reconcile's BEGIN IMMEDIATE fail.
     connection.commit()
-    connection.execute(f"PRAGMA user_version = {_SCHEMA_VERSION}")
+    connection.execute(f"PRAGMA user_version = {version}")
     connection.commit()
 
 
 def _ensure_schema(connection: sqlite3.Connection, *, discard_stale: bool = False) -> None:
+    # Before the CREATEs, not after: a fingerprint mismatch drops the tables,
+    # and they are then recreated below with whatever columns this build
+    # declares. That is the whole migration story.
+    if discard_stale:
+        _discard_stale_rows(connection)
     connection.execute(
         "CREATE TABLE IF NOT EXISTS source_meta (source_key TEXT PRIMARY KEY, "
         "mtime_ns INTEGER NOT NULL, size INTEGER NOT NULL, "
@@ -77,6 +124,7 @@ def _ensure_schema(connection: sqlite3.Connection, *, discard_stale: bool = Fals
         "billing_provider TEXT NOT NULL DEFAULT '', "
         "provider_costs TEXT, "
         "cost_billing TEXT NOT NULL DEFAULT 'api', "
+        "tokens INTEGER NOT NULL DEFAULT 0, "
         "PRIMARY KEY (source_key, row_order))"
     )
     connection.execute("CREATE INDEX IF NOT EXISTS idx_session_rows_activity ON session_rows (last_activity_at DESC)")
@@ -102,14 +150,13 @@ def _ensure_schema(connection: sqlite3.Connection, *, discard_stale: bool = Fals
             "billing_provider",
             "provider_costs",
             "cost_billing",
+            "tokens",
         },
     }
     for table, columns in required.items():
         actual = {str(row[1]) for row in connection.execute(f"PRAGMA table_info({table})")}
         if not columns.issubset(actual):
             raise sqlite3.DatabaseError("session index schema is invalid")
-    if discard_stale:
-        _discard_stale_rows(connection)
 
 
 def _secure_permissions(cache_path: Path) -> None:

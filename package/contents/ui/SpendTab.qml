@@ -19,6 +19,21 @@ ColumnLayout {
 
     readonly property var rows: spendTab.buildRows()
     readonly property real totalUsd: FeatureTabs.spendTotal(rows, "USD")
+    readonly property real meteredTotalUsd: FeatureTabs.spendMeteredTotal(rows, "USD")
+    readonly property real planTotalUsd: FeatureTabs.spendPlanTotal(rows, "USD")
+    readonly property real allTotalUsd: FeatureTabs.spendAllTotal(rows, "USD")
+    readonly property string summaryText: FeatureTabs.spendSummaryText(rows, "USD", i18n)
+    readonly property string summaryTooltip: FeatureTabs.spendSummaryTooltip(rows, "USD", i18n)
+
+    // Which provider rows are expanded, by row id — a plain object so
+    // reassigning it (not mutating in place) fires the property-changed
+    // signal QML needs to notice. Each expanded row gets its own trend
+    // chart (see the Repeater below) rather than one merged chart across
+    // every provider: providers report on wildly different ranges (30-day
+    // API window vs. all-time local logs), so summing them into one line
+    // produced a chart that was mostly flat with one misleading spike.
+    property var expandedProviders: ({})
+    property var expandedWindowDays: ({})
 
     // ── Model rate table ───────────────────────────────────────────────────
     // The shared pricing catalog the session costs are computed from, shown so
@@ -88,19 +103,36 @@ ColumnLayout {
         }
     }
 
+    // Plasma flattens each provider's stats onto root properties, so a row's
+    // per-day token series has to be looked up from the raw provider list.
+    // Its per-day cost comes from the session rows instead (see
+    // FeatureTabs.dailyCostByProvider) — the same source as the totals.
+    function statsFor(id) {
+        var list = rootItem.rawProviders || [];
+        for (var i = 0; i < list.length; i++) {
+            if (list[i] && list[i].id === id)
+                return (list[i].details && list[i].details.stats) || {};
+        }
+        return {};
+    }
+
     function buildRows() {
         // Plasma keeps costs on root properties rather than a provider list.
         var out = [];
+        var dailyByProvider = FeatureTabs.dailyCostByProvider(rootItem.localSpend);
         function push(id, label, cost, note, currency) {
             if (typeof cost !== "number" || !isFinite(cost) || !(cost > 0))
                 return;
+            var stats = spendTab.statsFor(id);
             out.push({
                 id: id,
                 label: label,
                 cost: cost,
                 note: note || "",
                 currency: currency || "USD",
-                accent: rootItem.tabColor(id)
+                accent: rootItem.tabColor(id),
+                dailyCost: dailyByProvider[id] || [],
+                dailyTokens: Array.isArray(stats.dailySeries) ? stats.dailySeries : (Array.isArray(stats.dailyTokens) ? stats.dailyTokens : [])
             });
         }
         push("claude", "Claude", rootItem.claudeTotalCostUSD || rootItem.claudeStatsTotalCostUSD || 0, i18n("30d API"));
@@ -110,7 +142,7 @@ ColumnLayout {
         push("muse", "Muse", rootItem.museCostUSD, i18n("local est."), rootItem.museCurrency || "USD");
         push("cline", "Cline", (rootItem.clineStats && rootItem.clineStats.totalCostUSD) || 0, i18n("local"));
         push("cursor", "Cursor", rootItem.cursorOnDemandUsed, i18n("on-demand"));
-        var localRows = FeatureTabs.localSpendRows(rootItem.localSpend, out);
+        var localRows = FeatureTabs.localSpendRows(rootItem.localSpend, out, rootItem.rawProviders);
         for (var i = 0; i < localRows.length; i++) {
             localRows[i].label = i18n(localRows[i].label);
             localRows[i].note = i18n(localRows[i].note);
@@ -144,72 +176,125 @@ ColumnLayout {
         model: spendTab.rows
 
         Rectangle {
+            id: rowCard
             required property var modelData
+            readonly property bool canExpand: !!((modelData.dailyCost && modelData.dailyCost.length > 1) || (modelData.dailyTokens && modelData.dailyTokens.length > 1))
+            readonly property bool isExpanded: spendTab.expandedProviders[modelData.id] === true
+            readonly property int windowDays: spendTab.expandedWindowDays[modelData.id] !== undefined ? spendTab.expandedWindowDays[modelData.id] : 0
+
             Layout.fillWidth: true
-            implicitHeight: body.implicitHeight + 16
+            implicitHeight: body.implicitHeight + 16 + (canExpand && isExpanded ? detail.implicitHeight + 10 : 0)
             radius: 8
             color: Qt.rgba(1, 1, 1, 0.04)
             border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.08)
+            clip: true
 
-            RowLayout {
-                id: body
-                anchors.fill: parent
+            Behavior on implicitHeight {
+                NumberAnimation {
+                    duration: 150
+                    easing.type: Easing.OutCubic
+                }
+            }
+
+            ColumnLayout {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
                 anchors.margins: 8
                 spacing: 8
 
-                Rectangle {
-                    width: 8
-                    height: 8
-                    radius: 4
-                    color: modelData.accent
-                    Layout.alignment: Qt.AlignVCenter
-                }
-
-                ColumnLayout {
+                RowLayout {
+                    id: body
                     Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    spacing: 1
-                    PlasmaComponents.Label {
-                        text: modelData.label
-                        font.bold: true
-                        font.pixelSize: 12
-                        color: Kirigami.Theme.textColor
+                    spacing: 8
+
+                    Rectangle {
+                        implicitWidth: 8
+                        implicitHeight: 8
+                        Layout.preferredWidth: 8
+                        Layout.preferredHeight: 8
+                        radius: 4
+                        color: modelData.accent
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    ColumnLayout {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
-                        maximumLineCount: 1
-                        elide: Text.ElideRight
-                        wrapMode: Text.NoWrap
+                        spacing: 1
+                        PlasmaComponents.Label {
+                            text: modelData.label
+                            font.bold: true
+                            font.pixelSize: 12
+                            color: Kirigami.Theme.textColor
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            maximumLineCount: 1
+                            elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                        }
+                        PlasmaComponents.Label {
+                            visible: modelData.note !== ""
+                            text: modelData.note
+                            font.pixelSize: 10
+                            opacity: 0.45
+                            color: Kirigami.Theme.textColor
+                            maximumLineCount: 1
+                            elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                        }
                     }
+
                     PlasmaComponents.Label {
-                        visible: modelData.note !== ""
-                        text: modelData.note
-                        font.pixelSize: 10
-                        opacity: 0.45
+                        visible: rowCard.canExpand
+                        text: rowCard.isExpanded ? "▾" : "▸"
+                        font.pixelSize: 11
+                        opacity: 0.5
                         color: Kirigami.Theme.textColor
-                        maximumLineCount: 1
-                        elide: Text.ElideRight
-                        wrapMode: Text.NoWrap
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    PlasmaComponents.Label {
+                        Layout.alignment: Qt.AlignVCenter
+                        text: rootItem.formatMoney(modelData.cost, modelData.currency)
+                        font.bold: true
+                        // Fixed-width digits keep the two-decimal amounts in one
+                        // column: every price ends in ".XX", so with equal digit
+                        // advances the decimal points line up across rows.
+                        font.family: "monospace"
+                        font.pixelSize: 12
+                        color: Kirigami.Theme.textColor
                     }
                 }
 
-                PlasmaComponents.Label {
-                    Layout.alignment: Qt.AlignVCenter
-                    text: rootItem.formatMoney(modelData.cost, modelData.currency)
-                    font.bold: true
-                    // Fixed-width digits keep the two-decimal amounts in one
-                    // column: every price ends in ".XX", so with equal digit
-                    // advances the decimal points line up across rows.
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                    color: Kirigami.Theme.textColor
+                SpendTimelineChart {
+                    id: detail
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 16
+                    visible: rowCard.canExpand && rowCard.isExpanded
+                    points: FeatureTabs.spendTimeline(modelData.dailyCost, modelData.dailyTokens, rowCard.windowDays)
+                    costColor: modelData.accent
+                    windowDays: rowCard.windowDays
+                    onWindowDaysSelected: days => {
+                        var next = Object.assign({}, spendTab.expandedWindowDays);
+                        next[modelData.id] = days;
+                        spendTab.expandedWindowDays = next;
+                    }
                 }
             }
 
             MouseArea {
                 anchors.fill: parent
-                cursorShape: modelData.local === true ? Qt.ArrowCursor : Qt.PointingHandCursor
+                anchors.bottomMargin: rowCard.canExpand && rowCard.isExpanded ? detail.implicitHeight + 10 : 0
+                cursorShape: modelData.local === true && !rowCard.canExpand ? Qt.ArrowCursor : Qt.PointingHandCursor
                 onClicked: {
+                    if (rowCard.canExpand) {
+                        var next = Object.assign({}, spendTab.expandedProviders);
+                        next[modelData.id] = !rowCard.isExpanded;
+                        spendTab.expandedProviders = next;
+                        return;
+                    }
                     if (modelData.local !== true)
                         rootItem.selectTab(modelData.id);
                 }
