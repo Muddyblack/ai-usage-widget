@@ -31,6 +31,7 @@ SOURCE_REGISTRY: Final = (
     ("claude", "Claude Code"),
     ("opencode", "OpenCode"),
     ("antigravity", "Antigravity"),
+    ("mistral", "Mistral"),
 )
 
 

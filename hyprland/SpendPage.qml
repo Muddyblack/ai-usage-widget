@@ -14,7 +14,6 @@ ColumnLayout {
         var out = FeatureTabs.spendProviderRows(shell.providers);
         var localRows = FeatureTabs.localSpendRows(shell.localSpend);
         for (var i = 0; i < localRows.length; i++) {
-            localRows[i].accent = FeatureTabs.accent("spend");
             localRows[i].label = shell.i18n(localRows[i].label);
             localRows[i].note = shell.i18n(localRows[i].note);
             out.push(localRows[i]);

@@ -125,6 +125,31 @@ function upstreamProviderLabel(provider) {
     return labels[localSourceKey(provider)] || localSourceLabel(provider);
 }
 
+function providerAccent(provider) {
+    var colors = {
+        anthropic: "#cc785c",
+        claude: "#cc785c",
+        antigravity: "#4285f4",
+        openai: "#10a37f",
+        kiro: "#8b5cf6",
+        mistral: "#ff7000",
+        openrouter: "#9333ea",
+        ollama: "#f0f0f0",
+        "ollama-cloud": "#f0f0f0",
+        selfhosted: "#38bdf8",
+        grok: "#e6e6e6",
+        zai: "#126ef4",
+        copilot: "#8b5cf6",
+        deepseek: "#4f8cff",
+        kimi: "#1e3a8a",
+        muse: "#0064e0",
+        cursor: "#e6e6e6",
+        cline: "#e6e6e6"
+    };
+    var key = localSourceKey(provider);
+    return colors[key] || "#34d399";
+}
+
 function localSpendNote(provenance, costStatus, source) {
     var prefix = source === "opencode" ? "via OpenCode" : "local CLI logs";
     var notes = {
@@ -200,6 +225,11 @@ function localSpendRows(localSpend) {
         var estimatedUSD = estimated ? estimated.cost : 0;
         var source = actual && actual.source || estimated && estimated.source || "";
         var providerKey = localProviderKey(sourceKey);
+        // Mistral's provider card and its Vibe session totals read the same
+        // ~/.vibe/meta.json costs. Keep the session rows available for the
+        // Sessions tab, but show that total once in Usage & Spend.
+        if (providerKey === "mistral" && source !== "opencode")
+            continue;
         var hasActual = actualUSD > 0;
         var hasEstimated = estimatedUSD > 0;
         var provenance = hasActual && hasEstimated ? "mixed" : hasActual ? "actual" : "estimated";
@@ -215,7 +245,8 @@ function localSpendRows(localSpend) {
             source: source || providerKey,
             provenance: provenance,
             costStatus: costStatus,
-            costBreakdown: { actualUSD: actualUSD, estimatedUSD: estimatedUSD }
+            costBreakdown: { actualUSD: actualUSD, estimatedUSD: estimatedUSD },
+            accent: providerAccent(providerKey)
         });
     }
 
@@ -257,7 +288,8 @@ function localSpendRows(localSpend) {
             billing: "subscription",
             source: planSource || planProviderKey,
             provenance: "estimated",
-            costStatus: planStatus
+            costStatus: planStatus,
+            accent: providerAccent(planProviderKey)
         });
     }
 
@@ -342,7 +374,7 @@ function spendProviderRows(providers) {
         rows.push({
             id: id,
             label: p.label || id,
-            accent: p.accent || accent("spend"),
+            accent: p.accent || providerAccent(id),
             icon: p.icon || "",
             cost: cost,
             currency: currency,

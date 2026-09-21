@@ -36,7 +36,7 @@ from collections.abc import Sequence
 
 from . import billing, billing_mode, pricing
 from .contract import epoch_of, num
-from .providers import antigravity_sessions, opencode
+from .providers import antigravity_sessions, mistral_sessions, opencode
 from .providers.cline import get_cline_session_records
 from .providers.grok import grok_home
 from .providers.muse import sessions_root as muse_sessions_root
@@ -753,6 +753,43 @@ def _antigravity_entries(*, include_all=False):
     return out
 
 
+def _mistral_entries(*, include_all=False):
+    out = []
+    for record in mistral_sessions.read_recent_sessions(include_all=include_all):
+        detail = []
+        tokens = record.input_tokens + record.output_tokens + record.cached_tokens
+        if tokens > 0:
+            detail.append(f"{_format_tokens(tokens)} tok")
+        if record.project:
+            detail.append(record.project)
+        if record.model:
+            detail.append(record.model)
+        bucket = billing.UsageBucket(
+            "mistral",
+            record.model,
+            record.session_id,
+            input_tokens=record.input_tokens,
+            output_tokens=record.output_tokens,
+            cache_read_tokens=record.cached_tokens,
+            provider_cost_usd=record.cost_usd,
+        )
+        entry = _with_usage_cost(
+            _entry(
+                "mistral",
+                _clip_title(record.title) or "Mistral Vibe",
+                record.last_activity,
+                state=_state(record.last_activity, ended=True),
+                session_name="Mistral Vibe",
+                detail=" · ".join(detail),
+            ),
+            "mistral",
+            [bucket],
+        )
+        if entry:
+            out.append(entry)
+    return out
+
+
 def _antigravity_targets():
     return [
         {
@@ -917,6 +954,7 @@ SESSION_COLLECTORS = {
     "claude": "_claude_entries",
     "opencode": "_opencode_entries",
     "antigravity": "_antigravity_entries",
+    "mistral": "_mistral_entries",
 }
 
 

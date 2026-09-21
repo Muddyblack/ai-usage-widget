@@ -112,7 +112,6 @@ ColumnLayout {
         push("cursor", "Cursor", rootItem.cursorOnDemandUsed, i18n("on-demand"));
         var localRows = FeatureTabs.localSpendRows(rootItem.localSpend);
         for (var i = 0; i < localRows.length; i++) {
-            localRows[i].accent = FeatureTabs.accent("spend");
             localRows[i].label = i18n(localRows[i].label);
             localRows[i].note = i18n(localRows[i].note);
             out.push(localRows[i]);
