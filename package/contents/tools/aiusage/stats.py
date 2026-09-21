@@ -456,3 +456,119 @@ def copilot_stats(s, now):
         }
     )
     return r
+
+
+def opencode_stats(s, now):
+    """Build one stable stats shape from OpenCode's local SQLite ledger."""
+    if not isinstance(s, dict):
+        return {"available": False}
+    sessions = [row for row in (s.get("sessions") or []) if isinstance(row, dict)]
+    sessions = [row for row in sessions if row.get("id") or row.get("usage")]
+    if not sessions:
+        return {"available": False}
+
+    def usage_total(row):
+        return sum(num(row.get(key)) for key in ("input", "output", "cacheRead", "cacheWrite", "reasoning"))
+
+    def cost_state(rows):
+        states = [row.get("costStatus") for row in rows if isinstance(row, dict) and usage_total(row) > 0]
+        if not states:
+            return "unavailable"
+        if any(state in (None, "unavailable") for state in states):
+            return "partial" if any(state in ("exact", "partial") for state in states) else "unavailable"
+        return "partial" if any(state == "partial" for state in states) else "exact"
+
+    models = {}
+    upstream = {}
+    daily = {}
+    workspaces = {}
+    all_buckets = []
+    total_tokens = total_input = total_output = total_cache_read = total_cache_write = total_reasoning = 0
+    total_cost = 0.0
+    cost_rows = []
+    favorite = ""
+    favorite_total = -1
+
+    def session_date(session):
+        timestamp = num(session.get("lastActivity")) or num(session.get("createdAt"))
+        try:
+            return datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d") if timestamp > 0 else ""
+        except (OverflowError, OSError, ValueError):
+            return ""
+
+    for session in sessions:
+        directory = session.get("directory") or ""
+        if directory:
+            workspaces[directory] = workspaces.get(directory, 0) + 1
+        date = session_date(session)
+        if date:
+            daily.setdefault(date, 0)
+        session_buckets = [row for row in (session.get("usage") or []) if isinstance(row, dict)]
+        all_buckets.extend(session_buckets)
+        for row in session_buckets:
+            provider = row.get("provider") or "unknown"
+            model = row.get("model") or "unknown"
+            key = f"{provider}/{model}"
+            in_ = num(row.get("input"))
+            out_ = num(row.get("output"))
+            cache_read = num(row.get("cacheRead"))
+            cache_write = num(row.get("cacheWrite"))
+            reasoning = num(row.get("reasoning"))
+            tokens = in_ + out_ + cache_read + cache_write + reasoning
+            cost = row.get("costUSD")
+            cost = num(cost) if isinstance(cost, (int, float)) else None
+            item = models.setdefault(key, {"provider": provider, "model": model, "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0, "reasoning": 0, "total": 0, "cost": 0, "requests": 0, "costStatus": "exact"})
+            item.update({"input": item["input"] + in_, "output": item["output"] + out_, "cacheRead": item["cacheRead"] + cache_read, "cacheWrite": item["cacheWrite"] + cache_write, "reasoning": item["reasoning"] + reasoning, "total": item["total"] + tokens, "requests": item["requests"] + 1})
+            if cost is not None:
+                item["cost"] += cost
+                total_cost += cost
+            if row.get("costStatus") == "unavailable":
+                item["costStatus"] = "partial"
+            if date:
+                daily[date] += tokens
+            total_input += in_
+            total_output += out_
+            total_cache_read += cache_read
+            total_cache_write += cache_write
+            total_reasoning += reasoning
+            total_tokens += tokens
+            upstream_item = upstream.setdefault(provider, {"provider": provider, "tokens": 0, "cost": 0, "requests": 0, "costStatus": "exact"})
+            upstream_item["tokens"] += tokens
+            upstream_item["requests"] += 1
+            if cost is not None:
+                upstream_item["cost"] += cost
+            if row.get("costStatus") == "unavailable":
+                upstream_item["costStatus"] = "partial"
+            cost_rows.append(row)
+            if tokens > favorite_total:
+                favorite, favorite_total = key, tokens
+
+    daily_tokens = [{"date": date, "total": total} for date, total in sorted(daily.items()) if date]
+    dates = [row["date"] for row in daily_tokens]
+    activity = {"dailyActivity": [{"date": date} for date in dates], "totalSessions": len(sessions), "totalMessages": sum(len(row.get("usage") or []) for row in sessions), "firstSessionDate": dates[0] if dates else ""}
+    r = activity_base(activity, now, daily_tokens, "tokens")
+    periods = []
+    midnight = datetime.datetime.fromtimestamp(now).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+    for key, label, since in (("today", "Today", midnight), ("7d", "Last 7 days", now - 7 * 86400), ("30d", "Last 30 days", now - 30 * 86400), ("all", "All time", 0)):
+        selected = [row for row in sessions if num(row.get("lastActivity")) >= since]
+        selected_rows = [bucket for row in selected for bucket in (row.get("usage") or []) if isinstance(bucket, dict)]
+        periods.append({"key": key, "label": label, "sessions": len(selected), "tokens": sum(usage_total(bucket) for bucket in selected_rows), "cost": sum(num(bucket.get("costUSD")) for bucket in selected_rows if isinstance(bucket.get("costUSD"), (int, float))), "costStatus": cost_state(selected_rows)})
+
+    r.update({
+        "totalTokens": total_tokens,
+        "totalInputTokens": total_input,
+        "totalOutputTokens": total_output,
+        "totalCachedTokens": total_cache_read + total_cache_write,
+        "totalReasoningTokens": total_reasoning,
+        "totalCostUSD": total_cost,
+        "costStatus": cost_state(cost_rows),
+        "costProvenance": "catalog/local ledger",
+        "favoriteModel": favorite,
+        "models": models,
+        "upstreamProviders": sorted(upstream.values(), key=lambda row: row["tokens"], reverse=True),
+        "topWorkspaces": [{"name": name, "sessions": count} for name, count in sorted(workspaces.items(), key=lambda item: item[1], reverse=True)[:8]],
+        "dailyTokens": daily_tokens,
+        "periods": periods,
+        "currency": "USD",
+    })
+    return r

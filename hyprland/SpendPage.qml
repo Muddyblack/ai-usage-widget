@@ -12,7 +12,7 @@ ColumnLayout {
 
     readonly property var rows: {
         var out = FeatureTabs.spendProviderRows(shell.providers);
-        var localRows = FeatureTabs.localSpendRows(shell.localSpend);
+        var localRows = FeatureTabs.localSpendRows(shell.localSpend, out);
         for (var i = 0; i < localRows.length; i++) {
             localRows[i].label = shell.i18n(localRows[i].label);
             localRows[i].note = shell.i18n(localRows[i].note);

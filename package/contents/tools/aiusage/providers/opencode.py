@@ -146,11 +146,6 @@ def _aggregate_bucket(row, session_id: str) -> billing.UsageBucket | None:
     token_counts = (input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, reasoning_tokens)
     if provider_cost == 0 and sum(token_counts) > 0:
         provider_cost = None
-    # A zero-cost row with no tokens is an empty assistant record, not a
-    # billable usage event. Keeping it makes free sessions look like a string
-    # of mysterious $0.0000 costs in the Sessions tab.
-    if sum(token_counts) <= 0 and (provider_cost is None or provider_cost == 0):
-        return None
     return billing.UsageBucket(
         provider,
         model,
@@ -351,3 +346,57 @@ def read_recent_sessions(*, include_all: bool = False) -> list[OpenCodeSession]:
 
 def read_session_targets(*, include_all: bool = True) -> list[OpenCodeSession]:
     return read_recent_sessions(include_all=include_all)
+
+
+def usage_snapshot() -> dict:
+    """Return the complete local usage ledger in a JSON-shaped structure.
+
+    OpenCode stores the provider-reported cost beside token counts.  When a
+    provider does not store cost, the shared catalog can estimate it by the
+    exact provider/model pair.  Keeping both the bucket and its pricing
+    provenance here lets the normalizer explain partial or unavailable costs
+    instead of turning them into a misleading zero.
+    """
+    try:
+        from .. import pricing
+
+        pricing.load_catalog()
+        catalog = pricing.cached_catalog()
+    except Exception:  # a stale/offline catalog must not hide local usage
+        catalog = {}
+
+    sessions = []
+    for record in read_recent_sessions(include_all=True):
+        buckets = []
+        for bucket in record.usage:
+            priced = billing.aggregate_session_usage([bucket], catalog)
+            row = {
+                "provider": bucket.provider,
+                "model": bucket.model,
+                "input": bucket.input_tokens,
+                "output": bucket.output_tokens,
+                "cacheRead": bucket.cache_read_tokens,
+                "cacheWrite": bucket.cache_write_tokens,
+                "reasoning": bucket.reasoning_tokens,
+                "costUSD": priced.get("costUSD"),
+                "costStatus": priced.get("costStatus", "unavailable"),
+                "costProvenance": priced.get("costProvenance", ""),
+            }
+            if "costBreakdown" in priced:
+                row["costBreakdown"] = priced["costBreakdown"]
+            buckets.append(row)
+        session_cost = billing.aggregate_session_usage(record.usage, catalog)
+        sessions.append(
+            {
+                "id": record.session_id,
+                "title": record.title,
+                "directory": record.directory,
+                "createdAt": record.created_at,
+                "lastActivity": record.last_activity,
+                "usage": buckets,
+                "costUSD": session_cost.get("costUSD"),
+                "costStatus": session_cost.get("costStatus", "unavailable"),
+                "costProvenance": session_cost.get("costProvenance", ""),
+            }
+        )
+    return {"sessions": sessions}

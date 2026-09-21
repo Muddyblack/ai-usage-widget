@@ -144,7 +144,8 @@ function providerAccent(provider) {
         kimi: "#1e3a8a",
         muse: "#0064e0",
         cursor: "#e6e6e6",
-        cline: "#e6e6e6"
+        cline: "#e6e6e6",
+        opencode: "#B7B1B1"
     };
     var key = localSourceKey(provider);
     return colors[key] || "#34d399";
@@ -196,8 +197,15 @@ function localProviderKey(identity) {
     return separator > 0 ? key.slice(0, separator) : key;
 }
 
-function localSpendRows(localSpend) {
+function localSpendRows(localSpend, providerRows) {
     var rows = [];
+    var hasOpenCodeProvider = false;
+    for (var providerIndex = 0; providerIndex < (providerRows || []).length; providerIndex++) {
+        if ((providerRows[providerIndex] || {}).id === "opencode") {
+            hasOpenCodeProvider = true;
+            break;
+        }
+    }
     var sources = {};
     var groups = ["actual", "estimated"];
     for (var i = 0; i < groups.length; i++) {
@@ -229,6 +237,10 @@ function localSpendRows(localSpend) {
         // ~/.vibe/meta.json costs. Keep the session rows available for the
         // Sessions tab, but show that total once in Usage & Spend.
         if (providerKey === "mistral" && source !== "opencode")
+            continue;
+        // OpenCode's aggregate card already includes the upstream provider
+        // buckets from its local ledger. Do not count those rows a second time.
+        if (hasOpenCodeProvider && source === "opencode")
             continue;
         var hasActual = actualUSD > 0;
         var hasEstimated = estimatedUSD > 0;
@@ -367,6 +379,9 @@ function spendProviderRows(providers) {
         } else if (id === "cursor") {
             cost = (d.stats && d.stats.totalCostUSD) || d.onDemandUsed || d.onDemandSpendUSD || d.onDemand || 0;
             note = (d.stats && d.stats.totalCostUSD) ? "billing cycle" : "on-demand";
+        } else if (id === "opencode") {
+            cost = (d.stats && d.stats.totalCostUSD) || d.totalCostUSD || 0;
+            note = "local sessions";
         }
 
         if (typeof cost !== "number" || !isFinite(cost) || !(cost > 0))

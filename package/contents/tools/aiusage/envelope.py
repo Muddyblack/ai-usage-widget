@@ -33,6 +33,7 @@ _CRASH_LABELS = {
     "muse": ("Muse", "#0064e0"),
     "cursor": ("Cursor", "#e6e6e6"),
     "cline": ("Cline", "#e6e6e6"),
+    "opencode": ("OpenCode", "#38bdf8"),
 }
 
 

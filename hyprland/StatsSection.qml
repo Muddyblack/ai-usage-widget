@@ -86,6 +86,8 @@ ColumnLayout {
                     return statsSectionRoot.shell.i18n("No Cursor usage this billing cycle yet.\nRequests made with Cursor or cursor-agent will appear here.");
                 if (statsSectionRoot.providerId === "cline")
                     return statsSectionRoot.shell.i18n("No Cline sessions yet.\nRun the Cline CLI and its session logs in ~/.cline will appear here.");
+                if (statsSectionRoot.providerId === "opencode")
+                    return statsSectionRoot.shell.i18n("No OpenCode sessions yet.\nEnable OpenCode and run a local session; usage is read from its SQLite database.");
                 return statsSectionRoot.shell.i18n("No local activity stats yet.\nRun Claude Code to generate ~/.claude/stats-cache.json");
             }
             font.pixelSize: 11

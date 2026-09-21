@@ -110,7 +110,7 @@ ColumnLayout {
         push("muse", "Muse", rootItem.museCostUSD, i18n("local est."), rootItem.museCurrency || "USD");
         push("cline", "Cline", (rootItem.clineStats && rootItem.clineStats.totalCostUSD) || 0, i18n("local"));
         push("cursor", "Cursor", rootItem.cursorOnDemandUsed, i18n("on-demand"));
-        var localRows = FeatureTabs.localSpendRows(rootItem.localSpend);
+        var localRows = FeatureTabs.localSpendRows(rootItem.localSpend, out);
         for (var i = 0; i < localRows.length; i++) {
             localRows[i].label = i18n(localRows[i].label);
             localRows[i].note = i18n(localRows[i].note);

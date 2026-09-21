@@ -32,6 +32,7 @@ from .providers.muse_quota import get_muse_quota
 from .providers.ollama import get_ollama_usage
 from .providers.openai_credentials import get_openai_credentials
 from .providers.openrouter import get_openrouter_usage
+from .providers.opencode import usage_snapshot as get_opencode_usage
 from .providers.zai import get_zai_usage
 
 
@@ -230,6 +231,10 @@ def collect_kimi(now):
     }
 
 
+def collect_opencode(now):
+    return {"id": "opencode", "now": now, "inputs": {"usage": get_opencode_usage()}}
+
+
 _SIMPLE = {
     "antigravity": get_antigravity_usage,
     "kiro": get_kiro_usage,
@@ -259,6 +264,8 @@ def collect(id_, now):
         return collect_muse(now)
     if id_ == "kimi":
         return collect_kimi(now)
+    if id_ == "opencode":
+        return collect_opencode(now)
     if id_ in _SIMPLE:
         usage = _SIMPLE[id_]() or {}
         return {"id": id_, "now": now, "inputs": {"usage": usage, "status": provider_status(id_)}}

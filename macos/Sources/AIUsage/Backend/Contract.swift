@@ -415,6 +415,10 @@ enum SpendRows {
                 cost = details.double(paths: [["onDemandUsed"], ["onDemandSpendUSD"], ["onDemand"]])
                 note = i18n("on-demand")
                 currency = "USD"
+            case "opencode":
+                cost = details.double(paths: [["stats", "totalCostUSD"], ["totalCostUSD"]])
+                note = i18n("local sessions")
+                currency = "USD"
             default:
                 continue
             }
@@ -424,7 +428,7 @@ enum SpendRows {
         if let legacy = localSpend.legacy {
             appendLocal(legacy, label: i18n("Local sessions"), provenance: nil, to: &out)
         } else {
-            appendLocalProviders(actual: localSpend.actual, estimated: localSpend.estimated, to: &out)
+            appendLocalProviders(actual: localSpend.actual, estimated: localSpend.estimated, suppressOpenCode: providers.contains(where: { $0.id == "opencode" }), to: &out)
             appendPlanProviders(subscription: localSpend.subscription, subscriptionActual: localSpend.subscriptionActual, to: &out)
         }
         return out.sorted { $0.cost > $1.cost }
@@ -453,6 +457,7 @@ enum SpendRows {
     private static func appendLocalProviders(
         actual: LocalSpendTotal,
         estimated: LocalSpendTotal,
+        suppressOpenCode: Bool,
         to rows: inout [SpendRow]) {
         let sources = Set(actual.providers.keys.compactMap(localSourceKey))
             .union(estimated.providers.keys.compactMap(localSourceKey))
@@ -469,6 +474,7 @@ enum SpendRows {
             let identityParts = source.split(separator: "::", maxSplits: 1).map(String.init)
             let providerKey = identityParts.first ?? source
             let localSource = sourceMetadata.isEmpty ? providerKey : sourceMetadata
+            if suppressOpenCode && localSource == "opencode" { continue }
             let provenance = actualUSD > 0 && estimatedUSD > 0
                 ? "mixed" : actualUSD > 0 ? "actual" : "estimated"
             let costStatus = actualEntry?.status == "partial" || estimatedEntry?.status == "partial"

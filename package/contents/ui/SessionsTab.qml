@@ -111,7 +111,7 @@ ColumnLayout {
         if (id === "codex")
             return dir + "codex.svg";
         if (id === "opencode")
-            return dir + "ollama.svg";
+            return dir + "opencode-color.svg";
         var icon = rootItem.tabIcon ? rootItem.tabIcon(id) : "";
         if (icon)
             return icon;
@@ -155,7 +155,7 @@ ColumnLayout {
             "cline": "#007acc",
             "muse": "#0064e0",
             "grok": "#ef4444",
-            "opencode": "#38bdf8",
+            "opencode": "#B7B1B1",
             "cursor": "#e6e6e6",
             "copilot": "#8b5cf6",
             "kimi": "#1e3a8a",

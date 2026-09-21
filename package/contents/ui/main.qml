@@ -653,6 +653,12 @@ PlasmoidItem {
             label: "Cline",
             color: root.clineWhite,
             icon: "cline.svg"
+        },
+        {
+            id: "opencode",
+            label: "OpenCode",
+            color: "#B7B1B1",
+            icon: "opencode-color.svg"
         }
     ]
 
@@ -3050,6 +3056,9 @@ PlasmoidItem {
                             if (tab === "cline")
                                 return i18n("Cline Stats");
 
+                            if (tab === "opencode")
+                                return i18n("OpenCode Usage");
+
                             return i18n("AI Usage Monitor");
                         }
                         font.bold: true
@@ -3394,6 +3403,10 @@ PlasmoidItem {
             }
 
             ClineTab {
+                rootItem: root
+            }
+
+            OpenCodeTab {
                 rootItem: root
             }
 

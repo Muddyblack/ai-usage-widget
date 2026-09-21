@@ -202,7 +202,7 @@ Window {
         if (root.activeIsFeature)
             return false;
         var p = activeProvider();
-        return p && (p.id === "claude" || p.id === "openai" || p.id === "copilot" || p.id === "muse" || p.id === "cursor" || p.id === "cline");
+        return p && (p.id === "claude" || p.id === "openai" || p.id === "copilot" || p.id === "muse" || p.id === "cursor" || p.id === "cline" || p.id === "opencode");
     }
 
     function providerById(id) {
