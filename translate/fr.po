@@ -67,18 +67,18 @@ msgid "%1 Usage"
 msgstr "Utilisation %1"
 
 #: hyprland/PopupContent.qml
-msgid "Language, pill, position and chart"
-msgstr "Langue, pilule, position et graphique"
+msgid "Views, pill, position and chart"
+msgstr ""
 
 #: hyprland/PopupContent.qml
-msgid "Language and usage chart"
-msgstr "Langue et graphique d'utilisation"
+msgid "Views, language and usage chart"
+msgstr ""
 
 #: hyprland/PopupContent.qml package/contents/ui/main.qml
-msgid "Optional Overview, Spend and Sessions tabs"
-msgstr "Onglets facultatifs Vue d’ensemble, Dépenses et Sessions"
+msgid "About AI Usage Monitor and project links"
+msgstr ""
 
-#: hyprland/PopupContent.qml package/contents/ui/main.qml
+#: hyprland/PopupContent.qml
 msgid "Local endpoints: Ollama, vLLM and llama.cpp"
 msgstr ""
 
@@ -365,10 +365,6 @@ msgid "Local Models"
 msgstr "Modèles locaux"
 
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
-msgid "Views"
-msgstr "Vues"
-
-#: hyprland/SettingsPage.qml
 msgid "Panel"
 msgstr "Panneau"
 
@@ -384,6 +380,10 @@ msgstr "Données"
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "Advanced"
 msgstr "Avancé"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Info"
+msgstr ""
 
 #: hyprland/SettingsPage.qml
 msgid ""
@@ -2224,6 +2224,60 @@ msgstr "%1 req / %2"
 msgid "Free tier active — rate limits apply"
 msgstr "Forfait gratuit actif — les limites de débit s'appliquent"
 
+#: package/contents/ui/ProjectInfoPane.qml
+msgid ""
+"An open-source AI quota & usage monitor for Plasma, Hyprland, macOS and "
+"Windows. Explore the project, get updates, or help improve it."
+msgstr ""
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Installed version · %1"
+msgstr ""
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Latest stable release · %1"
+msgstr ""
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Get update ↗"
+msgstr ""
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "View latest release ↗"
+msgstr ""
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Check again"
+msgstr ""
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "License · %1"
+msgstr ""
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "From the bundled LICENSE file"
+msgstr ""
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Contributors"
+msgstr ""
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "See all on GitHub ↗"
+msgstr ""
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Support the project"
+msgstr ""
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "View source on GitHub ↗"
+msgstr ""
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Report an issue ↗"
+msgstr ""
+
 #: package/contents/ui/ProviderSettingRow.qml
 msgid "Hide options"
 msgstr "Masquer les options"
@@ -2269,10 +2323,6 @@ msgstr "Reprendre la session"
 #: package/contents/ui/SessionsTab.qml
 msgid "Could not parse sessions."
 msgstr "Impossible d’analyser les sessions."
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Appearance"
-msgstr "Apparence"
 
 #: package/contents/ui/SettingsPanel.qml
 msgid ""
@@ -3091,8 +3141,8 @@ msgid "AI Usage Monitor"
 msgstr "Moniteur d'utilisation IA"
 
 #: package/contents/ui/main.qml
-msgid "Colors, chart and popup style"
-msgstr "Couleurs, graphique et style de la fenêtre contextuelle"
+msgid "Views, colors, chart and popup style"
+msgstr ""
 
 #: package/contents/ui/main.qml
 msgid "Export current tab as PNG or SVG"
@@ -3289,6 +3339,42 @@ msgstr ""
 msgid "Usage over the last %1"
 msgstr "Utilisation sur les derniers %1"
 
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "Could not check for updates"
+msgstr ""
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "Version comparison unavailable"
+msgstr ""
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "Update available"
+msgstr ""
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "Newer than latest release"
+msgstr ""
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "Up to date"
+msgstr ""
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "By %1 ↗"
+msgstr ""
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "GitHub stars ↗"
+msgstr ""
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "GitHub downloads ↗"
+msgstr ""
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "OpenDesktop downloads ↗"
+msgstr ""
+
 #: macos/Sources/AIUsage/Views/OverviewView.swift
 msgid "%1%"
 msgstr "%1 %"
@@ -3392,6 +3478,10 @@ msgstr ""
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Engine: auto, ollama, vllm, llama.cpp"
 msgstr "Moteur : auto, ollama, vllm, llama.cpp"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Views"
+msgstr "Vues"
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Optional tabs that sit ahead of your providers in the popover."

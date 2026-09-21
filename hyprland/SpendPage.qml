@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic as QC
 import QtQuick.Layouts
-import Quickshell.Io
 import "../package/contents/code/FeatureTabs.js" as FeatureTabs
 
 ColumnLayout {
@@ -68,14 +67,27 @@ ColumnLayout {
     readonly property int ratePage: FeatureTabs.ratePageNumber(page.rateOffset, page.rateLimit, page.rateTotal)
 
     function loadRates(offset) {
-        if (rateProcess.running)
+        if (page.rateLoading)
             return;
         page.rateLoading = true;
         page.rateError = "";
         page.rateOffset = offset === undefined ? 0 : offset;
-        rateProcess.exec({
-            command: ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --pricing-table --query \"$3\" --limit \"$4\" --offset \"$5\"", "ai-usage", page.shell.settings.pythonPath || "", page.shell.backendCommand, (page.rateFilter || "").trim(), String(page.rateLimit), String(page.rateOffset)]
-        });
+        if (page.shell && typeof page.shell.queryRates === "function") {
+            page.shell.queryRates((page.rateFilter || "").trim(), page.rateLimit, page.rateOffset, function (payload) {
+                page.rateLoading = false;
+                if (!payload) {
+                    page.rateError = shell.i18n("Could not read model pricing.");
+                    return;
+                }
+                page.rateRows = payload.rows || [];
+                page.rateTotal = payload.total || 0;
+                page.rateUnit = payload.unit || "";
+                page.rateFetchedAt = payload.fetchedAt || 0;
+                page.rateError = page.rateTotal === 0 ? (payload.error || shell.i18n("No cached model rates yet — refresh pricing in settings.")) : "";
+            });
+        } else {
+            page.rateLoading = false;
+        }
     }
 
     onRatesOpenChanged: {
@@ -90,25 +102,6 @@ ColumnLayout {
         interval: 300
         repeat: false
         onTriggered: page.loadRates(0)
-    }
-
-    Process {
-        id: rateProcess
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var payload = FeatureTabs.parseRateTable(this.text);
-                if (payload === null) {
-                    page.rateError = shell.i18n("Could not read model pricing.");
-                    return;
-                }
-                page.rateRows = payload.rows;
-                page.rateTotal = payload.total;
-                page.rateUnit = payload.unit;
-                page.rateFetchedAt = payload.fetchedAt;
-                page.rateError = payload.total === 0 ? (payload.error || shell.i18n("No cached model rates yet — refresh pricing in settings.")) : "";
-            }
-        }
-        onExited: page.rateLoading = false
     }
 
     Text {

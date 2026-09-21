@@ -209,11 +209,11 @@ enum SessionCostPresentation {
         guard let costUSD, costUSD.isFinite, (status == "exact" || status == "partial") else {
             return i18n("Cost unavailable")
         }
-        let formatted = formatted(costUSD)
+        let costText = formatted(costUSD)
         if billing == "subscription" {
             return status == "exact"
-                ? i18n("Covered by plan · %1 on API", formatted)
-                : i18n("Covered by plan · ~%1 on API", formatted)
+                ? i18n("Covered by plan · %1 on API", costText)
+                : i18n("Covered by plan · ~%1 on API", costText)
         }
         if provenance == "mixed" {
             guard let breakdown else { return i18n("Cost unavailable") }
@@ -222,12 +222,12 @@ enum SessionCostPresentation {
             return i18n("Actual %1 + estimate %2 (%3)", actual, estimate, status)
         }
         if provenance == "actual" {
-            return i18n("Actual cost: %1 (%2)", formatted, status)
+            return i18n("Actual cost: %1 (%2)", costText, status)
         }
         if provenance == "estimated" {
-            return i18n("Calculated estimate: %1 (%2)", formatted, status)
+            return i18n("Calculated estimate: %1 (%2)", costText, status)
         }
-        return i18n("Cost: %1 (%2)", formatted, status)
+        return i18n("Cost: %1 (%2)", costText, status)
     }
 
     static func color(costUSD: Double?, status: String, provenance: String? = nil, accent: Color, billing: String? = nil) -> Color {

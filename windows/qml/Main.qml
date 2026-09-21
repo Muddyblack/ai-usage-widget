@@ -464,6 +464,14 @@ Window {
         backend.refreshPricing();
     }
 
+    function queryRates(filter, limit, offset, callback) {
+        var jsonStr = backend.queryRatesJson((filter || "").trim(), limit || 40, offset || 0);
+        if (typeof callback === "function") {
+            var payload = FeatureTabs.parseRateTable(jsonStr);
+            callback(payload);
+        }
+    }
+
     // Rows with an empty openKey (Muse) render no button at all.
     function openSession(key) {
         if (!key)

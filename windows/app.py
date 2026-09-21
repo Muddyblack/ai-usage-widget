@@ -450,6 +450,16 @@ class Backend(QObject):
             self._pricing_busy = False
             self.pricingBusyChanged.emit()
 
+    @Slot(str, int, int, result=str)
+    def queryRatesJson(self, query="", limit=40, offset=0):
+        try:
+            from aiusage import pricing
+
+            rows = pricing.catalog_rows(query, limit=limit, offset=offset)
+            return json.dumps(rows, separators=(",", ":"), ensure_ascii=False)
+        except Exception:
+            return ""
+
     @Slot()
     @Slot(str)
     @Slot(str, int)

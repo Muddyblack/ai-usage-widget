@@ -769,6 +769,37 @@ ShellRoot {
         }
     }
 
+    Process {
+        id: rateProcess
+        property var callback: null
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var payload = FeatureTabs.parseRateTable(this.text);
+                if (typeof rateProcess.callback === "function") {
+                    var cb = rateProcess.callback;
+                    rateProcess.callback = null;
+                    cb(payload);
+                }
+            }
+        }
+        onExited: function (exitCode) {
+            if (exitCode !== 0 && typeof rateProcess.callback === "function") {
+                var cb = rateProcess.callback;
+                rateProcess.callback = null;
+                cb(null);
+            }
+        }
+    }
+
+    function queryRates(filter, limit, offset, callback) {
+        if (rateProcess.running)
+            return;
+        rateProcess.callback = callback;
+        rateProcess.exec({
+            command: ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --pricing-table --query \"$3\" --limit \"$4\" --offset \"$5\"", "ai-usage", root.settings.pythonPath || "", root.backendCommand, (filter || "").trim(), String(limit), String(offset)]
+        });
+    }
+
     function sessionsCommand() {
         var mode = root.sessionsActiveRefresh ? "--refresh" : "--query-only";
         var script = "PYTHON3=\"$1\" exec \"$2\" --sessions " + mode + " --query \"$3\"";
