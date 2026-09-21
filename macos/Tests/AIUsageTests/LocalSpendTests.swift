@@ -21,6 +21,17 @@ final class LocalSpendContractTests: XCTestCase {
         XCTAssertEqual(envelope.localSpend.estimated.costProvenance, "estimated")
     }
 
+    func testEnvelopeDecodesSubscriptionLocalSpendTotals() throws {
+        let envelope = try decode(
+            #"{"localSpend":{"subscription":{"totalUSD":42.0,"costStatus":"exact","providers":{"claude":{"costUSD":42.0,"costStatus":"exact"}}},"subscriptionActual":{"totalUSD":5.0,"costStatus":"partial"}}}"#)
+
+        XCTAssertEqual(envelope.localSpend.subscription.totalUSD, 42.0)
+        XCTAssertEqual(envelope.localSpend.subscription.costStatus, "exact")
+        XCTAssertEqual(envelope.localSpend.subscription.providers["claude"]?.costUSD, 42.0)
+        XCTAssertEqual(envelope.localSpend.subscriptionActual.totalUSD, 5.0)
+        XCTAssertEqual(envelope.localSpend.subscriptionActual.costStatus, "partial")
+    }
+
     func testLegacyLocalSpendShapeStillDecodes() throws {
         let legacy = try decode(
             #"{"localSpend":{"totalUSD":12.34,"costStatus":"exact","providers":{"opencode":{"costUSD":0.42,"costStatus":"exact"}}}}"#)
@@ -237,6 +248,40 @@ final class LocalSpendRowsTests: XCTestCase {
         for (key, label) in expected {
             XCTAssertEqual(localRows.first(where: { $0.id == "local-\(key)" })?.label, label)
         }
+    }
+
+    func testSubscriptionPlanRowsBuildWithCorrectLabelsAndNotes() {
+        let rows = SpendRows.build([], localSpend: LocalSpend(
+            subscription: LocalSpendTotal(
+                totalUSD: 10,
+                costStatus: "exact",
+                providers: [
+                    "claude": LocalSpendProvider(costUSD: 10, costStatus: "exact"),
+                    "anthropic::opencode": LocalSpendProvider(costUSD: 5, costStatus: "partial", source: "opencode")
+                ]),
+            subscriptionActual: LocalSpendTotal(
+                totalUSD: 2,
+                costStatus: "exact",
+                providers: [
+                    "claude": LocalSpendProvider(costUSD: 2, costStatus: "exact")
+                ])))
+
+        XCTAssertEqual(rows.count, 2)
+        let claude = rows.first { $0.source == "claude" }
+        XCTAssertNotNil(claude)
+        XCTAssertEqual(claude?.cost, 12)
+        XCTAssertEqual(claude?.id, "plan-claude")
+        XCTAssertEqual(claude?.billing, "subscription")
+        XCTAssertEqual(claude?.note, "covered by plan · would cost on API")
+
+        let opencode = rows.first { $0.id == "plan-anthropic::opencode" }
+        XCTAssertNotNil(opencode)
+        XCTAssertEqual(opencode?.cost, 5)
+        XCTAssertEqual(opencode?.billing, "subscription")
+        XCTAssertEqual(opencode?.note, "via OpenCode · would cost on API · partial")
+
+        // Plan costs must never be summed into metered API provider spend
+        XCTAssertEqual(SpendRows.totalUSD(rows), 0)
     }
 
     func testProviderSpendAcceptsFiniteNumbersButRejectsStringsBooleansAndNonFiniteValues() {

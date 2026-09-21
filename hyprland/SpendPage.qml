@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls.Basic as QC
 import QtQuick.Layouts
 import Quickshell.Io
 import "../package/contents/code/FeatureTabs.js" as FeatureTabs
@@ -259,35 +260,119 @@ ColumnLayout {
         }
     }
 
-    Rectangle {
+    RowLayout {
         visible: page.ratesOpen
         Layout.fillWidth: true
-        implicitHeight: 28
-        radius: 6
-        color: Qt.rgba(1, 1, 1, 0.04)
-        border.width: 1
-        border.color: rateFilterInput.activeFocus ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(1, 1, 1, 0.08)
+        spacing: 8
 
-        TextInput {
-            id: rateFilterInput
-            anchors.fill: parent
-            anchors.leftMargin: 8
-            anchors.rightMargin: 8
-            verticalAlignment: TextInput.AlignVCenter
-            clip: true
-            color: "#f8fafc"
-            font.pixelSize: 11
-            selectByMouse: true
-            onTextChanged: page.rateFilter = text
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 28
+            radius: 6
+            color: Qt.rgba(1, 1, 1, 0.04)
+            border.width: 1
+            border.color: rateFilterInput.activeFocus ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(1, 1, 1, 0.08)
+
+            TextInput {
+                id: rateFilterInput
+                anchors.fill: parent
+                anchors.leftMargin: 8
+                anchors.rightMargin: 8
+                verticalAlignment: TextInput.AlignVCenter
+                clip: true
+                color: "#f8fafc"
+                font.pixelSize: 11
+                selectByMouse: true
+                onTextChanged: page.rateFilter = text
+
+                Text {
+                    anchors.fill: parent
+                    verticalAlignment: Text.AlignVCenter
+                    visible: rateFilterInput.text === ""
+                    text: shell.i18n("Filter by provider or model\u2026")
+                    font.pixelSize: 11
+                    opacity: 0.35
+                    color: "#f8fafc"
+                }
+            }
+        }
+
+        // Top pagination so the user doesn't need to scroll all the way to the bottom
+        RowLayout {
+            visible: page.ratePages > 1
+            spacing: 4
+            Layout.alignment: Qt.AlignVCenter
+
+            Rectangle {
+                readonly property int target: page.rateOffset - page.rateLimit
+                readonly property bool usable: !page.rateLoading && target >= 0
+                implicitWidth: 26
+                implicitHeight: 26
+                radius: 6
+                color: prevAreaTop.containsMouse && usable ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.04)
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.08)
+                opacity: usable ? 1 : 0.35
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "‹"
+                    font.bold: true
+                    font.pixelSize: 14
+                    color: "#f8fafc"
+                }
+
+                MouseArea {
+                    id: prevAreaTop
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: parent.usable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: {
+                        if (parent.usable)
+                            page.loadRates(parent.target);
+                    }
+                }
+            }
 
             Text {
-                anchors.fill: parent
-                verticalAlignment: Text.AlignVCenter
-                visible: rateFilterInput.text === ""
-                text: shell.i18n("Filter by provider or model\u2026")
-                font.pixelSize: 11
-                opacity: 0.35
+                text: page.ratePage + "/" + page.ratePages
+                font.pixelSize: 10
+                font.family: "monospace"
+                opacity: 0.7
                 color: "#f8fafc"
+                Layout.leftMargin: 2
+                Layout.rightMargin: 2
+            }
+
+            Rectangle {
+                readonly property int target: page.rateOffset + page.rateLimit
+                readonly property bool usable: !page.rateLoading && target < page.rateTotal
+                implicitWidth: 26
+                implicitHeight: 26
+                radius: 6
+                color: nextAreaTop.containsMouse && usable ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.04)
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.08)
+                opacity: usable ? 1 : 0.35
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "›"
+                    font.bold: true
+                    font.pixelSize: 14
+                    color: "#f8fafc"
+                }
+
+                MouseArea {
+                    id: nextAreaTop
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: parent.usable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: {
+                        if (parent.usable)
+                            page.loadRates(parent.target);
+                    }
+                }
             }
         }
     }
@@ -340,9 +425,26 @@ ColumnLayout {
         boundsBehavior: Flickable.StopAtBounds
         interactive: contentHeight > height
 
+        QC.ScrollBar.vertical: QC.ScrollBar {
+            id: rateScrollBar
+            policy: rateList.interactive ? QC.ScrollBar.AsNeeded : QC.ScrollBar.AlwaysOff
+            width: 8
+            contentItem: Rectangle {
+                implicitWidth: 6
+                radius: 3
+                color: "#f8fafc"
+                opacity: rateScrollBar.pressed ? 0.6 : (rateScrollBar.hovered ? 0.4 : 0.22)
+            }
+            background: Rectangle {
+                implicitWidth: 8
+                radius: 4
+                color: Qt.rgba(1, 1, 1, 0.04)
+            }
+        }
+
         delegate: RowLayout {
             required property var modelData
-            width: rateList.width
+            width: rateList.width - (rateScrollBar.visible ? (rateScrollBar.width + 4) : 0)
             spacing: 8
 
             ColumnLayout {
@@ -392,6 +494,8 @@ ColumnLayout {
     RowLayout {
         visible: page.ratesOpen && page.ratePages > 1
         Layout.fillWidth: true
+        Layout.topMargin: 4
+        Layout.bottomMargin: 12
         spacing: 6
 
         Text {

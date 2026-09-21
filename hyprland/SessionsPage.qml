@@ -782,6 +782,8 @@ ColumnLayout {
         if (!info.available)
             return shell.i18n("Cost unavailable");
         var cost = info.cost.toFixed(4);
+        if (info.billing === "subscription")
+            return info.status === "exact" ? shell.i18n("Covered by plan · $%1 on API", cost) : shell.i18n("Covered by plan · ~$%1 on API", cost);
         if (info.provenance === "actual")
             return info.status === "exact" ? shell.i18n("Actual provider cost: $%1 (exact)", cost) : shell.i18n("Actual provider cost: $%1 (partial)", cost);
         if (info.provenance === "estimated")
@@ -794,6 +796,8 @@ ColumnLayout {
     function sessionCostColor(entry) {
         var info = FeatureTabs.sessionCostInfo(entry);
         if (!info.available)
+            return "#f8fafc";
+        if (info.billing === "subscription")
             return "#f8fafc";
         if (info.status === "partial" || info.provenance === "mixed")
             return "#f5a623";

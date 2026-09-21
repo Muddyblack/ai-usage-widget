@@ -111,6 +111,32 @@ final class PricingContractTests: XCTestCase {
             "Cost unavailable")
     }
 
+    func testSessionCostPresentationLabelsSubscriptionCosts() {
+        XCTAssertEqual(
+            SessionCostPresentation.text(
+                costUSD: 0.1234,
+                status: "exact",
+                billing: "subscription"),
+            "Covered by plan · $0.1234 on API")
+        XCTAssertEqual(
+            SessionCostPresentation.text(
+                costUSD: 1.25,
+                status: "partial",
+                billing: "subscription"),
+            "Covered by plan · ~$1.2500 on API")
+    }
+
+    func testSessionCostDecodesCostBillingMode() throws {
+        let data = Data(
+            #"""
+            {"sessions":[
+                {"provider":"opencode","title":"test","costUSD":0.5,"costStatus":"exact","costBilling":"subscription"}
+            ]}
+            """#.utf8)
+        let sessions = try JSONDecoder().decode(LocalSessions.self, from: data).sessions
+        XCTAssertEqual(sessions[0].costBilling, "subscription")
+    }
+
     func testSessionCostProvenanceAndBreakdownAreOptionalAndMalformedDataIsUnavailable() throws {
         let data = Data(
             #"""

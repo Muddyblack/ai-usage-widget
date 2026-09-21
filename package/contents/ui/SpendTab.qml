@@ -281,12 +281,49 @@ ColumnLayout {
         }
     }
 
-    PlasmaComponents.TextField {
+    RowLayout {
         visible: spendTab.ratesOpen
         Layout.fillWidth: true
-        placeholderText: i18n("Filter by provider or model…")
-        text: spendTab.rateFilter
-        onTextChanged: spendTab.rateFilter = text
+        spacing: 8
+
+        PlasmaComponents.TextField {
+            Layout.fillWidth: true
+            placeholderText: i18n("Filter by provider or model…")
+            text: spendTab.rateFilter
+            onTextChanged: spendTab.rateFilter = text
+        }
+
+        RowLayout {
+            visible: spendTab.ratePages > 1
+            spacing: 4
+            Layout.alignment: Qt.AlignVCenter
+
+            PlasmaComponents.Button {
+                implicitWidth: 28
+                implicitHeight: 28
+                text: "‹"
+                enabled: !spendTab.rateLoading && spendTab.rateOffset > 0
+                onClicked: spendTab.loadRates(Math.max(0, spendTab.rateOffset - spendTab.rateLimit))
+            }
+
+            PlasmaComponents.Label {
+                text: spendTab.ratePage + "/" + spendTab.ratePages
+                font.pixelSize: 10
+                font.family: "monospace"
+                opacity: 0.7
+                color: Kirigami.Theme.textColor
+                Layout.leftMargin: 2
+                Layout.rightMargin: 2
+            }
+
+            PlasmaComponents.Button {
+                implicitWidth: 28
+                implicitHeight: 28
+                text: "›"
+                enabled: !spendTab.rateLoading && (spendTab.rateOffset + spendTab.rateLimit) < spendTab.rateTotal
+                onClicked: spendTab.loadRates(spendTab.rateOffset + spendTab.rateLimit)
+            }
+        }
     }
 
     PlasmaComponents.Label {
@@ -404,6 +441,8 @@ ColumnLayout {
     RowLayout {
         visible: spendTab.ratesOpen && spendTab.ratePages > 1
         Layout.fillWidth: true
+        Layout.topMargin: 4
+        Layout.bottomMargin: 12
         spacing: 6
 
         PlasmaComponents.Label {

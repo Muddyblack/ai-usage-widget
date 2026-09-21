@@ -111,9 +111,15 @@ struct SpendRow: Identifiable {
     let provenance: String?
     let costStatus: String?
     let costBreakdown: CostBreakdown?
+    let billing: String?
 
     var id: String {
         if let provider { return provider.id }
+        if billing == "subscription" {
+            if let localIdentity { return "plan-\(localIdentity)" }
+            if let source { return "plan-\(source)" }
+            return "plan-subscription"
+        }
         if let localIdentity { return "local-\(localIdentity)" }
         if let source { return "local-\(source)" }
         return "local-sessions"
@@ -131,6 +137,7 @@ struct SpendRow: Identifiable {
         self.provenance = nil
         self.costStatus = nil
         self.costBreakdown = nil
+        self.billing = nil
     }
 
     init(localCost: Double) {
@@ -151,11 +158,12 @@ struct SpendRow: Identifiable {
         self.provenance = provenance
         self.costStatus = costStatus
         self.costBreakdown = nil
+        self.billing = nil
     }
 
     init(localSource: String, actualUSD: Double, estimatedUSD: Double,
          provenance: String, costStatus: String, billingProvider: String? = nil,
-         identity: String? = nil, viaSource: String? = nil) {
+         identity: String? = nil, viaSource: String? = nil, billing: String? = nil) {
         let sourceKey = Self.localSourceKey(localSource)
         let viaSourceKey = Self.localSourceKey(viaSource ?? "")
         self.provider = nil
@@ -165,7 +173,12 @@ struct SpendRow: Identifiable {
         self.accent = "#34d399"
         self.cost = actualUSD + estimatedUSD
         self.currency = "USD"
-        self.note = Self.localSpendNote(provenance, costStatus: costStatus, source: viaSourceKey)
+        self.billing = billing
+        if billing == "subscription" {
+            self.note = Self.planSpendNote(costStatus, source: viaSourceKey)
+        } else {
+            self.note = Self.localSpendNote(provenance, costStatus: costStatus, source: viaSourceKey)
+        }
         self.provenance = provenance
         self.costStatus = costStatus
         self.costBreakdown = CostBreakdown(actualUSD: actualUSD, estimatedUSD: estimatedUSD)
@@ -222,6 +235,13 @@ struct SpendRow: Identifiable {
         case "mixed:partial": return "\(prefix) · mixed · partial"
         default: return prefix
         }
+    }
+
+    private static func planSpendNote(_ costStatus: String, source: String = "") -> String {
+        let prefix = source == "opencode" ? i18n("via OpenCode") : i18n("covered by plan")
+        let wouldCost = i18n("would cost on API")
+        let partial = i18n("partial")
+        return "\(prefix) · \(wouldCost)" + (costStatus == "partial" ? " · \(partial)" : "")
     }
 }
 
@@ -300,6 +320,8 @@ struct LocalSpendTotal: Decodable, Equatable {
 struct LocalSpend: Decodable, Equatable {
     var actual = LocalSpendTotal()
     var estimated = LocalSpendTotal()
+    var subscription = LocalSpendTotal()
+    var subscriptionActual = LocalSpendTotal()
     var legacy: LocalSpendTotal?
 
     init(totalUSD: Double = 0, costStatus: String = "unavailable",
@@ -307,15 +329,20 @@ struct LocalSpend: Decodable, Equatable {
         legacy = LocalSpendTotal(totalUSD: totalUSD, costStatus: costStatus, providers: providers)
     }
 
-    init(actual: LocalSpendTotal = LocalSpendTotal(), estimated: LocalSpendTotal = LocalSpendTotal()) {
+    init(actual: LocalSpendTotal = LocalSpendTotal(),
+         estimated: LocalSpendTotal = LocalSpendTotal(),
+         subscription: LocalSpendTotal = LocalSpendTotal(),
+         subscriptionActual: LocalSpendTotal = LocalSpendTotal()) {
         self.actual = Self.withDefaultProvenance(actual, value: "actual")
         self.estimated = Self.withDefaultProvenance(estimated, value: "estimated")
+        self.subscription = Self.withDefaultProvenance(subscription, value: "estimated")
+        self.subscriptionActual = Self.withDefaultProvenance(subscriptionActual, value: "actual")
         legacy = nil
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        let hasSeparateTotals = c.contains(.actual) || c.contains(.estimated)
+        let hasSeparateTotals = c.contains(.actual) || c.contains(.estimated) || c.contains(.subscription) || c.contains(.subscriptionActual)
         if hasSeparateTotals {
             actual = Self.withDefaultProvenance(
                 (try? c.decode(LocalSpendTotal.self, forKey: .actual)) ?? LocalSpendTotal(),
@@ -323,6 +350,12 @@ struct LocalSpend: Decodable, Equatable {
             estimated = Self.withDefaultProvenance(
                 (try? c.decode(LocalSpendTotal.self, forKey: .estimated)) ?? LocalSpendTotal(),
                 value: "estimated")
+            subscription = Self.withDefaultProvenance(
+                (try? c.decode(LocalSpendTotal.self, forKey: .subscription)) ?? LocalSpendTotal(),
+                value: "estimated")
+            subscriptionActual = Self.withDefaultProvenance(
+                (try? c.decode(LocalSpendTotal.self, forKey: .subscriptionActual)) ?? LocalSpendTotal(),
+                value: "actual")
             legacy = nil
         } else if c.contains(.totalUSD) || c.contains(.costStatus) || c.contains(.providers) {
             legacy = try? LocalSpendTotal(from: decoder)
@@ -331,7 +364,7 @@ struct LocalSpend: Decodable, Equatable {
         }
     }
 
-    enum CodingKeys: String, CodingKey { case actual, estimated, totalUSD, costStatus, providers }
+    enum CodingKeys: String, CodingKey { case actual, estimated, subscription, subscriptionActual, totalUSD, costStatus, providers }
 
     private static func withDefaultProvenance(_ total: LocalSpendTotal, value: String) -> LocalSpendTotal {
         guard total.costProvenance == nil,
@@ -392,6 +425,7 @@ enum SpendRows {
             appendLocal(legacy, label: i18n("Local sessions"), provenance: nil, to: &out)
         } else {
             appendLocalProviders(actual: localSpend.actual, estimated: localSpend.estimated, to: &out)
+            appendPlanProviders(subscription: localSpend.subscription, subscriptionActual: localSpend.subscriptionActual, to: &out)
         }
         return out.sorted { $0.cost > $1.cost }
     }
@@ -449,6 +483,43 @@ enum SpendRows {
                 billingProvider: localSource == "opencode" && viaSource != nil ? providerKey : nil,
                 identity: source,
                 viaSource: viaSource))
+        }
+    }
+
+    private static func appendPlanProviders(
+        subscription: LocalSpendTotal,
+        subscriptionActual: LocalSpendTotal,
+        to rows: inout [SpendRow]) {
+        let sources = Set(subscription.providers.keys.compactMap(localSourceKey))
+            .union(subscriptionActual.providers.keys.compactMap(localSourceKey))
+            .filter { !$0.isEmpty }
+            .sorted()
+        for source in sources {
+            let estimatedEntry = validLocalProvider(localProvider(source, in: subscription.providers))
+            let actualEntry = validLocalProvider(localProvider(source, in: subscriptionActual.providers))
+            guard estimatedEntry != nil || actualEntry != nil else { continue }
+
+            let estimatedUSD = estimatedEntry?.cost ?? 0
+            let actualUSD = actualEntry?.cost ?? 0
+            guard (estimatedUSD + actualUSD) > 0 else { continue }
+
+            let sourceMetadata = estimatedEntry?.source ?? actualEntry?.source ?? ""
+            let identityParts = source.split(separator: "::", maxSplits: 1).map(String.init)
+            let providerKey = identityParts.first ?? source
+            let localSource = sourceMetadata.isEmpty ? providerKey : sourceMetadata
+            let costStatus = (estimatedEntry?.status == "partial" || actualEntry?.status == "partial")
+                ? "partial" : "exact"
+            let viaSource = sourceMetadata.isEmpty ? nil : sourceMetadata
+            rows.append(SpendRow(
+                localSource: localSource,
+                actualUSD: actualUSD,
+                estimatedUSD: estimatedUSD,
+                provenance: "estimated",
+                costStatus: costStatus,
+                billingProvider: localSource == "opencode" && viaSource != nil ? providerKey : nil,
+                identity: source,
+                viaSource: viaSource,
+                billing: "subscription"))
         }
     }
 
@@ -578,9 +649,10 @@ struct LocalSession: Decodable, Identifiable {
     var costStatus: String
     var costProvenance: String?
     var costBreakdown: CostBreakdown?
+    var costBilling: String?
 
     enum CodingKeys: String, CodingKey {
-        case provider, title, sessionName, state, lastActivityAt, detail, openKey, fullTitle, costUSD, costStatus, costProvenance, costBreakdown
+        case provider, title, sessionName, state, lastActivityAt, detail, openKey, fullTitle, costUSD, costStatus, costProvenance, costBreakdown, costBilling
     }
 
     init(from decoder: Decoder) throws {
@@ -603,6 +675,7 @@ struct LocalSession: Decodable, Identifiable {
         costUSD = valid && decodedStatus != "unavailable" ? validCost : nil
         costStatus = valid ? decodedStatus : "unavailable"
         costProvenance = valid && decodedStatus != "unavailable" ? validOrigin : nil
+        costBilling = try? c.decode(String.self, forKey: .costBilling)
         if costProvenance == "mixed",
            let cost = costUSD,
            let breakdown = try? c.decode(CostBreakdown.self, forKey: .costBreakdown),
