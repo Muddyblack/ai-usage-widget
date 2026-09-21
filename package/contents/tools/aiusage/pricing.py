@@ -5,7 +5,6 @@ OpenRouter fill exact misses without becoming runtime dependencies.
 """
 
 import json
-import math
 import os
 import re
 import tempfile
@@ -13,6 +12,7 @@ import threading
 import time
 
 from . import config
+from .contract import finite_number
 from .http import as_json, fetch_json
 from .pricing_lock import acquire as _acquire_lock
 from .pricing_lock import release as _release_lock
@@ -34,7 +34,7 @@ _CATALOG_CACHE = {}
 
 
 def valid_rate(value):
-    return type(value) in (int, float) and 0 <= value <= 1_000_000 and math.isfinite(value)
+    return finite_number(value, minimum=0, maximum=1_000_000) is not None
 
 
 def _safe_namespace(value):

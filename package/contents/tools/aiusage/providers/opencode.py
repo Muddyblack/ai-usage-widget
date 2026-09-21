@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .. import billing, paths
+from ..contract import finite_number
 
 _MAX_ROWS = 60
 _QUERY_TIMEOUT_SECONDS = 2.0
@@ -124,18 +125,12 @@ def _provider_id(value: SQLiteValue) -> str:
 
 
 def _finite(value: SQLiteValue) -> float | None:
-    if type(value) not in (int, float):
-        return None
-    try:
-        number = float(value)
-    except (OverflowError, ValueError):
-        return None
-    return number if math.isfinite(number) else None
+    return finite_number(value)
 
 
 def _nonnegative(value: SQLiteValue) -> float:
-    number = _finite(value)
-    return number if number is not None and number >= 0 else 0
+    number = finite_number(value, minimum=0)
+    return number if number is not None else 0
 
 
 def _aggregate_bucket(row, session_id: str) -> billing.UsageBucket | None:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from typing import NamedTuple
 
-from .contract import num
+from .contract import finite_number, num
 
 
 class UsageBucket(NamedTuple):
@@ -41,14 +41,13 @@ def _bucket_tokens(bucket):
     }
 
 
+def total_tokens(buckets):
+    """Sum of input/output/cache tokens across a set of usage buckets."""
+    return sum(sum(_bucket_tokens(bucket)[key] for key in ("input", "output", "cache_read", "cache_write")) for bucket in buckets)
+
+
 def _finite_rate(value):
-    if type(value) not in (int, float):
-        return None
-    try:
-        rate = float(value)
-    except (OverflowError, TypeError, ValueError):
-        return None
-    return rate if math.isfinite(rate) and rate >= 0 else None
+    return finite_number(value, minimum=0)
 
 
 def _bucket_cost(bucket, price):

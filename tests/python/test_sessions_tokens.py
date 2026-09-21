@@ -14,7 +14,11 @@ import unittest
 from unittest import mock
 
 from _support import REPO, raw_fixture  # noqa: F401  (ensures TOOLS is on sys.path)
-from aiusage import pricing, sessions
+from aiusage import billing, pricing, sessions
+
+
+def _claude_session_tokens(path):
+    return billing.total_tokens(sessions._claude_session_usage(path, ""))
 
 
 class FormatTokensTest(unittest.TestCase):
@@ -41,7 +45,7 @@ class FormatTokensTest(unittest.TestCase):
 
 class ClaudeSessionTokensTest(unittest.TestCase):
     def test_missing_file_is_zero(self):
-        self.assertEqual(sessions._claude_session_tokens("/no/such/file.jsonl"), 0)
+        self.assertEqual(_claude_session_tokens("/no/such/file.jsonl"), 0)
 
     def test_sums_usage_across_messages(self):
         with tempfile.TemporaryDirectory() as root:
@@ -50,7 +54,7 @@ class ClaudeSessionTokensTest(unittest.TestCase):
                 f.write(json.dumps({"message": {"usage": {"input_tokens": 10, "output_tokens": 5}}}) + "\n")
                 f.write(json.dumps({"message": {"usage": {"input_tokens": 3, "output_tokens": 2, "cache_read_input_tokens": 100}}}) + "\n")
                 f.write(json.dumps({"type": "mode", "mode": "normal"}) + "\n")  # no usage
-            self.assertEqual(sessions._claude_session_tokens(path), 10 + 5 + 3 + 2 + 100)
+            self.assertEqual(_claude_session_tokens(path), 10 + 5 + 3 + 2 + 100)
 
     def test_malformed_lines_are_skipped_not_fatal(self):
         with tempfile.TemporaryDirectory() as root:
@@ -58,7 +62,7 @@ class ClaudeSessionTokensTest(unittest.TestCase):
             with open(path, "w", encoding="utf-8") as f:
                 f.write('not json but has "usage" in it\n')
                 f.write(json.dumps({"message": {"usage": {"input_tokens": 7}}}) + "\n")
-            self.assertEqual(sessions._claude_session_tokens(path), 7)
+            self.assertEqual(_claude_session_tokens(path), 7)
 
     def test_claude_entries_detail_includes_token_total(self):
         with tempfile.TemporaryDirectory() as root:

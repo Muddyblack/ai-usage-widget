@@ -74,6 +74,25 @@ def num(v):
     return 0
 
 
+def finite_number(value, *, minimum=None, maximum=None):
+    """`value` as a float, or None if it isn't a real (never bool), finite,
+    in-range number. Shared guard for external data — pricing rates, provider
+    cost/token fields — before it reaches arithmetic."""
+    if type(value) not in (int, float):
+        return None
+    try:
+        number = float(value)
+    except (OverflowError, ValueError):
+        return None
+    if not math.isfinite(number):
+        return None
+    if minimum is not None and number < minimum:
+        return None
+    if maximum is not None and number > maximum:
+        return None
+    return number
+
+
 def pct_clamp(x):
     if x < 0:
         return 0

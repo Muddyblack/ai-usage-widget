@@ -633,17 +633,6 @@ def _claude_prompt_titles(root):
     return titles
 
 
-def _claude_session_tokens(path):
-    """Sum of input/output/cache tokens across a transcript's own ``usage``
-    records — the CLI's own per-message counters, never the message text
-    itself. Capped generously; an unfinished sum from a huge file still beats
-    none."""
-    return sum(
-        sum(billing._bucket_tokens(bucket)[key] for key in ("input", "output", "cache_read", "cache_write"))
-        for bucket in _claude_session_usage(path, "")
-    )
-
-
 def _claude_entries(*, include_all=False):
     """Light scan of Claude Code project folders — mtime only, no transcripts."""
     root = os.environ.get("CLAUDE_CONFIG_DIR") or os.path.expanduser("~/.claude")
@@ -684,9 +673,7 @@ def _claude_entries(*, include_all=False):
                 title = _clip_title(full_title) or folder_title
                 transcript = os.path.join(project, newest_entry)
                 buckets = _claude_session_usage(transcript, session_id)
-                tokens = sum(
-                    sum(billing._bucket_tokens(bucket)[key] for key in ("input", "output", "cache_read", "cache_write")) for bucket in buckets
-                )
+                tokens = billing.total_tokens(buckets)
                 bits = []
                 if folder_title != title:
                     bits.append(folder_title)
