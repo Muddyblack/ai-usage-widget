@@ -11,6 +11,6 @@ repos:
       - id: qmllint
         name: qmllint
         entry: nix develop --command qmllint
-        args: ["--unresolved-type", "info"]
+        args: ["-E", "--unresolved-type", "info"]
         language: system
         files: \.qml$

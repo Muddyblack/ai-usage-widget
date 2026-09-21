@@ -161,7 +161,9 @@
             name = "ai-usage-widget-dev";
             packages = with pkgs; [
               qt6.qtdeclarative
+              kdePackages.kirigami
               kdePackages.kpackage
+              kdePackages.plasma-framework
               kdePackages.plasma-sdk
               gettext
               pre-commit
@@ -172,6 +174,10 @@
               nodejs
             ];
             shellHook = ''
+              # qmllint does not discover KDE's QML modules from the Qt import
+              # path automatically. Keep this in the development shell so the
+              # same imports work for CI, pre-commit, and local editor checks.
+              export QML_IMPORT_PATH="${pkgs.kdePackages.kirigami}/lib/qt-6/qml:${pkgs.kdePackages.plasma-framework}/lib/qt-6/qml:${pkgs.qt6.qtdeclarative}/lib/qt-6/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
               pre-commit install -f --install-hooks
               echo "ai-usage-widget dev shell ready"
               echo "  make help        — list targets (view, install, pack, tag)"

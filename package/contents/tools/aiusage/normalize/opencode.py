@@ -25,7 +25,14 @@ def normalize_opencode(raw):
     r = provider_base("opencode", "OpenCode", ACCENT, now)
     r["summary"] = {"pct": 0, "text": compact_tokens(recent.get("tokens")), "detail": "last 7 days · local sessions", "hasChart": False}
     r["quotaWindows"] = [flat_window(period.get("key"), period.get("label"), 0, 0, _period_text(period), False) for period in periods]
-    r["slots"] = [{"pct": 0, "color": ACCENT, "text": compact_tokens(recent.get("tokens")), "tooltip": "OpenCode local usage\n" + "\n".join(f"{p.get('label')}: {_period_text(p)}" for p in periods)}]
+    r["slots"] = [
+        {
+            "pct": 0,
+            "color": ACCENT,
+            "text": compact_tokens(recent.get("tokens")),
+            "tooltip": "OpenCode local usage\n" + "\n".join(f"{p.get('label')}: {_period_text(p)}" for p in periods),
+        }
+    ]
     r["details"] = {
         "stats": stats,
         "periods": periods,

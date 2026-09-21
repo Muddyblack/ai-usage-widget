@@ -517,8 +517,33 @@ def opencode_stats(s, now):
             tokens = in_ + out_ + cache_read + cache_write + reasoning
             cost = row.get("costUSD")
             cost = num(cost) if isinstance(cost, (int, float)) else None
-            item = models.setdefault(key, {"provider": provider, "model": model, "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0, "reasoning": 0, "total": 0, "cost": 0, "requests": 0, "costStatus": "exact"})
-            item.update({"input": item["input"] + in_, "output": item["output"] + out_, "cacheRead": item["cacheRead"] + cache_read, "cacheWrite": item["cacheWrite"] + cache_write, "reasoning": item["reasoning"] + reasoning, "total": item["total"] + tokens, "requests": item["requests"] + 1})
+            item = models.setdefault(
+                key,
+                {
+                    "provider": provider,
+                    "model": model,
+                    "input": 0,
+                    "output": 0,
+                    "cacheRead": 0,
+                    "cacheWrite": 0,
+                    "reasoning": 0,
+                    "total": 0,
+                    "cost": 0,
+                    "requests": 0,
+                    "costStatus": "exact",
+                },
+            )
+            item.update(
+                {
+                    "input": item["input"] + in_,
+                    "output": item["output"] + out_,
+                    "cacheRead": item["cacheRead"] + cache_read,
+                    "cacheWrite": item["cacheWrite"] + cache_write,
+                    "reasoning": item["reasoning"] + reasoning,
+                    "total": item["total"] + tokens,
+                    "requests": item["requests"] + 1,
+                }
+            )
             if cost is not None:
                 item["cost"] += cost
                 total_cost += cost
@@ -545,30 +570,53 @@ def opencode_stats(s, now):
 
     daily_tokens = [{"date": date, "total": total} for date, total in sorted(daily.items()) if date]
     dates = [row["date"] for row in daily_tokens]
-    activity = {"dailyActivity": [{"date": date} for date in dates], "totalSessions": len(sessions), "totalMessages": sum(len(row.get("usage") or []) for row in sessions), "firstSessionDate": dates[0] if dates else ""}
+    activity = {
+        "dailyActivity": [{"date": date} for date in dates],
+        "totalSessions": len(sessions),
+        "totalMessages": sum(len(row.get("usage") or []) for row in sessions),
+        "firstSessionDate": dates[0] if dates else "",
+    }
     r = activity_base(activity, now, daily_tokens, "tokens")
     periods = []
     midnight = datetime.datetime.fromtimestamp(now).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
-    for key, label, since in (("today", "Today", midnight), ("7d", "Last 7 days", now - 7 * 86400), ("30d", "Last 30 days", now - 30 * 86400), ("all", "All time", 0)):
+    for key, label, since in (
+        ("today", "Today", midnight),
+        ("7d", "Last 7 days", now - 7 * 86400),
+        ("30d", "Last 30 days", now - 30 * 86400),
+        ("all", "All time", 0),
+    ):
         selected = [row for row in sessions if num(row.get("lastActivity")) >= since]
         selected_rows = [bucket for row in selected for bucket in (row.get("usage") or []) if isinstance(bucket, dict)]
-        periods.append({"key": key, "label": label, "sessions": len(selected), "tokens": sum(usage_total(bucket) for bucket in selected_rows), "cost": sum(num(bucket.get("costUSD")) for bucket in selected_rows if isinstance(bucket.get("costUSD"), (int, float))), "costStatus": cost_state(selected_rows)})
+        periods.append(
+            {
+                "key": key,
+                "label": label,
+                "sessions": len(selected),
+                "tokens": sum(usage_total(bucket) for bucket in selected_rows),
+                "cost": sum(num(bucket.get("costUSD")) for bucket in selected_rows if isinstance(bucket.get("costUSD"), (int, float))),
+                "costStatus": cost_state(selected_rows),
+            }
+        )
 
-    r.update({
-        "totalTokens": total_tokens,
-        "totalInputTokens": total_input,
-        "totalOutputTokens": total_output,
-        "totalCachedTokens": total_cache_read + total_cache_write,
-        "totalReasoningTokens": total_reasoning,
-        "totalCostUSD": total_cost,
-        "costStatus": cost_state(cost_rows),
-        "costProvenance": "catalog/local ledger",
-        "favoriteModel": favorite,
-        "models": models,
-        "upstreamProviders": sorted(upstream.values(), key=lambda row: row["tokens"], reverse=True),
-        "topWorkspaces": [{"name": name, "sessions": count} for name, count in sorted(workspaces.items(), key=lambda item: item[1], reverse=True)[:8]],
-        "dailyTokens": daily_tokens,
-        "periods": periods,
-        "currency": "USD",
-    })
+    r.update(
+        {
+            "totalTokens": total_tokens,
+            "totalInputTokens": total_input,
+            "totalOutputTokens": total_output,
+            "totalCachedTokens": total_cache_read + total_cache_write,
+            "totalReasoningTokens": total_reasoning,
+            "totalCostUSD": total_cost,
+            "costStatus": cost_state(cost_rows),
+            "costProvenance": "catalog/local ledger",
+            "favoriteModel": favorite,
+            "models": models,
+            "upstreamProviders": sorted(upstream.values(), key=lambda row: row["tokens"], reverse=True),
+            "topWorkspaces": [
+                {"name": name, "sessions": count} for name, count in sorted(workspaces.items(), key=lambda item: item[1], reverse=True)[:8]
+            ],
+            "dailyTokens": daily_tokens,
+            "periods": periods,
+            "currency": "USD",
+        }
+    )
     return r

@@ -31,8 +31,8 @@ from .providers.muse import get_muse_usage
 from .providers.muse_quota import get_muse_quota
 from .providers.ollama import get_ollama_usage
 from .providers.openai_credentials import get_openai_credentials
-from .providers.openrouter import get_openrouter_usage
 from .providers.opencode import usage_snapshot as get_opencode_usage
+from .providers.openrouter import get_openrouter_usage
 from .providers.zai import get_zai_usage
 
 
