@@ -146,7 +146,10 @@ def _aggregate_bucket(row, session_id: str) -> billing.UsageBucket | None:
     token_counts = (input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, reasoning_tokens)
     if provider_cost == 0 and sum(token_counts) > 0:
         provider_cost = None
-    if sum(token_counts) <= 0 and provider_cost is None:
+    # A zero-cost row with no tokens is an empty assistant record, not a
+    # billable usage event. Keeping it makes free sessions look like a string
+    # of mysterious $0.0000 costs in the Sessions tab.
+    if sum(token_counts) <= 0 and (provider_cost is None or provider_cost == 0):
         return None
     return billing.UsageBucket(
         provider,

@@ -781,6 +781,8 @@ ColumnLayout {
         var info = FeatureTabs.sessionCostInfo(entry);
         if (!info.available)
             return shell.i18n("Cost unavailable");
+        if (info.cost === 0 && info.provenance === "estimated")
+            return shell.i18n("Free model");
         var cost = info.cost.toFixed(4);
         if (info.billing === "subscription")
             return info.status === "exact" ? shell.i18n("Covered by plan · $%1 on API", cost) : shell.i18n("Covered by plan · ~$%1 on API", cost);

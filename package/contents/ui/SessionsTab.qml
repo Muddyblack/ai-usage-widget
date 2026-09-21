@@ -767,6 +767,8 @@ ColumnLayout {
         var info = FeatureTabs.sessionCostInfo(entry);
         if (!info.available)
             return i18n("Cost unavailable");
+        if (info.cost === 0 && info.provenance === "estimated")
+            return i18n("Free model");
         var cost = info.cost.toFixed(4);
         // A plan already paid for this work, so the figure is a comparison
         // against API pricing rather than something the user owes.

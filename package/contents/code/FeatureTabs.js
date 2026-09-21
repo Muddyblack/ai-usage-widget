@@ -365,8 +365,8 @@ function spendProviderRows(providers) {
             cost = (d.stats && d.stats.totalCostUSD) || d.totalCostUSD || 0;
             note = "local";
         } else if (id === "cursor") {
-            cost = d.onDemandUsed || d.onDemandSpendUSD || d.onDemand || 0;
-            note = "on-demand";
+            cost = (d.stats && d.stats.totalCostUSD) || d.onDemandUsed || d.onDemandSpendUSD || d.onDemand || 0;
+            note = (d.stats && d.stats.totalCostUSD) ? "billing cycle" : "on-demand";
         }
 
         if (typeof cost !== "number" || !isFinite(cost) || !(cost > 0))
