@@ -32,6 +32,7 @@ SOURCE_REGISTRY: Final = (
     ("opencode", "OpenCode"),
     ("antigravity", "Antigravity"),
     ("mistral", "Mistral"),
+    ("cursor", "Cursor"),
 )
 
 

@@ -8,7 +8,7 @@ import os
 from dataclasses import dataclass
 
 from . import paths
-from .providers import mistral_sessions, opencode  # noqa: F401
+from .providers import cursor_sessions, mistral_sessions, opencode  # noqa: F401
 from .providers.grok import grok_home
 from .providers.muse import sessions_root as muse_sessions_root
 from .providers.openai_credentials import codex_home
@@ -164,6 +164,10 @@ def build_manifests() -> list[SessionManifest]:
         (
             "mistral",
             [(path, "file", mtime_ns, size, 0) for path, mtime_ns, size in mistral_sessions.session_records()],
+        ),
+        (
+            "cursor",
+            [(path, "file", mtime_ns, size, 0) for path, mtime_ns, size in cursor_sessions.session_records()],
         ),
     )
     return [_fingerprint(source_id, records) for source_id, records in groups]

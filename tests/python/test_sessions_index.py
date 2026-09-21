@@ -309,7 +309,6 @@ class SessionIndexTest(unittest.TestCase):
         self.assertEqual(result["total"], 1)
 
 
-
 def _titled_parser(title: str) -> Parser:
     def parse(source: Source) -> list[Row]:
         return [

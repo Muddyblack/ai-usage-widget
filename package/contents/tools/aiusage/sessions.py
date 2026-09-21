@@ -36,7 +36,7 @@ from collections.abc import Sequence
 
 from . import billing, billing_mode, pricing
 from .contract import epoch_of, num
-from .providers import antigravity_sessions, mistral_sessions, opencode
+from .providers import antigravity_sessions, cursor_sessions, mistral_sessions, opencode
 from .providers.cline import get_cline_session_records
 from .providers.grok import grok_home
 from .providers.muse import sessions_root as muse_sessions_root
@@ -790,6 +790,23 @@ def _mistral_entries(*, include_all=False):
     return out
 
 
+def _cursor_entries(*, include_all=False):
+    out = []
+    for record in cursor_sessions.read_recent_sessions(include_all=include_all):
+        detail = record.project if record.project and record.project != record.title else ""
+        entry = _entry(
+            "cursor",
+            _clip_title(record.title) or "Cursor",
+            record.last_activity,
+            state=_state(record.last_activity, ended=True),
+            session_name="Cursor Agent",
+            detail=detail,
+        )
+        if entry:
+            out.append(entry)
+    return out
+
+
 def _antigravity_targets():
     return [
         {
@@ -955,6 +972,7 @@ SESSION_COLLECTORS = {
     "opencode": "_opencode_entries",
     "antigravity": "_antigravity_entries",
     "mistral": "_mistral_entries",
+    "cursor": "_cursor_entries",
 }
 
 
