@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 /// The optional Sessions view: recent local agent sessions as redacted
 /// titles with recency only — never paths or transcripts. Tapping a row
@@ -6,6 +7,7 @@ import SwiftUI
 struct SessionsView: View {
     @ObservedObject var model: AppModel
     @State private var filterText = ""
+    @State private var expandedIDs: Set<String> = []
 
     private var normalizedFilterText: String {
         filterText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -141,15 +143,35 @@ struct SessionsView: View {
                     .frame(width: 8, height: 8)
                     .padding(.top, 4)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(session.title.isEmpty ? session.provider : session.title)
+                    let expanded = expandedIDs.contains(session.id)
+                    Text(expanded && !session.fullTitle.isEmpty ? session.fullTitle : (session.title.isEmpty ? session.provider : session.title))
                         .font(.system(size: 12, weight: .semibold))
-                        .lineLimit(1)
+                        .lineLimit(expanded ? nil : 1)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            guard !session.fullTitle.isEmpty else { return }
+                            if expanded { expandedIDs.remove(session.id) } else { expandedIDs.insert(session.id) }
+                        }
                     if !session.sessionName.isEmpty, session.sessionName != session.title {
                         Text(session.sessionName).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
                     }
                     if !session.detail.isEmpty {
                         Text(session.detail).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
                     }
+                    Text(SessionCostPresentation.text(
+                        costUSD: session.costUSD,
+                        status: session.costStatus,
+                        provenance: session.costProvenance,
+                        breakdown: session.costBreakdown,
+                        billing: session.costBilling))
+                        .font(.system(size: 9))
+                        .foregroundStyle(SessionCostPresentation.color(
+                            costUSD: session.costUSD,
+                            status: session.costStatus,
+                            provenance: session.costProvenance,
+                            accent: Theme.accent(model.envelope.provider(id: session.provider)?.accent ?? FeatureView.sessions.accentHex),
+                            billing: session.costBilling))
+                        .lineLimit(1)
                 }
                 Spacer(minLength: 8)
                 VStack(alignment: .trailing, spacing: 2) {
@@ -174,6 +196,50 @@ struct SessionsView: View {
                 model.showFeature(nil); model.selectedID = session.provider
             }
         }
+    }
+}
+
+enum SessionCostPresentation {
+    static func text(
+        costUSD: Double?,
+        status: String,
+        provenance: String? = nil,
+        breakdown: CostBreakdown? = nil,
+        billing: String? = nil) -> String {
+        guard let costUSD, costUSD.isFinite, (status == "exact" || status == "partial") else {
+            return i18n("Cost unavailable")
+        }
+        let costText = formatted(costUSD)
+        if billing == "subscription" {
+            return status == "exact"
+                ? i18n("Covered by plan · %1 on API", costText)
+                : i18n("Covered by plan · ~%1 on API", costText)
+        }
+        if provenance == "mixed" {
+            guard let breakdown else { return i18n("Cost unavailable") }
+            let actual = formatted(breakdown.actualUSD)
+            let estimate = formatted(breakdown.estimatedUSD)
+            return i18n("Actual %1 + estimate %2 (%3)", actual, estimate, status)
+        }
+        if provenance == "actual" {
+            return i18n("Actual cost: %1 (%2)", costText, status)
+        }
+        if provenance == "estimated" {
+            return i18n("Calculated estimate: %1 (%2)", costText, status)
+        }
+        return i18n("Cost: %1 (%2)", costText, status)
+    }
+
+    static func color(costUSD: Double?, status: String, provenance: String? = nil, accent: Color, billing: String? = nil) -> Color {
+        guard let costUSD, costUSD.isFinite, status == "exact" || status == "partial" else { return .secondary }
+        if billing == "subscription" { return .secondary }
+        if provenance == "actual" || provenance == nil, status == "exact" { return accent }
+        if provenance == "estimated" || provenance == "mixed" || status == "partial" { return .orange }
+        return .secondary
+    }
+
+    private static func formatted(_ costUSD: Double) -> String {
+        String(format: "$%.4f", locale: Locale(identifier: "en_US_POSIX"), arguments: [costUSD])
     }
 }
 

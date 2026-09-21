@@ -68,7 +68,7 @@ jobs:
       - uses: cachix/install-nix-action@v27
 
       - name: qmllint
-        run: nix develop --command bash -c 'find package/contents -name "*.qml" | xargs qmllint --unresolved-type info'
+        run: nix develop --command bash -c 'find package/contents -name "*.qml" -print0 | xargs -0 qmllint -E --unresolved-type info'
 
       - name: qmlformat check
         run: nix develop --command bash -c 'find package/contents -name "*.qml" | xargs qmlformat --dry-run 2>&1 | grep -q "would reformat" && echo "Files need formatting, run qmlformat -i" && exit 1 || true'

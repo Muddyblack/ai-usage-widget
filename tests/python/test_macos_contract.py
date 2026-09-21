@@ -102,7 +102,7 @@ class SwiftContractTest(unittest.TestCase):
         )
 
     def test_envelope_fields(self):
-        self.assert_decodes("Envelope", {"schemaVersion": 1, "updatedAt": 0, "active": "", "providers": []})
+        self.assert_decodes("Envelope", {"schemaVersion": 1, "updatedAt": 0, "active": "", "providers": [], "localSpend": {}})
 
     def test_provider_fields(self):
         self.assert_decodes("Provider", self.emitted["provider"])
@@ -255,11 +255,11 @@ class SwiftContractTest(unittest.TestCase):
             r"\.onChange\(of: filterText\).*model\.refreshSessions\(query:\s*\$0\)",
         )
 
-    def test_local_session_does_not_decode_raw_full_title(self):
-        self.assertNotIn("fullTitle", declaration(self.text, "LocalSession"))
+    def test_local_session_decodes_full_title(self):
+        self.assertIn("fullTitle", declaration(self.text, "LocalSession"))
 
-    def test_sessions_view_does_not_expand_raw_full_title(self):
-        self.assertNotIn("fullTitle", self.sessions_view)
+    def test_sessions_view_expands_full_title_on_tap(self):
+        self.assertIn("fullTitle", self.sessions_view)
 
     def test_session_refresh_scheduler_replaces_pending_work_after_300_ms(self):
         self.assertRegex(self.app_model, r"func scheduleSessionsRefresh\(query: String\)")

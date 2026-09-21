@@ -125,6 +125,24 @@ enum Backend {
         }
     }
 
+    static let refreshPricingArguments = ["--refresh-pricing"]
+
+    static func refreshPricing() throws -> PricingRefreshResult {
+        try refreshPricing(using: nil)
+    }
+
+    static func refreshPricing(using tool: URL?) throws -> PricingRefreshResult {
+        let data = try run(
+            tool: tool,
+            arguments: refreshPricingArguments,
+            ignoreStatus: true)
+        do {
+            return try JSONDecoder().decode(PricingRefreshResult.self, from: data)
+        } catch {
+            throw Failure.badJSON(error.localizedDescription)
+        }
+    }
+
     /// Resume one listed session (by its `openKey`) in the user's terminal.
     /// `--open-session` prints `{ok,message}` and exits 1 on a failure that is
     /// still meant to be shown, not thrown — so this bypasses `run()`'s
@@ -171,7 +189,8 @@ enum Backend {
     }
 
     private static func run(
-        tool overrideTool: URL? = nil, arguments: [String], environment: [String: String] = [:]
+        tool overrideTool: URL? = nil, arguments: [String], environment: [String: String] = [:],
+        ignoreStatus: Bool = false
     ) throws -> Data {
         guard let tool = overrideTool ?? executable else { throw Failure.notFound }
 
@@ -191,7 +210,7 @@ enum Backend {
         process.standardInput = FileHandle.nullDevice
 
         try process.run()
-        return try collect(process, out: out, err: err)
+        return try collect(process, out: out, err: err, ignoreStatus: ignoreStatus)
     }
 
     private static func collect(
@@ -224,6 +243,30 @@ enum Backend {
             )
         }
         return stdout
+    }
+}
+
+struct PricingRefreshResult: Decodable, Equatable, Sendable {
+    var ok: Bool
+    var status: String
+    var fetchedAt: Double
+    var error: String
+
+    enum CodingKeys: String, CodingKey { case ok, status, fetchedAt, error }
+
+    init(ok: Bool = false, status: String = "no-cache", fetchedAt: Double = 0, error: String = "") {
+        self.ok = ok
+        self.status = status
+        self.fetchedAt = fetchedAt
+        self.error = error
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        ok = (try? c.decode(Bool.self, forKey: .ok)) ?? false
+        status = (try? c.decode(String.self, forKey: .status)) ?? (ok ? "refreshed" : "no-cache")
+        fetchedAt = (try? c.decode(Double.self, forKey: .fetchedAt)) ?? 0
+        error = (try? c.decode(String.self, forKey: .error)) ?? ""
     }
 }
 

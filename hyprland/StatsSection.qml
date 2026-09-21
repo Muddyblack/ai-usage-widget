@@ -86,6 +86,8 @@ ColumnLayout {
                     return statsSectionRoot.shell.i18n("No Cursor usage this billing cycle yet.\nRequests made with Cursor or cursor-agent will appear here.");
                 if (statsSectionRoot.providerId === "cline")
                     return statsSectionRoot.shell.i18n("No Cline sessions yet.\nRun the Cline CLI and its session logs in ~/.cline will appear here.");
+                if (statsSectionRoot.providerId === "opencode")
+                    return statsSectionRoot.shell.i18n("No OpenCode sessions yet.\nEnable OpenCode and run a local session; usage is read from its SQLite database.");
                 return statsSectionRoot.shell.i18n("No local activity stats yet.\nRun Claude Code to generate ~/.claude/stats-cache.json");
             }
             font.pixelSize: 11
@@ -272,7 +274,7 @@ ColumnLayout {
             Row {
                 id: sparkRow
                 Layout.fillWidth: true
-                height: 32
+                Layout.preferredHeight: 32
                 spacing: 1
 
                 readonly property real maxTok: {
@@ -365,7 +367,8 @@ ColumnLayout {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
+                implicitHeight: 1
+                Layout.preferredHeight: 1
                 color: Qt.rgba(1, 1, 1, 0.08)
             }
 
@@ -388,6 +391,7 @@ ColumnLayout {
                 }
 
                 ColumnLayout {
+                    id: modelRowCol
                     required property string modelData
                     Layout.fillWidth: true
                     spacing: 2
@@ -399,7 +403,7 @@ ColumnLayout {
                         spacing: 8
 
                         Text {
-                            text: statsSectionRoot.shortenModelName(parent.parent.modelData)
+                            text: statsSectionRoot.shortenModelName(modelRowCol.modelData)
                             font.pixelSize: 10
                             color: "#f8fafc"
                             opacity: 0.85
@@ -412,39 +416,39 @@ ColumnLayout {
                         }
 
                         Text {
-                            visible: (parent.parent.modelEntry.input !== undefined)
-                            text: statsSectionRoot.shell.i18n("%1 in", statsSectionRoot.formatTokens(parent.parent.modelEntry.input || 0))
+                            visible: (modelRowCol.modelEntry.input !== undefined)
+                            text: statsSectionRoot.shell.i18n("%1 in", statsSectionRoot.formatTokens(modelRowCol.modelEntry.input || 0))
                             font.pixelSize: 9
                             color: "#94a3b8"
                             opacity: 0.7
                         }
 
                         Text {
-                            visible: (parent.parent.modelEntry.output !== undefined)
-                            text: statsSectionRoot.shell.i18n("%1 out", statsSectionRoot.formatTokens(parent.parent.modelEntry.output || 0))
+                            visible: (modelRowCol.modelEntry.output !== undefined)
+                            text: statsSectionRoot.shell.i18n("%1 out", statsSectionRoot.formatTokens(modelRowCol.modelEntry.output || 0))
                             font.pixelSize: 9
                             color: "#94a3b8"
                             opacity: 0.7
                         }
 
                         Text {
-                            visible: (parent.parent.modelEntry.sessions !== undefined && parent.parent.modelEntry.input === undefined)
-                            text: statsSectionRoot.shell.i18nc("abbreviated sessions", "%1 sess", parent.parent.modelEntry.sessions || 0)
+                            visible: (modelRowCol.modelEntry.sessions !== undefined && modelRowCol.modelEntry.input === undefined)
+                            text: statsSectionRoot.shell.i18nc("abbreviated sessions", "%1 sess", modelRowCol.modelEntry.sessions || 0)
                             font.pixelSize: 9
                             color: "#94a3b8"
                             opacity: 0.7
                         }
 
                         Text {
-                            visible: (parent.parent.modelEntry.cost || 0) > 0
-                            text: "$" + (parent.parent.modelEntry.cost || 0).toFixed(2)
+                            visible: (modelRowCol.modelEntry.cost || 0) > 0
+                            text: "$" + (modelRowCol.modelEntry.cost || 0).toFixed(2)
                             font.pixelSize: 9
                             color: statsSectionRoot.accent
                             opacity: 0.85
                         }
 
                         Text {
-                            text: (statsSectionRoot.stats.totalTokens || 0) > 0 ? Math.round((parent.parent.modelEntry.total || 0) / statsSectionRoot.stats.totalTokens * 100) + "%" : "—"
+                            text: (statsSectionRoot.stats.totalTokens || 0) > 0 ? Math.round((modelRowCol.modelEntry.total || 0) / statsSectionRoot.stats.totalTokens * 100) + "%" : "—"
                             font.pixelSize: 10
                             font.bold: true
                             color: "#f8fafc"
@@ -456,7 +460,8 @@ ColumnLayout {
                     // Progress bar
                     Item {
                         Layout.fillWidth: true
-                        height: 3
+                        implicitHeight: 3
+                        Layout.preferredHeight: 3
 
                         Rectangle {
                             anchors.fill: parent
@@ -471,7 +476,7 @@ ColumnLayout {
                             radius: 1.5
                             color: statsSectionRoot.accent
                             opacity: 0.7
-                            width: (statsSectionRoot.stats.totalTokens || 0) > 0 ? parent.width * Math.min(1, Math.max(0, (parent.parent.modelEntry.total || 0) / statsSectionRoot.stats.totalTokens)) : 0
+                            width: (statsSectionRoot.stats.totalTokens || 0) > 0 ? parent.width * Math.min(1, Math.max(0, (modelRowCol.modelEntry.total || 0) / statsSectionRoot.stats.totalTokens)) : 0
                             Behavior on width {
                                 NumberAnimation {
                                     duration: 400

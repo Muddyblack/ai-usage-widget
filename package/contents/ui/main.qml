@@ -64,6 +64,7 @@ PlasmoidItem {
     // Provider id → details.status from the backend:
     // { indicator, description, components, incidents, latestUpdate, url }
     property var providerStatus: ({})
+    property var localSpend: ({})
     // ── Claude data ───────────────────────────────────────────────────────────
     property bool sessionAvailable: false
     property real sessionPct: 0
@@ -534,6 +535,10 @@ PlasmoidItem {
     // drift apart. Enabled state lives in Plasmoid.configuration under a fixed
     // "<id>Enabled" key. Icon filenames are listed rather than derived: the
     // "-color" suffix is inconsistent upstream artwork, not a convention.
+    // The raw envelope's provider array (id, details.stats, ...) from the
+    // latest backend snapshot — distinct from `providers` below, which is a
+    // static UI registry (label/color/icon) and never carries live stats.
+    property var rawProviders: []
     readonly property var providers: [
         {
             id: "claude",
@@ -652,6 +657,12 @@ PlasmoidItem {
             label: "Cline",
             color: root.clineWhite,
             icon: "cline.svg"
+        },
+        {
+            id: "opencode",
+            label: "OpenCode",
+            color: "#B7B1B1",
+            icon: "opencode-color.svg"
         }
     ]
 
@@ -727,6 +738,9 @@ PlasmoidItem {
     // ── Timers ────────────────────────────────────────────────────────────────
     // Poll interval is user-configurable (seconds); default 300s. Clamp to a sane floor.
     property int pollIntervalSec: Plasmoid.configuration.pollIntervalSec || 300
+    property bool pricingLoading: false
+    property string pricingStatus: ""
+    property string pricingError: ""
 
     function shellQuote(s) {
         return Shell.quote(s);
@@ -1512,6 +1526,8 @@ PlasmoidItem {
             return;
         }
         var providers = snapshot.providers || [];
+        root.rawProviders = providers;
+        root.localSpend = snapshot.localSpend || ({});
         var active = root.enabledTabs[root.activeTab] || "";
         var activeSeen = false;
         var activeError = "";
@@ -1989,10 +2005,19 @@ PlasmoidItem {
 
         // The active tab plus every pinned service: those are the only providers
         // whose data is on screen, so those are the only ones worth fetching.
+        // Overview and Spend are the exception — they total every provider, so
+        // an unpinned setup would otherwise leave them refreshing nothing.
         var ids = [];
         var active = root.enabledTabs[root.activeTab] || "";
         if (active !== "" && !FeatureTabs.isFeatureTab(active))
             ids.push(active);
+        else if (active === "overview" || active === "spend") {
+            for (var p = 0; p < root.providers.length; p++) {
+                var id = root.providers[p].id;
+                if (root.enabledTabs.indexOf(id) >= 0 && ids.indexOf(id) < 0)
+                    ids.push(id);
+            }
+        }
 
         var pins = root.pinnedTabs;
         for (var i = 0; i < pins.length; i++) {
@@ -2005,6 +2030,15 @@ PlasmoidItem {
         var cmd = root.backendCommand(ids);
         usageSource.disconnectSource(cmd);
         usageSource.connectSource(cmd);
+    }
+
+    function refreshPricing() {
+        if (root.pricingLoading)
+            return;
+        root.pricingLoading = true;
+        var cmd = root.pythonEnv() + root.scriptPath("get-ai-usage") + " --refresh-pricing";
+        pricingSource.disconnectSource(cmd);
+        pricingSource.connectSource(cmd);
     }
 
     Plasmoid.backgroundHints: root.backgroundHints
@@ -2361,6 +2395,28 @@ PlasmoidItem {
         }
     }
 
+    Plasma5Support.DataSource {
+        id: pricingSource
+
+        engine: "executable"
+        connectedSources: []
+        onNewData: function (src, data) {
+            disconnectSource(src);
+            root.pricingLoading = false;
+            var stdout = (data && data.stdout) ? data.stdout.trim() : "";
+            try {
+                var result = JSON.parse(stdout);
+                root.pricingStatus = result.status || (result.ok === true ? "refreshed" : "no-cache");
+                root.pricingError = result.error || "";
+                if (result.ok === true)
+                    root.refresh();
+            } catch (e) {
+                root.pricingStatus = "no-cache";
+                root.pricingError = i18n("Could not refresh pricing.");
+            }
+        }
+    }
+
     Timer {
         interval: Math.max(30, root.pollIntervalSec) * 1000
         running: true
@@ -2450,8 +2506,10 @@ PlasmoidItem {
 
             Rectangle {
                 visible: root.errorMsg !== ""
-                width: 6
-                height: 6
+                implicitWidth: 6
+                implicitHeight: 6
+                Layout.preferredWidth: 6
+                Layout.preferredHeight: 6
                 radius: 3
                 color: root.dangerColor
                 Layout.alignment: Qt.AlignVCenter
@@ -2486,8 +2544,10 @@ PlasmoidItem {
 
             Rectangle {
                 visible: root.panelShows("claude") && root.sessionAvailable && root.weeklyAvailable
-                width: 1
-                height: 14
+                implicitWidth: 1
+                implicitHeight: 14
+                Layout.preferredWidth: 1
+                Layout.preferredHeight: 14
                 color: Qt.rgba(1, 1, 1, 0.16)
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -2515,8 +2575,10 @@ PlasmoidItem {
 
             Rectangle {
                 visible: root.panelShows("antigravity")
-                width: 1
-                height: 14
+                implicitWidth: 1
+                implicitHeight: 14
+                Layout.preferredWidth: 1
+                Layout.preferredHeight: 14
                 color: Qt.rgba(1, 1, 1, 0.16)
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -2547,8 +2609,10 @@ PlasmoidItem {
 
             Rectangle {
                 visible: root.panelShows("openai") && root.codexSessionAvailable && root.codexWeeklyAvailable
-                width: 1
-                height: 14
+                implicitWidth: 1
+                implicitHeight: 14
+                Layout.preferredWidth: 1
+                Layout.preferredHeight: 14
                 color: Qt.rgba(1, 1, 1, 0.16)
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -2615,8 +2679,10 @@ PlasmoidItem {
 
             Rectangle {
                 visible: root.panelShows("ollama") && root.ollamaWindows.length > 0 && root.ollamaWindows[0].key === "ollama_session" && root.ollamaWeeklyWindow !== null
-                width: 1
-                height: 14
+                implicitWidth: 1
+                implicitHeight: 14
+                Layout.preferredWidth: 1
+                Layout.preferredHeight: 14
                 color: Qt.rgba(1, 1, 1, 0.16)
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -2902,8 +2968,10 @@ PlasmoidItem {
                 visible: !root._exportHideHeader
 
                 Item {
-                    width: 22
-                    height: 22
+                    implicitWidth: 22
+                    implicitHeight: 22
+                    Layout.preferredWidth: 22
+                    Layout.preferredHeight: 22
 
                     // Brand logo of the active provider, falling back to the
                     // tinted widget logo for providers without artwork.
@@ -3005,6 +3073,9 @@ PlasmoidItem {
                             if (tab === "cline")
                                 return i18n("Cline Stats");
 
+                            if (tab === "opencode")
+                                return i18n("OpenCode Usage");
+
                             return i18n("AI Usage Monitor");
                         }
                         font.bold: true
@@ -3013,27 +3084,55 @@ PlasmoidItem {
                     }
 
                     PlasmaComponents.Label {
-                        visible: root.showSettings
-                        // Names the section on screen, so the header says where
-                        // you are rather than repeating what the page is.
+                        visible: root.showSettings || root.enabledTabs[root.activeTab] === "overview" || root.enabledTabs[root.activeTab] === "sessions" || root.enabledTabs[root.activeTab] === "spend"
                         text: {
-                            if (root.settingsTab === "views")
-                                return i18n("Optional Overview, Spend and Sessions tabs");
+                            if (root.showSettings) {
+                                if (root.settingsTab === "panel")
+                                    return i18n("Views, colors, chart and popup style");
 
-                            if (root.settingsTab === "appearance")
-                                return i18n("Colors, chart and popup style");
+                                if (root.settingsTab === "info")
+                                    return i18n("About AI Usage Monitor and project links");
 
-                            if (root.settingsTab === "data")
-                                return i18n("Refresh interval and usage history");
+                                if (root.settingsTab === "data")
+                                    return i18n("Refresh interval and usage history");
 
-                            if (root.settingsTab === "advanced")
-                                return i18n("Python interpreter and terminal tool");
+                                if (root.settingsTab === "advanced")
+                                    return i18n("Python interpreter and terminal tool");
 
-                            return i18n("Turn providers on and set their keys");
+                                return i18n("Turn providers on and set their keys");
+                            }
+                            var tab = root.enabledTabs[root.activeTab];
+                            if (tab === "overview") {
+                                var count = 0;
+                                for (var i = 0; i < (root.enabledTabs || []).length; i++) {
+                                    var tid = root.enabledTabs[i];
+                                    if (tid !== "overview" && tid !== "spend" && tid !== "sessions")
+                                        count++;
+                                }
+                                return i18np("%1 provider", "%1 providers", count);
+                            }
+                            if (tab === "sessions")
+                                return sessionsTabView.loading ? i18n("Refreshing…") : i18np("%1 local session", "%1 local sessions", sessionsTabView.sessionsTotal || 0);
+                            if (tab === "spend") {
+                                // Provider/API total: metered spend and plan-inclusive spend
+                                return spendTabView ? spendTabView.summaryText : "";
+                            }
+                            return "";
                         }
                         font.pixelSize: 10
                         opacity: 0.5
                         color: Kirigami.Theme.textColor
+
+                        MouseArea {
+                            id: subtitleMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            acceptedButtons: Qt.NoButton
+                        }
+
+                        QQC2.ToolTip.visible: subtitleMouseArea.containsMouse && root.enabledTabs[root.activeTab] === "spend" && spendTabView && spendTabView.summaryTooltip !== ""
+                        QQC2.ToolTip.delay: 300
+                        QQC2.ToolTip.text: spendTabView ? spendTabView.summaryTooltip : ""
                     }
                 }
 
@@ -3093,7 +3192,13 @@ PlasmoidItem {
                 PlasmaComponents.ToolButton {
                     icon.name: "view-refresh"
                     display: PlasmaComponents.AbstractButton.IconOnly
-                    onClicked: root.refresh()
+                    // Sessions come from a separate backend call, so root.refresh()
+                    // alone leaves the list untouched while it is on screen.
+                    onClicked: {
+                        root.refresh();
+                        if (sessionsTabView.visible)
+                            sessionsTabView.refresh();
+                    }
                     opacity: hovered ? 1 : 0.6
 
                     Behavior on opacity {
@@ -3114,8 +3219,10 @@ PlasmoidItem {
                     model: root.enabledTabs
 
                     Rectangle {
+                        id: tabPillItem
                         Layout.fillWidth: true
-                        height: 32
+                        implicitHeight: 32
+                        Layout.preferredHeight: 32
                         radius: 6
                         clip: true
                         color: root.activeTab === index ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
@@ -3146,7 +3253,7 @@ PlasmoidItem {
 
                             Rectangle {
                                 anchors.fill: parent
-                                radius: parent.parent.radius
+                                radius: tabPillItem.radius
                                 color: parent.containsMouse && root.activeTab !== index ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
                             }
                         }
@@ -3242,7 +3349,8 @@ PlasmoidItem {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
+                implicitHeight: 1
+                Layout.preferredHeight: 1
                 color: Qt.rgba(1, 1, 1, 0.08)
             }
 
@@ -3255,10 +3363,12 @@ PlasmoidItem {
             }
 
             SpendTab {
+                id: spendTabView
                 rootItem: root
             }
 
             SessionsTab {
+                id: sessionsTabView
                 rootItem: root
             }
 
@@ -3326,6 +3436,10 @@ PlasmoidItem {
                 rootItem: root
             }
 
+            OpenCodeTab {
+                rootItem: root
+            }
+
             UsageChart {
                 rootItem: root
             }
@@ -3337,8 +3451,10 @@ PlasmoidItem {
 
                 Rectangle {
                     visible: root.errorMsg !== ""
-                    width: 6
-                    height: 6
+                    implicitWidth: 6
+                    implicitHeight: 6
+                    Layout.preferredWidth: 6
+                    Layout.preferredHeight: 6
                     radius: 3
                     color: root.dangerColor
                     Layout.alignment: Qt.AlignVCenter

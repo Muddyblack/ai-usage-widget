@@ -42,10 +42,10 @@ def _local_gpu():
 
 
 def _probe(base, engine, headers):
+    parsed = urlsplit(base)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
+        return {"url": base, "error": "Invalid local server URL"}
     for name in DEFAULTS if engine == "auto" else (engine,):
-        parsed = urlsplit(base)
-        if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
-            return {"url": base, "error": "Invalid local server URL"}
         probe = {"ollama": "/api/version", "vllm": "/v1/models", "llama.cpp": "/slots"}[name]
         result = _request(base, probe, headers)
         if result.status != 200:
@@ -89,6 +89,9 @@ def get_selfhosted_usage():
     if len(urls) > 8:
         return {"error": "At most eight local server URLs are supported"}
     jobs = [(url, engine) for url in urls] if endpoints.strip() else list(zip(DEFAULTS.values(), DEFAULTS.keys()))
+    if not jobs:
+        # A setting of only separators ("," or whitespace) leaves nothing to probe.
+        return {"error": "No local server URL configured"}
     with ThreadPoolExecutor(max_workers=len(jobs)) as pool:
         instances = list(pool.map(lambda job: _probe(job[0], job[1], headers), jobs))
     if not endpoints.strip():

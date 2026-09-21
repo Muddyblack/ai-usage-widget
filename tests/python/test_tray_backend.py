@@ -29,7 +29,15 @@ class BackendThreadTest(unittest.TestCase):
         self.addCleanup(self.backend._pool.shutdown, wait=True)
         self.events = []
         self.gui_thread = threading.get_ident()
-        for name in ("busyChanged", "snapshotReady", "refreshFailed", "historyFinished"):
+        for name in (
+            "busyChanged",
+            "snapshotReady",
+            "refreshFailed",
+            "historyFinished",
+            "pricingBusyChanged",
+            "pricingRefreshFinished",
+            "pricingRefreshFailed",
+        ):
             # A direct observer records the emission thread, without Qt
             # concealing an unsafe emission by queueing the test callback.
             getattr(self.backend, name).connect(
@@ -55,6 +63,47 @@ class BackendThreadTest(unittest.TestCase):
 
     def test_refresh_failure_is_published_on_the_gui_thread(self):
         self.check_refresh(RuntimeError("offline"))
+
+    def check_pricing_refresh(self, result=None, error=None):
+        with mock.patch("app.refresh_pricing_json", return_value=result, side_effect=error) as refresh:
+            self.backend.refreshPricing()
+            self.backend.refreshPricing()
+            self.backend._pool.shutdown(wait=True)
+            self.assertTrue(self.backend.pricingBusy)
+            self.assertEqual(self.events, [("pricingBusyChanged", (), self.gui_thread)])
+            self.qt_app.processEvents()
+            self.assertFalse(self.backend.pricingBusy)
+            if error:
+                expected = ("pricingRefreshFailed", ("pricing backend failed: offline",), self.gui_thread)
+            else:
+                expected = ("pricingRefreshFinished", (result,), self.gui_thread)
+            self.assertEqual(
+                self.events[1:],
+                [expected, ("pricingBusyChanged", (), self.gui_thread)],
+            )
+            refresh.assert_called_once_with()
+
+    def test_pricing_refresh_success_rejects_duplicate_calls(self):
+        self.check_pricing_refresh('{"ok":true,"status":"refreshed","fetchedAt":1800000000,"error":""}')
+
+    def test_pricing_refresh_preserves_stale_and_hard_failure_statuses(self):
+        for result in (
+            '{"ok":true,"status":"stale-good","fetchedAt":1799000000,"error":"download failed"}',
+            '{"ok":false,"status":"no-cache","fetchedAt":0,"error":"No usable pricing rates"}',
+        ):
+            with self.subTest(result=result):
+                backend = app.Backend()
+                self.addCleanup(backend._pool.shutdown, wait=True)
+                events = []
+                backend.pricingRefreshFinished.connect(
+                    lambda text, events=events: events.append(("finished", text)),
+                    Qt.DirectConnection,
+                )
+                with mock.patch("app.refresh_pricing_json", return_value=result):
+                    backend.refreshPricing()
+                    backend._pool.shutdown(wait=True)
+                    self.qt_app.processEvents()
+                self.assertEqual(events, [("finished", result)])
 
     def test_history_is_published_on_the_gui_thread(self):
         with mock.patch("app.historyio.run", return_value='{"data":[]}'):

@@ -77,6 +77,30 @@ ColumnLayout {
         }
     }
 
+    function pricingMessage() {
+        var status = page.shell.pricingStatus || "";
+        if (page.shell.pricingLoading === true)
+            return page.shell.i18n("Refreshing pricing…");
+        if (status === "refreshed")
+            return page.shell.i18n("Pricing updated.");
+        if (status === "stale-good")
+            return page.shell.i18n("Pricing refresh failed; using saved rates.") + (page.shell.pricingError ? " " + page.shell.pricingError : "");
+        if (status === "no-cache")
+            return page.shell.pricingError || page.shell.i18n("No pricing rates available; try again.");
+        return page.shell.pricingError || "";
+    }
+
+    function pricingMessageColor() {
+        var status = page.shell.pricingStatus || "";
+        if (status === "no-cache" || (status === "" && page.shell.pricingError !== ""))
+            return "#f87171";
+        if (status === "stale-good")
+            return "#f5a623";
+        if (status === "refreshed")
+            return "#34d399";
+        return "#f8fafc";
+    }
+
     SegmentBar {
         accent: page.shell.activeAccent
         currentId: page.section
@@ -86,8 +110,8 @@ ColumnLayout {
                 label: page.shell.i18n("Providers")
             },
             {
-                id: "views",
-                label: page.shell.i18n("Views")
+                id: "local",
+                label: page.shell.i18n("Local Models")
             },
             {
                 id: "panel",
@@ -101,6 +125,10 @@ ColumnLayout {
             {
                 id: "advanced",
                 label: page.shell.i18n("Advanced")
+            },
+            {
+                id: "info",
+                label: page.shell.i18n("Info")
             }
         ]
         onSelected: id => page.section = id
@@ -115,7 +143,9 @@ ColumnLayout {
         Repeater {
             // Labels, accents and key names all come from ProviderRegistry.js,
             // so adding a provider there is enough to make it configurable here.
-            model: page.shell.allProviders
+            model: (page.shell.allProviders || []).filter(function (p) {
+                return p.id !== "selfhosted";
+            })
 
             ProviderSettingRow {
                 required property var modelData
@@ -135,11 +165,180 @@ ColumnLayout {
         }
     }
 
-    // ── Views (Overview / Spend / Sessions) ──────────────────────────────────
+    // ── Local Models ─────────────────────────────────────────────────────────
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 12
+        visible: page.section === "local"
+
+        // Master toggle row
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+
+            Rectangle {
+                Layout.preferredWidth: 26
+                Layout.preferredHeight: 26
+                radius: 6
+                color: Qt.rgba(0.22, 0.74, 0.97, 0.15)
+
+                Image {
+                    anchors.centerIn: parent
+                    width: 15
+                    height: 15
+                    source: page.shell.iconDir ? (page.shell.iconDir + "local-models.svg") : ""
+                    sourceSize.width: 15
+                    sourceSize.height: 15
+                    fillMode: Image.PreserveAspectFit
+                }
+            }
+
+            ColumnLayout {
+                spacing: 1
+                Text {
+                    text: page.shell.i18n("Local Models")
+                    font.bold: true
+                    font.pixelSize: 12
+                    color: "#f8fafc"
+                }
+                Text {
+                    text: page.shell.i18n("Monitor Ollama, vLLM, or llama.cpp servers")
+                    font.pixelSize: 10
+                    opacity: 0.5
+                    color: "#f8fafc"
+                }
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            StyledToggle {
+                checked: page.shell.providerEnabled("selfhosted")
+                onToggled: {
+                    page.shell.setSetting("providers", "selfhosted", checked);
+                    page.shell.refresh();
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 1
+            Layout.preferredHeight: 1
+            color: Qt.rgba(1, 1, 1, 0.08)
+        }
+
+        // Server URLs
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 4
+
+            SectionLabel {
+                text: page.shell.i18n("Server URLs")
+            }
+
+            QC.TextField {
+                Layout.fillWidth: true
+                implicitHeight: 28
+                color: "#f8fafc"
+                font.pixelSize: 11
+                text: page.shell.settings.selfhostedEndpoint || ""
+                placeholderText: page.shell.i18n("e.g. http://127.0.0.1:11434, http://127.0.0.1:8000")
+                placeholderTextColor: Qt.rgba(1, 1, 1, 0.3)
+                background: Rectangle {
+                    radius: 5
+                    color: Qt.rgba(1, 1, 1, 0.06)
+                    border.width: 1
+                    border.color: parent.activeFocus ? Qt.rgba(0.22, 0.74, 0.97, 0.6) : Qt.rgba(1, 1, 1, 0.12)
+                }
+                onEditingFinished: {
+                    page.shell.setSetting2("selfhostedEndpoint", text.trim());
+                    page.shell.refresh();
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: page.shell.i18n("Separate multiple endpoints with commas. Leave empty to auto-discover Ollama (:11434), vLLM (:8000), and llama.cpp (:8080).")
+                font.pixelSize: 9
+                opacity: 0.45
+                color: "#f8fafc"
+                wrapMode: Text.WordWrap
+            }
+        }
+
+        // Engine and optional token
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+
+            ColumnLayout {
+                Layout.preferredWidth: 120
+                spacing: 4
+
+                SectionLabel {
+                    text: page.shell.i18n("Engine")
+                }
+
+                SettingCombo {
+                    Layout.fillWidth: true
+                    model: ["auto", "ollama", "vllm", "llama.cpp"]
+                    currentIndex: Math.max(0, model.indexOf(page.shell.settings.selfhostedEngine || "auto"))
+                    onActivated: {
+                        page.shell.setSetting2("selfhostedEngine", currentText);
+                        page.shell.refresh();
+                    }
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 4
+
+                SectionLabel {
+                    text: page.shell.i18n("Bearer Token (optional)")
+                }
+
+                QC.TextField {
+                    Layout.fillWidth: true
+                    implicitHeight: 26
+                    color: "#f8fafc"
+                    font.pixelSize: 11
+                    echoMode: TextInput.Password
+                    text: (page.shell.settings.keys && page.shell.settings.keys.selfhosted) || ""
+                    placeholderText: page.shell.i18n("Optional auth token")
+                    placeholderTextColor: Qt.rgba(1, 1, 1, 0.3)
+                    background: Rectangle {
+                        radius: 5
+                        color: Qt.rgba(1, 1, 1, 0.06)
+                        border.width: 1
+                        border.color: parent.activeFocus ? Qt.rgba(0.22, 0.74, 0.97, 0.6) : Qt.rgba(1, 1, 1, 0.12)
+                    }
+                    onEditingFinished: {
+                        page.shell.setSetting("keys", "selfhosted", text.trim());
+                        page.shell.refresh();
+                    }
+                }
+            }
+        }
+
+        Text {
+            Layout.fillWidth: true
+            Layout.topMargin: 4
+            text: page.shell.i18n("Token counters reflect usage since server start. GPU VRAM tracking is enabled automatically where supported.")
+            font.pixelSize: 9
+            opacity: 0.4
+            color: "#f8fafc"
+            wrapMode: Text.WordWrap
+        }
+    }
+
+    // ── Panel & Views ────────────────────────────────────────────────────────
     ColumnLayout {
         Layout.fillWidth: true
         spacing: 8
-        visible: page.section === "views"
+        visible: page.section === "panel"
 
         Text {
             Layout.fillWidth: true
@@ -177,8 +376,10 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 8
                 Rectangle {
-                    width: 7
-                    height: 7
+                    implicitWidth: 7
+                    implicitHeight: 7
+                    Layout.preferredWidth: 7
+                    Layout.preferredHeight: 7
                     radius: 3.5
                     color: modelData.accent
                     Layout.alignment: Qt.AlignVCenter
@@ -209,13 +410,13 @@ ColumnLayout {
                 }
             }
         }
-    }
 
-    // ── Panel ────────────────────────────────────────────────────────────────
-    ColumnLayout {
-        Layout.fillWidth: true
-        spacing: 8
-        visible: page.section === "panel"
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 1
+            Layout.preferredHeight: 1
+            color: Qt.rgba(1, 1, 1, 0.08)
+        }
 
         RowLayout {
             Layout.fillWidth: true
@@ -232,6 +433,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             SettingCombo {
                 id: languageCombo
@@ -279,6 +481,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             SettingCombo {
                 Layout.preferredWidth: 130
@@ -308,6 +511,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             SettingCombo {
                 Layout.preferredWidth: 130
@@ -337,6 +541,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             SettingCombo {
                 id: monitorCombo
@@ -382,6 +587,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             StyledToggle {
                 checked: page.shell.settings.showChart !== false
@@ -410,6 +616,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             SettingCombo {
                 Layout.preferredWidth: 130
@@ -439,6 +646,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             StyledToggle {
                 checked: page.shell.settings.floatingPill === true
@@ -481,6 +689,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             QC.ComboBox {
                 id: pollCombo
@@ -548,6 +757,43 @@ ColumnLayout {
                 Layout.preferredWidth: 7
                 Layout.preferredHeight: 7
                 radius: 3.5
+                color: page.shell.pricingLoading ? "#f5a623" : page.shell.pricingStatus === "" ? Qt.rgba(1, 1, 1, 0.3) : page.shell.pricingStatus === "stale-good" ? "#f5a623" : page.shell.pricingStatus === "no-cache" ? "#f87171" : "#34d399"
+                Layout.alignment: Qt.AlignVCenter
+            }
+            Text {
+                text: page.shell.i18n("Pricing")
+                font.pixelSize: 11
+                color: "#f8fafc"
+                Layout.preferredWidth: 90
+                elide: Text.ElideRight
+            }
+            SettingsButton {
+                text: page.shell.pricingLoading ? page.shell.i18n("Refreshing…") : page.shell.i18n("Refresh pricing")
+                enabled: !page.shell.pricingLoading
+                onClicked: page.shell.refreshPricing()
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+        }
+
+        Text {
+            visible: page.shell.pricingLoading || page.shell.pricingStatus !== "" || page.shell.pricingError !== ""
+            Layout.fillWidth: true
+            text: page.pricingMessage()
+            font.pixelSize: 9
+            opacity: 0.8
+            color: page.pricingMessageColor()
+            wrapMode: Text.WordWrap
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Rectangle {
+                Layout.preferredWidth: 7
+                Layout.preferredHeight: 7
+                radius: 3.5
                 color: page.shell.activeAccent
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -556,6 +802,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             SettingsButton {
                 text: page.shell.i18n("Export")
@@ -610,6 +857,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
             StyledToggle {
                 checked: page.shell.autostart === true
@@ -643,6 +891,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
 
             Rectangle {
@@ -703,6 +952,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: "#f8fafc"
                 Layout.preferredWidth: 90
+                elide: Text.ElideRight
             }
 
             Rectangle {
@@ -749,5 +999,13 @@ ColumnLayout {
             color: "#f8fafc"
             wrapMode: Text.WordWrap
         }
+    }
+
+    // ── Info ─────────────────────────────────────────────────────────────────
+    ProjectInfoPane {
+        id: infoPane
+        Layout.fillWidth: true
+        visible: page.section === "info"
+        shell: page.shell
     }
 }

@@ -14,17 +14,20 @@ presentation only; see docs/provider-contract.md for the schema.
 import json
 import sys
 
-from . import config, envelope
+from . import config, envelope, pricing
 from .contract import finalize
 from .normalize import normalize
 from .session_index import SOURCE_REGISTRY
 
-USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize | --sessions]
+USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize | --sessions | --refresh-pricing | --pricing-table]
 
   --all                 fetch every provider enabled in the shared settings file
   --provider <ids>      fetch the named providers regardless of the toggles
   --normalize           read one raw envelope on stdin, print the provider object
   --sessions            list recent local agent sessions (no paths or transcripts)
+  --refresh-pricing     force one shared pricing catalog refresh
+  --pricing-table       cached model rates as a searchable page
+                        (--query, --limit, --offset)
   --query-only          query the shared session index without refreshing
   --refresh             refresh all session providers before querying
   --query <text>        search all local session records by safe display fields
@@ -54,6 +57,27 @@ def snapshot():
     return finalize(envelope.build(envelope.enabled(cfg)))
 
 
+def _refresh_pricing():
+    snapshot = pricing.load_catalog(force=True)
+    providers = snapshot.get("providers") or {}
+    usable = bool(providers.get("anthropic") or providers.get("openai"))
+    error = str(snapshot.get("error") or "")
+    if not usable:
+        error = (
+            f"{error}; no usable pricing rates; retry when pricing sources are available."
+            if error
+            else "No usable pricing rates; retry when pricing sources are available."
+        )
+    result = {
+        "ok": usable,
+        "status": "stale-good" if usable and error else "refreshed" if usable else "no-cache",
+        "fetchedAt": snapshot.get("fetchedAt", 0),
+        "error": error,
+    }
+    sys.stdout.write(json.dumps(result, separators=(",", ":"), ensure_ascii=False) + "\n")
+    return 0 if usable else 1
+
+
 def main(argv):
     mode = ""
     requested = ""
@@ -81,6 +105,10 @@ def main(argv):
             mode = "normalize"
         elif arg == "--sessions":
             mode = "sessions"
+        elif arg == "--refresh-pricing":
+            mode = "refresh-pricing"
+        elif arg == "--pricing-table":
+            mode = "pricing-table"
         elif arg == "--query-only":
             query_only = True
         elif arg == "--refresh":
@@ -194,6 +222,19 @@ def main(argv):
             )
         _emit(result)
         return 0
+
+    if mode == "pricing-table":
+        _emit(
+            pricing.catalog_rows(
+                query,
+                limit=limit if limit is not None else 60,
+                offset=offset if offset is not None else 0,
+            )
+        )
+        return 0
+
+    if mode == "refresh-pricing":
+        return _refresh_pricing()
 
     if mode == "open-session":
         from .sessions import open_session

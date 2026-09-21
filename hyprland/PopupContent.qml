@@ -99,24 +99,39 @@ ColumnLayout {
                 color: "#f8fafc"
             }
             Text {
-                visible: shell.showSettings
-                // Names the section on screen, so the header
-                // says where you are rather than repeating
-                // what the page is.
+                visible: shell.showSettings || shell.activeIsFeature
                 text: {
-                    if (settingsPage.section === "panel")
-                        return shell.pillControls ? shell.i18n("Language, pill, position and chart") : shell.i18n("Language and usage chart");
+                    if (shell.showSettings) {
+                        if (settingsPage.section === "panel")
+                            return shell.pillControls ? shell.i18n("Views, pill, position and chart") : shell.i18n("Views, language and usage chart");
 
-                    if (settingsPage.section === "views")
-                        return shell.i18n("Optional Overview, Spend and Sessions tabs");
+                        if (settingsPage.section === "info")
+                            return shell.i18n("About AI Usage Monitor and project links");
 
-                    if (settingsPage.section === "data")
-                        return shell.i18n("Refresh interval and usage history");
+                        if (settingsPage.section === "local")
+                            return shell.i18n("Local endpoints: Ollama, vLLM and llama.cpp");
 
-                    if (settingsPage.section === "advanced")
-                        return shell.interpreterControls ? shell.i18n("Python interpreter and terminal tool") : shell.i18n("Start at login");
+                        if (settingsPage.section === "data")
+                            return shell.i18n("Refresh interval and usage history");
 
-                    return shell.i18n("Turn providers on and set their keys");
+                        if (settingsPage.section === "advanced")
+                            return shell.interpreterControls ? shell.i18n("Python interpreter and terminal tool") : shell.i18n("Start at login");
+
+                        return shell.i18n("Turn providers on and set their keys");
+                    }
+                    if (shell.activeId === "overview") {
+                        var pList = shell.providers || [];
+                        return shell.i18np("%1 provider", "%1 providers", pList.length);
+                    }
+                    if (shell.activeId === "sessions")
+                        return shell.sessionsLoading ? shell.i18n("Refreshing…") : shell.i18np("%1 local session", "%1 local sessions", shell.sessionsTotal || 0);
+                    if (shell.activeId === "spend") {
+                        // Provider/API total: metered spend and plan-inclusive spend
+                        var providerRows = FeatureTabs.spendProviderRows(shell.providers, shell.localSpend);
+                        var allRows = providerRows.concat(FeatureTabs.localSpendRows(shell.localSpend, providerRows, shell.providers));
+                        return FeatureTabs.spendSummaryText(allRows, "USD", shell.i18n);
+                    }
+                    return "";
                 }
                 font.pixelSize: 10
                 opacity: 0.5

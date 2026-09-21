@@ -16,6 +16,30 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 10
 
+    function pricingMessage() {
+        var status = settingsPanelRoot.rootItem.pricingStatus || "";
+        if (settingsPanelRoot.rootItem.pricingLoading === true)
+            return i18n("Refreshing pricing…");
+        if (status === "refreshed")
+            return i18n("Pricing updated.");
+        if (status === "stale-good")
+            return i18n("Pricing refresh failed; using saved rates.") + (settingsPanelRoot.rootItem.pricingError ? " " + settingsPanelRoot.rootItem.pricingError : "");
+        if (status === "no-cache")
+            return settingsPanelRoot.rootItem.pricingError || i18n("No pricing rates available; try again.");
+        return settingsPanelRoot.rootItem.pricingError || "";
+    }
+
+    function pricingMessageColor() {
+        var status = settingsPanelRoot.rootItem.pricingStatus || "";
+        if (status === "no-cache" || (status === "" && settingsPanelRoot.rootItem.pricingError !== ""))
+            return rootItem.dangerColor;
+        if (status === "stale-good")
+            return "#f5a623";
+        if (status === "refreshed")
+            return "#34d399";
+        return Kirigami.Theme.textColor;
+    }
+
     SubTabBar {
         accent: rootItem.activeAccent
         currentId: rootItem.settingsTab
@@ -25,12 +49,12 @@ ColumnLayout {
                 label: i18n("Providers")
             },
             {
-                id: "views",
-                label: i18n("Views")
+                id: "local",
+                label: i18n("Local Models")
             },
             {
-                id: "appearance",
-                label: i18n("Appearance")
+                id: "panel",
+                label: i18n("Panel")
             },
             {
                 id: "data",
@@ -39,6 +63,10 @@ ColumnLayout {
             {
                 id: "advanced",
                 label: i18n("Advanced")
+            },
+            {
+                id: "info",
+                label: i18n("Info")
             }
         ]
         onSelected: id => rootItem.settingsTab = id
@@ -54,7 +82,9 @@ ColumnLayout {
             // Labels, brand colours and key names all come from the provider
             // registry in main.qml rather than being restated here, so adding a
             // provider there is enough to make it configurable here.
-            model: rootItem.providers
+            model: (rootItem.providers || []).filter(function (p) {
+                return p.id !== "selfhosted";
+            })
 
             ProviderSettingRow {
                 required property var modelData
@@ -74,11 +104,156 @@ ColumnLayout {
         }
     }
 
-    // ── Views (Overview / Spend / Sessions) ─────────────────────
+    // ── Local Models ────────────────────────────────────────────
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 10
+        visible: rootItem.settingsTab === "local"
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+
+            Rectangle {
+                Layout.preferredWidth: 26
+                Layout.preferredHeight: 26
+                radius: 6
+                color: Qt.rgba(0.22, 0.74, 0.97, 0.15)
+
+                Kirigami.Icon {
+                    anchors.centerIn: parent
+                    width: 15
+                    height: 15
+                    source: Qt.resolvedUrl("../icons/local-models.svg")
+                }
+            }
+
+            ColumnLayout {
+                spacing: 1
+                PlasmaComponents.Label {
+                    text: i18n("Local Models")
+                    font.bold: true
+                    font.pixelSize: 12
+                    color: Kirigami.Theme.textColor
+                }
+                PlasmaComponents.Label {
+                    text: i18n("Monitor Ollama, vLLM, or llama.cpp servers")
+                    font.pixelSize: 10
+                    opacity: 0.5
+                    color: Kirigami.Theme.textColor
+                }
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            QQC2.Switch {
+                implicitHeight: 20
+                checked: Plasmoid.configuration.selfhostedEnabled === true
+                onToggled: Plasmoid.configuration.selfhostedEnabled = checked
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            height: 1
+            color: Qt.rgba(1, 1, 1, 0.08)
+        }
+
+        // Server URLs
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 3
+
+            PlasmaComponents.Label {
+                text: i18n("Server URLs")
+                font.bold: true
+                font.pixelSize: 10
+                opacity: 0.6
+                color: Kirigami.Theme.textColor
+            }
+
+            QQC2.TextField {
+                Layout.fillWidth: true
+                placeholderText: i18n("e.g. http://127.0.0.1:11434, http://127.0.0.1:8000")
+                text: Plasmoid.configuration.selfhostedEndpoint || ""
+                onEditingFinished: Plasmoid.configuration.selfhostedEndpoint = text.trim()
+            }
+
+            PlasmaComponents.Label {
+                Layout.fillWidth: true
+                text: i18n("Separate multiple endpoints with commas. Leave empty to auto-discover Ollama (:11434), vLLM (:8000), and llama.cpp (:8080).")
+                font.pixelSize: 9
+                opacity: 0.45
+                color: Kirigami.Theme.textColor
+                wrapMode: Text.WordWrap
+            }
+        }
+
+        // Engine & Bearer token
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+
+            ColumnLayout {
+                Layout.preferredWidth: 120
+                spacing: 3
+
+                PlasmaComponents.Label {
+                    text: i18n("Engine")
+                    font.bold: true
+                    font.pixelSize: 10
+                    opacity: 0.6
+                    color: Kirigami.Theme.textColor
+                }
+
+                QQC2.ComboBox {
+                    Layout.fillWidth: true
+                    model: ["auto", "ollama", "vllm", "llama.cpp"]
+                    currentIndex: Math.max(0, model.indexOf(Plasmoid.configuration.selfhostedEngine || "auto"))
+                    onActivated: Plasmoid.configuration.selfhostedEngine = currentText
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 3
+
+                PlasmaComponents.Label {
+                    text: i18n("Bearer Token (optional)")
+                    font.bold: true
+                    font.pixelSize: 10
+                    opacity: 0.6
+                    color: Kirigami.Theme.textColor
+                }
+
+                QQC2.TextField {
+                    Layout.fillWidth: true
+                    echoMode: TextInput.Password
+                    placeholderText: i18n("Optional auth token")
+                    text: Plasmoid.configuration.selfhostedKey || ""
+                    onEditingFinished: Plasmoid.configuration.selfhostedKey = text.trim()
+                }
+            }
+        }
+
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            Layout.topMargin: 4
+            text: i18n("Token counters reflect usage since server start. GPU VRAM tracking is enabled automatically where supported.")
+            font.pixelSize: 9
+            opacity: 0.4
+            color: Kirigami.Theme.textColor
+            wrapMode: Text.WordWrap
+        }
+    }
+
+    // ── Panel & Views ──────────────────────────────────────────
     ColumnLayout {
         Layout.fillWidth: true
         spacing: 6
-        visible: rootItem.settingsTab === "views"
+        visible: rootItem.settingsTab === "panel"
 
         PlasmaComponents.Label {
             Layout.fillWidth: true
@@ -155,13 +330,12 @@ ColumnLayout {
                 }
             }
         }
-    }
 
-    // ── Appearance ──────────────────────────────────────────────
-    ColumnLayout {
-        Layout.fillWidth: true
-        spacing: 6
-        visible: rootItem.settingsTab === "appearance"
+        Rectangle {
+            Layout.fillWidth: true
+            height: 1
+            color: Qt.rgba(1, 1, 1, 0.08)
+        }
 
         // Plasma loads one translation per plasmashell process, so the widget
         // cannot pick its own language the way the Hyprland and Windows apps do.
@@ -536,6 +710,45 @@ ColumnLayout {
                 width: 7
                 height: 7
                 radius: 3.5
+                color: rootItem.pricingLoading ? "#f5a623" : rootItem.pricingStatus === "" ? Qt.rgba(1, 1, 1, 0.3) : rootItem.pricingStatus === "stale-good" ? "#f5a623" : rootItem.pricingStatus === "no-cache" ? rootItem.dangerColor : "#34d399"
+                Layout.alignment: Qt.AlignVCenter
+            }
+            PlasmaComponents.Label {
+                text: i18n("Pricing")
+                font.pixelSize: 11
+                color: Kirigami.Theme.textColor
+                Layout.preferredWidth: 120
+                elide: Text.ElideRight
+            }
+            PlasmaComponents.Button {
+                text: rootItem.pricingLoading ? i18n("Refreshing…") : i18n("Refresh pricing")
+                implicitHeight: 26
+                font.pixelSize: 10
+                enabled: !rootItem.pricingLoading
+                onClicked: rootItem.refreshPricing()
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+        }
+
+        PlasmaComponents.Label {
+            visible: rootItem.pricingLoading || rootItem.pricingStatus !== "" || rootItem.pricingError !== ""
+            text: settingsPanelRoot.pricingMessage()
+            font.pixelSize: 9
+            opacity: 0.8
+            color: settingsPanelRoot.pricingMessageColor()
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Rectangle {
+                width: 7
+                height: 7
+                radius: 3.5
                 color: rootItem.activeAccent
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -690,5 +903,13 @@ ColumnLayout {
                 wrapMode: Text.WordWrap
             }
         }
+    }
+
+    // ── Info ────────────────────────────────────────────────────
+    ProjectInfoPane {
+        id: infoPane
+        Layout.fillWidth: true
+        visible: rootItem.settingsTab === "info"
+        rootItem: settingsPanelRoot.rootItem
     }
 }

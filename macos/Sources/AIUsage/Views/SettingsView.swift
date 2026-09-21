@@ -34,14 +34,16 @@ struct SettingsView: View {
         TabView {
             providersTab
                 .tabItem { Label(i18n("Providers"), systemImage: "square.grid.2x2") }
-            viewsTab
-                .tabItem { Label(i18n("Views"), systemImage: "rectangle.grid.2x2") }
             menuBarTab
                 .tabItem { Label(i18n("Menu Bar"), systemImage: "menubar.rectangle") }
+            dataTab
+                .tabItem { Label(i18n("Data"), systemImage: "externaldrive") }
             generalTab
                 .tabItem { Label(i18n("General"), systemImage: "gearshape") }
+            InfoView()
+                .tabItem { Label(i18n("Info"), systemImage: "info.circle") }
         }
-        .frame(width: 460, height: 420)
+        .frame(width: 460, height: 440)
     }
 
     // ── Providers ────────────────────────────────────────────────────────
@@ -119,111 +121,152 @@ struct SettingsView: View {
         model.envelope.provider(id: id)?.icon ?? ""
     }
 
-    // ── Views (Overview / Spend / Sessions) ────────────────────────────────
-    // The same optional popup tabs the Linux frontends offer, with the same
-    // defaults and the same shared settings keys — so a toggle here is a
-    // toggle there. The popover reads them through AppModel.featureTabs.
+    // ── Menu bar & Views ─────────────────────────────────────────────────
 
-    private var viewsTab: some View {
+    private var menuBarTab: some View {
         Form {
-            Text(i18n("Optional tabs that sit ahead of your providers in the popover."))
-                .font(.system(size: 10))
-                .foregroundStyle(.secondary)
-            // Literals, not `view.label`: xgettext only extracts literals, and
-            // the settings key-field table next to this is the one allowed
-            // indirection (see test_every_translation_call…).
-            Toggle(isOn: Binding(
-                get: { model.settings.featureEnabled("overview") },
-                set: { value in model.changeSettings { $0.setFeature("overview", enabled: value) } }
-            )) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(i18n("Overview"))
-                    Text(i18n("All enabled providers at a glance"))
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
+            Section {
+                Toggle(isOn: Binding(
+                    get: { model.settings.featureEnabled("overview") },
+                    set: { value in model.changeSettings { $0.setFeature("overview", enabled: value) } }
+                )) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(i18n("Overview"))
+                        Text(i18n("All enabled providers at a glance"))
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
                 }
-            }
-            Toggle(isOn: Binding(
-                get: { model.settings.featureEnabled("spend") },
-                set: { value in model.changeSettings { $0.setFeature("spend", enabled: value) } }
-            )) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(i18n("Usage & Spend"))
-                    Text(i18n("Combined cost figures across providers"))
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
+                Toggle(isOn: Binding(
+                    get: { model.settings.featureEnabled("spend") },
+                    set: { value in model.changeSettings { $0.setFeature("spend", enabled: value) } }
+                )) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(i18n("Usage & Spend"))
+                        Text(i18n("Combined cost figures across providers"))
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
                 }
+                Toggle(isOn: Binding(
+                    get: { model.settings.featureEnabled("sessions") },
+                    set: { value in model.changeSettings { $0.setFeature("sessions", enabled: value) } }
+                )) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(i18n("Sessions"))
+                        Text(i18n("Recent local agent sessions (no transcripts)"))
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } header: {
+                Text(i18n("Views"))
+            } footer: {
+                Text(i18n("Optional tabs that sit ahead of your providers in the popover."))
             }
-            Toggle(isOn: Binding(
-                get: { model.settings.featureEnabled("sessions") },
-                set: { value in model.changeSettings { $0.setFeature("sessions", enabled: value) } }
-            )) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(i18n("Sessions"))
-                    Text(i18n("Recent local agent sessions (no transcripts)"))
+
+            Section {
+                Picker(i18n("Show"), selection: Binding(
+                    get: { model.settings.menuBarStyle },
+                    set: { value in model.changeSettings { $0.menuBarStyle = value } }
+                )) {
+                    ForEach(MenuBarStyle.allCases) { style in
+                        Text(style.title).tag(style)
+                    }
+                }
+
+                Picker(i18n("Values"), selection: Binding(
+                    get: { model.settings.menuBarSlots },
+                    set: { value in model.changeSettings { $0.menuBarSlots = value } }
+                )) {
+                    Text(i18n("One")).tag(1)
+                    Text(i18n("Two")).tag(2)
+                    Text(i18n("Three")).tag(3)
+                }
+                .disabled(model.settings.menuBarStyle == .iconOnly)
+
+                Picker(i18n("Icon"), selection: Binding(
+                    get: { model.settings.menuBarIcon },
+                    set: { value in model.changeSettings { $0.menuBarIcon = value } }
+                )) {
+                    ForEach(MenuBarIcon.allCases) { icon in
+                        Text(icon.title).tag(icon)
+                    }
+                }
+                .disabled(model.settings.menuBarStyle == .percentOnly)
+                Text(i18n("Monochrome is what macOS expects: it inverts with the menu bar and stays legible over any wallpaper. The other two show a logo beside every value, the way the Plasma panel does."))
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+
+                Toggle(i18n("Colour every percentage"), isOn: Binding(
+                    get: { model.settings.colouredPercentages },
+                    set: { value in model.changeSettings { $0.colouredPercentages = value } }
+                ))
+                Text(i18n("Off, a percentage stays in the menu bar's own colour until it is worth a look — amber from 70 %, red from 90 %."))
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+
+                Picker(i18n("Provider"), selection: Binding(
+                    get: { model.selectedID },
+                    set: { model.selectedID = $0 }
+                )) {
+                    ForEach(model.providers) { provider in
+                        Text(provider.label).tag(provider.id)
+                    }
+                }
+                .disabled(model.providers.isEmpty)
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private var dataTab: some View {
+        Form {
+            Section {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(i18n("Pricing"))
+                        Text(i18n("Refresh the shared model pricing catalog now."))
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                    Button(model.pricingLoading ? i18n("Refreshing…") : i18n("Refresh pricing")) {
+                        model.refreshPricing()
+                    }
+                    .disabled(model.pricingLoading)
+                }
+                if model.pricingLoading || !model.pricingStatus.isEmpty || !model.pricingError.isEmpty {
+                    Text(pricingMessage)
                         .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(pricingMessageColor)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
         .formStyle(.grouped)
     }
 
-    // ── Menu bar ─────────────────────────────────────────────────────────
-
-    private var menuBarTab: some View {
-        Form {
-            Picker(i18n("Show"), selection: Binding(
-                get: { model.settings.menuBarStyle },
-                set: { value in model.changeSettings { $0.menuBarStyle = value } }
-            )) {
-                ForEach(MenuBarStyle.allCases) { style in
-                    Text(style.title).tag(style)
-                }
-            }
-
-            Picker(i18n("Values"), selection: Binding(
-                get: { model.settings.menuBarSlots },
-                set: { value in model.changeSettings { $0.menuBarSlots = value } }
-            )) {
-                Text(i18n("One")).tag(1)
-                Text(i18n("Two")).tag(2)
-                Text(i18n("Three")).tag(3)
-            }
-            .disabled(model.settings.menuBarStyle == .iconOnly)
-
-            Picker(i18n("Icon"), selection: Binding(
-                get: { model.settings.menuBarIcon },
-                set: { value in model.changeSettings { $0.menuBarIcon = value } }
-            )) {
-                ForEach(MenuBarIcon.allCases) { icon in
-                    Text(icon.title).tag(icon)
-                }
-            }
-            .disabled(model.settings.menuBarStyle == .percentOnly)
-            Text(i18n("Monochrome is what macOS expects: it inverts with the menu bar and stays legible over any wallpaper. The other two show a logo beside every value, the way the Plasma panel does."))
-                .font(.system(size: 10))
-                .foregroundStyle(.secondary)
-
-            Toggle(i18n("Colour every percentage"), isOn: Binding(
-                get: { model.settings.colouredPercentages },
-                set: { value in model.changeSettings { $0.colouredPercentages = value } }
-            ))
-            Text(i18n("Off, a percentage stays in the menu bar's own colour until it is worth a look — amber from 70 %, red from 90 %."))
-                .font(.system(size: 10))
-                .foregroundStyle(.secondary)
-
-            Picker(i18n("Provider"), selection: Binding(
-                get: { model.selectedID },
-                set: { model.selectedID = $0 }
-            )) {
-                ForEach(model.providers) { provider in
-                    Text(provider.label).tag(provider.id)
-                }
-            }
-            .disabled(model.providers.isEmpty)
+    private var pricingMessage: String {
+        if model.pricingLoading { return i18n("Refreshing pricing…") }
+        switch model.pricingStatus {
+        case "refreshed": return i18n("Pricing updated.")
+        case "stale-good":
+            return i18n("Pricing refresh failed; using saved rates.")
+                + (model.pricingError.isEmpty ? "" : " " + model.pricingError)
+        case "no-cache":
+            return model.pricingError.isEmpty ? i18n("No pricing rates available; try again.") : model.pricingError
+        default: return model.pricingError
         }
-        .formStyle(.grouped)
+    }
+
+    private var pricingMessageColor: Color {
+        switch model.pricingStatus {
+        case "refreshed": return .green
+        case "stale-good": return .orange
+        case "no-cache": return .red
+        default: return .secondary
+        }
     }
 
     /// "fr" → "français", in that language rather than in the current one, so

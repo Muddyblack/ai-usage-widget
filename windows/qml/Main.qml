@@ -19,7 +19,7 @@ Window {
     id: root
 
     width: 460
-    height: Math.min(680, popupContent.height + 40)
+    height: Math.min(720, popupContent.height + 40)
     visible: false
     color: "transparent"
     flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
@@ -143,14 +143,19 @@ Window {
 
     // ── Provider state ───────────────────────────────────────────────────────
     property var providers: []
+    property var localSpend: ({})
     property var sessions: []
     property bool sessionsLoading: false
     property string sessionsError: ""
     property string sessionsNotice: ""
+    readonly property bool pricingLoading: backend.pricingBusy
+    property string pricingStatus: ""
+    property string pricingError: ""
     property string sessionsQuery: ""
     property var sessionsSources: []
     property var sessionsSourceIds: []
     property string sessionsSourceSignature: ""
+    property string sessionsSourceResetSignature: ""
     property var sessionsActiveSourceIds: []
     property string sessionsActiveSourceSignature: ""
     property int sessionsRequestId: 0
@@ -197,7 +202,7 @@ Window {
         if (root.activeIsFeature)
             return false;
         var p = activeProvider();
-        return p && (p.id === "claude" || p.id === "openai" || p.id === "copilot" || p.id === "muse" || p.id === "cursor" || p.id === "cline");
+        return p && (p.id === "claude" || p.id === "openai" || p.id === "copilot" || p.id === "muse" || p.id === "cursor" || p.id === "cline" || p.id === "opencode");
     }
 
     function providerById(id) {
@@ -321,6 +326,7 @@ Window {
         try {
             var data = JSON.parse((text || "").trim());
             root.providers = data.providers || [];
+            root.localSpend = data.localSpend || ({});
             root.updatedAt = data.updatedAt || 0;
             // Seed (or heal, if the remembered one got disabled) the pill's
             // fallback provider — needed even before the user ever leaves a
@@ -452,6 +458,20 @@ Window {
             backend.refreshSessions(root.sessionsQuery, root.sessionsRequestId, offset);
     }
 
+    function refreshPricing() {
+        if (root.pricingLoading)
+            return;
+        backend.refreshPricing();
+    }
+
+    function queryRates(filter, limit, offset, callback) {
+        var jsonStr = backend.queryRatesJson((filter || "").trim(), limit || 40, offset || 0);
+        if (typeof callback === "function") {
+            var payload = FeatureTabs.parseRateTable(jsonStr);
+            callback(payload);
+        }
+    }
+
     // Rows with an empty openKey (Muse) render no button at all.
     function openSession(key) {
         if (!key)
@@ -579,8 +599,12 @@ Window {
                     var staleSelection = root.sessionSourceSelectionHasStaleIds(responseSources);
                     root.sessionsSources = responseSources;
                     if (staleSelection) {
+                        var staleSignature = root.sessionsSourceSignature;
+                        if (root.sessionsSourceResetSignature === staleSignature)
+                            return;
                         root.sessionsSourceIds = [];
                         root.sessionsSourceSignature = "";
+                        root.sessionsSourceResetSignature = staleSignature;
                         root.sessionsRequestId += 1;
                         root.sessions = [];
                         root.sessionsOffset = 0;
@@ -590,6 +614,7 @@ Window {
                         root.requestSessions(root.sessionsQuery, false, []);
                         return;
                     }
+                    root.sessionsSourceResetSignature = "";
                     root.sessionsTotal = Number(data.total) || 0;
                     root.sessionsOffset = Number(data.offset) || root.sessionsActiveOffset;
                     root.sessionsHasMore = data.hasMore === true;
@@ -612,6 +637,24 @@ Window {
 
         function onRefreshFailed(message) {
             root.errorText = message;
+        }
+
+        function onPricingRefreshFinished(text) {
+            try {
+                var data = JSON.parse((text || "").trim());
+                root.pricingStatus = data.status || (data.ok === true ? "refreshed" : "no-cache");
+                root.pricingError = data.error || "";
+                if (data.ok === true)
+                    root.refresh();
+            } catch (e) {
+                root.pricingStatus = "no-cache";
+                root.pricingError = root.i18n("Could not refresh pricing.");
+            }
+        }
+
+        function onPricingRefreshFailed(message) {
+            root.pricingStatus = "no-cache";
+            root.pricingError = message;
         }
 
         // The tray menu's switches (tray style, floating pill), JSON-encoded.
@@ -855,7 +898,7 @@ Window {
         contentWidth: width
         contentHeight: popupContent.height
         boundsBehavior: Flickable.StopAtBounds
-        interactive: contentHeight > height
+        interactive: Math.round(contentHeight) > Math.round(height) + 1
 
         QC.ScrollBar.vertical: QC.ScrollBar {
             policy: contentFlick.interactive ? QC.ScrollBar.AsNeeded : QC.ScrollBar.AlwaysOff

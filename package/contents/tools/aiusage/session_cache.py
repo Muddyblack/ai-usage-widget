@@ -13,12 +13,15 @@ from .session_index import (
     SessionQueryResult,
     SessionRow,
     SessionSource,
+    SkipSource,
     redact_rows,
 )
-from .session_manifest import build_manifest
+from .session_manifest import build_manifests
 
 CollectorBatch = tuple[list[Mapping[str, str | int]], bool]
 Collector = Callable[[], CollectorBatch]
+# Rows for one named source; raising means "keep what the index already has".
+SourceCollector = Callable[[str], Sequence[Mapping[str, str | int]]]
 
 
 class IncompleteRefresh(Exception):
@@ -63,20 +66,58 @@ class SessionCache:
                 "sources": [],
             }
 
-    def refresh(self, collect: Collector) -> list[SessionRow] | None:
-        """Reconcile the index, returning direct rows only for incomplete scans."""
-        manifest = build_manifest()
+    def rows(self) -> list[SessionRow]:
+        """Every indexed row, unpaged — spend rollups must never sum a page."""
+        try:
+            return self._index.rows()
+        except (OSError, sqlite3.Error):
+            return []
+
+    def refresh(self, collect: Collector, collect_source: SourceCollector | None = None) -> list[SessionRow] | None:
+        """Reconcile the index per source, returning direct rows only when the
+        index itself cannot be used.
+
+        Each collector is fingerprinted on its own, so a poll re-parses only the
+        stores that actually changed. A collector that raises keeps its previous
+        rows instead of blanking them.
+        """
+        if collect_source is None:
+            return self._refresh_all(collect)
+
+        def parse(source: SessionSource) -> Sequence[Mapping[str, str | int]]:
+            try:
+                return collect_source(source.source_id)
+            except Exception:
+                raise SkipSource(source.source_id) from None
+
+        try:
+            self._index.reconcile(build_manifests(), parse)
+        except (OSError, sqlite3.Error):
+            return self._direct(collect)
+        return None
+
+    def _refresh_all(self, collect: Collector) -> list[SessionRow] | None:
+        """Single-source fallback for callers with no per-source collector."""
+        scanned: list[Mapping[str, str | int]] = []
 
         def parse(_source: SessionSource) -> Sequence[Mapping[str, str | int]]:
             rows, complete = collect()
+            scanned[:] = rows
             if not complete:
                 raise IncompleteRefresh(rows)
             return rows
 
         try:
-            self._index.reconcile([manifest], parse, force=True)
+            self._index.reconcile(build_manifests(), parse)
         except IncompleteRefresh as error:
             return redact_rows(error.rows)
         except (OSError, sqlite3.Error):
-            return None
+            if scanned:
+                return redact_rows(scanned)
+            return self._direct(collect)
         return None
+
+    def _direct(self, collect: Collector) -> list[SessionRow]:
+        """The index is unusable, so querying it would show an empty tab."""
+        rows, _complete = collect()
+        return redact_rows(rows)

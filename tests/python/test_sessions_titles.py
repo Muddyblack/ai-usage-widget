@@ -2,8 +2,8 @@
 words.
 
 Claude Code writes no separate summary, so its row title is the session's own
-opening prompt (from ``history.jsonl``), clipped without retaining the raw
-prompt. Cline's own ``prompt`` field
+opening prompt (from ``history.jsonl``), clipped, with the full text offered
+back as ``fullTitle`` for a frontend to expand. Cline's own ``prompt`` field
 looks similar but is a rolling snapshot of recent tool output rather than an
 opening message, so it must never reach ``_cline_entries()``'s output — that
 is a regression a future edit could reintroduce without this test.
@@ -88,9 +88,8 @@ class ClaudeEntriesTitleTest(IsolatedHomeTest):
         self.assertEqual(entry["detail"], "widget")
         self.assertNotIn("fullTitle", entry)  # short enough it wasn't clipped
 
-    def test_long_prompt_is_clipped_without_raw_prompt_or_fulltitle(self):
-        raw_prompt_suffix = "__CLAUDE_RAW_PROMPT_MUST_NOT_LEAK_7f4c9a__"
-        long_prompt = "please " + ("x" * 100) + raw_prompt_suffix
+    def test_long_prompt_carries_fulltitle_when_clipped(self):
+        long_prompt = "please " + ("x" * 100)
         with tempfile.TemporaryDirectory() as root:
             self._write_session(root, "-mnt-projects-widget", "session-1")
             with open(os.path.join(root, "history.jsonl"), "w", encoding="utf-8") as f:
@@ -98,10 +97,8 @@ class ClaudeEntriesTitleTest(IsolatedHomeTest):
             with mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": root}):
                 entries = sessions._claude_entries()
         entry = entries[0]
-        self.assertEqual(entry["title"], sessions._clip_title(long_prompt))
         self.assertTrue(entry["title"].endswith("…"))
-        self.assertNotIn("fullTitle", entry)
-        self.assertNotIn(raw_prompt_suffix, json.dumps(entry))
+        self.assertEqual(entry["fullTitle"], long_prompt)
         self.assertRegex(entry["openKey"], r"^[0-9a-f]{64}$")
         self.assertNotEqual(entry["openKey"], "session-1")
 

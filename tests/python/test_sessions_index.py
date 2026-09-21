@@ -71,13 +71,22 @@ def _connection(
     stored: list[tuple[str, int, int]],
     checkpoints: list[str],
     events: list[str],
+    cached_rows: dict[str, int] | None = None,
 ) -> mock.MagicMock:
     connection = mock.MagicMock(spec=sqlite3.Connection)
     connection.__enter__.return_value = connection
+    # Default: each stored source already has rows cached. A source cached
+    # with zero rows is deliberately re-parsed even when its fingerprint
+    # matches, so tests about "unchanged" sources have to look non-empty.
+    counts = {row[0]: 1 for row in stored} if cached_rows is None else cached_rows
 
-    def execute(statement: str, *parameters) -> list[tuple[str, int, int]]:
+    def execute(statement: str, *parameters) -> list[tuple[str, int, int, int]]:
         if statement.startswith("SELECT source_key, mtime_ns, size"):
-            return stored
+            # source_order matches the scan order, so an unchanged manifest
+            # stays unmutated.
+            return [(*row, order) for order, row in enumerate(stored)]
+        if statement.startswith("SELECT source_key, COUNT(*)"):
+            return list(counts.items())
         if statement.startswith("PRAGMA wal_checkpoint("):
             checkpoints.append(statement.partition("(")[2][:-1])
             events.append(f"checkpoint:{checkpoints[-1]}")
@@ -146,7 +155,7 @@ class SessionIndexTest(unittest.TestCase):
                         "lastActivityAt": 1,
                         "detail": "Safe detail",
                         "openKey": "opaque-key",
-                        "fullTitle": "private full title transcript",
+                        "fullTitle": "safe expandable title",
                         "path": "/private/session/path",
                         "rawId": "raw-session-id",
                         "transcript": "private transcript body",
@@ -161,11 +170,14 @@ class SessionIndexTest(unittest.TestCase):
             "/private/session/path",
             "raw-session-id",
             "private transcript body",
-            "private full title transcript",
             "secret-token",
             "opaque-key",
         ):
             self.assertNotIn(private_value, encoded)
+        # fullTitle is an intentionally exposed, opt-in expansion of the
+        # (already-shown, already-clipped) row title — not raw session data —
+        # so unlike the fields above it is expected to survive redaction.
+        self.assertEqual(result["sessions"][0]["fullTitle"], "safe expandable title")
         self.assertEqual(result["sources"], [{"id": "openai", "label": "Codex"}])
 
     def test_unchanged_manifest_does_not_run_checkpoint_maintenance(self):
@@ -186,6 +198,36 @@ class SessionIndexTest(unittest.TestCase):
         self.assertEqual(events, ["commit"])
         self.assertEqual(checkpoints, [])
         query.assert_not_called()
+
+    def test_source_cached_with_no_rows_is_reparsed_even_when_unchanged(self):
+        """A collector that once succeeded while seeing nothing (run where it
+        could not reach the store) must not hide that source forever: its
+        fingerprint matches, so the only thing distinguishing it is that it
+        cached no rows."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = _source(root, "one.jsonl", "one")
+            source_key = hashlib.sha256(source.source_id.encode("utf-8")).hexdigest()
+            connection = _connection(
+                [(source_key, source.mtime_ns, source.size)],
+                [],
+                [],
+                cached_rows={source_key: 0},
+            )
+            index = _index_class()(root / "sessions.sqlite3")
+            parsed: list[str] = []
+
+            def parse(scanned: Source) -> list[Row]:
+                parsed.append(scanned.source_id)
+                return []
+
+            with (
+                mock.patch.object(index, "_open", return_value=connection),
+                mock.patch.object(index, "query", return_value={"sessions": [], "total": 0}),
+            ):
+                index.reconcile([source], parse)
+
+        self.assertEqual(parsed, ["one"])
 
     def test_changed_manifest_runs_passive_checkpoint_after_commit(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -302,6 +344,71 @@ class SessionIndexTest(unittest.TestCase):
 
         self.assertEqual(calls, ["one"])
         self.assertEqual(result["total"], 1)
+
+
+def _titled_parser(title: str) -> Parser:
+    def parse(source: Source) -> list[Row]:
+        return [
+            {
+                "provider": "test",
+                "title": title,
+                "sessionName": "Fixture",
+                "state": "idle",
+                "lastActivityAt": source.mtime_ns,
+                "detail": "safe",
+                "openKey": "opaque-key",
+            }
+        ]
+
+    return parse
+
+
+class SchemaVersionInvalidationTest(unittest.TestCase):
+    """Cached rows are the product of the parser that produced them, so a
+    parser change has to invalidate them even when no session file moved.
+    The cache key is a hash of that code, so this happens with nothing to
+    remember to bump."""
+
+    def test_the_key_tracks_the_code_that_produces_rows(self):
+        storage = importlib.import_module("aiusage.session_index_storage")
+        storage._schema_version.cache_clear()
+        first = storage._schema_version()
+        # Stable across calls, and an int SQLite's user_version can hold.
+        self.assertEqual(first, storage._schema_version())
+        self.assertTrue(0 <= first <= 0x7FFF_FFFF)
+
+        # Editing any module that determines a row's content changes the key.
+        storage._schema_version.cache_clear()
+        with mock.patch.object(storage, "_CONTENT_SOURCES", ("contract.py",)):
+            self.assertNotEqual(storage._schema_version(), first)
+        storage._schema_version.cache_clear()
+
+    def test_a_key_change_forces_every_source_to_recollect(self):
+        storage = importlib.import_module("aiusage.session_index_storage")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / "sessions.sqlite3"
+            source = _source(root, "one.jsonl", "openai")
+
+            _index_class()(cache).reconcile([source], _titled_parser("old parser title"))
+            self.assertEqual([row["title"] for row in _index_class()(cache).rows()], ["old parser title"])
+
+            # Same source, unchanged on disk: without a bump it is not re-read.
+            _index_class()(cache).reconcile([source], _titled_parser("new parser title"))
+            self.assertEqual([row["title"] for row in _index_class()(cache).rows()], ["old parser title"])
+
+            with mock.patch.object(storage, "_schema_version", lambda: 123456):
+                _index_class()(cache).reconcile([source], _titled_parser("new parser title"))
+                self.assertEqual([row["title"] for row in _index_class()(cache).rows()], ["new parser title"])
+
+    def test_an_unchanged_version_keeps_the_cached_rows(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / "sessions.sqlite3"
+            source = _source(root, "one.jsonl", "openai")
+            _index_class()(cache).reconcile([source], _titled_parser("cached"))
+
+            self.assertEqual([row["title"] for row in _index_class()(cache).rows()], ["cached"])
 
 
 if __name__ == "__main__":

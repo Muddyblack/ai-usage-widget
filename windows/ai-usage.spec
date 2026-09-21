@@ -27,6 +27,7 @@ datas = []
 datas += tree(os.path.join(ROOT, "windows", "qml"), os.path.join("windows", "qml"))
 datas += tree(os.path.join(ROOT, "package", "contents", "code"), os.path.join("package", "contents", "code"))
 datas += tree(os.path.join(ROOT, "package", "contents", "icons"), os.path.join("package", "contents", "icons"))
+datas += [(os.path.join(ROOT, "package", "icon.png"), "package")]
 # The translation catalogs: app.py picks one, Main.qml parses it with I18n.js.
 datas += [(path, "translate") for path in glob.glob(os.path.join(ROOT, "translate", "*.po"))]
 # The shared QML and JS only; the Quickshell entry point and the C++ tray

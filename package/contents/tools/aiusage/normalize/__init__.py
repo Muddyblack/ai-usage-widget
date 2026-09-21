@@ -12,6 +12,7 @@ from .moonshot import normalize_moonshot
 from .muse import normalize_muse
 from .ollama import normalize_ollama
 from .openai import normalize_openai
+from .opencode import normalize_opencode
 from .openrouter import normalize_openrouter
 from .selfhosted import normalize_selfhosted
 from .zai import normalize_zai
@@ -33,6 +34,7 @@ _DISPATCH = {
     "kimi": normalize_moonshot,
     "cursor": normalize_cursor,
     "cline": normalize_cline,
+    "opencode": normalize_opencode,
 }
 
 

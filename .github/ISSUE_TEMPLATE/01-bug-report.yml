@@ -1,0 +1,81 @@
+name: Bug report
+description: Report something broken in the widget, tray app, CLI, or provider backend.
+title: "[Bug]: "
+body:
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Where does it happen?
+      options:
+        - KDE Plasma widget
+        - Hyprland / Quickshell widget
+        - macOS menu bar app
+        - Windows tray app
+        - Terminal CLI (ai-usage-cli / get-ai-usage)
+        - Multiple platforms / Shared backend
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Which provider or view is affected?
+      options:
+        - General UI / Settings / Appearance
+        - Overview tab
+        - Usage & Spend tab
+        - Sessions tab / Search / Resume
+        - History & Usage chart
+        - Claude (Anthropic)
+        - Antigravity / Google AI Studio
+        - OpenAI / Codex
+        - Grok (xAI)
+        - Kiro
+        - Mistral AI
+        - OpenRouter
+        - Ollama Cloud
+        - Local LLMs / Self-hosted
+        - Z.AI
+        - GitHub Copilot
+        - DeepSeek
+        - Kimi / Moonshot AI
+        - Muse
+        - Cursor
+        - Cline
+        - OpenCode
+        - Multiple / Other
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Version and environment
+      description: Include the widget or app version/commit and installation method (KDE Store, Git, Nix flake, Homebrew, installer). For Linux, add your distro and Plasma or Quickshell version; for macOS/Windows, add the OS version; and include your Python version.
+      placeholder: "Widget/App version: …\nInstalled via: …\nOS / Desktop: …\nPython version: …"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include the provider settings, views, or CLI arguments needed to reproduce the issue.
+      placeholder: "1. Enable provider …\n2. Open …\n3. Observe …"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Screenshots or a short recording are helpful for visual, layout, and animation issues.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Extra context, logs, or CLI output
+      description: "If relevant, include output from `get-ai-usage --provider <name>` or application logs. ⚠️ IMPORTANT PRIVACY WARNING: Never include API keys, session tokens, passwords, or private prompts. Redact all credentials before submitting."

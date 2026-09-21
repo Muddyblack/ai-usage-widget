@@ -26,13 +26,14 @@ ALL_PROVIDERS = [
     "muse",
     "cursor",
     "cline",
+    "opencode",
 ]
 
 # Providers that stay off until explicitly enabled: most need a token the user
 # has to paste, so defaulting them on would only produce error rows. Muse,
 # Cursor and Cline need no token at all — they are opt-in because a machine
 # without the tool installed should not grow a tab for it.
-OPT_IN_PROVIDERS = {"zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "ollama", "selfhosted"}
+OPT_IN_PROVIDERS = {"zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "ollama", "selfhosted"}
 
 _KEY_EXPORTS = [
     ("WIDGET_CLAUDE_ADMIN_KEY", "claudeAdmin"),

@@ -388,8 +388,10 @@ Rectangle {
                     spacing: 4
                     Rectangle {
                         visible: modelData.dotColor !== ""
-                        width: 5
-                        height: 5
+                        implicitWidth: 5
+                        implicitHeight: 5
+                        Layout.preferredWidth: 5
+                        Layout.preferredHeight: 5
                         radius: 2.5
                         color: modelData.dotColor
                         Layout.alignment: Qt.AlignVCenter
@@ -891,8 +893,10 @@ Rectangle {
                         spacing: 3
                         visible: chartCanvas.scrubGeminiPt !== null
                         Rectangle {
-                            width: 5
-                            height: 5
+                            implicitWidth: 5
+                            implicitHeight: 5
+                            Layout.preferredWidth: 5
+                            Layout.preferredHeight: 5
                             radius: 2.5
                             color: chart.googleBlue
                             Layout.alignment: Qt.AlignVCenter
@@ -917,8 +921,10 @@ Rectangle {
                         spacing: 3
                         visible: chartCanvas.scrubRestPt !== null
                         Rectangle {
-                            width: 5
-                            height: 5
+                            implicitWidth: 5
+                            implicitHeight: 5
+                            Layout.preferredWidth: 5
+                            Layout.preferredHeight: 5
                             radius: 2.5
                             color: chart.googleGreen
                             Layout.alignment: Qt.AlignVCenter

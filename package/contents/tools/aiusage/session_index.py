@@ -3,13 +3,26 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import sqlite3
 import time
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Callable, Final, Protocol, TypedDict
+from typing import Any, Callable, Final, Protocol, TypedDict
 
-_SEARCH_COLUMNS: Final = ("provider", "title", "session_name", "state", "detail")
+from .contract import finite_number
+
+# Single source of truth for which public fields are searchable, shared with
+# the fallback (`sessions.py`) search path so the two never drift apart.
+SEARCH_FIELDS: Final = ("provider", "title", "sessionName", "state", "detail")
+_COLUMN_BY_FIELD: Final = {
+    "provider": "provider",
+    "title": "title",
+    "sessionName": "session_name",
+    "state": "state",
+    "detail": "detail",
+}
+_SEARCH_COLUMNS: Final = tuple(_COLUMN_BY_FIELD[field] for field in SEARCH_FIELDS)
 SOURCE_REGISTRY: Final = (
     ("cline", "Cline"),
     ("muse", "Muse"),
@@ -18,7 +31,15 @@ SOURCE_REGISTRY: Final = (
     ("claude", "Claude Code"),
     ("opencode", "OpenCode"),
     ("antigravity", "Antigravity"),
+    ("mistral", "Mistral"),
+    ("cursor", "Cursor"),
 )
+
+
+class SkipSource(Exception):
+    """Raised by a parser to leave one source's stored rows exactly as they are.
+
+    Its metadata is left stale too, so the next reconcile retries it."""
 
 
 class SessionSource(Protocol):
@@ -27,7 +48,7 @@ class SessionSource(Protocol):
     size: int
 
 
-class SessionRow(TypedDict):
+class _SessionRowCore(TypedDict):
     provider: str
     title: str
     sessionName: str
@@ -35,6 +56,19 @@ class SessionRow(TypedDict):
     lastActivityAt: int
     detail: str
     openKey: str
+
+
+class SessionRow(_SessionRowCore, total=False):
+    fullTitle: str
+    source: str
+    costUSD: float
+    costStatus: str
+    costProvenance: str
+    costBreakdown: dict
+    billingProvider: str
+    providerCosts: dict
+    costBilling: str
+    tokens: int
 
 
 class SessionSourceDescriptor(TypedDict):
@@ -68,26 +102,112 @@ def _timestamp(value: str | int) -> int:
     return value if isinstance(value, int) else int(value)
 
 
-def _redact(rows: Sequence[Mapping[str, str | int]]) -> list[SessionRow]:
+def _json_or_none(value: object) -> str | None:
+    return json.dumps(value, separators=(",", ":")) if isinstance(value, dict) else None
+
+
+def _decode_json_or_none(value: object) -> dict | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        decoded = json.loads(value)
+    except ValueError:
+        return None
+    return decoded if isinstance(decoded, dict) else None
+
+
+def _redact(rows: Sequence[Mapping[str, Any]]) -> list[SessionRow]:
     redacted: list[SessionRow] = []
     for row in rows:
-        redacted.append(
-            {
-                "provider": _text(row.get("provider", "")),
-                "title": _text(row.get("title", "")),
-                "sessionName": _text(row.get("sessionName", "")),
-                "state": _text(row.get("state", "")),
-                "lastActivityAt": _timestamp(row.get("lastActivityAt", 0)),
-                "detail": _text(row.get("detail", "")),
-                "openKey": _valid_open_key(row.get("openKey", "")),
-            }
-        )
+        entry: SessionRow = {
+            "provider": _text(row.get("provider", "")),
+            "title": _text(row.get("title", "")),
+            "sessionName": _text(row.get("sessionName", "")),
+            "state": _text(row.get("state", "")),
+            "lastActivityAt": _timestamp(row.get("lastActivityAt", 0)),
+            "detail": _text(row.get("detail", "")),
+            "openKey": _valid_open_key(row.get("openKey", "")),
+        }
+        full_title = row.get("fullTitle")
+        if isinstance(full_title, str) and full_title:
+            entry["fullTitle"] = full_title
+        source = row.get("source")
+        if isinstance(source, str) and source:
+            entry["source"] = source
+        cost_status = row.get("costStatus")
+        if isinstance(cost_status, str) and cost_status:
+            entry["costStatus"] = cost_status
+        cost_usd = finite_number(row.get("costUSD"))
+        if cost_usd is not None:
+            entry["costUSD"] = cost_usd
+        cost_provenance = row.get("costProvenance")
+        if isinstance(cost_provenance, str) and cost_provenance:
+            entry["costProvenance"] = cost_provenance
+        cost_breakdown = row.get("costBreakdown")
+        if isinstance(cost_breakdown, dict):
+            entry["costBreakdown"] = cost_breakdown
+        billing_provider = row.get("billingProvider")
+        if isinstance(billing_provider, str) and billing_provider:
+            entry["billingProvider"] = billing_provider
+        cost_billing = row.get("costBilling")
+        if cost_billing in ("subscription", "api"):
+            entry["costBilling"] = cost_billing
+        provider_costs = row.get("providerCosts")
+        if isinstance(provider_costs, dict):
+            entry["providerCosts"] = provider_costs
+        tokens = finite_number(row.get("tokens"), minimum=0)
+        if tokens:
+            entry["tokens"] = int(tokens)
+        redacted.append(entry)
     return redacted
 
 
-def redact_rows(rows: Sequence[Mapping[str, str | int]]) -> list[SessionRow]:
+def redact_rows(rows: Sequence[Mapping[str, Any]]) -> list[SessionRow]:
     """Return only the public fields allowed in a session response."""
     return _redact(rows)
+
+
+def _row_from_columns(row: Sequence[Any]) -> SessionRow:
+    """Rebuild a public ``SessionRow`` from a ``session_rows`` SELECT tuple.
+
+    Column order must match every ``SELECT ... FROM session_rows`` above:
+    provider, title, session_name, state, last_activity_at, detail, open_key,
+    full_title, source, cost_usd, cost_status, cost_provenance, cost_breakdown,
+    billing_provider, provider_costs, cost_billing, tokens.
+    """
+    entry: SessionRow = {
+        "provider": _text(row[0]),
+        "title": _text(row[1]),
+        "sessionName": _text(row[2]),
+        "state": _text(row[3]),
+        "lastActivityAt": _timestamp(row[4]),
+        "detail": _text(row[5]),
+        "openKey": _valid_open_key(row[6]),
+    }
+    if row[7]:
+        entry["fullTitle"] = _text(row[7])
+    if row[8]:
+        entry["source"] = _text(row[8])
+    cost_usd = finite_number(row[9])
+    if cost_usd is not None:
+        entry["costUSD"] = cost_usd
+    if row[10]:
+        entry["costStatus"] = _text(row[10])
+    if row[11]:
+        entry["costProvenance"] = _text(row[11])
+    cost_breakdown = _decode_json_or_none(row[12])
+    if cost_breakdown is not None:
+        entry["costBreakdown"] = cost_breakdown
+    if row[13]:
+        entry["billingProvider"] = _text(row[13])
+    if row[15] in ("subscription", "api"):
+        entry["costBilling"] = _text(row[15])
+    provider_costs = _decode_json_or_none(row[14])
+    if provider_costs is not None:
+        entry["providerCosts"] = provider_costs
+    if len(row) > 16 and row[16]:
+        entry["tokens"] = int(row[16])
+    return entry
 
 
 def normalize_source_ids(source_ids: Sequence[str] | None) -> tuple[str, ...] | None:
@@ -112,12 +232,16 @@ class SessionIndex:
 
     def __init__(self, cache_path: str | Path) -> None:
         self._cache_path = Path(cache_path)
-        self._cache_path.parent.mkdir(parents=True, exist_ok=True)
+        self._cache_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        try:
+            self._cache_path.parent.chmod(0o700)
+        except OSError:
+            pass
 
-    def _open(self) -> sqlite3.Connection:
+    def _open(self, *, discard_stale: bool = False) -> sqlite3.Connection:
         from .session_index_storage import open_index
 
-        return open_index(self._cache_path)
+        return open_index(self._cache_path, discard_stale=discard_stale)
 
     def reconcile(
         self,
@@ -128,12 +252,25 @@ class SessionIndex:
     ) -> None:
         """Refresh changed sources and remove sources absent from the scan."""
         source_map = {_source_key(source): source for source in sources}
-        connection = self._open()
+        connection = self._open(discard_stale=True)
         try:
             with connection:
                 connection.execute("BEGIN IMMEDIATE")
-                stored = {str(row[0]): (int(row[1]), int(row[2])) for row in connection.execute("SELECT source_key, mtime_ns, size FROM source_meta")}
-                stored_orders = {str(row[0]): int(row[1]) for row in connection.execute("SELECT source_key, source_order FROM source_meta")}
+                meta = {
+                    str(row[0]): (int(row[1]), int(row[2]), int(row[3]))
+                    for row in connection.execute("SELECT source_key, mtime_ns, size, source_order FROM source_meta")
+                }
+                stored = {key: (mtime_ns, size) for key, (mtime_ns, size, _order) in meta.items()}
+                stored_orders = {key: order for key, (_mtime_ns, _size, order) in meta.items()}
+                # A source that cached no rows is never taken at its word. A
+                # parse that succeeds but yields nothing — a collector run
+                # somewhere it could not see the store, e.g. from a desktop
+                # shell with a different HOME — otherwise writes a fingerprint
+                # that makes the source look up to date forever, hiding every
+                # one of its sessions until those files happen to change.
+                cached_rows = {
+                    str(row[0]): int(row[1]) for row in connection.execute("SELECT source_key, COUNT(*) FROM session_rows GROUP BY source_key")
+                }
                 mutated = False
                 for key in stored:
                     if key not in source_map:
@@ -143,7 +280,7 @@ class SessionIndex:
 
                 for source_order, (key, source) in enumerate(source_map.items()):
                     metadata = (source.mtime_ns, source.size)
-                    if not force and stored.get(key) == metadata:
+                    if not force and stored.get(key) == metadata and cached_rows.get(key, 0) > 0:
                         if key in stored_orders and stored_orders[key] != source_order:
                             mutated = True
                         connection.execute(
@@ -151,8 +288,11 @@ class SessionIndex:
                             (source_order, key),
                         )
                         continue
+                    try:
+                        rows = _redact(parser(source))
+                    except SkipSource:
+                        continue
                     mutated = True
-                    rows = _redact(parser(source))
                     connection.execute(
                         "INSERT INTO source_meta (source_key, mtime_ns, size, source_order) "
                         "VALUES (?, ?, ?, ?) ON CONFLICT(source_key) DO UPDATE SET "
@@ -164,7 +304,9 @@ class SessionIndex:
                     connection.executemany(
                         "INSERT INTO session_rows (source_key, row_order, provider, "
                         "title, session_name, state, last_activity_at, detail, "
-                        "open_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        "open_key, full_title, source, cost_usd, cost_status, "
+                        "cost_provenance, cost_breakdown, billing_provider, "
+                        "provider_costs, cost_billing, tokens) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (
                             (
                                 key,
@@ -176,6 +318,16 @@ class SessionIndex:
                                 row["lastActivityAt"],
                                 row["detail"],
                                 row["openKey"],
+                                row.get("fullTitle", ""),
+                                row.get("source", ""),
+                                row.get("costUSD"),
+                                row.get("costStatus", "unavailable"),
+                                row.get("costProvenance"),
+                                _json_or_none(row.get("costBreakdown")),
+                                row.get("billingProvider", ""),
+                                _json_or_none(row.get("providerCosts")),
+                                row.get("costBilling", "api"),
+                                int(row.get("tokens") or 0),
                             )
                             for row_order, row in enumerate(rows)
                         ),
@@ -194,25 +346,19 @@ class SessionIndex:
         connection = self._open()
         try:
             page = connection.execute(
-                "SELECT provider, title, session_name, state, last_activity_at, "
-                "detail, open_key FROM session_rows "
-                "ORDER BY (SELECT source_order FROM source_meta "
-                "WHERE source_key = session_rows.source_key), row_order"
+                "SELECT session_rows.provider, session_rows.title, session_rows.session_name, "
+                "session_rows.state, session_rows.last_activity_at, session_rows.detail, "
+                "session_rows.open_key, session_rows.full_title, session_rows.source, "
+                "session_rows.cost_usd, session_rows.cost_status, session_rows.cost_provenance, "
+                "session_rows.cost_breakdown, session_rows.billing_provider, session_rows.provider_costs, "
+                "session_rows.cost_billing, session_rows.tokens "
+                "FROM session_rows "
+                "LEFT JOIN source_meta ON source_meta.source_key = session_rows.source_key "
+                "ORDER BY source_meta.source_order, session_rows.row_order"
             ).fetchall()
         finally:
             connection.close()
-        return [
-            {
-                "provider": _text(row[0]),
-                "title": _text(row[1]),
-                "sessionName": _text(row[2]),
-                "state": _text(row[3]),
-                "lastActivityAt": _timestamp(row[4]),
-                "detail": _text(row[5]),
-                "openKey": _valid_open_key(row[6]),
-            }
-            for row in page
-        ]
+        return [_row_from_columns(row) for row in page]
 
     def query(
         self,
@@ -243,24 +389,18 @@ class SessionIndex:
                 ).fetchone()[0]
             )
             page = connection.execute(
-                "SELECT provider, title, session_name, state, last_activity_at, detail, open_key "
-                "FROM session_rows" + where + " ORDER BY last_activity_at DESC, "
-                "(SELECT source_order FROM source_meta WHERE source_key = session_rows.source_key) ASC, "
-                "row_order ASC" + " LIMIT ? OFFSET ?",
+                "SELECT session_rows.provider, session_rows.title, session_rows.session_name, "
+                "session_rows.state, session_rows.last_activity_at, session_rows.detail, "
+                "session_rows.open_key, session_rows.full_title, session_rows.source, "
+                "session_rows.cost_usd, session_rows.cost_status, session_rows.cost_provenance, "
+                "session_rows.cost_breakdown, session_rows.billing_provider, session_rows.provider_costs, "
+                "session_rows.cost_billing, session_rows.tokens "
+                "FROM session_rows "
+                "LEFT JOIN source_meta ON source_meta.source_key = session_rows.source_key" + where + " ORDER BY session_rows.last_activity_at DESC, "
+                "source_meta.source_order ASC, session_rows.row_order ASC LIMIT ? OFFSET ?",
                 (*parameters, limit, offset),
             ).fetchall()
-            sessions: list[SessionRow] = [
-                {
-                    "provider": _text(row[0]),
-                    "title": _text(row[1]),
-                    "sessionName": _text(row[2]),
-                    "state": _text(row[3]),
-                    "lastActivityAt": _timestamp(row[4]),
-                    "detail": _text(row[5]),
-                    "openKey": _valid_open_key(row[6]),
-                }
-                for row in page
-            ]
+            sessions: list[SessionRow] = [_row_from_columns(row) for row in page]
         finally:
             connection.close()
         return {

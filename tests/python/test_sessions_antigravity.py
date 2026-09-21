@@ -130,6 +130,24 @@ class AntigravityDiscoveryTest(unittest.TestCase):
 
 
 class AntigravitySessionBoundaryTest(unittest.TestCase):
+    def test_unverified_usage_fields_remain_outside_metadata_contract(self):
+        transcript = json.dumps(
+            {
+                "step_index": 0,
+                "type": "MODEL_RESPONSE",
+                "model": "gemini-test",
+                "usage": {"input_tokens": 1000, "output_tokens": 200},
+            }
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(_write_cli(root, _CLI_ID, transcript))
+            record = antigravity_sessions._read_cli(_CLI_ID, path)
+        with mock.patch.object(antigravity_sessions, "read_recent_sessions", return_value=[record]):
+            entry = sessions._antigravity_entries()[0]
+
+        self.assertEqual(entry["costStatus"], "unavailable")
+        self.assertNotIn("costUSD", entry)
+
     def test_public_entry_redacts_source_path_and_session_id(self):
         record = antigravity_sessions.AntigravitySession(
             session_id=_CLI_ID,
@@ -143,6 +161,7 @@ class AntigravitySessionBoundaryTest(unittest.TestCase):
         encoded = json.dumps(entry)
         self.assertEqual(entry["provider"], "antigravity")
         self.assertEqual(entry["sessionName"], "Antigravity")
+        self.assertEqual(entry["costStatus"], "unavailable")
         self.assertNotIn(record.source_path, encoded)
         self.assertNotIn(_CLI_ID, encoded)
         self.assertRegex(entry["openKey"], r"^[0-9a-f]{64}$")

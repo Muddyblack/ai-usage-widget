@@ -28,6 +28,10 @@ msgstr "Échec de l'export"
 msgid "usage backend returned no data"
 msgstr "le backend d'utilisation n'a renvoyé aucune donnée"
 
+#: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
+msgid "Could not refresh pricing."
+msgstr "Impossible d'actualiser les tarifs."
+
 #: hyprland/AiUsageShell.qml package/contents/ui/SessionsTab.qml
 #: windows/qml/Main.qml
 msgid "Could not load sessions."
@@ -50,17 +54,6 @@ msgstr "Chargement"
 msgid "No data"
 msgstr "Aucune donnée"
 
-#: hyprland/OverviewPage.qml hyprland/SettingsPage.qml
-#: package/contents/ui/OverviewTab.qml package/contents/ui/SettingsPanel.qml
-msgid "Overview"
-msgstr "Vue d’ensemble"
-
-#: hyprland/OverviewPage.qml package/contents/ui/OverviewTab.qml
-msgid "%1 provider"
-msgid_plural "%1 providers"
-msgstr[0] "%1 fournisseur"
-msgstr[1] "%1 fournisseurs"
-
 #: hyprland/OverviewPage.qml package/contents/ui/OverviewTab.qml
 msgid "Enable a provider in Settings to see it here."
 msgstr "Activez un fournisseur dans les paramètres pour le voir ici."
@@ -74,16 +67,20 @@ msgid "%1 Usage"
 msgstr "Utilisation %1"
 
 #: hyprland/PopupContent.qml
-msgid "Language, pill, position and chart"
-msgstr "Langue, pilule, position et graphique"
+msgid "Views, pill, position and chart"
+msgstr "Vues, pilule, position et graphique"
 
 #: hyprland/PopupContent.qml
-msgid "Language and usage chart"
-msgstr "Langue et graphique d'utilisation"
+msgid "Views, language and usage chart"
+msgstr "Vues, langue et graphique d'utilisation"
 
 #: hyprland/PopupContent.qml package/contents/ui/main.qml
-msgid "Optional Overview, Spend and Sessions tabs"
-msgstr "Onglets facultatifs Vue d’ensemble, Dépenses et Sessions"
+msgid "About AI Usage Monitor and project links"
+msgstr "À propos d'AI Usage Monitor et liens du projet"
+
+#: hyprland/PopupContent.qml
+msgid "Local endpoints: Ollama, vLLM and llama.cpp"
+msgstr "Points de terminaison locaux : Ollama, vLLM et llama.cpp"
 
 #: hyprland/PopupContent.qml package/contents/ui/main.qml
 msgid "Refresh interval and usage history"
@@ -100,6 +97,23 @@ msgstr "Démarrer à la connexion"
 #: hyprland/PopupContent.qml package/contents/ui/main.qml
 msgid "Turn providers on and set their keys"
 msgstr "Activer les fournisseurs et configurer leurs clés"
+
+#: hyprland/PopupContent.qml package/contents/ui/main.qml
+msgid "%1 provider"
+msgid_plural "%1 providers"
+msgstr[0] "%1 fournisseur"
+msgstr[1] "%1 fournisseurs"
+
+#: hyprland/PopupContent.qml hyprland/SettingsPage.qml
+#: package/contents/ui/SettingsPanel.qml package/contents/ui/main.qml
+msgid "Refreshing…"
+msgstr "Actualisation…"
+
+#: hyprland/PopupContent.qml package/contents/ui/main.qml
+msgid "%1 local session"
+msgid_plural "%1 local sessions"
+msgstr[0] "%1 session locale"
+msgstr[1] "%1 sessions locales"
 
 #: hyprland/PopupContent.qml package/contents/ui/SubTabBar.qml
 msgid "Usage"
@@ -178,7 +192,8 @@ msgstr "URL du serveur"
 msgid "Server URLs, separated by commas"
 msgstr "URLs du serveur, séparées par des virgules"
 
-#: hyprland/ProviderSettingRow.qml
+#: hyprland/ProviderSettingRow.qml hyprland/SettingsPage.qml
+#: package/contents/ui/SettingsPanel.qml
 msgid "Engine"
 msgstr "Moteur"
 
@@ -216,21 +231,6 @@ msgid_plural "%1 sources selected"
 msgstr[0] "%1 source sélectionnée"
 msgstr[1] "%1 sources sélectionnées"
 
-#: hyprland/SessionsPage.qml hyprland/SettingsPage.qml
-#: package/contents/ui/SessionsTab.qml package/contents/ui/SettingsPanel.qml
-msgid "Sessions"
-msgstr "Sessions"
-
-#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
-msgid "Refreshing…"
-msgstr "Actualisation…"
-
-#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
-msgid "%1 local session"
-msgid_plural "%1 local sessions"
-msgstr[0] "%1 session locale"
-msgstr[1] "%1 sessions locales"
-
 #: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
 msgid "Search sessions…"
 msgstr "Rechercher des sessions…"
@@ -267,11 +267,6 @@ msgstr "Active"
 msgid "Idle"
 msgstr "Inactive"
 
-#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
-#: windows/qml/Main.qml
-msgid "Load more"
-msgstr "Charger plus"
-
 #: hyprland/SessionsPage.qml package/contents/ui/MistralTab.qml
 #: package/contents/ui/SessionsTab.qml
 msgid "just now"
@@ -295,15 +290,81 @@ msgid_plural "%1 d ago"
 msgstr[0] "il y a %1 j"
 msgstr[1] "il y a %1 j"
 
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Cost unavailable"
+msgstr "Coût indisponible"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Free model"
+msgstr "Modèle gratuit"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Covered by plan · $%1 on API"
+msgstr "Couvert par le forfait · $%1 sur l'API"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Covered by plan · ~$%1 on API"
+msgstr "Couvert par le forfait · ~$%1 sur l'API"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Actual provider cost: $%1 (exact)"
+msgstr "Coût réel du fournisseur : $%1 (exact)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Actual provider cost: $%1 (partial)"
+msgstr "Coût réel du fournisseur : $%1 (partiel)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Calculated estimate: $%1 (exact)"
+msgstr "Estimation calculée : $%1 (exacte)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Calculated estimate: $%1 (partial)"
+msgstr "Estimation calculée : $%1 (partielle)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Mixed cost: $%1 (exact)"
+msgstr "Coût mixte : $%1 (exact)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Mixed cost: $%1 (partial)"
+msgstr "Coût mixte : $%1 (partiel)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Cost: $%1 (exact)"
+msgstr "Coût : $%1 (exact)"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Cost: $%1 (partial)"
+msgstr "Coût : $%1 (partiel)"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Refreshing pricing…"
+msgstr "Actualisation des tarifs…"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Pricing updated."
+msgstr "Tarifs mis à jour."
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Pricing refresh failed; using saved rates."
+msgstr ""
+"Échec de l'actualisation des tarifs ; utilisation des tarifs enregistrés."
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "No pricing rates available; try again."
+msgstr "Aucun tarif disponible ; réessayez."
+
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "Providers"
 msgstr "Fournisseurs"
 
-#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
-msgid "Views"
-msgstr "Vues"
+#: hyprland/SettingsPage.qml package/contents/ui/SelfhostedTab.qml
+#: package/contents/ui/SettingsPanel.qml package/contents/ui/main.qml
+msgid "Local Models"
+msgstr "Modèles locaux"
 
-#: hyprland/SettingsPage.qml
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "Panel"
 msgstr "Panneau"
 
@@ -320,6 +381,10 @@ msgstr "Données"
 msgid "Advanced"
 msgstr "Avancé"
 
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Info"
+msgstr "Infos"
+
 #: hyprland/SettingsPage.qml
 msgid ""
 "Expand a provider for its API key and options. Keys are stored in %1; leave "
@@ -330,23 +395,67 @@ msgstr ""
 "d'environnement ou une connexion CLI existante."
 
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Monitor Ollama, vLLM, or llama.cpp servers"
+msgstr "Surveiller les serveurs Ollama, vLLM ou llama.cpp"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Server URLs"
+msgstr "URL des serveurs"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "e.g. http://127.0.0.1:11434, http://127.0.0.1:8000"
+msgstr "p. ex. http://127.0.0.1:11434, http://127.0.0.1:8000"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid ""
+"Separate multiple endpoints with commas. Leave empty to auto-discover Ollama "
+"(:11434), vLLM (:8000), and llama.cpp (:8080)."
+msgstr ""
+"Séparez plusieurs points de terminaison par des virgules. Laissez vide pour "
+"détecter automatiquement Ollama (:11434), vLLM (:8000) et llama.cpp (:8080)."
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Bearer Token (optional)"
+msgstr "Jeton Bearer (facultatif)"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Optional auth token"
+msgstr "Jeton d'authentification facultatif"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid ""
+"Token counters reflect usage since server start. GPU VRAM tracking is "
+"enabled automatically where supported."
+msgstr ""
+"Les compteurs de jetons indiquent l'utilisation depuis le démarrage du "
+"serveur. Le suivi de la VRAM GPU est activé automatiquement lorsqu'il est "
+"pris en charge."
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "Optional tabs that sit ahead of your providers in the popup."
 msgstr ""
 "Onglets facultatifs affichés avant vos fournisseurs dans la fenêtre "
 "contextuelle."
 
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Overview"
+msgstr "Vue d’ensemble"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "All enabled providers at a glance"
 msgstr "Tous les fournisseurs activés en un coup d’œil"
 
-#: hyprland/SettingsPage.qml hyprland/SpendPage.qml
-#: package/contents/ui/SettingsPanel.qml package/contents/ui/SpendTab.qml
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "Usage & Spend"
 msgstr "Utilisation et dépenses"
 
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "Combined cost figures across providers"
 msgstr "Coûts cumulés des fournisseurs"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Sessions"
+msgstr "Sessions"
 
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "Recent local agent sessions (no transcripts)"
@@ -481,6 +590,14 @@ msgid "30 min"
 msgstr "30 min"
 
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Pricing"
+msgstr "Tarifs"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Refresh pricing"
+msgstr "Actualiser les tarifs"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "History"
 msgstr "Historique"
 
@@ -546,6 +663,16 @@ msgstr ""
 "passez --compact pour une ligne de barre d'état."
 
 #: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid "Could not read model pricing."
+msgstr "Impossible de lire la tarification des modèles."
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid "No cached model rates yet — refresh pricing in settings."
+msgstr ""
+"Aucun tarif de modèle en cache pour l'instant — actualisez la tarification "
+"dans les paramètres."
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
 msgid ""
 "Totals come from each provider's own usage APIs and local CLI logs. Ranges "
 "differ (30-day, all-time, lifetime)."
@@ -563,12 +690,87 @@ msgstr ""
 "les dépenses, ou utilisez-les jusqu’à ce que des journaux locaux "
 "apparaissent."
 
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid "Model rates"
+msgstr "Tarifs des modèles"
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid "Loading…"
+msgstr "Chargement…"
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid "Filter by provider or model…"
+msgstr "Filtrer par fournisseur ou modèle…"
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid "Model"
+msgstr "Modèle"
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid "In"
+msgstr "Entrée"
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid "Out"
+msgstr "Sortie"
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid "Cached"
+msgstr "En cache"
+
+#: hyprland/SpendPage.qml package/contents/ui/KimiTab.qml
+#: package/contents/ui/MistralTab.qml package/contents/ui/SpendTab.qml
+msgid "%1 of %2"
+msgstr "%1 sur %2"
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid "Previous"
+msgstr "Précédent"
+
+#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+msgid "Next"
+msgstr "Suivant"
+
+#: hyprland/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+msgid "Cost"
+msgstr "Coût"
+
+#: hyprland/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+msgid "Tokens (log)"
+msgstr "Jetons (log)"
+
+#: hyprland/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+msgid "· no token history"
+msgstr "· aucun historique de jetons"
+
+#: hyprland/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+msgid "· no cost history"
+msgstr "· aucun historique de coût"
+
+#: hyprland/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+msgid "30d"
+msgstr "30j"
+
+#: hyprland/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+msgid "90d"
+msgstr "90j"
+
+#: hyprland/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+msgid "All"
+msgstr "Tout"
+
+#: hyprland/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+msgid "Limited history (%1 days recorded) — dashed line, not a smoothed trend."
+msgstr ""
+"Historique limité (%1 jours enregistrés) — ligne pointillée, pas une "
+"tendance lissée."
+
 #: hyprland/StatsSection.qml package/contents/ui/CopilotTab.qml
 msgid "Top repositories"
 msgstr "Principaux dépôts"
 
 #: hyprland/StatsSection.qml package/contents/ui/ClineTab.qml
-#: package/contents/ui/MuseTab.qml
+#: package/contents/ui/MuseTab.qml package/contents/ui/OpenCodeTab.qml
 msgid "Top workspaces"
 msgstr "Espaces de travail principaux"
 
@@ -632,6 +834,16 @@ msgstr ""
 "Aucune session Cline pour le moment.\n"
 "Lancez le CLI Cline : ses journaux de session dans ~/.cline apparaîtront ici."
 
+#: hyprland/StatsSection.qml package/contents/ui/OpenCodeTab.qml
+msgid ""
+"No OpenCode sessions yet.\n"
+"Enable OpenCode and run a local session; usage is read from its SQLite "
+"database."
+msgstr ""
+"Aucune session OpenCode pour le moment.\n"
+"Activez OpenCode et lancez une session locale ; l'utilisation est lue depuis "
+"sa base SQLite."
+
 #: hyprland/StatsSection.qml package/contents/ui/ClaudeTab.qml
 msgid ""
 "No local activity stats yet.\n"
@@ -650,6 +862,7 @@ msgstr "Statistiques d'activité"
 #: hyprland/StatsSection.qml package/contents/ui/ClaudeTab.qml
 #: package/contents/ui/ClineTab.qml package/contents/ui/CursorTab.qml
 #: package/contents/ui/MuseTab.qml package/contents/ui/OpenAiTab.qml
+#: package/contents/ui/OpenCodeTab.qml
 msgctxt "stat label"
 msgid "tokens"
 msgstr "jetons"
@@ -664,7 +877,7 @@ msgstr "Total des jetons pour tous les modèles (toute période)"
 
 #: hyprland/StatsSection.qml package/contents/ui/ClaudeTab.qml
 #: package/contents/ui/ClineTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenAiTab.qml
+#: package/contents/ui/OpenAiTab.qml package/contents/ui/OpenCodeTab.qml
 msgctxt "stat label"
 msgid "sessions"
 msgstr "sessions"
@@ -677,7 +890,7 @@ msgstr "%1 messages au total"
 #: hyprland/StatsSection.qml package/contents/ui/ClaudeTab.qml
 #: package/contents/ui/ClineTab.qml package/contents/ui/CopilotTab.qml
 #: package/contents/ui/CursorTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenAiTab.qml
+#: package/contents/ui/OpenAiTab.qml package/contents/ui/OpenCodeTab.qml
 msgid "active days"
 msgstr "jours actifs"
 
@@ -691,6 +904,7 @@ msgstr "Depuis %1"
 #: hyprland/StatsSection.qml package/contents/ui/ClaudeTab.qml
 #: package/contents/ui/ClineTab.qml package/contents/ui/CopilotTab.qml
 #: package/contents/ui/MuseTab.qml package/contents/ui/OpenAiTab.qml
+#: package/contents/ui/OpenCodeTab.qml
 #, no-javascript-format
 msgctxt "streak length in days, abbreviated"
 msgid "%1d"
@@ -698,7 +912,7 @@ msgstr "%1j"
 
 #: hyprland/StatsSection.qml package/contents/ui/ClaudeTab.qml
 #: package/contents/ui/ClineTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenAiTab.qml
+#: package/contents/ui/OpenAiTab.qml package/contents/ui/OpenCodeTab.qml
 msgctxt "stat label"
 msgid "streak"
 msgstr "série"
@@ -706,6 +920,7 @@ msgstr "série"
 #: hyprland/StatsSection.qml package/contents/ui/ClaudeTab.qml
 #: package/contents/ui/ClineTab.qml package/contents/ui/CopilotTab.qml
 #: package/contents/ui/MuseTab.qml package/contents/ui/OpenAiTab.qml
+#: package/contents/ui/OpenCodeTab.qml
 #, no-javascript-format
 msgctxt "longest streak in days, abbreviated"
 msgid "best %1d"
@@ -833,6 +1048,7 @@ msgstr[0] "%1 session"
 msgstr[1] "%1 sessions"
 
 #: hyprland/StatsSection.qml package/contents/ui/OpenAiTab.qml
+#: package/contents/ui/OpenCodeTab.qml
 msgid "Models"
 msgstr "Modèles"
 
@@ -1187,7 +1403,7 @@ msgstr "Total des jetons entrée+sortie pour tous les modèles (toute période)"
 
 #: package/contents/ui/ClaudeTab.qml package/contents/ui/ClineTab.qml
 #: package/contents/ui/CursorTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/StatsSparkline.qml
+#: package/contents/ui/OpenCodeTab.qml package/contents/ui/StatsSparkline.qml
 msgid "tokens"
 msgstr "jetons"
 
@@ -1311,7 +1527,7 @@ msgstr "Réinitialisation"
 msgid "next month"
 msgstr "le mois prochain"
 
-#: package/contents/ui/CopilotTab.qml
+#: package/contents/ui/CopilotTab.qml package/contents/ui/OpenCodeTab.qml
 msgid "sessions"
 msgstr "sessions"
 
@@ -1534,10 +1750,6 @@ msgstr ""
 #: package/contents/ui/KimiTab.qml
 msgid "Extra usage"
 msgstr "Utilisation supplémentaire"
-
-#: package/contents/ui/KimiTab.qml package/contents/ui/MistralTab.qml
-msgid "%1 of %2"
-msgstr "%1 sur %2"
 
 #: package/contents/ui/KimiTab.qml
 msgid ""
@@ -1942,6 +2154,32 @@ msgstr[1] "%1 prompts au total"
 msgid "Function and custom tool invocations across all sessions"
 msgstr "Appels de fonctions et outils personnalisés sur toutes les sessions"
 
+#: package/contents/ui/OpenCodeTab.qml
+msgid "OpenCode"
+msgstr "OpenCode"
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid "SQLite · local"
+msgstr "SQLite · local"
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid "session"
+msgstr "session"
+
+#: package/contents/ui/OpenCodeTab.qml
+msgctxt "stat label"
+msgid "cost"
+msgstr "coût"
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid "Recorded provider cost plus exact model catalog estimates"
+msgstr ""
+"Coût fournisseur enregistré plus estimations exactes du catalogue des modèles"
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid "top model"
+msgstr "meilleur modèle"
+
 #: package/contents/ui/OpenRouterTab.qml
 msgid "OpenRouter support is in BETA and currently untested."
 msgstr ""
@@ -1999,6 +2237,63 @@ msgstr "%1 req / %2"
 msgid "Free tier active — rate limits apply"
 msgstr "Forfait gratuit actif — les limites de débit s'appliquent"
 
+#: package/contents/ui/ProjectInfoPane.qml
+msgid ""
+"An open-source AI quota & usage monitor for Plasma, Hyprland, macOS and "
+"Windows. Explore the project, get updates, or help improve it."
+msgstr ""
+"Un moniteur open source de quota et d'utilisation d'IA pour Plasma, "
+"Hyprland, macOS et Windows. Explorez le projet, obtenez les mises à jour ou "
+"aidez à l'améliorer."
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Installed version · %1"
+msgstr "Version installée · %1"
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Latest stable release · %1"
+msgstr "Dernière version stable · %1"
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Get update ↗"
+msgstr "Obtenir la mise à jour ↗"
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "View latest release ↗"
+msgstr "Voir la dernière version ↗"
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Check again"
+msgstr "Vérifier à nouveau"
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "License · %1"
+msgstr "Licence · %1"
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "From the bundled LICENSE file"
+msgstr "Depuis le fichier LICENSE inclus"
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Contributors"
+msgstr "Contributeurs"
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "See all on GitHub ↗"
+msgstr "Voir tout sur GitHub ↗"
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Support the project"
+msgstr "Soutenir le projet"
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "View source on GitHub ↗"
+msgstr "Voir le code source sur GitHub ↗"
+
+#: package/contents/ui/ProjectInfoPane.qml
+msgid "Report an issue ↗"
+msgstr "Signaler un problème ↗"
+
 #: package/contents/ui/ProviderSettingRow.qml
 msgid "Hide options"
 msgstr "Masquer les options"
@@ -2024,10 +2319,6 @@ msgstr ""
 msgid "Optional bearer token"
 msgstr "Jeton d'authentification optionnel"
 
-#: package/contents/ui/SelfhostedTab.qml package/contents/ui/main.qml
-msgid "Local Models"
-msgstr "Modèles locaux"
-
 #: package/contents/ui/SelfhostedTab.qml
 msgid "Since server start: %1 prompt · %2 generated tokens"
 msgstr ""
@@ -2048,10 +2339,6 @@ msgstr "Reprendre la session"
 #: package/contents/ui/SessionsTab.qml
 msgid "Could not parse sessions."
 msgstr "Impossible d’analyser les sessions."
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Appearance"
-msgstr "Apparence"
 
 #: package/contents/ui/SettingsPanel.qml
 msgid ""
@@ -2861,13 +3148,17 @@ msgstr "Utilisation Cursor"
 msgid "Cline Stats"
 msgstr "Statistiques Cline"
 
+#: package/contents/ui/main.qml
+msgid "OpenCode Usage"
+msgstr "Utilisation OpenCode"
+
 #: package/contents/ui/main.qml translate/metadata-i18n.js
 msgid "AI Usage Monitor"
 msgstr "Moniteur d'utilisation IA"
 
 #: package/contents/ui/main.qml
-msgid "Colors, chart and popup style"
-msgstr "Couleurs, graphique et style de la fenêtre contextuelle"
+msgid "Views, colors, chart and popup style"
+msgstr "Vues, couleurs, graphique et style de la fenêtre contextuelle"
 
 #: package/contents/ui/main.qml
 msgid "Export current tab as PNG or SVG"
@@ -2925,6 +3216,10 @@ msgstr "Démarrer avec Windows"
 msgid "Quit"
 msgstr "Quitter"
 
+#: windows/qml/Main.qml
+msgid "Load more"
+msgstr "Charger plus"
+
 #: translate/metadata-i18n.js
 msgid ""
 "Multi-service AI quota tracker with cost breakdown (Claude, Antigravity, "
@@ -2936,6 +3231,98 @@ msgstr ""
 #: macos/Sources/AIUsage/App/SettingsWindow.swift
 msgid "AI Usage Settings"
 msgstr "Paramètres d'AI Usage"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Local sessions"
+msgstr "Sessions locales"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "local CLI logs"
+msgstr "journaux CLI locaux"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Anthropic"
+msgstr "Anthropic"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "OpenAI"
+msgstr "OpenAI"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "OpenRouter"
+msgstr "OpenRouter"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Ollama Cloud"
+msgstr "Ollama Cloud"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Ollama"
+msgstr "Ollama"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "GitHub Copilot"
+msgstr "GitHub Copilot"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Google"
+msgstr "Google"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "ZenMux"
+msgstr "ZenMux"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "OpenCode Zen"
+msgstr "OpenCode Zen"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Claude Code"
+msgstr "Claude Code"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Codex"
+msgstr "Codex"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Cline"
+msgstr "Cline"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Grok CLI"
+msgstr "Grok CLI"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Muse"
+msgstr "Muse"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Antigravity"
+msgstr "Antigravity"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "Local source"
+msgstr "Source locale"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "via OpenCode"
+msgstr "via OpenCode"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "covered by plan"
+msgstr "couvert par le forfait"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "would cost on API"
+msgstr "coûterait sur l'API"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "partial"
+msgstr "partiel"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "local sessions"
+msgstr "sessions locales"
 
 #: macos/Sources/AIUsage/Backend/SettingsStore.swift
 msgid "Monochrome"
@@ -2968,6 +3355,42 @@ msgstr ""
 msgid "Usage over the last %1"
 msgstr "Utilisation sur les derniers %1"
 
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "Could not check for updates"
+msgstr "Impossible de vérifier les mises à jour"
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "Version comparison unavailable"
+msgstr "Comparaison de version indisponible"
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "Update available"
+msgstr "Mise à jour disponible"
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "Newer than latest release"
+msgstr "Plus récent que la dernière version"
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "Up to date"
+msgstr "À jour"
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "By %1 ↗"
+msgstr "Par %1 ↗"
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "GitHub stars ↗"
+msgstr "Étoiles GitHub ↗"
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "GitHub downloads ↗"
+msgstr "Téléchargements GitHub ↗"
+
+#: macos/Sources/AIUsage/Views/InfoView.swift
+msgid "OpenDesktop downloads ↗"
+msgstr "Téléchargements OpenDesktop ↗"
+
 #: macos/Sources/AIUsage/Views/OverviewView.swift
 msgid "%1%"
 msgstr "%1 %"
@@ -2985,6 +3408,30 @@ msgid "%1 source"
 msgid_plural "%1 sources"
 msgstr[0] "%1 source"
 msgstr[1] "%1 sources"
+
+#: macos/Sources/AIUsage/Views/SessionsView.swift
+msgid "Covered by plan · %1 on API"
+msgstr "Couvert par le forfait · %1 sur l'API"
+
+#: macos/Sources/AIUsage/Views/SessionsView.swift
+msgid "Covered by plan · ~%1 on API"
+msgstr "Couvert par le forfait · ~%1 sur l'API"
+
+#: macos/Sources/AIUsage/Views/SessionsView.swift
+msgid "Actual %1 + estimate %2 (%3)"
+msgstr "Coût réel %1 + estimation %2 (%3)"
+
+#: macos/Sources/AIUsage/Views/SessionsView.swift
+msgid "Actual cost: %1 (%2)"
+msgstr "Coût réel : %1 (%2)"
+
+#: macos/Sources/AIUsage/Views/SessionsView.swift
+msgid "Calculated estimate: %1 (%2)"
+msgstr "Estimation calculée : %1 (%2)"
+
+#: macos/Sources/AIUsage/Views/SessionsView.swift
+msgid "Cost: %1 (%2)"
+msgstr "Coût : %1 (%2)"
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Admin API key"
@@ -3032,6 +3479,10 @@ msgid "Menu Bar"
 msgstr "Barre des menus"
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Data"
+msgstr "Données"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "General"
 msgstr "Général"
 
@@ -3043,6 +3494,10 @@ msgstr ""
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Engine: auto, ollama, vllm, llama.cpp"
 msgstr "Moteur : auto, ollama, vllm, llama.cpp"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Views"
+msgstr "Vues"
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Optional tabs that sit ahead of your providers in the popover."
@@ -3099,6 +3554,10 @@ msgstr ""
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Provider"
 msgstr "Fournisseur"
+
+#: macos/Sources/AIUsage/Views/SettingsView.swift
+msgid "Refresh the shared model pricing catalog now."
+msgstr "Actualiser le catalogue partagé des tarifs des modèles."
 
 #: macos/Sources/AIUsage/Views/SettingsView.swift
 msgid "Refresh every"
@@ -3172,13 +3631,47 @@ msgstr ""
 "Partagé avec `ai-usage-cli` et avec les interfaces Linux de ce widget, pour "
 "qu'une clé collée ici ne soit collée qu'une seule fois."
 
-#: macos/Sources/AIUsage/Views/StatsView.swift
-msgid "Messages"
-msgstr "Messages"
+#: macos/Sources/AIUsage/Views/SpendChartView.swift
+msgid "Day"
+msgstr "Jour"
 
+#: macos/Sources/AIUsage/Views/SpendChartView.swift
 #: macos/Sources/AIUsage/Views/StatsView.swift
 msgid "Tokens"
 msgstr "Jetons"
+
+#: macos/Sources/AIUsage/Views/SpendView.swift
+msgid "Metered: %1 · Incl. plan: %2"
+msgstr "Mesuré : %1 · Forfait incl. : %2"
+
+#: macos/Sources/AIUsage/Views/SpendView.swift
+msgid "Incl. plan: %1"
+msgstr "Forfait incl. : %1"
+
+#: macos/Sources/AIUsage/Views/SpendView.swift
+msgid "Metered: %1"
+msgstr "Mesuré : %1"
+
+#: macos/Sources/AIUsage/Views/SpendView.swift
+msgid ""
+"Provider totals come from each provider's own usage APIs. Local source rows "
+"show actual, estimated, or mixed provenance and coverage separately."
+msgstr ""
+"Les totaux des fournisseurs proviennent de leurs propres API d'utilisation. "
+"Les lignes de source locale indiquent séparément la provenance réelle, "
+"estimée ou mixte ainsi que la couverture."
+
+#: macos/Sources/AIUsage/Views/SpendView.swift
+msgid "Hide history"
+msgstr "Masquer l'historique"
+
+#: macos/Sources/AIUsage/Views/SpendView.swift
+msgid "Show history"
+msgstr "Afficher l'historique"
+
+#: macos/Sources/AIUsage/Views/StatsView.swift
+msgid "Messages"
+msgstr "Messages"
 
 #: macos/Sources/AIUsage/Views/StatsView.swift
 msgid "Files"
@@ -3187,10 +3680,6 @@ msgstr "Fichiers"
 #: macos/Sources/AIUsage/Views/StatsView.swift
 msgid "Web searches"
 msgstr "Recherches web"
-
-#: macos/Sources/AIUsage/Views/StatsView.swift
-msgid "Cost"
-msgstr "Coût"
 
 #: macos/Sources/AIUsage/Views/StatsView.swift
 msgid "Active days"

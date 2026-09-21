@@ -43,10 +43,13 @@ against the checkout.
 
 ## The rule that keeps this affordable
 
-This frontend renders the **provider-agnostic** half of
+This frontend renders the **provider-agnostic** core of
 `docs/provider-contract.md`: `summary`, `quotaWindows`, `chartWindows`,
-`slots`, `historyValues`, and the shared `details.status`. A provider added to
-the backend must show up here with no Swift change at all.
+`slots`, `historyValues`, and the shared `details.status`. It also reads the
+generic provider cost figures under `details`, plus the shared `localSpend` and
+session cost fields for the Usage & Spend and Sessions views. A provider added
+to the backend still shows up in the core views with no Swift change; only a
+new contract field or provider-specific presentation needs one.
 
 So: no provider names in `Views/`, no per-provider cases, no icon table — the
 contract carries the label, the accent, the icon filename and the rows. The

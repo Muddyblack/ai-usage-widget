@@ -1,0 +1,51 @@
+name: AI provider request / update
+description: Suggest a new AI provider or report changes to an existing provider's API or quotas.
+title: "[Provider]: "
+body:
+  - type: input
+    id: provider_name
+    attributes:
+      label: Provider name and website
+      description: Name of the AI provider or service and link to its website/documentation.
+      placeholder: e.g. Together AI (https://together.ai)
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Provider type / category
+      options:
+        - Cloud API / LLM provider (API key based)
+        - Web subscription / plan quota (OAuth / session token / cookie)
+        - Local LLM server (Ollama, LM Studio, vLLM, etc.)
+        - Existing provider API / schema change
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: quotas
+    attributes:
+      label: What quotas or usage metrics does it expose?
+      description: Describe what data is available (e.g. rolling 5-hour window, weekly/monthly token limit, credit balance, USD spend, rate limits, per-model breakdown).
+      placeholder: "Account balance in USD, monthly spending limit, and per-minute token rate limits."
+    validations:
+      required: true
+  - type: textarea
+    id: endpoint_info
+    attributes:
+      label: Authentication and API endpoints
+      description: How is the usage/quota data accessed? Include API endpoint URLs, documentation links, or CLI/header references if known.
+    validations:
+      required: true
+  - type: textarea
+    id: sample_data
+    attributes:
+      label: Sample API response or payload (redacted)
+      description: "Provide sample JSON responses or HTTP headers if available. ⚠️ Remove all API keys, bearer tokens, and private identifiers before posting!"
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I have an active account or API key with this provider and can help test
+        - label: I am interested in contributing code or submitting a pull request

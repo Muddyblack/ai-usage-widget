@@ -42,11 +42,14 @@ Rectangle {
 
                 Text {
                     anchors.centerIn: parent
+                    width: parent.width - 4
+                    horizontalAlignment: Text.AlignHCenter
                     text: parent.modelData.label
-                    font.pixelSize: 11
+                    font.pixelSize: 10
                     font.bold: parent.active
                     color: parent.active ? bar.accent : "#f8fafc"
                     opacity: parent.active ? 1.0 : 0.6
+                    elide: Text.ElideRight
                 }
 
                 MouseArea {

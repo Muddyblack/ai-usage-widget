@@ -83,3 +83,10 @@ def test_multi_server_summary_uses_highest_saturation():
     assert row["summary"]["pct"] == 80
     assert len(row["details"]["servers"]) == 2
     assert row["quotaWindows"][0]["label"].startswith("http://one")
+
+
+def test_endpoint_of_only_separators_reports_instead_of_crashing():
+    """A setting like ", " strips to nothing: probing zero URLs used to raise
+    ValueError out of ThreadPoolExecutor(max_workers=0)."""
+    with patch.dict(os.environ, {"WIDGET_SELFHOSTED_ENDPOINT": " , "}):
+        assert get_selfhosted_usage() == {"error": "No local server URL configured"}

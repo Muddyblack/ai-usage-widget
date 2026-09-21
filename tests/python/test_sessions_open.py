@@ -49,7 +49,7 @@ class OpenSessionFailsClosedTest(unittest.TestCase):
             mock.patch.object(
                 sessions,
                 "collect_open_targets",
-                return_value={"0123456789abcdef": {"provider": "claude", "id": "secret-session-id", "cwd": "/home/user/project"}},
+                return_value={"0123456789abcdef" * 4: {"provider": "claude", "id": "secret-session-id", "cwd": "/home/user/project"}},
             ),
             mock.patch.object(sessions.shutil, "which", return_value=None),
         ):

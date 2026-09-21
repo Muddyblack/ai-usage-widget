@@ -25,12 +25,20 @@ class SessionCacheIntegrationTest(unittest.TestCase):
     def _manifest(self, version: int) -> SessionManifest:
         return SessionManifest(f"manifest-{version}", version, version)
 
+    def setUp(self):
+        # The index reconciles per source. These tests describe one merged
+        # listing, so they run with a single fake source whose collector is
+        # whatever `_collect_all_sessions` is patched to at call time.
+        source = mock.patch.object(sessions, "collect_source", lambda _id: sessions._collect_all_sessions()[0])
+        source.start()
+        self.addCleanup(source.stop)
+
     def test_repeated_queries_and_pages_reuse_cached_rows(self):
         with tempfile.TemporaryDirectory() as directory:
             rows = [_row("first", 2), _row("needle", 2), _row("last", 1)]
             with (
                 mock.patch("aiusage.config.cache_dir", return_value=directory),
-                mock.patch.object(session_cache, "build_manifest", return_value=self._manifest(1)),
+                mock.patch.object(session_cache, "build_manifests", return_value=[self._manifest(1)]),
                 mock.patch.object(sessions, "_collect_all_sessions", return_value=(rows, True)) as collect,
             ):
                 sessions.refresh_sessions()
@@ -55,7 +63,7 @@ class SessionCacheIntegrationTest(unittest.TestCase):
             rows[2]["provider"] = "opencode"
             with (
                 mock.patch("aiusage.config.cache_dir", return_value=directory),
-                mock.patch.object(session_cache, "build_manifest", return_value=self._manifest(1)),
+                mock.patch.object(session_cache, "build_manifests", return_value=[self._manifest(1)]),
                 mock.patch.object(sessions, "_collect_all_sessions", return_value=(rows, True)),
             ):
                 sessions.refresh_sessions()
@@ -79,7 +87,7 @@ class SessionCacheIntegrationTest(unittest.TestCase):
             refreshed = [_row("new", 2)]
             with (
                 mock.patch("aiusage.config.cache_dir", return_value=directory),
-                mock.patch.object(session_cache, "build_manifest", side_effect=manifests),
+                mock.patch.object(session_cache, "build_manifests", side_effect=[[m] for m in manifests]),
                 mock.patch.object(sessions, "_collect_all_sessions", side_effect=[(rows, True), (refreshed, True)]) as collect,
             ):
                 sessions.refresh_sessions()
@@ -94,7 +102,7 @@ class SessionCacheIntegrationTest(unittest.TestCase):
         with (
             tempfile.TemporaryDirectory() as directory,
             mock.patch("aiusage.config.cache_dir", return_value=directory),
-            mock.patch.object(session_cache, "build_manifest", return_value=self._manifest(1)),
+            mock.patch.object(session_cache, "build_manifests", return_value=[self._manifest(1)]),
             mock.patch.object(sessions, "_collect_all_sessions", return_value=(rows, True)),
         ):
             result = sessions.refresh_sessions()
@@ -102,40 +110,64 @@ class SessionCacheIntegrationTest(unittest.TestCase):
         self.assertEqual([row["title"] for row in result["sessions"]], ["cline", "claude"])
         self.assertEqual(result["sessions"][1]["openKey"], key)
 
-    def test_failed_refresh_returns_direct_rows_without_overwriting_cache(self):
+    def _two_source_refresh(self, directory, version, claude_rows, antigravity_rows):
+        """Run one refresh over two independently fingerprinted sources."""
+
+        def collect_source(source_id):
+            rows = claude_rows if source_id == "claude" else antigravity_rows
+            if isinstance(rows, Exception):
+                raise rows
+            return rows
+
+        manifests = [
+            SessionManifest("claude", version if claude_rows is not None else 1, 1),
+            SessionManifest("antigravity", version, 1),
+        ]
+        with (
+            mock.patch("aiusage.config.cache_dir", return_value=directory),
+            mock.patch.object(session_cache, "build_manifests", return_value=manifests),
+            mock.patch.object(sessions, "collect_source", collect_source),
+            mock.patch.object(sessions, "_collect_all_sessions", return_value=([], True)),
+        ):
+            return sessions.refresh_sessions()
+
+    def test_a_broken_collector_keeps_its_own_rows_and_lets_the_others_update(self):
         with tempfile.TemporaryDirectory() as directory:
-            old_rows = [_row("old", 1)]
-            current_rows = [_row("current", 2)]
-            with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
-                mock.patch.object(session_cache, "build_manifest", side_effect=[self._manifest(1), self._manifest(2)]),
-                mock.patch.object(sessions, "_collect_all_sessions", side_effect=[(old_rows, True), (current_rows, False)]),
-            ):
-                sessions.refresh_sessions()
-                result = sessions.refresh_sessions()
-                retained = SessionIndex(f"{directory}/sessions.sqlite3").rows()
+            claude_old = [dict(_row("claude old", 1), provider="claude")]
+            antigravity_old = [dict(_row("antigravity old", 2), provider="antigravity")]
+            antigravity_new = [dict(_row("antigravity new", 3), provider="antigravity")]
 
-        self.assertEqual([row["title"] for row in result["sessions"]], ["current"])
-        self.assertEqual([row["title"] for row in retained], ["old"])
+            self._two_source_refresh(directory, 1, claude_old, antigravity_old)
+            result = self._two_source_refresh(directory, 2, OSError("unreadable store"), antigravity_new)
+            retained = SessionIndex(f"{directory}/sessions.sqlite3").rows()
 
-    def test_incomplete_refresh_derives_sources_from_direct_rows_without_private_data(self):
+        titles = sorted(row["title"] for row in retained)
+        # Claude could not be read, so its cached row survives untouched while
+        # the healthy source still moves forward.
+        self.assertEqual(titles, ["antigravity new", "claude old"])
+        self.assertEqual([row["title"] for row in result["sessions"]], ["antigravity new", "claude old"])
+        self.assertEqual(
+            result["sources"],
+            [{"id": "claude", "label": "Claude Code"}, {"id": "antigravity", "label": "Antigravity"}],
+        )
+
+    def test_an_unchanged_source_is_not_recollected_while_a_changed_one_is(self):
         with tempfile.TemporaryDirectory() as directory:
-            old_rows = [_row("old", 1)]
-            old_rows[0]["provider"] = "claude"
-            current_rows = [_row("current", 2)]
-            current_rows[0]["provider"] = "antigravity"
-            with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
-                mock.patch.object(session_cache, "build_manifest", side_effect=[self._manifest(1), self._manifest(2)]),
-                mock.patch.object(sessions, "_collect_all_sessions", side_effect=[(old_rows, True), (current_rows, False)]),
-            ):
-                sessions.refresh_sessions()
-                result = sessions.refresh_sessions()
-                retained = SessionIndex(f"{directory}/sessions.sqlite3").rows()
+            claude_rows = [dict(_row("claude", 1), provider="claude")]
+            antigravity_v1 = [dict(_row("antigravity v1", 2), provider="antigravity")]
+            antigravity_v2 = [dict(_row("antigravity v2", 3), provider="antigravity")]
 
-        self.assertEqual([row["title"] for row in result["sessions"]], ["current"])
-        self.assertEqual([row["title"] for row in retained], ["old"])
-        self.assertEqual(result["sources"], [{"id": "antigravity", "label": "Antigravity"}])
+            self._two_source_refresh(directory, 1, claude_rows, antigravity_v1)
+            # Claude's fingerprint is pinned to 1 by the helper, so only
+            # antigravity looks changed on the second pass.
+            result = self._two_source_refresh(
+                directory,
+                2,
+                AssertionError("unchanged source was re-collected"),
+                antigravity_v2,
+            )
+
+        self.assertEqual([row["title"] for row in result["sessions"]], ["antigravity v2", "claude"])
 
     def test_corrupt_cache_rebuilds(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -143,7 +175,7 @@ class SessionCacheIntegrationTest(unittest.TestCase):
             rows = [_row("rebuilt", 1)]
             with (
                 mock.patch("aiusage.config.cache_dir", return_value=directory),
-                mock.patch.object(session_cache, "build_manifest", return_value=self._manifest(1)),
+                mock.patch.object(session_cache, "build_manifests", return_value=[self._manifest(1)]),
                 mock.patch.object(sessions, "_collect_all_sessions", return_value=(rows, True)) as collect,
             ):
                 sessions.refresh_sessions()
@@ -157,7 +189,7 @@ class SessionCacheIntegrationTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             with (
                 mock.patch("aiusage.config.cache_dir", return_value=directory),
-                mock.patch.object(session_cache, "build_manifest", side_effect=AssertionError("query built manifest")),
+                mock.patch.object(session_cache, "build_manifests", side_effect=AssertionError("query built manifest")),
                 mock.patch.object(sessions, "_collect_all_sessions", side_effect=AssertionError("query collected")),
             ):
                 result = sessions.collect_sessions("needle")
@@ -183,15 +215,33 @@ class SessionCacheIntegrationTest(unittest.TestCase):
         self.assertFalse(result["hasMore"])
         self.assertEqual(result["sources"], [])
 
+    def test_unchanged_manifest_does_not_recollect_on_refresh(self):
+        with tempfile.TemporaryDirectory() as directory:
+            rows = [_row("first", 2)]
+            with (
+                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch.object(session_cache, "build_manifests", return_value=[self._manifest(1)]),
+                mock.patch.object(sessions, "_collect_all_sessions", return_value=(rows, True)) as collect,
+            ):
+                sessions.refresh_sessions()
+                with mock.patch.object(sessions, "_collect_all_sessions", side_effect=AssertionError("cache miss")):
+                    result = sessions.refresh_sessions()
+
+        collect.assert_called_once()
+        self.assertEqual([row["title"] for row in result["sessions"]], ["first"])
+
     def test_manifest_does_not_use_opencode_cli_discovery(self):
         with mock.patch.object(
             session_manifest.opencode,
             "discover_database_paths",
             side_effect=AssertionError("cached manifest must not run opencode db path"),
         ):
-            manifest = session_manifest.build_manifest()
+            manifests = session_manifest.build_manifests()
 
-        self.assertTrue(manifest.source_id)
+        self.assertEqual(
+            [manifest.source_id for manifest in manifests],
+            list(sessions.SESSION_COLLECTORS),
+        )
 
 
 if __name__ == "__main__":

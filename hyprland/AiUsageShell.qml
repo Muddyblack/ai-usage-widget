@@ -318,16 +318,21 @@ ShellRoot {
     }
 
     property var providers: []
+    property var localSpend: ({})
     // Local sessions for the optional Sessions tab.
     property var sessions: []
     property bool sessionsLoading: false
     property string sessionsError: ""
     // Last `--open-session` result, shown as a status line under the list.
     property string sessionsNotice: ""
+    property bool pricingLoading: false
+    property string pricingStatus: ""
+    property string pricingError: ""
     property string sessionsQuery: ""
     property var sessionsSources: []
     property var sessionsSourceIds: []
     property string sessionsSourceSignature: ""
+    property string sessionsSourceResetSignature: ""
     property string sessionsActiveQuery: ""
     property var sessionsActiveSourceIds: []
     property string sessionsActiveSourceSignature: ""
@@ -347,6 +352,14 @@ ShellRoot {
     property bool sessionsResponseDone: false
     property bool sessionsProcessExited: false
     readonly property bool sessionsViewVisible: root.popupOpen && !root.showSettings && root.activeId === "sessions"
+
+    // Load as soon as the view is shown. The poll timer only reconciles when
+    // the tab is already visible, so opening the popup onto Sessions used to
+    // leave it empty until the next tick or a manual refresh.
+    onSessionsViewVisibleChanged: {
+        if (root.sessionsViewVisible && !root.sessionsLoading)
+            root.reconcileSessions(root.sessionsQuery);
+    }
     property string activeId: ""
     // The last real provider selected (never a feature tab id) — what the
     // panel pill shows while a feature tab (Overview/Spend/Sessions) is
@@ -397,7 +410,7 @@ ShellRoot {
         if (root.activeIsFeature)
             return false;
         var p = activeProvider();
-        return p && (p.id === "claude" || p.id === "openai" || p.id === "copilot" || p.id === "muse" || p.id === "cursor" || p.id === "cline");
+        return p && (p.id === "claude" || p.id === "openai" || p.id === "copilot" || p.id === "muse" || p.id === "cursor" || p.id === "cline" || p.id === "opencode");
     }
 
     function providerById(id) {
@@ -614,6 +627,7 @@ ShellRoot {
         try {
             var data = JSON.parse((text || "").trim());
             root.providers = data.providers || [];
+            root.localSpend = data.localSpend || ({});
             root.updatedAt = data.updatedAt || 0;
             // Seed (or heal, if the remembered one got disabled) the pill's
             // fallback provider — needed even before the user ever leaves a
@@ -707,8 +721,82 @@ ShellRoot {
         }
         root.sessionsLoading = true;
         root.sessionsError = "";
+        root.sessionsNotice = "";
         sessionsProcess.exec({
             command: root.sessionsCommand()
+        });
+    }
+
+    function refreshPricing() {
+        if (pricingProcess.running)
+            return;
+        root.pricingLoading = true;
+        pricingProcess.exec({
+            command: ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --refresh-pricing", "ai-usage", root.settings.pythonPath || "", root.backendCommand]
+        });
+    }
+
+    Process {
+        id: pricingProcess
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    var data = JSON.parse((this.text || "").trim());
+                    root.pricingStatus = data.status || (data.ok === true ? "refreshed" : "no-cache");
+                    root.pricingError = data.error || "";
+                    if (data.ok === true)
+                        root.refresh();
+                } catch (e) {
+                    root.pricingStatus = "no-cache";
+                    root.pricingError = root.i18n("Could not refresh pricing.");
+                }
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: {
+                var message = this.text.trim();
+                if (message !== "")
+                    root.pricingError = message.split("\n")[0];
+            }
+        }
+        onExited: function (exitCode) {
+            root.pricingLoading = false;
+            if (root.pricingStatus === "") {
+                root.pricingStatus = "no-cache";
+                if (root.pricingError === "")
+                    root.pricingError = root.i18n("Could not refresh pricing.");
+            }
+        }
+    }
+
+    Process {
+        id: rateProcess
+        property var callback: null
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var payload = FeatureTabs.parseRateTable(this.text);
+                if (typeof rateProcess.callback === "function") {
+                    var cb = rateProcess.callback;
+                    rateProcess.callback = null;
+                    cb(payload);
+                }
+            }
+        }
+        onExited: function (exitCode) {
+            if (exitCode !== 0 && typeof rateProcess.callback === "function") {
+                var cb = rateProcess.callback;
+                rateProcess.callback = null;
+                cb(null);
+            }
+        }
+    }
+
+    function queryRates(filter, limit, offset, callback) {
+        if (rateProcess.running)
+            return;
+        rateProcess.callback = callback;
+        rateProcess.exec({
+            command: ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --pricing-table --query \"$3\" --limit \"$4\" --offset \"$5\"", "ai-usage", root.settings.pythonPath || "", root.backendCommand, (filter || "").trim(), String(limit), String(offset)]
         });
     }
 
@@ -751,12 +839,6 @@ ShellRoot {
         root.startSessionsRequest(offset === undefined ? 0 : offset, append === true, false);
     }
 
-    function loadMoreSessions() {
-        if (root.sessionsLoading || sessionsProcess.running || !root.sessionsHasMore)
-            return;
-        root.querySessions(root.sessionsQuery, root.sessionsOffset + root.sessionsLimit, true);
-    }
-
     function handleSessionsOutput(text) {
         root.sessionsResponseDone = true;
         var current = root.sessionsActiveRequestId === root.sessionsRequestId && root.sessionsActiveQuery === root.sessionsQuery && root.sessionsActiveSourceSignature === root.sessionsSourceSignature;
@@ -773,8 +855,12 @@ ShellRoot {
             var staleSelection = root.sessionSourceSelectionHasStaleIds(responseSources);
             root.sessionsSources = responseSources;
             if (staleSelection) {
+                var staleSignature = root.sessionsSourceSignature;
+                if (root.sessionsSourceResetSignature === staleSignature)
+                    return;
                 root.sessionsSourceIds = [];
                 root.sessionsSourceSignature = "";
+                root.sessionsSourceResetSignature = staleSignature;
                 root.sessionsRequestId += 1;
                 root.sessions = [];
                 root.sessionsOffset = 0;
@@ -784,6 +870,7 @@ ShellRoot {
                 root.queueSessionsRequest(0, false, false);
                 return;
             }
+            root.sessionsSourceResetSignature = "";
             root.sessionsTotal = Number(data.total) || 0;
             root.sessionsOffset = Number(data.offset) || root.sessionsActiveOffset;
             root.sessionsHasMore = data.hasMore === true;
@@ -1123,7 +1210,7 @@ ShellRoot {
             PanelWindow {
                 id: popup
                 implicitWidth: 460
-                implicitHeight: Math.min(680, mainColumn.implicitHeight + 40)
+                implicitHeight: Math.min(popup.screen ? Math.min(740, popup.screen.height - 60) : 720, mainColumn.implicitHeight + 40)
                 visible: root.popupOpen && root.popupOwnedBy(panel.screen)
                 color: "transparent"
                 aboveWindows: true
@@ -1196,7 +1283,7 @@ ShellRoot {
                     boundsBehavior: Flickable.StopAtBounds
                     // Leave wheel events to the chart's range controls when everything
                     // already fits, which is the usual case on the usage page.
-                    interactive: contentHeight > height
+                    interactive: Math.round(contentHeight) > Math.round(height) + 1
 
                     QC.ScrollBar.vertical: QC.ScrollBar {
                         policy: contentFlick.interactive ? QC.ScrollBar.AsNeeded : QC.ScrollBar.AlwaysOff
