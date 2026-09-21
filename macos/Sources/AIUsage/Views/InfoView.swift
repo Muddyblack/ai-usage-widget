@@ -141,14 +141,14 @@ struct InfoView: View {
                             .frame(width: 52, height: 52)
                     }
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("AI Usage Monitor")
+                        Text(i18n("AI Usage Monitor"))
                             .font(.system(size: 16, weight: .semibold))
                         HStack(spacing: 8) {
                             Circle()
                                 .fill(Color.secondary.opacity(0.2))
                                 .frame(width: 22, height: 22)
                                 .overlay(
-                                    Text("M")
+                                    Text(verbatim: "M")
                                         .font(.system(size: 11, weight: .bold))
                                         .foregroundStyle(.accent)
                                 )
@@ -204,7 +204,7 @@ struct InfoView: View {
 
                 // License Card
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("License · MIT License")
+                    Text(i18n("License · %1", "MIT License"))
                         .font(.system(size: 11, weight: .semibold))
                     Text("MIT · " + i18n("From the bundled LICENSE file"))
                         .font(.system(size: 9))

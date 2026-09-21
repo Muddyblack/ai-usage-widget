@@ -175,46 +175,47 @@ struct SettingsView: View {
                     }
                 }
 
-            Picker(i18n("Values"), selection: Binding(
-                get: { model.settings.menuBarSlots },
-                set: { value in model.changeSettings { $0.menuBarSlots = value } }
-            )) {
-                Text(i18n("One")).tag(1)
-                Text(i18n("Two")).tag(2)
-                Text(i18n("Three")).tag(3)
-            }
-            .disabled(model.settings.menuBarStyle == .iconOnly)
-
-            Picker(i18n("Icon"), selection: Binding(
-                get: { model.settings.menuBarIcon },
-                set: { value in model.changeSettings { $0.menuBarIcon = value } }
-            )) {
-                ForEach(MenuBarIcon.allCases) { icon in
-                    Text(icon.title).tag(icon)
+                Picker(i18n("Values"), selection: Binding(
+                    get: { model.settings.menuBarSlots },
+                    set: { value in model.changeSettings { $0.menuBarSlots = value } }
+                )) {
+                    Text(i18n("One")).tag(1)
+                    Text(i18n("Two")).tag(2)
+                    Text(i18n("Three")).tag(3)
                 }
-            }
-            .disabled(model.settings.menuBarStyle == .percentOnly)
-            Text(i18n("Monochrome is what macOS expects: it inverts with the menu bar and stays legible over any wallpaper. The other two show a logo beside every value, the way the Plasma panel does."))
-                .font(.system(size: 10))
-                .foregroundStyle(.secondary)
+                .disabled(model.settings.menuBarStyle == .iconOnly)
 
-            Toggle(i18n("Colour every percentage"), isOn: Binding(
-                get: { model.settings.colouredPercentages },
-                set: { value in model.changeSettings { $0.colouredPercentages = value } }
-            ))
-            Text(i18n("Off, a percentage stays in the menu bar's own colour until it is worth a look — amber from 70 %, red from 90 %."))
-                .font(.system(size: 10))
-                .foregroundStyle(.secondary)
-
-            Picker(i18n("Provider"), selection: Binding(
-                get: { model.selectedID },
-                set: { model.selectedID = $0 }
-            )) {
-                ForEach(model.providers) { provider in
-                    Text(provider.label).tag(provider.id)
+                Picker(i18n("Icon"), selection: Binding(
+                    get: { model.settings.menuBarIcon },
+                    set: { value in model.changeSettings { $0.menuBarIcon = value } }
+                )) {
+                    ForEach(MenuBarIcon.allCases) { icon in
+                        Text(icon.title).tag(icon)
+                    }
                 }
+                .disabled(model.settings.menuBarStyle == .percentOnly)
+                Text(i18n("Monochrome is what macOS expects: it inverts with the menu bar and stays legible over any wallpaper. The other two show a logo beside every value, the way the Plasma panel does."))
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+
+                Toggle(i18n("Colour every percentage"), isOn: Binding(
+                    get: { model.settings.colouredPercentages },
+                    set: { value in model.changeSettings { $0.colouredPercentages = value } }
+                ))
+                Text(i18n("Off, a percentage stays in the menu bar's own colour until it is worth a look — amber from 70 %, red from 90 %."))
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+
+                Picker(i18n("Provider"), selection: Binding(
+                    get: { model.selectedID },
+                    set: { model.selectedID = $0 }
+                )) {
+                    ForEach(model.providers) { provider in
+                        Text(provider.label).tag(provider.id)
+                    }
+                }
+                .disabled(model.providers.isEmpty)
             }
-            .disabled(model.providers.isEmpty)
         }
         .formStyle(.grouped)
     }
