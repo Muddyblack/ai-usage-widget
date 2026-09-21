@@ -140,6 +140,13 @@ function localSpendNote(provenance, costStatus, source) {
     return notes[provenance + ":" + costStatus] || prefix;
 }
 
+// Plan-covered work: the figure is what the API would have charged, not money
+// owed, so its note has to say so rather than read like a bill.
+function planSpendNote(costStatus, source) {
+    var prefix = source === "opencode" ? "via OpenCode" : "covered by plan";
+    return prefix + " · would cost on API" + (costStatus === "partial" ? " · partial" : "");
+}
+
 function localProviderCost(group, source) {
     if (!group || (group.costStatus !== "exact" && group.costStatus !== "partial"))
         return null;
@@ -212,6 +219,48 @@ function localSpendRows(localSpend) {
         });
     }
 
+    // Subscription usage, kept as its own rows so it is never summed with, or
+    // mistaken for, the metered totals above.
+    var planSources = {};
+    var planGroups = ["subscription", "subscriptionActual"];
+    for (var g = 0; g < planGroups.length; g++) {
+        var planGroup = localSpend && localSpend[planGroups[g]];
+        var planProviders = planGroup && planGroup.providers;
+        if (!planProviders)
+            continue;
+        var planKeys = Object.keys(planProviders);
+        for (var n = 0; n < planKeys.length; n++) {
+            var planKey = localSourceKey(planKeys[n]);
+            if (planKey)
+                planSources[planKey] = true;
+        }
+    }
+    var planIds = Object.keys(planSources);
+    for (var q = 0; q < planIds.length; q++) {
+        var planSourceKey = planIds[q];
+        var planEstimated = localProviderCost(localSpend && localSpend.subscription, planSourceKey);
+        var planActual = localProviderCost(localSpend && localSpend.subscriptionActual, planSourceKey);
+        var planCost = (planEstimated ? planEstimated.cost : 0) + (planActual ? planActual.cost : 0);
+        if (!(planCost > 0))
+            continue;
+        var planSource = (planEstimated && planEstimated.source) || (planActual && planActual.source) || "";
+        var planProviderKey = localProviderKey(planSourceKey);
+        var planStatus = (planEstimated && planEstimated.status === "partial") ||
+                (planActual && planActual.status === "partial") ? "partial" : "exact";
+        rows.push({
+            id: "plan-" + (planSource ? planSource + "-" : "") + planProviderKey,
+            label: planSource === "opencode" ? upstreamProviderLabel(planProviderKey) : localSourceLabel(planProviderKey),
+            cost: planCost,
+            currency: "USD",
+            note: planSpendNote(planStatus, planSource),
+            local: true,
+            billing: "subscription",
+            source: planSource || planProviderKey,
+            provenance: "estimated",
+            costStatus: planStatus
+        });
+    }
+
     if (rows.length === 0 && localSpend && !localSpend.actual && !localSpend.estimated &&
             (localSpend.costStatus === "exact" || localSpend.costStatus === "partial") &&
             typeof localSpend.totalUSD === "number" && isFinite(localSpend.totalUSD) &&
@@ -235,7 +284,7 @@ function sessionCostInfo(entry) {
     var cost = entry && entry.costUSD;
     if ((status !== "exact" && status !== "partial") ||
             typeof cost !== "number" || !isFinite(cost) || cost < 0)
-        return { available: false, provenance: "", status: "unavailable", cost: 0 };
+        return { available: false, provenance: "", status: "unavailable", cost: 0, billing: "api" };
 
     var provenance = entry.costProvenance;
     if (provenance === undefined || provenance === null || provenance === "")
@@ -243,7 +292,8 @@ function sessionCostInfo(entry) {
     if (provenance !== "actual" && provenance !== "estimated" &&
             provenance !== "mixed" && provenance !== "legacy")
         return { available: false, provenance: "", status: "unavailable", cost: 0 };
-    return { available: true, provenance: provenance, status: status, cost: cost };
+    var billing = entry.costBilling === "subscription" ? "subscription" : "api";
+    return { available: true, provenance: provenance, status: status, cost: cost, billing: billing };
 }
 
 // Build the per-provider cost rows the Spend tab shows from a provider list
@@ -314,4 +364,73 @@ function spendTotal(rows, currency) {
             sum += rows[i].cost;
     }
     return sum;
+}
+
+// ── Model rate table ───────────────────────────────────────────────────────
+// Shared by every QML frontend's Spend view. The widgets differ (Plasma
+// components vs. plain QtQuick) and so does the process plumbing (Plasma5Support
+// DataSource vs. Quickshell Process), but the formatting, paging arithmetic and
+// payload parsing are identical — so they live here rather than in each copy.
+
+function rateText(value) {
+    if (typeof value !== "number" || !isFinite(value))
+        return "\u2014";
+    if (value === 0)
+        return "free";
+    return "$" + (value < 1 ? value.toFixed(3) : value.toFixed(2));
+}
+
+// The catalog is cached for a week, so "is this current?" is the first question
+// the table has to answer. nowMs is injectable so tests need no clock stubbing.
+function rateAge(seconds, i18nFn, nowMs) {
+    function t(text, arg) {
+        if (!i18nFn)
+            return text.replace("%1", arg);
+        return arg === undefined ? i18nFn(text) : i18nFn(text, arg);
+    }
+    if (typeof seconds !== "number" || !isFinite(seconds) || !(seconds > 0))
+        return "";
+    var now = (typeof nowMs === "number" && isFinite(nowMs)) ? nowMs : new Date().getTime();
+    var s = Math.max(0, (now / 1000) - seconds);
+    if (s < 3600)
+        return t("updated just now");
+    if (s < 86400)
+        return t("updated %1h ago", Math.floor(s / 3600));
+    if (s < 604800)
+        return t("updated %1d ago", Math.floor(s / 86400));
+    return t("updated %1w ago", Math.floor(s / 604800));
+}
+
+function ratePageCount(total, limit) {
+    var size = Math.max(1, Number(limit) || 1);
+    return Math.max(1, Math.ceil((Number(total) || 0) / size));
+}
+
+function ratePageNumber(offset, limit, total) {
+    var size = Math.max(1, Number(limit) || 1);
+    var at = Math.max(0, Number(offset) || 0);
+    return Math.min(ratePageCount(total, size), Math.floor(at / size) + 1);
+}
+
+// Parses --pricing-table stdout. Returns null when the output is unusable, so
+// each frontend can show its own "could not read" string.
+function parseRateTable(text) {
+    var out = (text || "").trim();
+    if (out === "")
+        return null;
+    var payload;
+    try {
+        payload = JSON.parse(out);
+    } catch (e) {
+        return null;
+    }
+    if (!payload || typeof payload !== "object")
+        return null;
+    return {
+        rows: Array.isArray(payload.rows) ? payload.rows : [],
+        total: Number(payload.total) || 0,
+        unit: payload.unit || "",
+        fetchedAt: Number(payload.fetchedAt) || 0,
+        error: payload.error || ""
+    };
 }

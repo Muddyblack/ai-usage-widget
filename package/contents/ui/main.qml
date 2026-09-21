@@ -1994,10 +1994,19 @@ PlasmoidItem {
 
         // The active tab plus every pinned service: those are the only providers
         // whose data is on screen, so those are the only ones worth fetching.
+        // Overview and Spend are the exception — they total every provider, so
+        // an unpinned setup would otherwise leave them refreshing nothing.
         var ids = [];
         var active = root.enabledTabs[root.activeTab] || "";
         if (active !== "" && !FeatureTabs.isFeatureTab(active))
             ids.push(active);
+        else if (active === "overview" || active === "spend") {
+            for (var p = 0; p < root.providers.length; p++) {
+                var id = root.providers[p].id;
+                if (root.enabledTabs.indexOf(id) >= 0 && ids.indexOf(id) < 0)
+                    ids.push(id);
+            }
+        }
 
         var pins = root.pinnedTabs;
         for (var i = 0; i < pins.length; i++) {
@@ -3049,23 +3058,41 @@ PlasmoidItem {
                     }
 
                     PlasmaComponents.Label {
-                        visible: root.showSettings
-                        // Names the section on screen, so the header says where
-                        // you are rather than repeating what the page is.
+                        visible: root.showSettings || root.enabledTabs[root.activeTab] === "overview" || root.enabledTabs[root.activeTab] === "sessions" || root.enabledTabs[root.activeTab] === "spend"
                         text: {
-                            if (root.settingsTab === "views")
-                                return i18n("Optional Overview, Spend and Sessions tabs");
+                            if (root.showSettings) {
+                                if (root.settingsTab === "views")
+                                    return i18n("Optional Overview, Spend and Sessions tabs");
 
-                            if (root.settingsTab === "appearance")
-                                return i18n("Colors, chart and popup style");
+                                if (root.settingsTab === "local")
+                                    return i18n("Local endpoints: Ollama, vLLM and llama.cpp");
 
-                            if (root.settingsTab === "data")
-                                return i18n("Refresh interval and usage history");
+                                if (root.settingsTab === "appearance")
+                                    return i18n("Colors, chart and popup style");
 
-                            if (root.settingsTab === "advanced")
-                                return i18n("Python interpreter and terminal tool");
+                                if (root.settingsTab === "data")
+                                    return i18n("Refresh interval and usage history");
 
-                            return i18n("Turn providers on and set their keys");
+                                if (root.settingsTab === "advanced")
+                                    return i18n("Python interpreter and terminal tool");
+
+                                return i18n("Turn providers on and set their keys");
+                            }
+                            var tab = root.enabledTabs[root.activeTab];
+                            if (tab === "overview") {
+                                var count = 0;
+                                for (var i = 0; i < (root.enabledTabs || []).length; i++) {
+                                    var tid = root.enabledTabs[i];
+                                    if (tid !== "overview" && tid !== "spend" && tid !== "sessions")
+                                        count++;
+                                }
+                                return i18np("%1 provider", "%1 providers", count);
+                            }
+                            if (tab === "sessions")
+                                return sessionsTabView.loading ? i18n("Refreshing…") : i18np("%1 local session", "%1 local sessions", sessionsTabView.sessionsTotal || 0);
+                            if (tab === "spend")
+                                return spendTabView && spendTabView.totalUsd > 0 ? i18n("Provider/API total: %1", FeatureTabs.formatMoney(spendTabView.totalUsd, "USD")) : "";
+                            return "";
                         }
                         font.pixelSize: 10
                         opacity: 0.5
@@ -3129,7 +3156,13 @@ PlasmoidItem {
                 PlasmaComponents.ToolButton {
                     icon.name: "view-refresh"
                     display: PlasmaComponents.AbstractButton.IconOnly
-                    onClicked: root.refresh()
+                    // Sessions come from a separate backend call, so root.refresh()
+                    // alone leaves the list untouched while it is on screen.
+                    onClicked: {
+                        root.refresh();
+                        if (sessionsTabView.visible)
+                            sessionsTabView.refresh();
+                    }
                     opacity: hovered ? 1 : 0.6
 
                     Behavior on opacity {
@@ -3291,10 +3324,12 @@ PlasmoidItem {
             }
 
             SpendTab {
+                id: spendTabView
                 rootItem: root
             }
 
             SessionsTab {
+                id: sessionsTabView
                 rootItem: root
             }
 

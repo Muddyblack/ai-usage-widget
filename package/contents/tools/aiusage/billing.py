@@ -46,19 +46,15 @@ def total_tokens(buckets):
     return sum(sum(_bucket_tokens(bucket)[key] for key in ("input", "output", "cache_read", "cache_write")) for bucket in buckets)
 
 
-def _finite_rate(value):
-    return finite_number(value, minimum=0)
-
-
 def _bucket_cost(bucket, price):
     if not isinstance(price, dict) or "input" not in price or "output" not in price:
         return None
-    input_rate = _finite_rate(price["input"])
-    output_rate = _finite_rate(price["output"])
+    input_rate = finite_number(price["input"], minimum=0)
+    output_rate = finite_number(price["output"], minimum=0)
     if input_rate is None or output_rate is None:
         return None
     cached_value = price.get("cached", input_rate)
-    cached_rate = input_rate if cached_value is None else _finite_rate(cached_value)
+    cached_rate = input_rate if cached_value is None else finite_number(cached_value, minimum=0)
     if cached_rate is None:
         return None
     tokens = _bucket_tokens(bucket)

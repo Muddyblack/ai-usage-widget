@@ -1,4 +1,4 @@
-.PHONY: help view view-h install pack tag test test-py translations check-translations lint-py run-windows macos macos-test
+.PHONY: help view view-h view-hyprland hyprland install pack tag test test-py translations check-translations lint-py run-windows macos macos-test
 .DEFAULT_GOAL := help
 
 help: ## list targets
@@ -17,6 +17,16 @@ view-h: ## preview widget (horizontal)
 	else \
 	  ./translate/build.sh && plasmoidviewer -a package -f horizontal; \
 	fi
+
+view-hyprland: ## preview widget (Hyprland / Quickshell)
+	@if command -v nix >/dev/null 2>&1 && [ -f flake.nix ]; then \
+	  nix run path:.#hyprland; \
+	else \
+	  echo "Running the Hyprland frontend requires Nix (Quickshell runtime)." >&2; \
+	  exit 1; \
+	fi
+
+hyprland: view-hyprland
 
 install: ## install test copy to local Plasma session
 	@./test_install.sh

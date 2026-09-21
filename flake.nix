@@ -88,7 +88,7 @@
             noDisplay = true;
             categories = [ "Utility" ];
           };
-        in {
+        in rec {
           view = {
             type = "app";
             program = toString (pkgs.writeShellScript "view" ''
@@ -151,6 +151,7 @@
               ${pkgs.quickshell}/bin/qs -p "$config"
             '');
           };
+          view-hyprland = hyprland;
         });
 
       devShells = forAllSystems (system:

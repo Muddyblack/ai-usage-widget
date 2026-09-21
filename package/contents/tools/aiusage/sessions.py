@@ -34,7 +34,7 @@ import time
 import urllib.parse
 from collections.abc import Sequence
 
-from . import billing, pricing
+from . import billing, billing_mode, pricing
 from .contract import epoch_of, num
 from .providers import antigravity_sessions, opencode
 from .providers.cline import get_cline_session_records
@@ -43,6 +43,7 @@ from .providers.muse import sessions_root as muse_sessions_root
 from .providers.openai_credentials import codex_home
 from .session_cache import SessionCache
 from .session_index import (
+    SEARCH_FIELDS,
     SessionQueryResult,
     SessionRow,
     normalize_source_ids,
@@ -51,7 +52,6 @@ from .session_index import (
 
 # Cap so a machine with years of logs stays snappy on a tab open.
 _MAX_SESSIONS = 60
-_SEARCH_FIELDS = ("provider", "title", "sessionName", "state", "detail")
 # A session touched within this window is treated as active.
 _ACTIVE_WITHIN_SEC = 15 * 60
 
@@ -130,7 +130,11 @@ def _with_usage_cost(entry, provider, buckets):
     catalog = pricing.cached_catalog()
     providers = {bucket.provider for bucket in buckets if bucket.provider}
     rates = {rate_provider: catalog.get(rate_provider, {}) for rate_provider in providers or {provider}}
-    return {**entry, **billing.aggregate_session_usage(buckets, rates)}
+    costed = {**entry, **billing.aggregate_session_usage(buckets, rates)}
+    # What the figure means: money owed on a metered key, or the API-equivalent
+    # of work a plan already covers. See billing_mode for why they never mix.
+    costed["costBilling"] = billing_mode.mode_for(entry.get("provider") or provider)
+    return costed
 
 
 def _cline_catalog_identity(provider, model):
@@ -266,6 +270,42 @@ def _muse_entries(*, include_all=False):
     return out
 
 
+# Codex replays a few synthetic "user" turns before the real prompt: the
+# project's AGENTS.md, the sandbox permissions block, and the IDE's open-tab
+# context. None of them describe the session, so they are skipped when picking
+# a title.
+_CODEX_SYNTHETIC_PREFIXES = (
+    "# AGENTS.md instructions",
+    "<permissions instructions>",
+    "<environment_context>",
+    "<user_instructions>",
+)
+# The IDE wrapper keeps the real prompt under this heading.
+_CODEX_REQUEST_HEADING = "## My request for Codex:"
+_CODEX_IMAGE_TAG = re.compile(r"^(?:<image\b[^>]*>\s*)+")
+
+
+def _codex_prompt_text(payload):
+    """The user-typed text of one transcript ``message`` record, or ""."""
+    if payload.get("role") != "user":
+        return ""
+    content = payload.get("content")
+    if not isinstance(content, list):
+        return ""
+    parts = [block.get("text", "") for block in content if isinstance(block, dict) and block.get("type") == "input_text"]
+    text = "\n".join(part for part in parts if isinstance(part, str)).strip()
+    if not text:
+        return ""
+    heading = text.find(_CODEX_REQUEST_HEADING)
+    if heading >= 0:
+        text = text[heading + len(_CODEX_REQUEST_HEADING) :].strip()
+    elif text.startswith(_CODEX_SYNTHETIC_PREFIXES):
+        return ""
+    # A pasted screenshot leads with an <image .../> tag that says nothing
+    # about the session; the typed text after it is the real title.
+    return _CODEX_IMAGE_TAG.sub("", text).strip()
+
+
 def _codex_entries(*, include_all=False):
     sessions = os.environ.get("CODEX_SESSIONS_DIR") or os.path.join(codex_home(), "sessions")
     if not os.path.isdir(sessions):
@@ -288,10 +328,20 @@ def _codex_entries(*, include_all=False):
         # event in the file, not a re-derivation from message content. Only
         # this numeric total is read; nothing else past the first 80 lines is.
         total_tokens = 0
+        prompt = ""
         session_id = _codex_id_from_path(path)
         try:
             with open(path, encoding="utf-8", errors="replace") as f:
                 for i, line in enumerate(f):
+                    if i <= 80 and not prompt and '"input_text"' in line:
+                        try:
+                            row = json.loads(line)
+                        except ValueError:
+                            row = None
+                        if isinstance(row, dict):
+                            payload = row.get("payload") if isinstance(row.get("payload"), dict) else row
+                            if isinstance(payload, dict) and payload.get("type") == "message":
+                                prompt = _codex_prompt_text(payload)
                     if i <= 80 and ('"cwd"' in line or '"model"' in line or "turn_context" in line) and not (cwd and model):
                         try:
                             row = json.loads(line)
@@ -321,8 +371,13 @@ def _codex_entries(*, include_all=False):
                                 total_tokens = tokens  # last one wins — it's cumulative
         except OSError:
             pass
-        title = cwd or "Codex"
+        # Prefer what the user actually asked for; the working directory is
+        # only a fallback, and moves to the detail line when it is not the title.
+        folder_title = cwd or "Codex"
+        title = _clip_title(prompt) or folder_title
         bits = []
+        if folder_title != title:
+            bits.append(folder_title)
         if total_tokens > 0:
             bits.append(f"{_format_tokens(total_tokens)} tok")
         if model:
@@ -336,6 +391,7 @@ def _codex_entries(*, include_all=False):
                     session_name="Codex",
                     detail=" · ".join(bits),
                     session_id=session_id,
+                    full_title=prompt,
                 ),
                 "openai",
                 _codex_session_usage(path, session_id, model),
@@ -448,11 +504,119 @@ def _codex_session_usage(path, session_id, model_hint=""):
     return turns or ([cumulative] if cumulative is not None else [])
 
 
+def _grok_usage(session_dir, session_id, model):
+    """The CLI's own cumulative counters — the last ``usage`` record in
+    ``updates.jsonl``, never the message text."""
+    totals = None
+    try:
+        with open(os.path.join(session_dir, "updates.jsonl"), encoding="utf-8", errors="replace") as f:
+            for i, line in enumerate(f):
+                if i > 20000:
+                    break
+                if '"usage"' not in line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                # JSON-RPC envelope: {"method": ..., "params": {"update": {"usage": {...}}}}
+                params = row.get("params") if isinstance(row, dict) else None
+                update = params.get("update") if isinstance(params, dict) else None
+                usage = update.get("usage") if isinstance(update, dict) else None
+                if isinstance(usage, dict):
+                    totals = usage  # cumulative: the last one wins
+    except OSError:
+        return []
+    if not isinstance(totals, dict):
+        return []
+    return [
+        billing.UsageBucket(
+            provider="xai",
+            model=model or "",
+            session_id=session_id,
+            input_tokens=num(totals.get("inputTokens")),
+            output_tokens=num(totals.get("outputTokens")),
+            cache_read_tokens=num(totals.get("cachedReadTokens")),
+            cache_write_tokens=num(totals.get("cacheCreationTokens")),
+            reasoning_tokens=num(totals.get("reasoningTokens")),
+        )
+    ]
+
+
+def _grok_summary_entries(sessions_dir, *, include_all=False):
+    """Grok CLI >= the summary.json layout: one directory per session under a
+    url-encoded workspace, carrying its own generated title and usage.
+
+    The older builds wrote a single ``signals.json`` per session instead; that
+    reader still runs for anyone on one, and simply finds nothing here.
+    """
+    found = []
+    for workspace in sorted(os.listdir(sessions_dir)):
+        workspace_dir = os.path.join(sessions_dir, workspace)
+        if not os.path.isdir(workspace_dir):
+            continue
+        for name in sorted(os.listdir(workspace_dir)):
+            session_dir = os.path.join(workspace_dir, name)
+            summary_path = os.path.join(session_dir, "summary.json")
+            try:
+                if not os.path.isfile(summary_path):
+                    continue
+                stat = os.stat(summary_path)
+                with open(summary_path, encoding="utf-8") as f:
+                    summary = json.load(f)
+            except (OSError, ValueError):
+                continue
+            if not isinstance(summary, dict):
+                continue
+            found.append((stat.st_mtime, session_dir, name, summary))
+
+    found.sort(reverse=True)
+    out = []
+    for mtime, session_dir, name, summary in found if include_all else found[:_MAX_SESSIONS]:
+        info = summary.get("info") if isinstance(summary.get("info"), dict) else {}
+        session_id = info.get("id") if isinstance(info.get("id"), str) else ""
+        session_id = session_id or name
+        model = summary.get("current_model_id") if isinstance(summary.get("current_model_id"), str) else ""
+        title = summary.get("generated_title") or summary.get("session_summary") or ""
+        folder_title = _basename(info.get("cwd") or "") or "Grok"
+        clipped = _clip_title(title) or folder_title
+        last_activity = epoch_of(summary.get("last_active_at") or summary.get("updated_at")) or int(mtime)
+
+        buckets = _grok_usage(session_dir, session_id, model)
+        tokens = billing.total_tokens(buckets)
+        bits = []
+        if folder_title != clipped:
+            bits.append(folder_title)
+        if tokens > 0:
+            bits.append(f"{_format_tokens(tokens)} tok")
+        if model:
+            bits.append(model)
+        out.append(
+            _with_usage_cost(
+                _entry(
+                    "grok",
+                    clipped,
+                    last_activity,
+                    session_name="Grok CLI",
+                    detail=" · ".join(bits),
+                    session_id=session_id,
+                    full_title=title if isinstance(title, str) else "",
+                ),
+                "grok",
+                buckets,
+            )
+        )
+    return out
+
+
 def _grok_entries(*, include_all=False):
     sessions_dir = os.path.join(grok_home(), "sessions")
     if not os.path.isdir(sessions_dir):
         return []
-    out = []
+    try:
+        out = _grok_summary_entries(sessions_dir, include_all=include_all)
+    except OSError:
+        out = []
     for root, _dirs, files in os.walk(sessions_dir):
         for name in files:
             if name != "signals.json":
@@ -736,23 +900,38 @@ _TERMINAL_TEMPLATES = [
 
 def _matches_query(entry, query):
     needle = query.casefold()
-    return any(needle in entry.get(field, "").casefold() for field in _SEARCH_FIELDS if isinstance(entry.get(field), str))
+    return any(needle in entry.get(field, "").casefold() for field in SEARCH_FIELDS if isinstance(entry.get(field), str))
+
+
+# Keyed by the same source ids ``session_manifest.build_manifests()`` emits, in
+# the same order: the index stores and merges rows per source, so a collector
+# only re-runs when its own store has changed.
+# Collectors are named, not referenced: binding the function objects here would
+# snapshot them at import, so a later rebind of the module attribute (a test
+# double, or any reload) would never be seen by the registry.
+SESSION_COLLECTORS = {
+    "cline": "_cline_entries",
+    "muse": "_muse_entries",
+    "codex": "_codex_entries",
+    "grok": "_grok_entries",
+    "claude": "_claude_entries",
+    "opencode": "_opencode_entries",
+    "antigravity": "_antigravity_entries",
+}
+
+
+def collect_source(source_id):
+    """Every row one collector can see. Raises if its store is unreadable —
+    the index then keeps that source's previous rows rather than dropping them."""
+    return globals()[SESSION_COLLECTORS[source_id]](include_all=True)
 
 
 def _collect_all_sessions():
     merged = []
     complete = True
-    for collector in (
-        _cline_entries,
-        _muse_entries,
-        _codex_entries,
-        _grok_entries,
-        _claude_entries,
-        _opencode_entries,
-        _antigravity_entries,
-    ):
+    for source_id in SESSION_COLLECTORS:
         try:
-            merged.extend(collector(include_all=True))
+            merged.extend(collect_source(source_id))
         except Exception:
             # One broken store must not blank the whole tab or replace its cache.
             complete = False
@@ -772,6 +951,12 @@ def collect_sessions(
         offset=offset,
         source_ids=source_ids,
     )
+
+
+def all_session_rows() -> list[SessionRow]:
+    """Every indexed session row. ``collect_sessions()`` returns one page, so
+    anything that totals spend has to come through here instead."""
+    return SessionCache().rows()
 
 
 def _page_sessions(
@@ -813,8 +998,18 @@ def refresh_sessions(
     source_ids: Sequence[str] | None = None,
 ) -> SessionQueryResult:
     """Refresh all session providers, then return the requested page."""
+    # Session costs are priced from the shared catalog, and `cached_catalog()`
+    # only ever reads it — nothing else fills it, so without this every row
+    # reported "Cost unavailable" until the user hit Refresh pricing by hand.
+    # load_catalog() is TTL-guarded (weekly, 15 min after an error), so this is
+    # a cheap no-op on all but the first run.
+    try:
+        pricing.load_catalog()
+    except Exception:
+        # Pricing is an enrichment; a listing without costs still beats none.
+        pass
     cache = SessionCache()
-    direct_rows = cache.refresh(_collect_all_sessions)
+    direct_rows = cache.refresh(_collect_all_sessions, collect_source)
     if direct_rows is not None:
         return _page_sessions(direct_rows, query, limit, offset, source_ids)
     return cache.query(
@@ -879,13 +1074,15 @@ def _grok_targets():
         return []
     out = []
     for root, _dirs, files in os.walk(sessions_dir):
-        if "signals.json" not in files:
+        # summary.json is the current layout, signals.json the older one.
+        marker = "summary.json" if "summary.json" in files else "signals.json" if "signals.json" in files else ""
+        if not marker:
             continue
         session_id = os.path.basename(root)
         if not session_id or session_id == "sessions":
             continue
         try:
-            mtime = os.path.getmtime(os.path.join(root, "signals.json"))
+            mtime = os.path.getmtime(os.path.join(root, marker))
         except OSError:
             continue
         # The session dir's parent is the url-encoded workspace ("%2F…").

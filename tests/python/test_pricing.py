@@ -5,6 +5,7 @@ import json
 import os
 import tempfile
 import threading
+import unittest
 from unittest import mock
 
 from _support import IsolatedHomeTest, raw_fixture
@@ -551,3 +552,85 @@ class PricingTest(IsolatedHomeTest):
             self.assertIn("claude-test", collect.collect_claude(1_800_000_000)["inputs"]["pricing"])
             self.assertIn("gpt-test", collect.collect_openai(1_800_000_000)["inputs"]["pricing"])
             self.assertEqual(self.fetch.call_count, 2)
+
+
+class CatalogRowsTest(unittest.TestCase):
+    """The searchable rate table the Spend tab renders."""
+
+    def _cache(self, directory, providers):
+        path = os.path.join(directory, pricing.CACHE_FILENAME)
+        with open(path, "w", encoding="utf-8") as stream:
+            json.dump(
+                {
+                    "version": pricing.CACHE_VERSION,
+                    "source": pricing.MODELS_DEV_SOURCE_URL,
+                    "fetchedAt": 10,
+                    "checkedAt": 10,
+                    "providers": providers,
+                    "error": "",
+                },
+                stream,
+            )
+        return path
+
+    def test_reads_the_cache_without_ever_fetching(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self._cache(directory, {"anthropic": {"claude-x": {"input": 3, "output": 15, "cached": 0.3}}})
+            with (
+                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch.object(pricing, "fetch_json", side_effect=AssertionError("rate table fetched")),
+            ):
+                pricing._CATALOG_CACHE.clear()
+                pricing._CURRENT_SNAPSHOTS.clear()
+                result = pricing.catalog_rows()
+
+        self.assertEqual(result["total"], 1)
+        self.assertEqual(result["rows"][0], {"provider": "anthropic", "model": "claude-x", "input": 3.0, "output": 15.0, "cached": 0.3})
+        self.assertEqual(result["unit"], "USD per 1M tokens")
+
+    def test_filters_on_provider_or_model_and_pages_stably(self):
+        providers = {
+            "anthropic": {"claude-a": {"input": 1, "output": 2}, "claude-b": {"input": 1, "output": 2}},
+            "openai": {"gpt-a": {"input": 1, "output": 2}},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            self._cache(directory, providers)
+            with mock.patch("aiusage.config.cache_dir", return_value=directory):
+                pricing._CATALOG_CACHE.clear()
+                pricing._CURRENT_SNAPSHOTS.clear()
+                by_model = pricing.catalog_rows("claude")
+                by_provider = pricing.catalog_rows("openai")
+                first = pricing.catalog_rows("", limit=2, offset=0)
+                second = pricing.catalog_rows("", limit=2, offset=2)
+
+        self.assertEqual([row["model"] for row in by_model["rows"]], ["claude-a", "claude-b"])
+        self.assertEqual([row["model"] for row in by_provider["rows"]], ["gpt-a"])
+        self.assertEqual([row["model"] for row in first["rows"]], ["claude-a", "claude-b"])
+        self.assertTrue(first["hasMore"])
+        self.assertEqual([row["model"] for row in second["rows"]], ["gpt-a"])
+        self.assertFalse(second["hasMore"])
+
+    def test_omits_a_rate_that_is_not_a_finite_number(self):
+        """The in-memory snapshot is not re-validated on read, so the row
+        builder has to drop a non-finite rate rather than render it."""
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, pricing.CACHE_FILENAME)
+            with mock.patch("aiusage.config.cache_dir", return_value=directory):
+                pricing._CATALOG_CACHE.clear()
+                pricing._CURRENT_SNAPSHOTS.clear()
+                pricing._CURRENT_SNAPSHOTS[path] = {
+                    "version": pricing.CACHE_VERSION,
+                    "source": pricing.MODELS_DEV_SOURCE_URL,
+                    "fetchedAt": 10,
+                    "checkedAt": 10,
+                    "providers": {"x": {"bad": {"input": float("inf"), "output": -1}, "good": {"input": 1, "output": 2}}},
+                    "error": "",
+                }
+                try:
+                    rows = {row["model"]: row for row in pricing.catalog_rows()["rows"]}
+                finally:
+                    pricing._CURRENT_SNAPSHOTS.clear()
+
+        self.assertEqual(rows["good"]["input"], 1.0)
+        self.assertNotIn("input", rows["bad"])
+        self.assertNotIn("output", rows["bad"])

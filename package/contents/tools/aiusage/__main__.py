@@ -19,13 +19,15 @@ from .contract import finalize
 from .normalize import normalize
 from .session_index import SOURCE_REGISTRY
 
-USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize | --sessions | --refresh-pricing]
+USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize | --sessions | --refresh-pricing | --pricing-table]
 
   --all                 fetch every provider enabled in the shared settings file
   --provider <ids>      fetch the named providers regardless of the toggles
   --normalize           read one raw envelope on stdin, print the provider object
   --sessions            list recent local agent sessions (no paths or transcripts)
   --refresh-pricing     force one shared pricing catalog refresh
+  --pricing-table       cached model rates as a searchable page
+                        (--query, --limit, --offset)
   --query-only          query the shared session index without refreshing
   --refresh             refresh all session providers before querying
   --query <text>        search all local session records by safe display fields
@@ -105,6 +107,8 @@ def main(argv):
             mode = "sessions"
         elif arg == "--refresh-pricing":
             mode = "refresh-pricing"
+        elif arg == "--pricing-table":
+            mode = "pricing-table"
         elif arg == "--query-only":
             query_only = True
         elif arg == "--refresh":
@@ -217,6 +221,16 @@ def main(argv):
                 offset=offset if offset is not None else 0,
             )
         _emit(result)
+        return 0
+
+    if mode == "pricing-table":
+        _emit(
+            pricing.catalog_rows(
+                query,
+                limit=limit if limit is not None else 60,
+                offset=offset if offset is not None else 0,
+            )
+        )
         return 0
 
     if mode == "refresh-pricing":

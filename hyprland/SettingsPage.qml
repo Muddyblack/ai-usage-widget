@@ -110,6 +110,10 @@ ColumnLayout {
                 label: page.shell.i18n("Providers")
             },
             {
+                id: "local",
+                label: page.shell.i18n("Local Models")
+            },
+            {
                 id: "views",
                 label: page.shell.i18n("Views")
             },
@@ -139,7 +143,9 @@ ColumnLayout {
         Repeater {
             // Labels, accents and key names all come from ProviderRegistry.js,
             // so adding a provider there is enough to make it configurable here.
-            model: page.shell.allProviders
+            model: (page.shell.allProviders || []).filter(function (p) {
+                return p.id !== "selfhosted";
+            })
 
             ProviderSettingRow {
                 required property var modelData
@@ -152,6 +158,174 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.topMargin: 6
             text: page.shell.i18n("Expand a provider for its API key and options. Keys are stored in %1; leave one blank to use env vars or an existing CLI login.", page.shell.configPath)
+            font.pixelSize: 9
+            opacity: 0.4
+            color: "#f8fafc"
+            wrapMode: Text.WordWrap
+        }
+    }
+
+    // ── Local Models ─────────────────────────────────────────────────────────
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 12
+        visible: page.section === "local"
+
+        // Master toggle row
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+
+            Rectangle {
+                Layout.preferredWidth: 26
+                Layout.preferredHeight: 26
+                radius: 6
+                color: Qt.rgba(0.22, 0.74, 0.97, 0.15)
+
+                Image {
+                    anchors.centerIn: parent
+                    width: 15
+                    height: 15
+                    source: page.shell.iconDir ? (page.shell.iconDir + "local-models.svg") : ""
+                    sourceSize.width: 15
+                    sourceSize.height: 15
+                    fillMode: Image.PreserveAspectFit
+                }
+            }
+
+            ColumnLayout {
+                spacing: 1
+                Text {
+                    text: page.shell.i18n("Local Models")
+                    font.bold: true
+                    font.pixelSize: 12
+                    color: "#f8fafc"
+                }
+                Text {
+                    text: page.shell.i18n("Monitor Ollama, vLLM, or llama.cpp servers")
+                    font.pixelSize: 10
+                    opacity: 0.5
+                    color: "#f8fafc"
+                }
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            StyledToggle {
+                checked: page.shell.providerEnabled("selfhosted")
+                onToggled: {
+                    page.shell.setSetting("providers", "selfhosted", checked);
+                    page.shell.refresh();
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            height: 1
+            color: Qt.rgba(1, 1, 1, 0.08)
+        }
+
+        // Server URLs
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 4
+
+            SectionLabel {
+                text: page.shell.i18n("Server URLs")
+            }
+
+            QC.TextField {
+                Layout.fillWidth: true
+                implicitHeight: 28
+                color: "#f8fafc"
+                font.pixelSize: 11
+                text: page.shell.settings.selfhostedEndpoint || ""
+                placeholderText: page.shell.i18n("e.g. http://127.0.0.1:11434, http://127.0.0.1:8000")
+                placeholderTextColor: Qt.rgba(1, 1, 1, 0.3)
+                background: Rectangle {
+                    radius: 5
+                    color: Qt.rgba(1, 1, 1, 0.06)
+                    border.width: 1
+                    border.color: parent.activeFocus ? Qt.rgba(0.22, 0.74, 0.97, 0.6) : Qt.rgba(1, 1, 1, 0.12)
+                }
+                onEditingFinished: {
+                    page.shell.setSetting2("selfhostedEndpoint", text.trim());
+                    page.shell.refresh();
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: page.shell.i18n("Separate multiple endpoints with commas. Leave empty to auto-discover Ollama (:11434), vLLM (:8000), and llama.cpp (:8080).")
+                font.pixelSize: 9
+                opacity: 0.45
+                color: "#f8fafc"
+                wrapMode: Text.WordWrap
+            }
+        }
+
+        // Engine and optional token
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+
+            ColumnLayout {
+                Layout.preferredWidth: 120
+                spacing: 4
+
+                SectionLabel {
+                    text: page.shell.i18n("Engine")
+                }
+
+                SettingCombo {
+                    Layout.fillWidth: true
+                    model: ["auto", "ollama", "vllm", "llama.cpp"]
+                    currentIndex: Math.max(0, model.indexOf(page.shell.settings.selfhostedEngine || "auto"))
+                    onActivated: {
+                        page.shell.setSetting2("selfhostedEngine", currentText);
+                        page.shell.refresh();
+                    }
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 4
+
+                SectionLabel {
+                    text: page.shell.i18n("Bearer Token (optional)")
+                }
+
+                QC.TextField {
+                    Layout.fillWidth: true
+                    implicitHeight: 26
+                    color: "#f8fafc"
+                    font.pixelSize: 11
+                    echoMode: TextInput.Password
+                    text: (page.shell.settings.keys && page.shell.settings.keys.selfhosted) || ""
+                    placeholderText: page.shell.i18n("Optional auth token")
+                    placeholderTextColor: Qt.rgba(1, 1, 1, 0.3)
+                    background: Rectangle {
+                        radius: 5
+                        color: Qt.rgba(1, 1, 1, 0.06)
+                        border.width: 1
+                        border.color: parent.activeFocus ? Qt.rgba(0.22, 0.74, 0.97, 0.6) : Qt.rgba(1, 1, 1, 0.12)
+                    }
+                    onEditingFinished: {
+                        page.shell.setSetting("keys", "selfhosted", text.trim());
+                        page.shell.refresh();
+                    }
+                }
+            }
+        }
+
+        Text {
+            Layout.fillWidth: true
+            Layout.topMargin: 4
+            text: page.shell.i18n("Token counters reflect usage since server start. GPU VRAM tracking is enabled automatically where supported.")
             font.pixelSize: 9
             opacity: 0.4
             color: "#f8fafc"

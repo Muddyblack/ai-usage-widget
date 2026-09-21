@@ -18,6 +18,38 @@ ColumnLayout {
     readonly property string searchQuery: (filterText || "").trim()
     readonly property int sessionsTotal: shell.sessionsTotal || 0
     property double clockMs: Date.now()
+    readonly property int sessionsLimit: shell.sessionsLimit || 60
+    readonly property int sessionsOffset: shell.sessionsOffset || 0
+    readonly property int totalPages: Math.max(1, Math.ceil(sessionsTotal / sessionsLimit))
+    readonly property int currentPage: Math.min(totalPages, Math.max(1, Math.floor(sessionsOffset / sessionsLimit) + 1))
+
+    function paginationItems(current, total) {
+        if (total <= 1)
+            return [];
+        if (total <= 7) {
+            var items = [];
+            for (var i = 1; i <= total; i++)
+                items.push(i);
+            return items;
+        }
+        if (current <= 4)
+            return [1, 2, 3, 4, 5, "…", total];
+        if (current >= total - 3)
+            return [1, "…", total - 4, total - 3, total - 2, total - 1, total];
+        return [1, "…", current - 1, current, current + 1, "…", total];
+    }
+
+    function goToPage(pageNumber) {
+        if (page.loading)
+            return;
+        var p = Math.max(1, Math.min(pageNumber, totalPages));
+        var targetOffset = (p - 1) * sessionsLimit;
+        if (targetOffset === sessionsOffset && sessions.length > 0)
+            return;
+        listFlick.contentY = 0;
+        if (typeof shell.querySessions === "function")
+            shell.querySessions(page.searchQuery, targetOffset, false, page.selectedSourceIds);
+    }
     readonly property var sessionSources: shell.sessionsSources || []
     readonly property var selectedSourceIds: shell.sessionsSourceIds || []
     readonly property bool sourceSelectionIsAll: selectedSourceIds.length === 0
@@ -84,6 +116,68 @@ ColumnLayout {
         page.setSourceSelection(SessionSources.toggled(page.selectedSourceIds, id, checked, page.sessionSources));
     }
 
+    function sourceIcon(id) {
+        if (!id)
+            return shell.iconSource || "";
+        var iconDir = shell.iconDir || (Qt.resolvedUrl("../package/contents/icons/").toString());
+        if (id === "codex")
+            return iconDir + "codex.svg";
+        if (id === "opencode")
+            return iconDir + "ollama.svg";
+        var p = shell.providerById ? shell.providerById(id) : null;
+        if (p && shell.providerIcon) {
+            var icon = shell.providerIcon(p);
+            if (icon)
+                return icon;
+        }
+        var fileMap = {
+            "claude": "claude-color.svg",
+            "antigravity": "antigravity-color.svg",
+            "openai": "codex.svg",
+            "cline": "cline.svg",
+            "muse": "muse-color.svg",
+            "grok": "grok.svg",
+            "cursor": "cursor.svg",
+            "copilot": "githubcopilot.svg",
+            "kimi": "kimi.svg",
+            "kiro": "kiro.svg",
+            "deepseek": "deepseek-color.svg",
+            "mistral": "mistral-color.svg",
+            "openrouter": "openrouter.svg",
+            "zai": "zai.svg"
+        };
+        if (fileMap[id])
+            return iconDir + fileMap[id];
+        return "";
+    }
+
+    function sourceColor(id) {
+        if (!id)
+            return "#a78bfa";
+        var p = shell.providerById ? shell.providerById(id) : null;
+        if (p && p.accent)
+            return p.accent;
+        var colorMap = {
+            "claude": "#cc785c",
+            "antigravity": "#4285f4",
+            "openai": "#10a37f",
+            "codex": "#10a37f",
+            "cline": "#007acc",
+            "muse": "#0064e0",
+            "grok": "#ef4444",
+            "opencode": "#38bdf8",
+            "cursor": "#e6e6e6",
+            "copilot": "#8b5cf6",
+            "kimi": "#1e3a8a",
+            "kiro": "#8b5cf6",
+            "deepseek": "#4f8cff",
+            "mistral": "#ff7000",
+            "openrouter": "#9333ea",
+            "zai": "#126ef4"
+        };
+        return colorMap[id] || "#a78bfa";
+    }
+
     function reconcileDisplayedSessions() {
         if (typeof shell.reconcileSessions === "function")
             shell.reconcileSessions(page.searchQuery, page.selectedSourceIds);
@@ -127,47 +221,6 @@ ColumnLayout {
     }
 
     RowLayout {
-        Layout.fillWidth: true
-        Text {
-            text: shell.i18n("Sessions")
-            font.bold: true
-            font.pixelSize: 14
-            color: "#f8fafc"
-        }
-        Item {
-            Layout.fillWidth: true
-        }
-        Text {
-            text: page.loading ? shell.i18n("Refreshing…") : shell.i18np("%1 local session", "%1 local sessions", page.sessionsTotal)
-            font.pixelSize: 10
-            opacity: 0.5
-            color: "#f8fafc"
-        }
-        Rectangle {
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 26
-            radius: 6
-            color: refreshMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.11) : "transparent"
-            Text {
-                anchors.centerIn: parent
-                text: "⟳"
-                color: "#e2e8f0"
-                font.pixelSize: 14
-                opacity: refreshMouse.containsMouse ? 1 : 0.6
-            }
-            MouseArea {
-                id: refreshMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    page.reconcileDisplayedSessions();
-                }
-            }
-        }
-    }
-
-    RowLayout {
         visible: page.sessions.length > 0 || page.searchQuery !== "" || searchTimer.running || page.loading || page.sessionSources.length > 0
         Layout.fillWidth: true
         spacing: 6
@@ -206,19 +259,19 @@ ColumnLayout {
         SettingsButton {
             id: sourceSelectorButton
             visible: page.sessionSources.length > 0
-            Layout.preferredWidth: 112
-            Layout.minimumWidth: 78
-            Layout.maximumWidth: 132
-            text: page.sourceSummary
+            Layout.preferredWidth: 124
+            Layout.minimumWidth: 86
+            Layout.maximumWidth: 145
+            text: page.sourceSummary + "  ▾"
             Accessible.name: page.shell.i18n("Filter sessions by source")
             onClicked: sourcePopup.open()
 
             QC.Popup {
                 id: sourcePopup
-                x: Math.max(0, sourceSelectorButton.width - sourcePopup.width)
+                x: Math.max(-sourceSelectorButton.x, sourceSelectorButton.width - sourcePopup.width)
                 y: sourceSelectorButton.height + 4
-                width: Math.min(220, Math.max(150, page.width))
-                height: Math.min(320, Math.max(1, page.height - sourceSelectorButton.height - 8))
+                width: 204
+                height: Math.min(320, popupCol.implicitHeight + 16)
                 padding: 6
                 focus: true
                 modal: false
@@ -226,22 +279,139 @@ ColumnLayout {
                 onOpened: page.pendingSourceIds = page.selectedSourceIds.slice(0)
                 onClosed: page.commitSourceSelection()
 
+                background: Rectangle {
+                    radius: 10
+                    color: Qt.rgba(0.08, 0.09, 0.12, 0.98)
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.14)
+
+                    Rectangle {
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.margins: 1
+                        height: 1
+                        color: Qt.rgba(1, 1, 1, 0.12)
+                        radius: 10
+                    }
+                }
+
                 contentItem: QC.ScrollView {
                     clip: true
                     QC.ScrollBar.horizontal.policy: QC.ScrollBar.AlwaysOff
+                    QC.ScrollBar.vertical: QC.ScrollBar {
+                        width: 6
+                        policy: QC.ScrollBar.AsNeeded
+                    }
 
                     ColumnLayout {
+                        id: popupCol
                         width: sourcePopup.availableWidth
-                        spacing: 0
+                        spacing: 2
+
                         Repeater {
                             model: page.sourceOptions
-                            delegate: QC.CheckBox {
+
+                            delegate: ColumnLayout {
+                                id: itemCol
                                 required property var modelData
                                 Layout.fillWidth: true
-                                text: modelData.label
-                                checked: modelData.isAll ? page.pendingSourceSelectionIsAll : (page.pendingSourceSelectionIsAll || page.pendingSourceIds.indexOf(modelData.id) >= 0)
-                                Accessible.name: modelData.label
-                                onClicked: modelData.isAll ? page.stageSourceSelection([]) : page.stageToggleSource(modelData.id, checked)
+                                spacing: 0
+
+                                Rectangle {
+                                    id: itemRow
+                                    Layout.fillWidth: true
+                                    height: 30
+                                    radius: 6
+                                    color: itemMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
+
+                                    readonly property bool isChecked: modelData.isAll ? page.pendingSourceSelectionIsAll : (page.pendingSourceSelectionIsAll || page.pendingSourceIds.indexOf(modelData.id) >= 0)
+                                    readonly property color accent: page.sourceColor(modelData.id)
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 120
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: itemMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: modelData.isAll ? page.stageSourceSelection([]) : page.stageToggleSource(modelData.id, !itemRow.isChecked)
+                                    }
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 8
+                                        anchors.rightMargin: 8
+                                        spacing: 8
+
+                                        // Custom styled checkbox
+                                        Rectangle {
+                                            Layout.preferredWidth: 16
+                                            Layout.preferredHeight: 16
+                                            radius: 4
+                                            color: itemRow.isChecked ? Qt.rgba(itemRow.accent.r, itemRow.accent.g, itemRow.accent.b, 0.22) : "transparent"
+                                            border.width: itemRow.isChecked ? 1.5 : 1
+                                            border.color: itemRow.isChecked ? itemRow.accent : Qt.rgba(1, 1, 1, 0.25)
+
+                                            Text {
+                                                anchors.centerIn: parent
+                                                visible: itemRow.isChecked
+                                                text: "✓"
+                                                font.pixelSize: 10
+                                                font.bold: true
+                                                color: itemRow.accent
+                                            }
+                                        }
+
+                                        // Provider Icon
+                                        Image {
+                                            id: srcIcon
+                                            Layout.preferredWidth: 14
+                                            Layout.preferredHeight: 14
+                                            sourceSize.width: 14
+                                            sourceSize.height: 14
+                                            fillMode: Image.PreserveAspectFit
+                                            smooth: true
+                                            source: page.sourceIcon(modelData.id)
+                                            visible: source !== "" && status !== Image.Error
+                                            opacity: itemRow.isChecked ? 1.0 : 0.55
+                                        }
+
+                                        // Fallback dot if no icon
+                                        Rectangle {
+                                            visible: !srcIcon.visible
+                                            Layout.preferredWidth: 8
+                                            Layout.preferredHeight: 8
+                                            radius: 4
+                                            color: itemRow.accent
+                                            opacity: itemRow.isChecked ? 1.0 : 0.55
+                                        }
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: modelData.label
+                                            font.pixelSize: 11
+                                            font.bold: modelData.isAll && itemRow.isChecked
+                                            color: itemRow.isChecked ? "#f8fafc" : Qt.rgba(1, 1, 1, 0.65)
+                                            elide: Text.ElideRight
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+                                    }
+                                }
+
+                                // Subtle divider below "All sources"
+                                Rectangle {
+                                    visible: modelData.isAll
+                                    Layout.fillWidth: true
+                                    Layout.topMargin: 4
+                                    Layout.bottomMargin: 4
+                                    height: 1
+                                    color: Qt.rgba(1, 1, 1, 0.08)
+                                }
                             }
                         }
                     }
@@ -295,6 +465,7 @@ ColumnLayout {
     Flickable {
         id: listFlick
         Layout.fillWidth: true
+        Layout.rightMargin: 8
         Layout.preferredHeight: Math.min(360, listColumn.implicitHeight)
         visible: page.displayedSessions.length > 0
         clip: true
@@ -304,13 +475,32 @@ ColumnLayout {
         interactive: contentHeight > height
 
         QC.ScrollBar.vertical: QC.ScrollBar {
+            id: verticalScrollBar
             policy: listFlick.interactive ? QC.ScrollBar.AsNeeded : QC.ScrollBar.AlwaysOff
-            width: 6
+            width: 12
+            contentItem: Rectangle {
+                implicitWidth: 6
+                implicitHeight: 32
+                radius: 3
+                color: "#f8fafc"
+                opacity: verticalScrollBar.pressed ? 0.6 : (verticalScrollBar.hovered ? 0.45 : 0.25)
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 150
+                    }
+                }
+            }
+            background: Rectangle {
+                implicitWidth: 12
+                color: "#f8fafc"
+                opacity: verticalScrollBar.hovered ? 0.08 : 0.04
+                radius: 6
+            }
         }
 
         ColumnLayout {
             id: listColumn
-            width: listFlick.width
+            width: listFlick.width - (verticalScrollBar.visible ? (verticalScrollBar.width + 4) : 0)
             spacing: 10
 
             Repeater {
@@ -455,14 +645,121 @@ ColumnLayout {
         }
     }
 
-    SettingsButton {
-        visible: shell.sessionsHasMore === true
+    // Numbered pages rather than an ever-growing "load more" list: the popup
+    // keeps one page of rows, so its height stays put no matter how deep the
+    // history goes. Mirrors the Plasma tab's control.
+    RowLayout {
+        id: paginationRow
         Layout.fillWidth: true
-        text: shell.i18n("Load more")
-        enabled: !page.loading
-        onClicked: {
-            if (typeof shell.loadMoreSessions === "function")
-                shell.loadMoreSessions();
+        Layout.topMargin: 2
+        visible: page.totalPages > 1 && page.sessions.length > 0
+        spacing: 4
+
+        Item {
+            Layout.fillWidth: true
+        }
+
+        Rectangle {
+            id: prevBtn
+            implicitWidth: 26
+            implicitHeight: 26
+            radius: 6
+            readonly property bool active: !page.loading && page.currentPage > 1
+            color: prevMouse.containsMouse && active ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.04)
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.08)
+            opacity: active ? 1.0 : 0.35
+
+            Text {
+                anchors.centerIn: parent
+                text: "‹"
+                font.pixelSize: 14
+                font.bold: true
+                color: "#f8fafc"
+            }
+
+            MouseArea {
+                id: prevMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: prevBtn.active ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onClicked: {
+                    if (prevBtn.active)
+                        page.goToPage(page.currentPage - 1);
+                }
+            }
+        }
+
+        Repeater {
+            model: page.paginationItems(page.currentPage, page.totalPages)
+
+            Rectangle {
+                id: pageBtn
+                required property var modelData
+                readonly property bool isEllipsis: modelData === "…"
+                readonly property bool isCurrent: !isEllipsis && Number(modelData) === page.currentPage
+                implicitWidth: isEllipsis ? 18 : 26
+                implicitHeight: 26
+                radius: 6
+                color: isCurrent ? "#38bdf8" : ((pageMouse.containsMouse && !isEllipsis && !page.loading) ? Qt.rgba(1, 1, 1, 0.12) : (isEllipsis ? "transparent" : Qt.rgba(1, 1, 1, 0.04)))
+                border.width: isEllipsis ? 0 : 1
+                border.color: isCurrent ? "transparent" : Qt.rgba(1, 1, 1, 0.08)
+
+                Text {
+                    anchors.centerIn: parent
+                    text: pageBtn.modelData
+                    font.bold: pageBtn.isCurrent
+                    font.pixelSize: pageBtn.isEllipsis ? 12 : 11
+                    color: pageBtn.isCurrent ? "#0b1220" : "#f8fafc"
+                    opacity: pageBtn.isEllipsis ? 0.45 : (page.loading ? 0.5 : 1.0)
+                }
+
+                MouseArea {
+                    id: pageMouse
+                    anchors.fill: parent
+                    hoverEnabled: !pageBtn.isEllipsis
+                    cursorShape: (!pageBtn.isEllipsis && !pageBtn.isCurrent && !page.loading) ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: {
+                        if (!pageBtn.isEllipsis && !page.loading)
+                            page.goToPage(Number(pageBtn.modelData));
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            id: nextBtn
+            implicitWidth: 26
+            implicitHeight: 26
+            radius: 6
+            readonly property bool active: !page.loading && page.currentPage < page.totalPages
+            color: nextMouse.containsMouse && active ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.04)
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.08)
+            opacity: active ? 1.0 : 0.35
+
+            Text {
+                anchors.centerIn: parent
+                text: "›"
+                font.pixelSize: 14
+                font.bold: true
+                color: "#f8fafc"
+            }
+
+            MouseArea {
+                id: nextMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: nextBtn.active ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onClicked: {
+                    if (nextBtn.active)
+                        page.goToPage(page.currentPage + 1);
+                }
+            }
+        }
+
+        Item {
+            Layout.fillWidth: true
         }
     }
 

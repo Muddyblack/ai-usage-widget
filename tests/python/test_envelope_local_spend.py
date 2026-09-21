@@ -6,6 +6,12 @@ import _support  # noqa: F401 — puts the backend package on sys.path
 from aiusage import envelope
 
 
+def _metered(local_spend):
+    """Only the metered groups. The plan-covered split is covered by
+    test_billing_mode; these tests are about the actual/estimated rollup."""
+    return {key: value for key, value in local_spend.items() if key in ("actual", "estimated")}
+
+
 class LocalSpendEnvelopeTest(unittest.TestCase):
     def build(self, sessions):
         provider = {
@@ -16,7 +22,7 @@ class LocalSpendEnvelopeTest(unittest.TestCase):
         with (
             mock.patch.object(envelope, "collect", return_value={}),
             mock.patch.object(envelope, "normalize", return_value=provider),
-            mock.patch("aiusage.sessions.collect_sessions", return_value={"sessions": sessions}),
+            mock.patch("aiusage.sessions.all_session_rows", return_value=sessions),
         ):
             return envelope.build(["claude"], now=1_700_000_000)
 
@@ -24,7 +30,7 @@ class LocalSpendEnvelopeTest(unittest.TestCase):
         result = self.build([])
 
         self.assertEqual(
-            result["localSpend"],
+            _metered(result["localSpend"]),
             {"actual": {"costStatus": "unavailable"}, "estimated": {"costStatus": "unavailable"}},
         )
 
@@ -45,7 +51,7 @@ class LocalSpendEnvelopeTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            result["localSpend"],
+            _metered(result["localSpend"]),
             {
                 "actual": {
                     "totalUSD": 0.42,
@@ -210,7 +216,7 @@ class LocalSpendEnvelopeTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            result["localSpend"],
+            _metered(result["localSpend"]),
             {
                 "actual": {
                     "totalUSD": 0.42,
@@ -232,7 +238,7 @@ class LocalSpendEnvelopeTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            result["localSpend"],
+            _metered(result["localSpend"]),
             {
                 "actual": {
                     "totalUSD": 0.42,
@@ -381,7 +387,7 @@ class LocalSpendEnvelopeTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            result["localSpend"],
+            _metered(result["localSpend"]),
             {"actual": {"costStatus": "unavailable"}, "estimated": {"costStatus": "unavailable"}},
         )
 
@@ -399,7 +405,7 @@ class LocalSpendEnvelopeTest(unittest.TestCase):
         result = self.build(invalid)
 
         self.assertEqual(
-            result["localSpend"],
+            _metered(result["localSpend"]),
             {"actual": {"costStatus": "unavailable"}, "estimated": {"costStatus": "unavailable"}},
         )
 
@@ -408,12 +414,12 @@ class LocalSpendEnvelopeTest(unittest.TestCase):
         with (
             mock.patch.object(envelope, "collect", return_value={}),
             mock.patch.object(envelope, "normalize", return_value=provider),
-            mock.patch("aiusage.sessions.collect_sessions", side_effect=RuntimeError("broken store")),
+            mock.patch("aiusage.sessions.all_session_rows", side_effect=RuntimeError("broken store")),
         ):
             result = envelope.build(["claude"], now=1_700_000_000)
 
         self.assertEqual(
-            result["localSpend"],
+            _metered(result["localSpend"]),
             {"actual": {"costStatus": "unavailable"}, "estimated": {"costStatus": "unavailable"}},
         )
         self.assertEqual(result["providers"], [provider])
@@ -433,3 +439,30 @@ class LocalSpendEnvelopeTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LocalSpendPagingTest(unittest.TestCase):
+    """The rollup must see every indexed session, not one 60-row page."""
+
+    def test_totals_every_row_beyond_one_page(self):
+        rows = [
+            {
+                "provider": "cline",
+                "source": "cline",
+                "costUSD": 1.0,
+                "costStatus": "exact",
+                "costProvenance": "estimated",
+            }
+            for _ in range(100)
+        ]
+        with mock.patch("aiusage.sessions.all_session_rows", return_value=rows):
+            spend = envelope._local_spend()
+
+        self.assertEqual(spend["estimated"]["totalUSD"], 100.0)
+
+    def test_reads_the_index_unpaged(self):
+        with mock.patch("aiusage.sessions.all_session_rows", return_value=[]) as unpaged:
+            with mock.patch("aiusage.sessions.collect_sessions", side_effect=AssertionError("local spend read a page")):
+                envelope._local_spend()
+
+        unpaged.assert_called_once_with()

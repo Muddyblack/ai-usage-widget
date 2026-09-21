@@ -49,6 +49,10 @@ ColumnLayout {
                 label: i18n("Providers")
             },
             {
+                id: "local",
+                label: i18n("Local Models")
+            },
+            {
                 id: "views",
                 label: i18n("Views")
             },
@@ -78,7 +82,9 @@ ColumnLayout {
             // Labels, brand colours and key names all come from the provider
             // registry in main.qml rather than being restated here, so adding a
             // provider there is enough to make it configurable here.
-            model: rootItem.providers
+            model: (rootItem.providers || []).filter(function (p) {
+                return p.id !== "selfhosted";
+            })
 
             ProviderSettingRow {
                 required property var modelData
@@ -91,6 +97,151 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.topMargin: 4
             text: i18n("Expand a provider for its API key and options. Keys are optional wherever a local CLI login can be read instead.")
+            font.pixelSize: 9
+            opacity: 0.4
+            color: Kirigami.Theme.textColor
+            wrapMode: Text.WordWrap
+        }
+    }
+
+    // ── Local Models ────────────────────────────────────────────
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 10
+        visible: rootItem.settingsTab === "local"
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+
+            Rectangle {
+                Layout.preferredWidth: 26
+                Layout.preferredHeight: 26
+                radius: 6
+                color: Qt.rgba(0.22, 0.74, 0.97, 0.15)
+
+                Kirigami.Icon {
+                    anchors.centerIn: parent
+                    width: 15
+                    height: 15
+                    source: Qt.resolvedUrl("../icons/local-models.svg")
+                }
+            }
+
+            ColumnLayout {
+                spacing: 1
+                PlasmaComponents.Label {
+                    text: i18n("Local Models")
+                    font.bold: true
+                    font.pixelSize: 12
+                    color: Kirigami.Theme.textColor
+                }
+                PlasmaComponents.Label {
+                    text: i18n("Monitor Ollama, vLLM, or llama.cpp servers")
+                    font.pixelSize: 10
+                    opacity: 0.5
+                    color: Kirigami.Theme.textColor
+                }
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            QQC2.Switch {
+                implicitHeight: 20
+                checked: Plasmoid.configuration.selfhostedEnabled === true
+                onToggled: Plasmoid.configuration.selfhostedEnabled = checked
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            height: 1
+            color: Qt.rgba(1, 1, 1, 0.08)
+        }
+
+        // Server URLs
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 3
+
+            PlasmaComponents.Label {
+                text: i18n("Server URLs")
+                font.bold: true
+                font.pixelSize: 10
+                opacity: 0.6
+                color: Kirigami.Theme.textColor
+            }
+
+            QQC2.TextField {
+                Layout.fillWidth: true
+                placeholderText: i18n("e.g. http://127.0.0.1:11434, http://127.0.0.1:8000")
+                text: Plasmoid.configuration.selfhostedEndpoint || ""
+                onEditingFinished: Plasmoid.configuration.selfhostedEndpoint = text.trim()
+            }
+
+            PlasmaComponents.Label {
+                Layout.fillWidth: true
+                text: i18n("Separate multiple endpoints with commas. Leave empty to auto-discover Ollama (:11434), vLLM (:8000), and llama.cpp (:8080).")
+                font.pixelSize: 9
+                opacity: 0.45
+                color: Kirigami.Theme.textColor
+                wrapMode: Text.WordWrap
+            }
+        }
+
+        // Engine & Bearer token
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+
+            ColumnLayout {
+                Layout.preferredWidth: 120
+                spacing: 3
+
+                PlasmaComponents.Label {
+                    text: i18n("Engine")
+                    font.bold: true
+                    font.pixelSize: 10
+                    opacity: 0.6
+                    color: Kirigami.Theme.textColor
+                }
+
+                QQC2.ComboBox {
+                    Layout.fillWidth: true
+                    model: ["auto", "ollama", "vllm", "llama.cpp"]
+                    currentIndex: Math.max(0, model.indexOf(Plasmoid.configuration.selfhostedEngine || "auto"))
+                    onActivated: Plasmoid.configuration.selfhostedEngine = currentText
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 3
+
+                PlasmaComponents.Label {
+                    text: i18n("Bearer Token (optional)")
+                    font.bold: true
+                    font.pixelSize: 10
+                    opacity: 0.6
+                    color: Kirigami.Theme.textColor
+                }
+
+                QQC2.TextField {
+                    Layout.fillWidth: true
+                    echoMode: TextInput.Password
+                    placeholderText: i18n("Optional auth token")
+                    text: Plasmoid.configuration.selfhostedKey || ""
+                    onEditingFinished: Plasmoid.configuration.selfhostedKey = text.trim()
+                }
+            }
+        }
+
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            Layout.topMargin: 4
+            text: i18n("Token counters reflect usage since server start. GPU VRAM tracking is enabled automatically where supported.")
             font.pixelSize: 9
             opacity: 0.4
             color: Kirigami.Theme.textColor

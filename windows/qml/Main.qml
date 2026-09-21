@@ -19,7 +19,7 @@ Window {
     id: root
 
     width: 460
-    height: Math.min(680, popupContent.height + 40)
+    height: Math.min(720, popupContent.height + 40)
     visible: false
     color: "transparent"
     flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
@@ -890,7 +890,7 @@ Window {
         contentWidth: width
         contentHeight: popupContent.height
         boundsBehavior: Flickable.StopAtBounds
-        interactive: contentHeight > height
+        interactive: Math.round(contentHeight) > Math.round(height) + 1
 
         QC.ScrollBar.vertical: QC.ScrollBar {
             policy: contentFlick.interactive ? QC.ScrollBar.AsNeeded : QC.ScrollBar.AlwaysOff

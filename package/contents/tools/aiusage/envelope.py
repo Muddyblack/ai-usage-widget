@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from . import config
 from .collect import collect
-from .contract import SCHEMA_VERSION, provider_error, status_summary
+from .contract import SCHEMA_VERSION, finite_number, provider_error, status_summary
 from .normalize import normalize
 
 # Name and accent for a provider whose fetch raised — the ones its normalizer
@@ -39,26 +39,6 @@ _CRASH_LABELS = {
 # Shared with the Swift decoder: permit binary-float roundoff only, not a USD mismatch.
 _MIXED_COST_REL_TOLERANCE = 1e-9
 _MIXED_COST_ABS_TOLERANCE = 1e-12
-
-
-def _positive_finite(value):
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return None
-    try:
-        number = float(value)
-    except (OverflowError, TypeError, ValueError):
-        return None
-    return number if math.isfinite(number) and number > 0 else None
-
-
-def _non_negative_finite(value):
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return None
-    try:
-        number = float(value)
-    except (OverflowError, TypeError, ValueError):
-        return None
-    return number if math.isfinite(number) and number >= 0 else None
 
 
 def enabled(cfg):
@@ -97,14 +77,14 @@ def _local_contributions(session, provenance):
     session_provenance = session.get("costProvenance")
     mixed = session_provenance == "mixed"
     if session_provenance == provenance:
-        cost = _positive_finite(session.get("costUSD"))
+        cost = finite_number(session.get("costUSD"), minimum=0) or None
     elif mixed:
-        parent_cost = _non_negative_finite(session.get("costUSD"))
+        parent_cost = finite_number(session.get("costUSD"), minimum=0)
         breakdown = session.get("costBreakdown")
         if not isinstance(breakdown, dict):
             return []
-        actual_cost = _non_negative_finite(breakdown.get("actualUSD"))
-        estimated_cost = _non_negative_finite(breakdown.get("estimatedUSD"))
+        actual_cost = finite_number(breakdown.get("actualUSD"), minimum=0)
+        estimated_cost = finite_number(breakdown.get("estimatedUSD"), minimum=0)
         if (
             parent_cost is None
             or actual_cost is None
@@ -131,11 +111,18 @@ def _local_contributions(session, provenance):
     return [contribution] if contribution is not None else []
 
 
-def _local_spend_group(sessions, provenance):
+def _billing_mode(session):
+    mode = session.get("costBilling") if isinstance(session, dict) else None
+    return mode if mode in ("subscription", "api") else "api"
+
+
+def _local_spend_group(sessions, provenance, billing="api"):
     totals = {}
     partial = set()
     costs = []
     for session in sessions:
+        if _billing_mode(session) != billing:
+            continue
         for rollup, cost, status in _local_contributions(session, provenance):
             totals[rollup] = totals.get(rollup, 0) + cost
             costs.append(cost)
@@ -166,18 +153,24 @@ def _local_spend_group(sessions, provenance):
 
 
 def _local_spend():
-    from .sessions import collect_sessions
+    from .sessions import all_session_rows
 
     try:
-        result = collect_sessions()
-        sessions = result.get("sessions") or []
+        # Every row, not ``collect_sessions()``'s first page: a paged total
+        # would silently under-report spend on a machine with many sessions.
+        sessions = all_session_rows()
     except Exception:  # noqa: BLE001  # noqa: BROAD_EXCEPT_OK
         sessions = []
     if not isinstance(sessions, list):
         sessions = []
     return {
+        # Money owed on metered keys.
         "actual": _local_spend_group(sessions, "actual"),
         "estimated": _local_spend_group(sessions, "estimated"),
+        # What plan-covered work would have cost on the API. Never added to the
+        # two above: a Pro/Max or ChatGPT plan already paid for it.
+        "subscription": _local_spend_group(sessions, "estimated", billing="subscription"),
+        "subscriptionActual": _local_spend_group(sessions, "actual", billing="subscription"),
     }
 
 

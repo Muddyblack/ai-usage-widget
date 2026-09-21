@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 import os
 import re
 import shutil
@@ -64,17 +63,21 @@ def _cli_database_path() -> str:
 
 def discover_database_paths() -> list[str]:
     explicit = os.environ.get("OPENCODE_DB", "").strip()
-    candidates: list[str] = []
     if explicit:
         path = _existing_file(explicit)
         return [path] if path else []
-    cli_path = _cli_database_path()
-    if cli_path:
-        candidates.append(cli_path)
+    candidates: list[str] = []
     for base in paths.data_home_dirs():
         for directory in (Path(base), Path(base) / "opencode"):
             candidates.extend(str(path) for path in sorted(directory.glob("opencode*.db")) if path.is_file())
-    return list(dict.fromkeys(candidates))
+    if candidates:
+        return list(dict.fromkeys(candidates))
+    # Only when the standard data directories hold nothing: `opencode db path`
+    # spawns the whole CLI, which is slow and opens the database read-write.
+    # That bumps its mtime, so asking every poll made the session index treat
+    # OpenCode as changed every time and re-scan it forever.
+    cli_path = _cli_database_path()
+    return [cli_path] if cli_path else []
 
 
 @contextmanager
@@ -105,9 +108,9 @@ def _usage_schema(connection: sqlite3.Connection) -> tuple[bool, bool, bool]:
 
 
 def _seconds(value: SQLiteValue) -> int:
-    if type(value) not in (int, float) or not math.isfinite(value):
+    number = finite_number(value)
+    if number is None:
         return 0
-    number = float(value)
     if number >= 100_000_000_000:
         number /= 1000
     return int(number)
@@ -124,13 +127,9 @@ def _provider_id(value: SQLiteValue) -> str:
     return provider
 
 
-def _finite(value: SQLiteValue) -> float | None:
-    return finite_number(value)
-
-
 def _nonnegative(value: SQLiteValue) -> float:
-    number = finite_number(value, minimum=0)
-    return number if number is not None else 0
+    """A token count from SQLite: anything unusable counts as none."""
+    return finite_number(value, minimum=0) or 0
 
 
 def _aggregate_bucket(row, session_id: str) -> billing.UsageBucket | None:
@@ -138,9 +137,7 @@ def _aggregate_bucket(row, session_id: str) -> billing.UsageBucket | None:
     model = _text(row[1])
     if not provider or not model:
         return None
-    provider_cost = _finite(row[2])
-    if provider_cost is not None and provider_cost < 0:
-        provider_cost = None
+    provider_cost = finite_number(row[2], minimum=0)
     input_tokens = _nonnegative(row[3])
     output_tokens = _nonnegative(row[4])
     cache_read_tokens = _nonnegative(row[5])

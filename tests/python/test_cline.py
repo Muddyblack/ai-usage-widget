@@ -78,7 +78,7 @@ class ClineRegressionTest(unittest.TestCase):
             ),
         ):
             local_session = sessions._cline_entries()[0]
-            with mock.patch("aiusage.sessions.collect_sessions", return_value={"sessions": [local_session]}):
+            with mock.patch("aiusage.sessions.all_session_rows", return_value=[local_session]):
                 local_spend = envelope._local_spend()
 
         self.assertEqual(provider["details"]["stats"]["totalCostUSD"], 0.55)

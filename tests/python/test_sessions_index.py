@@ -75,9 +75,11 @@ def _connection(
     connection = mock.MagicMock(spec=sqlite3.Connection)
     connection.__enter__.return_value = connection
 
-    def execute(statement: str, *parameters) -> list[tuple[str, int, int]]:
+    def execute(statement: str, *parameters) -> list[tuple[str, int, int, int]]:
         if statement.startswith("SELECT source_key, mtime_ns, size"):
-            return stored
+            # source_order matches the scan order, so an unchanged manifest
+            # stays unmutated.
+            return [(*row, order) for order, row in enumerate(stored)]
         if statement.startswith("PRAGMA wal_checkpoint("):
             checkpoints.append(statement.partition("(")[2][:-1])
             events.append(f"checkpoint:{checkpoints[-1]}")
@@ -305,6 +307,56 @@ class SessionIndexTest(unittest.TestCase):
 
         self.assertEqual(calls, ["one"])
         self.assertEqual(result["total"], 1)
+
+
+
+def _titled_parser(title: str) -> Parser:
+    def parse(source: Source) -> list[Row]:
+        return [
+            {
+                "provider": "test",
+                "title": title,
+                "sessionName": "Fixture",
+                "state": "idle",
+                "lastActivityAt": source.mtime_ns,
+                "detail": "safe",
+                "openKey": "opaque-key",
+            }
+        ]
+
+    return parse
+
+
+class SchemaVersionInvalidationTest(unittest.TestCase):
+    """Cached rows are the product of the parser that produced them, so a
+    parser change has to invalidate them even when no session file moved."""
+
+    def test_a_version_bump_forces_every_source_to_recollect(self):
+        storage = importlib.import_module("aiusage.session_index_storage")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / "sessions.sqlite3"
+            source = _source(root, "one.jsonl", "openai")
+
+            _index_class()(cache).reconcile([source], _titled_parser("old parser title"))
+            self.assertEqual([row["title"] for row in _index_class()(cache).rows()], ["old parser title"])
+
+            # Same source, unchanged on disk: without a bump it is not re-read.
+            _index_class()(cache).reconcile([source], _titled_parser("new parser title"))
+            self.assertEqual([row["title"] for row in _index_class()(cache).rows()], ["old parser title"])
+
+            with mock.patch.object(storage, "_SCHEMA_VERSION", storage._SCHEMA_VERSION + 1):
+                _index_class()(cache).reconcile([source], _titled_parser("new parser title"))
+                self.assertEqual([row["title"] for row in _index_class()(cache).rows()], ["new parser title"])
+
+    def test_an_unchanged_version_keeps_the_cached_rows(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / "sessions.sqlite3"
+            source = _source(root, "one.jsonl", "openai")
+            _index_class()(cache).reconcile([source], _titled_parser("cached"))
+
+            self.assertEqual([row["title"] for row in _index_class()(cache).rows()], ["cached"])
 
 
 if __name__ == "__main__":

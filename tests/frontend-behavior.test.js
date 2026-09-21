@@ -103,7 +103,9 @@ function assertSourcePopupWiring(file, owner) {
     const source = qmlSource(file);
     assert.match(source, new RegExp(`onOpened:\\s*(?:\\{\\s*)?${owner}\\.pendingSourceIds = ${owner}\\.selectedSourceIds\\.slice\\(0\\);?\\s*(?:\\})?`, "s"));
     assert.match(source, new RegExp(`onClosed:\\s*(?:\\{\\s*)?${owner}\\.commitSourceSelection\\(\\);?\\s*(?:\\})?`, "s"));
-    assert.match(source, new RegExp(`checked: [^\\n]*${owner}\\.pendingSourceIds`));
+    // Either a QQC2.CheckBox `checked:` binding or a custom row's `isChecked:`
+    // — both must read the staged selection, not the committed one.
+    assert.match(source, new RegExp(`(?:checked|isChecked): [^\\n]*${owner}\\.pendingSourceIds`));
     assert.doesNotMatch(qmlFunctionBlock(file, "stageToggleSource"), /queryOnly|querySessions/);
     assert.match(source, /ScrollView|Flickable/);
     assert.match(source, /availableHeight|maximumHeight|height: Math\.min/);
@@ -365,9 +367,13 @@ test("upstream provider labels cover every OpenCode-routed provider", () => {
 });
 
 test("spend views identify provider totals and constrain local metadata", () => {
+    // The grand total sits in each frontend's popup header, not in the Spend
+    // view itself, so the figure stays visible while the view scrolls.
+    for (const file of ["package/contents/ui/main.qml", "hyprland/PopupContent.qml"]) {
+        assert.match(fs.readFileSync(path.join(rootDir, file), "utf8"), /Provider\/API total/);
+    }
     for (const file of ["package/contents/ui/SpendTab.qml", "hyprland/SpendPage.qml"]) {
         const source = fs.readFileSync(path.join(rootDir, file), "utf8");
-        assert.match(source, /Provider\/API total/);
         assert.match(source, /maximumLineCount: 1/);
         assert.match(source, /elide: Text\.ElideRight/);
         assert.match(source, /wrapMode: Text\.NoWrap/);
@@ -563,4 +569,114 @@ test("shared Hyprland/Windows page close without changes does not query", () => 
     state.pendingSourceIds = state.selectedSourceIds.slice(0);
     state.commitSourceSelection();
     assert.equal(state.queryCount, 0);
+});
+
+
+test("plan-covered spend is its own row and never joins the metered total", () => {
+    const rows = FeatureTabs.localSpendRows({
+        estimated: {
+            costStatus: "exact",
+            totalUSD: 2,
+            providers: { cline: { costUSD: 2, costStatus: "exact", costProvenance: "estimated" } },
+        },
+        subscription: {
+            costStatus: "exact",
+            totalUSD: 100,
+            providers: { claude: { costUSD: 100, costStatus: "exact", costProvenance: "estimated" } },
+        },
+    });
+
+    const plan = rows.find((row) => row.billing === "subscription");
+    const metered = rows.find((row) => row.billing !== "subscription");
+    assert.ok(plan, "expected a plan-covered row");
+    assert.equal(plan.cost, 100);
+    assert.match(plan.note, /would cost on API/);
+    assert.equal(metered.cost, 2);
+    // Local rows never count toward the provider/API total either way.
+    assert.equal(FeatureTabs.spendTotal(rows, "USD"), 0);
+});
+
+test("session cost info reports the billing mode it was priced under", () => {
+    const plan = FeatureTabs.sessionCostInfo({
+        costUSD: 1.5,
+        costStatus: "exact",
+        costProvenance: "estimated",
+        costBilling: "subscription",
+    });
+    const metered = FeatureTabs.sessionCostInfo({
+        costUSD: 1.5,
+        costStatus: "exact",
+        costProvenance: "estimated",
+    });
+
+    assert.equal(plan.billing, "subscription");
+    assert.equal(metered.billing, "api");
+    assert.equal(FeatureTabs.sessionCostInfo({ costStatus: "unavailable" }).billing, "api");
+});
+
+// ── Model rate table helpers (shared by the Plasma and Quickshell Spend views) ──
+
+test("rateText formats rates, free tiers and missing values distinctly", () => {
+    assert.equal(FeatureTabs.rateText(0), "free");
+    assert.equal(FeatureTabs.rateText(0.25), "$0.250");
+    assert.equal(FeatureTabs.rateText(15), "$15.00");
+    assert.equal(FeatureTabs.rateText(undefined), "—");
+    assert.equal(FeatureTabs.rateText(NaN), "—");
+    assert.equal(FeatureTabs.rateText(Infinity), "—");
+});
+
+test("rateAge buckets the catalog age and stays empty when unknown", () => {
+    const now = 1_700_000_000_000;
+    const at = (secondsAgo) => FeatureTabs.rateAge(now / 1000 - secondsAgo, null, now);
+    assert.equal(at(30), "updated just now");
+    assert.equal(at(7200), "updated 2h ago");
+    assert.equal(at(3 * 86400), "updated 3d ago");
+    assert.equal(at(3 * 604800), "updated 3w ago");
+    // A missing or unusable timestamp renders nothing rather than "1970".
+    assert.equal(FeatureTabs.rateAge(0, null, now), "");
+    assert.equal(FeatureTabs.rateAge(undefined, null, now), "");
+    // A clock skewed behind the cache must not produce a negative age.
+    assert.equal(FeatureTabs.rateAge(now / 1000 + 600, null, now), "updated just now");
+});
+
+test("rateAge routes through the frontend's i18n function", () => {
+    const seen = [];
+    const i18n = (text, arg) => {
+        seen.push([text, arg]);
+        return "T:" + text.replace("%1", arg);
+    };
+    const now = 1_700_000_000_000;
+    assert.equal(FeatureTabs.rateAge(now / 1000 - 7200, i18n, now), "T:updated 2h ago");
+    assert.deepEqual(seen, [["updated %1h ago", 2]]);
+});
+
+test("rate paging arithmetic is stable at the edges", () => {
+    assert.equal(FeatureTabs.ratePageCount(0, 40), 1);
+    assert.equal(FeatureTabs.ratePageCount(676, 40), 17);
+    assert.equal(FeatureTabs.ratePageCount(80, 40), 2);
+    assert.equal(FeatureTabs.ratePageNumber(0, 40, 676), 1);
+    assert.equal(FeatureTabs.ratePageNumber(640, 40, 676), 17);
+    // Never divide by zero, and never report a page past the last one.
+    assert.equal(FeatureTabs.ratePageCount(100, 0), 100);
+    assert.equal(FeatureTabs.ratePageNumber(9999, 40, 676), 17);
+});
+
+test("parseRateTable normalizes payloads and rejects unusable output", () => {
+    const parsed = FeatureTabs.parseRateTable(
+        '{"rows":[{"provider":"anthropic","model":"claude-opus-5","input":15,"output":75}],' +
+        '"total":676,"unit":"USD per 1M tokens","fetchedAt":1789976769,"error":""}\n');
+    assert.equal(parsed.total, 676);
+    assert.equal(parsed.unit, "USD per 1M tokens");
+    assert.equal(parsed.fetchedAt, 1789976769);
+    assert.equal(parsed.rows[0].model, "claude-opus-5");
+    // Unusable output is null so each frontend can pick its own error string.
+    assert.equal(FeatureTabs.parseRateTable(""), null);
+    assert.equal(FeatureTabs.parseRateTable("   "), null);
+    assert.equal(FeatureTabs.parseRateTable("not json"), null);
+    assert.equal(FeatureTabs.parseRateTable("[1,2]").rows.length, 0);
+    // A payload missing fields degrades to empty rather than throwing.
+    const bare = FeatureTabs.parseRateTable("{}");
+    assert.equal(bare.rows.length, 0);
+    assert.equal(bare.total, 0);
+    assert.equal(bare.error, "");
 });

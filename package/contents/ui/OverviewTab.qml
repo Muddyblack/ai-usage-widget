@@ -13,25 +13,6 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 10
 
-    RowLayout {
-        Layout.fillWidth: true
-        PlasmaComponents.Label {
-            text: i18n("Overview")
-            font.bold: true
-            font.pixelSize: 14
-            color: Kirigami.Theme.textColor
-        }
-        Item {
-            Layout.fillWidth: true
-        }
-        PlasmaComponents.Label {
-            text: i18np("%1 provider", "%1 providers", overviewTab.rows.length)
-            font.pixelSize: 10
-            opacity: 0.5
-            color: Kirigami.Theme.textColor
-        }
-    }
-
     readonly property var rows: {
         var out = [];
         var tabs = rootItem.enabledTabs || [];

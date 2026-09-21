@@ -10,6 +10,8 @@ from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any, Callable, Final, Protocol, TypedDict
 
+from .contract import finite_number
+
 # Single source of truth for which public fields are searchable, shared with
 # the fallback (`sessions.py`) search path so the two never drift apart.
 SEARCH_FIELDS: Final = ("provider", "title", "sessionName", "state", "detail")
@@ -30,6 +32,12 @@ SOURCE_REGISTRY: Final = (
     ("opencode", "OpenCode"),
     ("antigravity", "Antigravity"),
 )
+
+
+class SkipSource(Exception):
+    """Raised by a parser to leave one source's stored rows exactly as they are.
+
+    Its metadata is left stale too, so the next reconcile retries it."""
 
 
 class SessionSource(Protocol):
@@ -57,6 +65,7 @@ class SessionRow(_SessionRowCore, total=False):
     costBreakdown: dict
     billingProvider: str
     providerCosts: dict
+    costBilling: str
 
 
 class SessionSourceDescriptor(TypedDict):
@@ -88,10 +97,6 @@ def _text(value: str | int) -> str:
 
 def _timestamp(value: str | int) -> int:
     return value if isinstance(value, int) else int(value)
-
-
-def _finite_cost(value: object) -> float | None:
-    return value if isinstance(value, (int, float)) and not isinstance(value, bool) and value == value and abs(value) != float("inf") else None
 
 
 def _json_or_none(value: object) -> str | None:
@@ -129,7 +134,7 @@ def _redact(rows: Sequence[Mapping[str, Any]]) -> list[SessionRow]:
         cost_status = row.get("costStatus")
         if isinstance(cost_status, str) and cost_status:
             entry["costStatus"] = cost_status
-        cost_usd = _finite_cost(row.get("costUSD"))
+        cost_usd = finite_number(row.get("costUSD"))
         if cost_usd is not None:
             entry["costUSD"] = cost_usd
         cost_provenance = row.get("costProvenance")
@@ -141,6 +146,9 @@ def _redact(rows: Sequence[Mapping[str, Any]]) -> list[SessionRow]:
         billing_provider = row.get("billingProvider")
         if isinstance(billing_provider, str) and billing_provider:
             entry["billingProvider"] = billing_provider
+        cost_billing = row.get("costBilling")
+        if cost_billing in ("subscription", "api"):
+            entry["costBilling"] = cost_billing
         provider_costs = row.get("providerCosts")
         if isinstance(provider_costs, dict):
             entry["providerCosts"] = provider_costs
@@ -174,7 +182,7 @@ def _row_from_columns(row: Sequence[Any]) -> SessionRow:
         entry["fullTitle"] = _text(row[7])
     if row[8]:
         entry["source"] = _text(row[8])
-    cost_usd = _finite_cost(row[9])
+    cost_usd = finite_number(row[9])
     if cost_usd is not None:
         entry["costUSD"] = cost_usd
     if row[10]:
@@ -186,6 +194,8 @@ def _row_from_columns(row: Sequence[Any]) -> SessionRow:
         entry["costBreakdown"] = cost_breakdown
     if row[13]:
         entry["billingProvider"] = _text(row[13])
+    if row[15] in ("subscription", "api"):
+        entry["costBilling"] = _text(row[15])
     provider_costs = _decode_json_or_none(row[14])
     if provider_costs is not None:
         entry["providerCosts"] = provider_costs
@@ -220,10 +230,10 @@ class SessionIndex:
         except OSError:
             pass
 
-    def _open(self) -> sqlite3.Connection:
+    def _open(self, *, discard_stale: bool = False) -> sqlite3.Connection:
         from .session_index_storage import open_index
 
-        return open_index(self._cache_path)
+        return open_index(self._cache_path, discard_stale=discard_stale)
 
     def reconcile(
         self,
@@ -234,12 +244,16 @@ class SessionIndex:
     ) -> None:
         """Refresh changed sources and remove sources absent from the scan."""
         source_map = {_source_key(source): source for source in sources}
-        connection = self._open()
+        connection = self._open(discard_stale=True)
         try:
             with connection:
                 connection.execute("BEGIN IMMEDIATE")
-                stored = {str(row[0]): (int(row[1]), int(row[2])) for row in connection.execute("SELECT source_key, mtime_ns, size FROM source_meta")}
-                stored_orders = {str(row[0]): int(row[1]) for row in connection.execute("SELECT source_key, source_order FROM source_meta")}
+                meta = {
+                    str(row[0]): (int(row[1]), int(row[2]), int(row[3]))
+                    for row in connection.execute("SELECT source_key, mtime_ns, size, source_order FROM source_meta")
+                }
+                stored = {key: (mtime_ns, size) for key, (mtime_ns, size, _order) in meta.items()}
+                stored_orders = {key: order for key, (_mtime_ns, _size, order) in meta.items()}
                 mutated = False
                 for key in stored:
                     if key not in source_map:
@@ -257,8 +271,11 @@ class SessionIndex:
                             (source_order, key),
                         )
                         continue
+                    try:
+                        rows = _redact(parser(source))
+                    except SkipSource:
+                        continue
                     mutated = True
-                    rows = _redact(parser(source))
                     connection.execute(
                         "INSERT INTO source_meta (source_key, mtime_ns, size, source_order) "
                         "VALUES (?, ?, ?, ?) ON CONFLICT(source_key) DO UPDATE SET "
@@ -272,7 +289,7 @@ class SessionIndex:
                         "title, session_name, state, last_activity_at, detail, "
                         "open_key, full_title, source, cost_usd, cost_status, "
                         "cost_provenance, cost_breakdown, billing_provider, "
-                        "provider_costs) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        "provider_costs, cost_billing) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (
                             (
                                 key,
@@ -292,6 +309,7 @@ class SessionIndex:
                                 _json_or_none(row.get("costBreakdown")),
                                 row.get("billingProvider", ""),
                                 _json_or_none(row.get("providerCosts")),
+                                row.get("costBilling", "api"),
                             )
                             for row_order, row in enumerate(rows)
                         ),
@@ -314,7 +332,8 @@ class SessionIndex:
                 "session_rows.state, session_rows.last_activity_at, session_rows.detail, "
                 "session_rows.open_key, session_rows.full_title, session_rows.source, "
                 "session_rows.cost_usd, session_rows.cost_status, session_rows.cost_provenance, "
-                "session_rows.cost_breakdown, session_rows.billing_provider, session_rows.provider_costs "
+                "session_rows.cost_breakdown, session_rows.billing_provider, session_rows.provider_costs, "
+                "session_rows.cost_billing "
                 "FROM session_rows "
                 "LEFT JOIN source_meta ON source_meta.source_key = session_rows.source_key "
                 "ORDER BY source_meta.source_order, session_rows.row_order"
@@ -356,7 +375,8 @@ class SessionIndex:
                 "session_rows.state, session_rows.last_activity_at, session_rows.detail, "
                 "session_rows.open_key, session_rows.full_title, session_rows.source, "
                 "session_rows.cost_usd, session_rows.cost_status, session_rows.cost_provenance, "
-                "session_rows.cost_breakdown, session_rows.billing_provider, session_rows.provider_costs "
+                "session_rows.cost_breakdown, session_rows.billing_provider, session_rows.provider_costs, "
+                "session_rows.cost_billing "
                 "FROM session_rows "
                 "LEFT JOIN source_meta ON source_meta.source_key = session_rows.source_key" + where + " ORDER BY session_rows.last_activity_at DESC, "
                 "source_meta.source_order ASC, session_rows.row_order ASC LIMIT ? OFFSET ?",

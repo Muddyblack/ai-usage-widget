@@ -17,25 +17,6 @@ ColumnLayout {
         return out;
     }
 
-    RowLayout {
-        Layout.fillWidth: true
-        Text {
-            text: shell.i18n("Overview")
-            font.bold: true
-            font.pixelSize: 14
-            color: "#f8fafc"
-        }
-        Item {
-            Layout.fillWidth: true
-        }
-        Text {
-            text: shell.i18np("%1 provider", "%1 providers", page.rows.length)
-            font.pixelSize: 10
-            opacity: 0.5
-            color: "#f8fafc"
-        }
-    }
-
     Text {
         visible: page.rows.length === 0
         Layout.fillWidth: true

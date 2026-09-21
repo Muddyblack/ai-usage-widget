@@ -32,11 +32,38 @@ ColumnLayout {
     property bool activeRefresh: false
     readonly property int sessionsLimit: 60
     property int sessionsTotal: 0
-    property bool sessionsHasMore: false
     property int sessionsOffset: 0
     property int activeOffset: 0
-    property bool activeAppend: false
     property double clockMs: Date.now()
+    readonly property int totalPages: Math.max(1, Math.ceil(sessionsTotal / sessionsLimit))
+    readonly property int currentPage: Math.min(totalPages, Math.max(1, Math.floor(sessionsOffset / sessionsLimit) + 1))
+
+    function paginationItems(current, total) {
+        if (total <= 1)
+            return [];
+        if (total <= 7) {
+            var items = [];
+            for (var i = 1; i <= total; i++)
+                items.push(i);
+            return items;
+        }
+        if (current <= 4)
+            return [1, 2, 3, 4, 5, "…", total];
+        if (current >= total - 3)
+            return [1, "…", total - 4, total - 3, total - 2, total - 1, total];
+        return [1, "…", current - 1, current, current + 1, "…", total];
+    }
+
+    function goToPage(pageNumber) {
+        if (loading)
+            return;
+        var p = Math.max(1, Math.min(pageNumber, totalPages));
+        var targetOffset = (p - 1) * sessionsLimit;
+        if (targetOffset === sessionsOffset && sessions.length > 0)
+            return;
+        sessionsList.positionViewAtBeginning();
+        queryOnly(targetOffset);
+    }
 
     readonly property var displayedSessions: sessions || []
     property var sessionSources: []
@@ -77,11 +104,73 @@ ColumnLayout {
         return i18np("%1 source selected", "%1 sources selected", sessionsTab.selectedSourceIds.length);
     }
 
-    onVisibleChanged: {
-        if (visible) {
-            clockMs = Date.now();
-            refresh();
+    function sourceIcon(id) {
+        if (!id)
+            return Qt.resolvedUrl("../icons/org.muddyblack.aiUsageWidget.svg");
+        var dir = Qt.resolvedUrl("../icons/");
+        if (id === "codex")
+            return dir + "codex.svg";
+        if (id === "opencode")
+            return dir + "ollama.svg";
+        var icon = rootItem.tabIcon ? rootItem.tabIcon(id) : "";
+        if (icon)
+            return icon;
+        var fileMap = {
+            "claude": "claude-color.svg",
+            "antigravity": "antigravity-color.svg",
+            "openai": "codex.svg",
+            "cline": "cline.svg",
+            "muse": "muse-color.svg",
+            "grok": "grok.svg",
+            "cursor": "cursor.svg",
+            "copilot": "githubcopilot.svg",
+            "kimi": "kimi.svg",
+            "kiro": "kiro.svg",
+            "deepseek": "deepseek-color.svg",
+            "mistral": "mistral-color.svg",
+            "openrouter": "openrouter.svg",
+            "zai": "zai.svg"
+        };
+        if (fileMap[id])
+            return dir + fileMap[id];
+        return "";
+    }
+
+    function sourceColor(id) {
+        if (!id)
+            return "#a78bfa";
+        var p = rootItem.providerById ? rootItem.providerById(id) : null;
+        if (p && p.accent)
+            return p.accent;
+        if (rootItem.tabColor) {
+            var col = rootItem.tabColor(id);
+            if (col && col !== "")
+                return col;
         }
+        var colorMap = {
+            "claude": "#cc785c",
+            "antigravity": "#4285f4",
+            "openai": "#10a37f",
+            "codex": "#10a37f",
+            "cline": "#007acc",
+            "muse": "#0064e0",
+            "grok": "#ef4444",
+            "opencode": "#38bdf8",
+            "cursor": "#e6e6e6",
+            "copilot": "#8b5cf6",
+            "kimi": "#1e3a8a",
+            "kiro": "#8b5cf6",
+            "deepseek": "#4f8cff",
+            "mistral": "#ff7000",
+            "openrouter": "#9333ea",
+            "zai": "#126ef4"
+        };
+        return colorMap[id] || "#a78bfa";
+    }
+
+    onVisibleChanged: {
+        if (visible)
+            clockMs = Date.now();
     }
 
     onFilterTextChanged: {
@@ -91,7 +180,6 @@ ColumnLayout {
             requestSerial += 1;
             sessionsOffset = 0;
             sessionsTotal = 0;
-            sessionsHasMore = false;
         }
         searchTimer.restart();
     }
@@ -119,7 +207,6 @@ ColumnLayout {
         sessionsTab.selectedSourceIds = normalized;
         sessionsTab.sessionsOffset = 0;
         sessionsTab.sessionsTotal = 0;
-        sessionsTab.sessionsHasMore = false;
         sessionsTab.queryOnly();
     }
 
@@ -154,6 +241,11 @@ ColumnLayout {
         interval: Math.max(30, rootItem.pollIntervalSec || 300) * 1000
         repeat: true
         running: sessionsTab.visible
+        // Fires the moment the tab becomes visible, including the very first
+        // time. onVisibleChanged cannot cover that: when the popup opens
+        // straight onto Sessions the property is already true at creation, so
+        // it never changes and the list sat empty until a manual refresh.
+        triggeredOnStart: true
         onTriggered: sessionsTab.refresh()
     }
 
@@ -162,31 +254,6 @@ ColumnLayout {
         repeat: true
         running: sessionsTab.visible && sessionsTab.sessions.length > 0
         onTriggered: sessionsTab.clockMs = Date.now()
-    }
-
-    RowLayout {
-        Layout.fillWidth: true
-        PlasmaComponents.Label {
-            text: i18n("Sessions")
-            font.bold: true
-            font.pixelSize: 14
-            color: Kirigami.Theme.textColor
-        }
-        Item {
-            Layout.fillWidth: true
-        }
-        PlasmaComponents.Label {
-            text: sessionsTab.loading ? i18n("Refreshing…") : i18np("%1 local session", "%1 local sessions", sessionsTab.sessionsTotal)
-            font.pixelSize: 10
-            opacity: 0.5
-            color: Kirigami.Theme.textColor
-        }
-        PlasmaComponents.ToolButton {
-            icon.name: "view-refresh"
-            display: PlasmaComponents.AbstractButton.IconOnly
-            onClicked: sessionsTab.refresh()
-            enabled: !sessionsTab.loading
-        }
     }
 
     RowLayout {
@@ -206,10 +273,10 @@ ColumnLayout {
         PlasmaComponents.Button {
             id: sourceSelectorButton
             visible: sessionsTab.sessionSources.length > 0
-            Layout.preferredWidth: 112
-            Layout.minimumWidth: 78
-            Layout.maximumWidth: 132
-            text: sessionsTab.sourceSummary
+            Layout.preferredWidth: 124
+            Layout.minimumWidth: 86
+            Layout.maximumWidth: 145
+            text: sessionsTab.sourceSummary + "  ▾"
             onClicked: sourcePopup.open()
             Accessible.name: i18n("Filter sessions by source")
             PlasmaComponents.ToolTip.text: i18n("Filter sessions by source")
@@ -217,10 +284,10 @@ ColumnLayout {
 
             QQC2.Popup {
                 id: sourcePopup
-                x: Math.max(0, sourceSelectorButton.width - sourcePopup.width)
+                x: Math.max(-sourceSelectorButton.x, sourceSelectorButton.width - sourcePopup.width)
                 y: sourceSelectorButton.height + 4
-                width: Math.min(220, Math.max(150, sessionsTab.width))
-                height: Math.min(320, Math.max(1, sessionsTab.height - sourceSelectorButton.height - 8))
+                width: 204
+                height: Math.min(320, popupCol.implicitHeight + 16)
                 padding: 6
                 focus: true
                 modal: false
@@ -228,22 +295,139 @@ ColumnLayout {
                 onOpened: sessionsTab.pendingSourceIds = sessionsTab.selectedSourceIds.slice(0)
                 onClosed: sessionsTab.commitSourceSelection()
 
+                background: Rectangle {
+                    radius: 10
+                    color: Qt.rgba(0.08, 0.09, 0.12, 0.98)
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.14)
+
+                    Rectangle {
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.margins: 1
+                        height: 1
+                        color: Qt.rgba(1, 1, 1, 0.12)
+                        radius: 10
+                    }
+                }
+
                 contentItem: QQC2.ScrollView {
                     clip: true
                     QQC2.ScrollBar.horizontal.policy: QQC2.ScrollBar.AlwaysOff
+                    QQC2.ScrollBar.vertical: QQC2.ScrollBar {
+                        width: 6
+                        policy: QQC2.ScrollBar.AsNeeded
+                    }
 
                     ColumnLayout {
+                        id: popupCol
                         width: sourcePopup.availableWidth
-                        spacing: 0
+                        spacing: 2
+
                         Repeater {
                             model: sessionsTab.sourceOptions
-                            delegate: QQC2.CheckBox {
+
+                            delegate: ColumnLayout {
+                                id: itemCol
                                 required property var modelData
                                 Layout.fillWidth: true
-                                text: modelData.label
-                                checked: modelData.isAll ? sessionsTab.pendingSourceSelectionIsAll : (sessionsTab.pendingSourceSelectionIsAll || sessionsTab.pendingSourceIds.indexOf(modelData.id) >= 0)
-                                Accessible.name: modelData.label
-                                onClicked: modelData.isAll ? sessionsTab.stageSourceSelection([]) : sessionsTab.stageToggleSource(modelData.id, checked)
+                                spacing: 0
+
+                                Rectangle {
+                                    id: itemRow
+                                    Layout.fillWidth: true
+                                    height: 30
+                                    radius: 6
+                                    color: itemMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
+
+                                    readonly property bool isChecked: modelData.isAll ? sessionsTab.pendingSourceSelectionIsAll : (sessionsTab.pendingSourceSelectionIsAll || sessionsTab.pendingSourceIds.indexOf(modelData.id) >= 0)
+                                    readonly property color accent: sessionsTab.sourceColor(modelData.id)
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 120
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: itemMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: modelData.isAll ? sessionsTab.stageSourceSelection([]) : sessionsTab.stageToggleSource(modelData.id, !itemRow.isChecked)
+                                    }
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 8
+                                        anchors.rightMargin: 8
+                                        spacing: 8
+
+                                        // Custom styled checkbox
+                                        Rectangle {
+                                            Layout.preferredWidth: 16
+                                            Layout.preferredHeight: 16
+                                            radius: 4
+                                            color: itemRow.isChecked ? Qt.rgba(itemRow.accent.r, itemRow.accent.g, itemRow.accent.b, 0.22) : "transparent"
+                                            border.width: itemRow.isChecked ? 1.5 : 1
+                                            border.color: itemRow.isChecked ? itemRow.accent : Qt.rgba(1, 1, 1, 0.25)
+
+                                            Text {
+                                                anchors.centerIn: parent
+                                                visible: itemRow.isChecked
+                                                text: "✓"
+                                                font.pixelSize: 10
+                                                font.bold: true
+                                                color: itemRow.accent
+                                            }
+                                        }
+
+                                        // Provider Icon
+                                        Image {
+                                            id: srcIcon
+                                            Layout.preferredWidth: 14
+                                            Layout.preferredHeight: 14
+                                            sourceSize.width: 14
+                                            sourceSize.height: 14
+                                            fillMode: Image.PreserveAspectFit
+                                            smooth: true
+                                            source: sessionsTab.sourceIcon(modelData.id)
+                                            visible: source !== "" && status !== Image.Error
+                                            opacity: itemRow.isChecked ? 1.0 : 0.55
+                                        }
+
+                                        // Fallback dot if no icon
+                                        Rectangle {
+                                            visible: !srcIcon.visible
+                                            Layout.preferredWidth: 8
+                                            Layout.preferredHeight: 8
+                                            radius: 4
+                                            color: itemRow.accent
+                                            opacity: itemRow.isChecked ? 1.0 : 0.55
+                                        }
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: modelData.label
+                                            font.pixelSize: 11
+                                            font.bold: modelData.isAll && itemRow.isChecked
+                                            color: itemRow.isChecked ? Kirigami.Theme.textColor : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.65)
+                                            elide: Text.ElideRight
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+                                    }
+                                }
+
+                                // Subtle divider below "All sources"
+                                Rectangle {
+                                    visible: modelData.isAll
+                                    Layout.fillWidth: true
+                                    Layout.topMargin: 4
+                                    Layout.bottomMargin: 4
+                                    height: 1
+                                    color: Qt.rgba(1, 1, 1, 0.08)
+                                }
                             }
                         }
                     }
@@ -292,149 +476,277 @@ ColumnLayout {
     // Bounded and independently scrollable: the header above (title, count,
     // search) stays put instead of scrolling away with a long list — the
     // popup as a whole only grows to fit this box, not every row in it.
-    QQC2.ScrollView {
+    ListView {
+        id: sessionsList
         Layout.fillWidth: true
-        Layout.preferredHeight: Math.min(360, listColumn.implicitHeight)
+        Layout.rightMargin: 8
+        // Bound by contentHeight, never by the delegates' own layout, so the
+        // popup cannot grow past the cap no matter how many rows a page holds.
+        Layout.preferredHeight: Math.min(360, contentHeight)
         visible: sessionsTab.displayedSessions.length > 0
         clip: true
+        spacing: 10
+        model: sessionsTab.displayedSessions
+        boundsBehavior: Flickable.StopAtBounds
+        // A full page keeps the wheel here; a short one lets it through to the
+        // popup instead of swallowing it against an unscrollable list.
+        interactive: contentHeight > height
         QQC2.ScrollBar.horizontal.policy: QQC2.ScrollBar.AlwaysOff
+        QQC2.ScrollBar.vertical: QQC2.ScrollBar {
+            id: verticalScrollBar
+            policy: QQC2.ScrollBar.AsNeeded
+            width: 12
+            contentItem: Rectangle {
+                implicitWidth: 6
+                implicitHeight: 32
+                radius: 3
+                color: Kirigami.Theme.textColor
+                opacity: verticalScrollBar.pressed ? 0.6 : (verticalScrollBar.hovered ? 0.45 : 0.25)
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 150
+                    }
+                }
+            }
+            background: Rectangle {
+                implicitWidth: 12
+                color: Kirigami.Theme.textColor
+                opacity: verticalScrollBar.hovered ? 0.08 : 0.04
+                radius: 6
+            }
+        }
 
-        ColumnLayout {
-            id: listColumn
-            width: sessionsTab.width
-            spacing: 10
+        delegate: Rectangle {
+            required property var modelData
+            width: sessionsList.width - (verticalScrollBar.visible ? (verticalScrollBar.width + 4) : 0)
+            height: body.implicitHeight + 14
+            radius: 8
+            color: Qt.rgba(1, 1, 1, 0.04)
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.08)
 
-            Repeater {
-                model: sessionsTab.displayedSessions
+            readonly property bool activeSession: modelData.state === "active" || modelData.state === "running"
+            readonly property color accent: rootItem.tabColor(modelData.provider || "")
+
+            RowLayout {
+                id: body
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 10
 
                 Rectangle {
-                    required property var modelData
+                    Layout.preferredWidth: 8
+                    Layout.preferredHeight: 8
+                    radius: 4
+                    color: accent
+                    Layout.alignment: Qt.AlignTop
+                    Layout.topMargin: 4
+                }
+
+                ColumnLayout {
                     Layout.fillWidth: true
-                    implicitHeight: body.implicitHeight + 14
-                    radius: 8
-                    color: Qt.rgba(1, 1, 1, 0.04)
-                    border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.08)
-
-                    readonly property bool activeSession: modelData.state === "active" || modelData.state === "running"
-                    readonly property color accent: rootItem.tabColor(modelData.provider || "")
-
-                    RowLayout {
-                        id: body
-                        anchors.fill: parent
-                        anchors.margins: 8
-                        spacing: 10
-
-                        Rectangle {
-                            Layout.preferredWidth: 8
-                            Layout.preferredHeight: 8
-                            radius: 4
-                            color: accent
-                            Layout.alignment: Qt.AlignTop
-                            Layout.topMargin: 4
-                        }
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 2
-                            PlasmaComponents.Label {
-                                text: modelData.title || modelData.provider || i18n("Session")
-                                textFormat: Text.PlainText
-                                font.bold: true
-                                font.pixelSize: 12
-                                color: Kirigami.Theme.textColor
-                                elide: Text.ElideRight
-                                wrapMode: Text.NoWrap
-                                Layout.fillWidth: true
-                            }
-                            PlasmaComponents.Label {
-                                visible: (modelData.sessionName || "") !== "" && modelData.sessionName !== modelData.title
-                                text: modelData.sessionName || ""
-                                textFormat: Text.PlainText
-                                font.pixelSize: 10
-                                opacity: 0.55
-                                color: Kirigami.Theme.textColor
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-                            }
-                            PlasmaComponents.Label {
-                                visible: (modelData.detail || "") !== ""
-                                text: modelData.detail || ""
-                                textFormat: Text.PlainText
-                                font.pixelSize: 10
-                                opacity: 0.45
-                                color: Kirigami.Theme.textColor
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-                            }
-                            PlasmaComponents.Label {
-                                text: sessionsTab.sessionCostText(modelData)
-                                font.pixelSize: 9
-                                opacity: (modelData.costStatus || "unavailable") === "unavailable" ? 0.4 : 0.7
-                                color: sessionsTab.sessionCostColor(modelData)
-                                Layout.fillWidth: true
-                                elide: Text.ElideRight
-                            }
-                        }
-
-                        ColumnLayout {
-                            spacing: 2
-                            Layout.alignment: Qt.AlignTop
-                            PlasmaComponents.Label {
-                                text: activeSession ? i18n("Active") : i18n("Idle")
-                                font.bold: true
-                                font.pixelSize: 11
-                                color: activeSession ? accent : Kirigami.Theme.textColor
-                                horizontalAlignment: Text.AlignRight
-                                Layout.alignment: Qt.AlignRight
-                            }
-                            PlasmaComponents.Label {
-                                text: sessionsTab.ageText(modelData.lastActivityAt)
-                                font.pixelSize: 10
-                                opacity: 0.45
-                                color: Kirigami.Theme.textColor
-                                horizontalAlignment: Text.AlignRight
-                                Layout.alignment: Qt.AlignRight
-                            }
-                        }
-
-                        PlasmaComponents.ToolButton {
-                            visible: (modelData.openKey || "") !== ""
-                            icon.source: Qt.resolvedUrl("../icons/session-terminal.svg")
-                            icon.color: Kirigami.Theme.textColor
-                            icon.width: 18
-                            icon.height: 18
-                            Layout.alignment: Qt.AlignTop
-                            display: PlasmaComponents.AbstractButton.IconOnly
-                            text: i18n("Resume session")
-                            PlasmaComponents.ToolTip.text: text
-                            PlasmaComponents.ToolTip.visible: hovered
-                            onClicked: sessionsTab.openSession(modelData.openKey)
-                        }
+                    spacing: 2
+                    PlasmaComponents.Label {
+                        text: modelData.title || modelData.provider || i18n("Session")
+                        textFormat: Text.PlainText
+                        font.bold: true
+                        font.pixelSize: 12
+                        color: Kirigami.Theme.textColor
+                        elide: Text.ElideRight
+                        wrapMode: Text.NoWrap
+                        Layout.fillWidth: true
                     }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        z: -1
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (modelData.provider)
-                                rootItem.selectTab(modelData.provider);
-                        }
+                    PlasmaComponents.Label {
+                        visible: (modelData.sessionName || "") !== "" && modelData.sessionName !== modelData.title
+                        text: modelData.sessionName || ""
+                        textFormat: Text.PlainText
+                        font.pixelSize: 10
+                        opacity: 0.55
+                        color: Kirigami.Theme.textColor
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
                     }
+                    PlasmaComponents.Label {
+                        visible: (modelData.detail || "") !== ""
+                        text: modelData.detail || ""
+                        textFormat: Text.PlainText
+                        font.pixelSize: 10
+                        opacity: 0.45
+                        color: Kirigami.Theme.textColor
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+                    PlasmaComponents.Label {
+                        text: sessionsTab.sessionCostText(modelData)
+                        font.pixelSize: 9
+                        opacity: (modelData.costStatus || "unavailable") === "unavailable" ? 0.4 : 0.7
+                        color: sessionsTab.sessionCostColor(modelData)
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                    }
+                }
+
+                ColumnLayout {
+                    spacing: 2
+                    Layout.alignment: Qt.AlignTop
+                    PlasmaComponents.Label {
+                        text: activeSession ? i18n("Active") : i18n("Idle")
+                        font.bold: true
+                        font.pixelSize: 11
+                        color: activeSession ? accent : Kirigami.Theme.textColor
+                        horizontalAlignment: Text.AlignRight
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    PlasmaComponents.Label {
+                        text: sessionsTab.ageText(modelData.lastActivityAt)
+                        font.pixelSize: 10
+                        opacity: 0.45
+                        color: Kirigami.Theme.textColor
+                        horizontalAlignment: Text.AlignRight
+                        Layout.alignment: Qt.AlignRight
+                    }
+                }
+
+                PlasmaComponents.ToolButton {
+                    visible: (modelData.openKey || "") !== ""
+                    icon.source: Qt.resolvedUrl("../icons/session-terminal.svg")
+                    icon.color: Kirigami.Theme.textColor
+                    icon.width: 18
+                    icon.height: 18
+                    Layout.alignment: Qt.AlignTop
+                    display: PlasmaComponents.AbstractButton.IconOnly
+                    text: i18n("Resume session")
+                    PlasmaComponents.ToolTip.text: text
+                    PlasmaComponents.ToolTip.visible: hovered
+                    onClicked: sessionsTab.openSession(modelData.openKey)
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                z: -1
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (modelData.provider)
+                        rootItem.selectTab(modelData.provider);
                 }
             }
         }
     }
 
-    PlasmaComponents.Button {
-        visible: sessionsTab.sessionsHasMore
+    RowLayout {
+        id: paginationRow
         Layout.fillWidth: true
-        text: i18n("Load more")
-        implicitHeight: 26
-        font.pixelSize: 10
-        enabled: !sessionsTab.loading
-        onClicked: sessionsTab.loadMore()
+        Layout.topMargin: 2
+        visible: sessionsTab.totalPages > 1 && sessionsTab.displayedSessions.length > 0
+        spacing: 4
+
+        Item {
+            Layout.fillWidth: true
+        }
+
+        Rectangle {
+            id: prevBtn
+            implicitWidth: 26
+            implicitHeight: 26
+            radius: 6
+            readonly property bool enabled: !sessionsTab.loading && sessionsTab.currentPage > 1
+            color: prevMouse.containsMouse && enabled ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.04)
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.08)
+            opacity: enabled ? 1.0 : 0.35
+
+            PlasmaComponents.Label {
+                anchors.centerIn: parent
+                text: "‹"
+                font.pixelSize: 14
+                font.bold: true
+                color: Kirigami.Theme.textColor
+            }
+
+            MouseArea {
+                id: prevMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: prevBtn.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onClicked: {
+                    if (prevBtn.enabled)
+                        sessionsTab.goToPage(sessionsTab.currentPage - 1);
+                }
+            }
+        }
+
+        Repeater {
+            model: sessionsTab.paginationItems(sessionsTab.currentPage, sessionsTab.totalPages)
+
+            Rectangle {
+                id: pageBtn
+                required property var modelData
+                readonly property bool isEllipsis: modelData === "…"
+                readonly property bool isCurrent: !isEllipsis && Number(modelData) === sessionsTab.currentPage
+                implicitWidth: isEllipsis ? 18 : 26
+                implicitHeight: 26
+                radius: 6
+                color: isCurrent ? Kirigami.Theme.highlightColor : ((pageMouse.containsMouse && !isEllipsis && !sessionsTab.loading) ? Qt.rgba(1, 1, 1, 0.12) : (isEllipsis ? "transparent" : Qt.rgba(1, 1, 1, 0.04)))
+                border.width: isEllipsis ? 0 : 1
+                border.color: isCurrent ? "transparent" : Qt.rgba(1, 1, 1, 0.08)
+
+                PlasmaComponents.Label {
+                    anchors.centerIn: parent
+                    text: pageBtn.modelData
+                    font.bold: pageBtn.isCurrent
+                    font.pixelSize: pageBtn.isEllipsis ? 12 : 11
+                    color: pageBtn.isCurrent ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
+                    opacity: pageBtn.isEllipsis ? 0.45 : (sessionsTab.loading ? 0.5 : 1.0)
+                }
+
+                MouseArea {
+                    id: pageMouse
+                    anchors.fill: parent
+                    hoverEnabled: !pageBtn.isEllipsis
+                    cursorShape: (!pageBtn.isEllipsis && !pageBtn.isCurrent && !sessionsTab.loading) ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: {
+                        if (!pageBtn.isEllipsis && !sessionsTab.loading)
+                            sessionsTab.goToPage(Number(pageBtn.modelData));
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            id: nextBtn
+            implicitWidth: 26
+            implicitHeight: 26
+            radius: 6
+            readonly property bool enabled: !sessionsTab.loading && sessionsTab.currentPage < sessionsTab.totalPages
+            color: nextMouse.containsMouse && enabled ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.04)
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.08)
+            opacity: enabled ? 1.0 : 0.35
+
+            PlasmaComponents.Label {
+                anchors.centerIn: parent
+                text: "›"
+                font.pixelSize: 14
+                font.bold: true
+                color: Kirigami.Theme.textColor
+            }
+
+            MouseArea {
+                id: nextMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: nextBtn.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onClicked: {
+                    if (nextBtn.enabled)
+                        sessionsTab.goToPage(sessionsTab.currentPage + 1);
+                }
+            }
+        }
+
+        Item {
+            Layout.fillWidth: true
+        }
     }
 
     function ageText(epochSec) {
@@ -456,6 +768,10 @@ ColumnLayout {
         if (!info.available)
             return i18n("Cost unavailable");
         var cost = info.cost.toFixed(4);
+        // A plan already paid for this work, so the figure is a comparison
+        // against API pricing rather than something the user owes.
+        if (info.billing === "subscription")
+            return info.status === "exact" ? i18n("Covered by plan · $%1 on API", cost) : i18n("Covered by plan · ~$%1 on API", cost);
         if (info.provenance === "actual")
             return info.status === "exact" ? i18n("Actual provider cost: $%1 (exact)", cost) : i18n("Actual provider cost: $%1 (partial)", cost);
         if (info.provenance === "estimated")
@@ -469,6 +785,8 @@ ColumnLayout {
         var info = FeatureTabs.sessionCostInfo(entry);
         if (!info.available)
             return Kirigami.Theme.textColor;
+        if (info.billing === "subscription")
+            return Kirigami.Theme.textColor;
         if (info.status === "partial" || info.provenance === "mixed")
             return "#f5a623";
         if (info.provenance === "estimated")
@@ -478,7 +796,7 @@ ColumnLayout {
         return Kirigami.Theme.textColor;
     }
 
-    function requestSessions(offset, append, refreshMode) {
+    function requestSessions(offset, refreshMode) {
         requestSerial += 1;
         requestedQuery = searchQuery;
         requestedSourceSignature = sourceSignature(selectedSourceIds);
@@ -486,12 +804,10 @@ ColumnLayout {
         activeSourceSignature = requestedSourceSignature;
         activeRequestSerial = requestSerial;
         activeOffset = offset;
-        activeAppend = append;
         activeRefresh = refreshMode === true;
-        if (!append) {
+        if (offset === 0) {
             sessionsOffset = 0;
             sessionsTotal = 0;
-            sessionsHasMore = false;
         }
         loading = true;
         errorText = "";
@@ -509,17 +825,11 @@ ColumnLayout {
     function refresh() {
         if (loading)
             return;
-        requestSessions(0, false, true);
+        requestSessions(0, true);
     }
 
-    function queryOnly(offset, append) {
-        requestSessions(offset === undefined ? 0 : offset, append === true, false);
-    }
-
-    function loadMore() {
-        if (loading || !sessionsHasMore)
-            return;
-        queryOnly(sessionsOffset + sessionsLimit, true);
+    function queryOnly(offset) {
+        requestSessions(offset === undefined ? 0 : offset, false);
     }
 
     Plasma5Support.DataSource {
@@ -557,15 +867,13 @@ ColumnLayout {
                     sessionsTab.sessions = [];
                     sessionsTab.sessionsOffset = 0;
                     sessionsTab.sessionsTotal = 0;
-                    sessionsTab.sessionsHasMore = false;
-                    sessionsTab.requestSessions(0, false, false);
+                    sessionsTab.requestSessions(0, false);
                     return;
                 }
                 sessionsTab.sourceResetSignature = "";
                 sessionsTab.sessionsTotal = Number(payload.total) || 0;
                 sessionsTab.sessionsOffset = Number(payload.offset) || sessionsTab.activeOffset;
-                sessionsTab.sessionsHasMore = payload.hasMore === true;
-                sessionsTab.sessions = sessionsTab.activeAppend ? sessionsTab.sessions.concat(page) : page;
+                sessionsTab.sessions = page;
             } catch (e) {
                 sessionsTab.errorText = i18n("Could not parse sessions.");
             }

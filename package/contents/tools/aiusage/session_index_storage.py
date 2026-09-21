@@ -8,7 +8,12 @@ from pathlib import Path
 from typing import Final
 
 _BUSY_TIMEOUT_MS: Final = 5_000
-_SCHEMA_VERSION: Final = 3
+# Bump whenever a collector's *output* changes shape or content, not just when
+# a column is added: cached rows are the product of the parser that produced
+# them, so a parser improvement has to invalidate them. Without this, a better
+# title or a newly priced cost never reached a store whose files had not
+# happened to change since.
+_SCHEMA_VERSION: Final = 5
 
 
 def _is_corrupt(error: sqlite3.DatabaseError) -> bool:
@@ -35,8 +40,23 @@ def _try_wal(connection: sqlite3.Connection) -> str:
     return str(result[0]) if result else "unsupported"
 
 
-def _ensure_schema(connection: sqlite3.Connection) -> None:
+def _discard_stale_rows(connection: sqlite3.Connection) -> None:
+    """Drop rows parsed by an older build so every source re-collects once."""
+    row = connection.execute("PRAGMA user_version").fetchone()
+    stored = int(row[0]) if row else 0
+    if stored == _SCHEMA_VERSION:
+        return
+    connection.execute("DELETE FROM session_rows")
+    connection.execute("DELETE FROM source_meta")
+    # The DELETEs opened an implicit transaction. Close it before touching
+    # user_version: a PRAGMA write inside a transaction does not stick, and
+    # leaving one open makes reconcile's BEGIN IMMEDIATE fail.
+    connection.commit()
     connection.execute(f"PRAGMA user_version = {_SCHEMA_VERSION}")
+    connection.commit()
+
+
+def _ensure_schema(connection: sqlite3.Connection, *, discard_stale: bool = False) -> None:
     connection.execute(
         "CREATE TABLE IF NOT EXISTS source_meta (source_key TEXT PRIMARY KEY, "
         "mtime_ns INTEGER NOT NULL, size INTEGER NOT NULL, "
@@ -56,6 +76,7 @@ def _ensure_schema(connection: sqlite3.Connection) -> None:
         "cost_breakdown TEXT, "
         "billing_provider TEXT NOT NULL DEFAULT '', "
         "provider_costs TEXT, "
+        "cost_billing TEXT NOT NULL DEFAULT 'api', "
         "PRIMARY KEY (source_key, row_order))"
     )
     connection.execute("CREATE INDEX IF NOT EXISTS idx_session_rows_activity ON session_rows (last_activity_at DESC)")
@@ -80,12 +101,15 @@ def _ensure_schema(connection: sqlite3.Connection) -> None:
             "cost_breakdown",
             "billing_provider",
             "provider_costs",
+            "cost_billing",
         },
     }
     for table, columns in required.items():
         actual = {str(row[1]) for row in connection.execute(f"PRAGMA table_info({table})")}
         if not columns.issubset(actual):
             raise sqlite3.DatabaseError("session index schema is invalid")
+    if discard_stale:
+        _discard_stale_rows(connection)
 
 
 def _secure_permissions(cache_path: Path) -> None:
@@ -96,8 +120,13 @@ def _secure_permissions(cache_path: Path) -> None:
             pass
 
 
-def open_index(cache_path: Path) -> sqlite3.Connection:
-    """Open a writable index connection, replacing a corrupt database."""
+def open_index(cache_path: Path, *, discard_stale: bool = False) -> sqlite3.Connection:
+    """Open a writable index connection, replacing a corrupt database.
+
+    ``discard_stale`` drops rows produced by an older parser. Only a reconcile
+    passes it: a read doing the wipe would blank the list and leave it blank
+    until the next poll, which is exactly what the user sees on screen.
+    """
     connection: sqlite3.Connection | None = None
     try:
         connection = sqlite3.connect(str(cache_path), timeout=5.0)
@@ -107,7 +136,7 @@ def open_index(cache_path: Path) -> sqlite3.Connection:
         connection.create_function("casefold", 1, str.casefold)
         _try_wal(connection)
         _secure_permissions(cache_path)
-        _ensure_schema(connection)
+        _ensure_schema(connection, discard_stale=discard_stale)
     except sqlite3.DatabaseError as error:
         if connection is not None:
             connection.close()
@@ -125,5 +154,5 @@ def open_index(cache_path: Path) -> sqlite3.Connection:
         connection.create_function("casefold", 1, str.casefold)
         _try_wal(connection)
         _secure_permissions(cache_path)
-        _ensure_schema(connection)
+        _ensure_schema(connection, discard_stale=discard_stale)
     return connection

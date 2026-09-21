@@ -397,3 +397,71 @@ def cached_catalog():
 def get_pricing(provider, models=None):
     requested = {provider: models} if models is not None else None
     return load_catalog(models=requested)["providers"].get(provider, {})
+
+
+# Direct vendors first; the catalog is otherwise dominated by resellers whose
+# ids sort ahead of them ("302ai" before "anthropic"), which buried the rates
+# most people open this table to look up.
+_PRIMARY_PROVIDERS = (
+    "anthropic",
+    "openai",
+    "google",
+    "google-vertex",
+    "xai",
+    "mistral",
+    "deepseek",
+    "moonshotai",
+    "zhipuai",
+    "meta",
+    "openrouter",
+)
+
+
+def _provider_rank(provider):
+    try:
+        return (0, _PRIMARY_PROVIDERS.index(provider), provider)
+    except ValueError:
+        return (1, 0, provider)
+
+
+def catalog_rows(query="", limit=60, offset=0):
+    """A searchable, paged view of the cached rate table for the frontends.
+
+    Reads the cache only — never fetches — so opening the table cannot block on
+    the network. Rows are sorted by provider then model so paging is stable.
+    """
+    path = os.path.join(config.cache_dir(), CACHE_FILENAME)
+    snapshot = _snapshot(path)
+    needle = (query or "").strip().casefold()
+    rows = []
+    for provider in sorted(snapshot.get("providers") or {}, key=_provider_rank):
+        models = snapshot["providers"][provider]
+        if not isinstance(models, dict):
+            continue
+        for model in sorted(models):
+            rates = models[model]
+            if not isinstance(rates, dict):
+                continue
+            if needle and needle not in provider.casefold() and needle not in model.casefold():
+                continue
+            row = {"provider": provider, "model": model}
+            for field in ("input", "output", "cached"):
+                rate = finite_number(rates.get(field), minimum=0)
+                if rate is not None:
+                    row[field] = rate
+            rows.append(row)
+    total = len(rows)
+    page_limit = max(1, int(limit or 60))
+    page_offset = max(0, int(offset or 0))
+    return {
+        "schemaVersion": 1,
+        "fetchedAt": int(snapshot.get("fetchedAt", 0) or 0),
+        "checkedAt": int(snapshot.get("checkedAt", 0) or 0),
+        "error": str(snapshot.get("error") or ""),
+        "unit": "USD per 1M tokens",
+        "rows": rows[page_offset : page_offset + page_limit],
+        "total": total,
+        "offset": page_offset,
+        "limit": page_limit,
+        "hasMore": page_offset + page_limit < total,
+    }

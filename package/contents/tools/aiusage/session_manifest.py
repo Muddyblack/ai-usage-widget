@@ -40,19 +40,8 @@ def _directory_records(root: str, excluded: set[str] | None = None) -> list[tupl
     return records
 
 
-def _matching_files(root: str, predicate, *, recursive: bool = True, excluded: set[str] | None = None) -> list[tuple[str, str, int, int, int]]:
+def _matching_files(root: str, predicate, *, excluded: set[str] | None = None) -> list[tuple[str, str, int, int, int]]:
     records = _directory_records(root, excluded)
-    if not recursive:
-        try:
-            entries = sorted(os.listdir(root))
-        except OSError:
-            entries = []
-        records = [_stat_record(root, "directory")]
-        records.extend(_stat_record(os.path.join(root, name), "directory") for name in entries if os.path.isdir(os.path.join(root, name)))
-        records.extend(
-            _stat_record(os.path.join(root, name), "file") for name in entries if os.path.isfile(os.path.join(root, name)) and predicate(name)
-        )
-        return records
     for dirpath, dirnames, filenames in os.walk(root):
         if excluded:
             dirnames[:] = [name for name in dirnames if name not in excluded]
@@ -130,19 +119,47 @@ def _antigravity_records(root: str) -> list[tuple[str, str, int, int, int]]:
     return records
 
 
-def build_manifest() -> SessionManifest:
-    """Fingerprint all metadata inputs used by the seven session collectors."""
+def _fingerprint(source_id: str, records: list[tuple[str, str, int, int, int]]) -> SessionManifest:
+    encoded = json.dumps(records, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    digest = hashlib.sha256(encoded).hexdigest()
+    return SessionManifest(source_id, int(digest[:16], 16) & ((1 << 63) - 1), len(encoded))
+
+
+def build_manifests() -> list[SessionManifest]:
+    """Fingerprint each session collector's metadata inputs separately.
+
+    One digest per collector, not one for all seven: the stores are written
+    independently and constantly — a Claude transcript grows while you read it
+    — so a combined digest changed on nearly every poll and re-ran every
+    collector. Keyed per source, a Claude write re-parses only Claude and the
+    other six keep their cached rows.
+
+    The order here is the order rows are merged in, and must stay in step with
+    ``sessions.SESSION_COLLECTORS``.
+    """
     claude_root = os.environ.get("CLAUDE_CONFIG_DIR") or os.path.expanduser("~/.claude")
     antigravity_root = os.environ.get("ANTIGRAVITY_HOME") or os.environ.get("GEMINI_HOME") or os.path.expanduser("~/.gemini")
     groups = (
-        _cline_records(os.environ.get("CLINE_SESSIONS_DIR") or os.path.expanduser("~/.cline/data/sessions")),
-        _matching_files(muse_sessions_root(), lambda name: name == "session.jsonl", excluded={".msp-view-v1"}),
-        _matching_files(os.environ.get("CODEX_SESSIONS_DIR") or os.path.join(codex_home(), "sessions"), lambda name: name.endswith(".jsonl")),
-        _matching_files(os.path.join(grok_home(), "sessions"), lambda name: name == "signals.json"),
-        _claude_records(claude_root),
-        _opencode_records(),
-        _antigravity_records(antigravity_root),
+        ("cline", _cline_records(os.environ.get("CLINE_SESSIONS_DIR") or os.path.expanduser("~/.cline/data/sessions"))),
+        ("muse", _matching_files(muse_sessions_root(), lambda name: name == "session.jsonl", excluded={".msp-view-v1"})),
+        (
+            "codex",
+            _matching_files(
+                os.environ.get("CODEX_SESSIONS_DIR") or os.path.join(codex_home(), "sessions"),
+                lambda name: name.endswith(".jsonl"),
+            ),
+        ),
+        (
+            "grok",
+            _matching_files(
+                os.path.join(grok_home(), "sessions"),
+                # summary.json is the current per-session layout, updates.jsonl
+                # carries the usage totals, signals.json is the older format.
+                lambda name: name in ("summary.json", "updates.jsonl", "signals.json"),
+            ),
+        ),
+        ("claude", _claude_records(claude_root)),
+        ("opencode", _opencode_records()),
+        ("antigravity", _antigravity_records(antigravity_root)),
     )
-    encoded = json.dumps(groups, separators=(",", ":"), sort_keys=True).encode("utf-8")
-    digest = hashlib.sha256(encoded).hexdigest()
-    return SessionManifest(digest, int(digest[:16], 16) & ((1 << 63) - 1), len(encoded))
+    return [_fingerprint(source_id, records) for source_id, records in groups]

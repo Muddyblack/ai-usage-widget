@@ -352,6 +352,14 @@ ShellRoot {
     property bool sessionsResponseDone: false
     property bool sessionsProcessExited: false
     readonly property bool sessionsViewVisible: root.popupOpen && !root.showSettings && root.activeId === "sessions"
+
+    // Load as soon as the view is shown. The poll timer only reconciles when
+    // the tab is already visible, so opening the popup onto Sessions used to
+    // leave it empty until the next tick or a manual refresh.
+    onSessionsViewVisibleChanged: {
+        if (root.sessionsViewVisible && !root.sessionsLoading)
+            root.reconcileSessions(root.sessionsQuery);
+    }
     property string activeId: ""
     // The last real provider selected (never a feature tab id) — what the
     // panel pill shows while a feature tab (Overview/Spend/Sessions) is
@@ -800,12 +808,6 @@ ShellRoot {
         root.startSessionsRequest(offset === undefined ? 0 : offset, append === true, false);
     }
 
-    function loadMoreSessions() {
-        if (root.sessionsLoading || sessionsProcess.running || !root.sessionsHasMore)
-            return;
-        root.querySessions(root.sessionsQuery, root.sessionsOffset + root.sessionsLimit, true);
-    }
-
     function handleSessionsOutput(text) {
         root.sessionsResponseDone = true;
         var current = root.sessionsActiveRequestId === root.sessionsRequestId && root.sessionsActiveQuery === root.sessionsQuery && root.sessionsActiveSourceSignature === root.sessionsSourceSignature;
@@ -1177,7 +1179,7 @@ ShellRoot {
             PanelWindow {
                 id: popup
                 implicitWidth: 460
-                implicitHeight: Math.min(680, mainColumn.implicitHeight + 40)
+                implicitHeight: Math.min(popup.screen ? Math.min(740, popup.screen.height - 60) : 720, mainColumn.implicitHeight + 40)
                 visible: root.popupOpen && root.popupOwnedBy(panel.screen)
                 color: "transparent"
                 aboveWindows: true
@@ -1250,7 +1252,7 @@ ShellRoot {
                     boundsBehavior: Flickable.StopAtBounds
                     // Leave wheel events to the chart's range controls when everything
                     // already fits, which is the usual case on the usage page.
-                    interactive: contentHeight > height
+                    interactive: Math.round(contentHeight) > Math.round(height) + 1
 
                     QC.ScrollBar.vertical: QC.ScrollBar {
                         policy: contentFlick.interactive ? QC.ScrollBar.AsNeeded : QC.ScrollBar.AlwaysOff
