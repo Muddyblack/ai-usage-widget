@@ -3087,14 +3087,11 @@ PlasmoidItem {
                         visible: root.showSettings || root.enabledTabs[root.activeTab] === "overview" || root.enabledTabs[root.activeTab] === "sessions" || root.enabledTabs[root.activeTab] === "spend"
                         text: {
                             if (root.showSettings) {
-                                if (root.settingsTab === "views")
-                                    return i18n("Optional Overview, Spend and Sessions tabs");
+                                if (root.settingsTab === "panel")
+                                    return i18n("Views, colors, chart and popup style");
 
-                                if (root.settingsTab === "local")
-                                    return i18n("Local endpoints: Ollama, vLLM and llama.cpp");
-
-                                if (root.settingsTab === "appearance")
-                                    return i18n("Colors, chart and popup style");
+                                if (root.settingsTab === "info")
+                                    return i18n("About AI Usage Monitor and project links");
 
                                 if (root.settingsTab === "data")
                                     return i18n("Refresh interval and usage history");

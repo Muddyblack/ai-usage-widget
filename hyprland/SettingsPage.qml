@@ -114,10 +114,6 @@ ColumnLayout {
                 label: page.shell.i18n("Local Models")
             },
             {
-                id: "views",
-                label: page.shell.i18n("Views")
-            },
-            {
                 id: "panel",
                 // Without a pill there is no panel to set up, only the chart.
                 label: page.shell.pillControls ? page.shell.i18n("Panel") : page.shell.i18n("Display")
@@ -129,6 +125,10 @@ ColumnLayout {
             {
                 id: "advanced",
                 label: page.shell.i18n("Advanced")
+            },
+            {
+                id: "info",
+                label: page.shell.i18n("Info")
             }
         ]
         onSelected: id => page.section = id
@@ -334,11 +334,11 @@ ColumnLayout {
         }
     }
 
-    // ── Views (Overview / Spend / Sessions) ──────────────────────────────────
+    // ── Panel & Views ────────────────────────────────────────────────────────
     ColumnLayout {
         Layout.fillWidth: true
         spacing: 8
-        visible: page.section === "views"
+        visible: page.section === "panel"
 
         Text {
             Layout.fillWidth: true
@@ -410,13 +410,13 @@ ColumnLayout {
                 }
             }
         }
-    }
 
-    // ── Panel ────────────────────────────────────────────────────────────────
-    ColumnLayout {
-        Layout.fillWidth: true
-        spacing: 8
-        visible: page.section === "panel"
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 1
+            Layout.preferredHeight: 1
+            color: Qt.rgba(1, 1, 1, 0.08)
+        }
 
         RowLayout {
             Layout.fillWidth: true
@@ -999,5 +999,13 @@ ColumnLayout {
             color: "#f8fafc"
             wrapMode: Text.WordWrap
         }
+    }
+
+    // ── Info ─────────────────────────────────────────────────────────────────
+    ProjectInfoPane {
+        id: infoPane
+        Layout.fillWidth: true
+        visible: page.section === "info"
+        shell: page.shell
     }
 }

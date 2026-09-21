@@ -53,12 +53,8 @@ ColumnLayout {
                 label: i18n("Local Models")
             },
             {
-                id: "views",
-                label: i18n("Views")
-            },
-            {
-                id: "appearance",
-                label: i18n("Appearance")
+                id: "panel",
+                label: i18n("Panel")
             },
             {
                 id: "data",
@@ -67,6 +63,10 @@ ColumnLayout {
             {
                 id: "advanced",
                 label: i18n("Advanced")
+            },
+            {
+                id: "info",
+                label: i18n("Info")
             }
         ]
         onSelected: id => rootItem.settingsTab = id
@@ -249,11 +249,11 @@ ColumnLayout {
         }
     }
 
-    // ── Views (Overview / Spend / Sessions) ─────────────────────
+    // ── Panel & Views ──────────────────────────────────────────
     ColumnLayout {
         Layout.fillWidth: true
         spacing: 6
-        visible: rootItem.settingsTab === "views"
+        visible: rootItem.settingsTab === "panel"
 
         PlasmaComponents.Label {
             Layout.fillWidth: true
@@ -330,13 +330,12 @@ ColumnLayout {
                 }
             }
         }
-    }
 
-    // ── Appearance ──────────────────────────────────────────────
-    ColumnLayout {
-        Layout.fillWidth: true
-        spacing: 6
-        visible: rootItem.settingsTab === "appearance"
+        Rectangle {
+            Layout.fillWidth: true
+            height: 1
+            color: Qt.rgba(1, 1, 1, 0.08)
+        }
 
         // Plasma loads one translation per plasmashell process, so the widget
         // cannot pick its own language the way the Hyprland and Windows apps do.
@@ -904,5 +903,13 @@ ColumnLayout {
                 wrapMode: Text.WordWrap
             }
         }
+    }
+
+    // ── Info ────────────────────────────────────────────────────
+    ProjectInfoPane {
+        id: infoPane
+        Layout.fillWidth: true
+        visible: rootItem.settingsTab === "info"
+        rootItem: settingsPanelRoot.rootItem
     }
 }

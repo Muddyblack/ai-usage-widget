@@ -103,10 +103,10 @@ ColumnLayout {
                 text: {
                     if (shell.showSettings) {
                         if (settingsPage.section === "panel")
-                            return shell.pillControls ? shell.i18n("Language, pill, position and chart") : shell.i18n("Language and usage chart");
+                            return shell.pillControls ? shell.i18n("Views, pill, position and chart") : shell.i18n("Views, language and usage chart");
 
-                        if (settingsPage.section === "views")
-                            return shell.i18n("Optional Overview, Spend and Sessions tabs");
+                        if (settingsPage.section === "info")
+                            return shell.i18n("About AI Usage Monitor and project links");
 
                         if (settingsPage.section === "local")
                             return shell.i18n("Local endpoints: Ollama, vLLM and llama.cpp");

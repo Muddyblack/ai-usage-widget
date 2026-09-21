@@ -1363,7 +1363,7 @@ def _run_headless(app, engine, backend, warnings, screenshot, settings):
         # Every section once, so a binding that only breaks on a hidden page
         # still shows up as a warning.
         steps.append(lambda: window.setProperty("showSettings", True))
-        for section in ("providers", "panel", "data", "advanced"):
+        for section in ("providers", "panel", "data", "advanced", "info"):
             steps.append(lambda s=section: page.setProperty("section", s))
         steps.append(lambda: window.setProperty("showSettings", False))
     # The first step waits for the first refresh and history load to answer.
