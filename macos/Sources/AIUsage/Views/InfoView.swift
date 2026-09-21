@@ -150,7 +150,7 @@ struct InfoView: View {
                                 .overlay(
                                     Text(verbatim: "M")
                                         .font(.system(size: 11, weight: .bold))
-                                        .foregroundStyle(.accent)
+                                        .foregroundStyle(Color.accentColor)
                                 )
                             Button(i18n("By %1 ↗", "Muddyblack")) {
                                 open("https://github.com/Muddyblack")
@@ -241,7 +241,7 @@ struct InfoView: View {
                                             .overlay(
                                                 Text(String(c.login.prefix(1)).uppercased())
                                                     .font(.system(size: 10, weight: .bold))
-                                                    .foregroundStyle(.accent)
+                                                    .foregroundStyle(Color.accentColor)
                                             )
                                         VStack(alignment: .leading, spacing: 1) {
                                             Text(c.login)
