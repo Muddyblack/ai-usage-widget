@@ -5,8 +5,11 @@ struct SpendView: View {
     /// Matches SessionsView's expansion idiom rather than introducing
     /// DisclosureGroup, which this app does not use anywhere.
     @State private var expandedIDs: Set<String> = []
+    @State private var timeframe: SpendTimeframe = .all
 
-    private var rows: [SpendRow] { model.spendRows }
+    private var rows: [SpendRow] {
+        SpendRows.filtered(model.spendRows, timeframe: timeframe)
+    }
     private var meteredTotal: Double { SpendRows.meteredTotalUSD(rows) }
     private var planTotal: Double { SpendRows.planTotalUSD(rows) }
     private var allTotal: Double { SpendRows.allTotalUSD(rows) }
@@ -32,6 +35,15 @@ struct SpendView: View {
                         .monospacedDigit()
                         .foregroundStyle(Theme.accent("#34d399"))
                 }
+                Picker(i18n("Spend timeframe"), selection: $timeframe) {
+                    ForEach(SpendTimeframe.allCases, id: \.self) { timeframe in
+                        Text(timeframe.title).tag(timeframe)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .controlSize(.small)
+                .accessibilityLabel(Text(i18n("Spend timeframe")))
             }
             Text(i18n("Provider totals come from each provider's own usage APIs. Local source rows show actual, estimated, or mixed provenance and coverage separately."))
                 .font(.system(size: 10))

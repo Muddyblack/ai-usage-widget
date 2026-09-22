@@ -199,6 +199,46 @@ struct SpendRow: Identifiable {
         self.costBreakdown = CostBreakdown(actualUSD: actualUSD, estimatedUSD: estimatedUSD)
     }
 
+    fileprivate func filtered(to timeframe: SpendTimeframe, referenceDate: Date) -> SpendRow? {
+        guard timeframe != .all else { return self }
+
+        let calendar = SpendTimeframe.calendar
+        let formatter = SpendTimeframe.dateFormatter
+        let end = calendar.startOfDay(for: referenceDate)
+        let start = calendar.date(byAdding: .day, value: -(timeframe.dayCount - 1), to: end) ?? end
+        let startKey = formatter.string(from: start)
+        let endKey = formatter.string(from: end)
+        let cost = dailyCost.filter { $0.date >= startKey && $0.date <= endKey }
+        let tokens = dailyTokens.filter { $0.date >= startKey && $0.date <= endKey }
+        guard !cost.isEmpty || !tokens.isEmpty else { return nil }
+
+        return SpendRow(copying: self, series: SpendSeries(
+            cost: cost.reduce(0) { $0 + $1.usd }, dailyCost: cost, dailyTokens: tokens))
+    }
+
+    private struct SpendSeries {
+        let cost: Double
+        let dailyCost: [DailyCostPoint]
+        let dailyTokens: [DailyPoint]
+    }
+
+    private init(copying row: SpendRow, series: SpendSeries) {
+        provider = row.provider
+        source = row.source
+        localIdentity = row.localIdentity
+        label = row.label
+        accent = row.accent
+        cost = series.cost
+        currency = row.currency
+        note = row.note
+        provenance = row.provenance
+        costStatus = row.costStatus
+        costBreakdown = row.costBreakdown
+        billing = row.billing
+        dailyCost = series.dailyCost
+        dailyTokens = series.dailyTokens
+    }
+
     private static func localSourceKey(_ source: String) -> String {
         source.trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
@@ -257,6 +297,45 @@ struct SpendRow: Identifiable {
         let wouldCost = i18n("would cost on API")
         let partial = i18n("partial")
         return "\(prefix) · \(wouldCost)" + (costStatus == "partial" ? " · \(partial)" : "")
+    }
+}
+
+enum SpendTimeframe: CaseIterable, Hashable {
+    case oneDay
+    case sevenDays
+    case thirtyDays
+    case all
+
+    var title: String {
+        switch self {
+        case .oneDay: return "1D"
+        case .sevenDays: return "7D"
+        case .thirtyDays: return "30D"
+        case .all: return "ALL"
+        }
+    }
+
+    var dayCount: Int {
+        switch self {
+        case .oneDay: return 1
+        case .sevenDays: return 7
+        case .thirtyDays: return 30
+        case .all: return 0
+        }
+    }
+
+    fileprivate static var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        return calendar
+    }
+
+    fileprivate static var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
     }
 }
 
@@ -430,6 +509,10 @@ struct LocalSpend: Decodable, Equatable {
 // spend, Muse/Cline local stats, Cursor on-demand spend. Costs are read out
 // of the generic details dictionary so no new per-provider contract is needed.
 enum SpendRows {
+    static func filtered(_ rows: [SpendRow], timeframe: SpendTimeframe, referenceDate: Date = Date()) -> [SpendRow] {
+        rows.compactMap { $0.filtered(to: timeframe, referenceDate: referenceDate) }
+    }
+
     static func build(_ providers: [Provider], localSpend: LocalSpend = LocalSpend()) -> [SpendRow] {
         var out: [SpendRow] = []
         let dailyByProvider = dailyByProvider(localSpend)
