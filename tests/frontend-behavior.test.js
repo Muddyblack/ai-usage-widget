@@ -15,6 +15,13 @@ vm.runInNewContext(
     FeatureTabs,
 );
 
+function spendDateDaysAgo(days) {
+    const now = new Date();
+    const date = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    date.setUTCDate(date.getUTCDate() - days);
+    return date.toISOString().slice(0, 10);
+}
+
 // Execute the production QML adapter functions, without starting the desktop
 // shell or its network polling. No copies of their mapping logic live here.
 function qmlFunction(file, name) {
@@ -509,22 +516,22 @@ test("dailyCostByProvider merges every billing group and needs no per-provider c
 
 test("spendTimeline zips cost and token series and can trim to a trailing window", () => {
     const cost = [
-        { date: "2026-01-01", usd: 1 },
-        { date: "2026-01-02", usd: 2 },
-        { date: "2026-01-03", usd: 3 },
+        { date: spendDateDaysAgo(2), usd: 1 },
+        { date: spendDateDaysAgo(1), usd: 2 },
+        { date: spendDateDaysAgo(0), usd: 3 },
     ];
     const tokens = [
-        { date: "2026-01-02", total: 20 },
-        { date: "2026-01-03", total: 30 },
+        { date: spendDateDaysAgo(1), total: 20 },
+        { date: spendDateDaysAgo(0), total: 30 },
     ];
     assert.deepEqual(Array.from(FeatureTabs.spendTimeline(cost, tokens, 0), x => ({ ...x })), [
-        { date: "2026-01-01", usd: 1, total: 0 },
-        { date: "2026-01-02", usd: 2, total: 20 },
-        { date: "2026-01-03", usd: 3, total: 30 },
+        { date: spendDateDaysAgo(2), usd: 1, total: 0 },
+        { date: spendDateDaysAgo(1), usd: 2, total: 20 },
+        { date: spendDateDaysAgo(0), usd: 3, total: 30 },
     ]);
     assert.deepEqual(Array.from(FeatureTabs.spendTimeline(cost, tokens, 2), x => ({ ...x })), [
-        { date: "2026-01-02", usd: 2, total: 20 },
-        { date: "2026-01-03", usd: 3, total: 30 },
+        { date: spendDateDaysAgo(1), usd: 2, total: 20 },
+        { date: spendDateDaysAgo(0), usd: 3, total: 30 },
     ]);
     assert.deepEqual(Array.from(FeatureTabs.spendTimeline([], [], 30)), []);
 });
@@ -595,6 +602,55 @@ test("spend totals ignore non-numeric and non-finite row costs", () => {
     ];
     assert.equal(FeatureTabs.spendTotal(rows, "USD"), 6);
     assert.equal(FeatureTabs.spendTotal(rows, "EUR"), 99);
+});
+test("spend timeframe filtering recomputes bounded rows and preserves ALL", () => {
+    const rows = [{
+        id: "claude",
+        cost: 6,
+        currency: "USD",
+        dailyCost: [
+            { date: spendDateDaysAgo(2), usd: 1 },
+            { date: spendDateDaysAgo(1), usd: 2 },
+            { date: spendDateDaysAgo(0), usd: 3 },
+        ],
+        dailyTokens: [
+            { date: spendDateDaysAgo(2), total: 10 },
+            { date: spendDateDaysAgo(1), total: 20 },
+            { date: spendDateDaysAgo(0), total: 30 },
+        ],
+    }];
+
+    const oneDay = FeatureTabs.spendRowsForWindow(rows, 1);
+    const all = FeatureTabs.spendRowsForWindow(rows, 0);
+
+    assert.equal(oneDay[0].cost, 3);
+    assert.equal(JSON.stringify(oneDay[0].dailyCost), JSON.stringify([{ date: spendDateDaysAgo(0), usd: 3 }]));
+    assert.equal(JSON.stringify(oneDay[0].dailyTokens), JSON.stringify([{ date: spendDateDaysAgo(0), total: 30 }]));
+    assert.strictEqual(all, rows);
+});
+
+test("spend timeframe filtering omits rows without bounded history", () => {
+    const rows = [{ id: "legacy", cost: 4, currency: "USD", dailyCost: [], dailyTokens: [] }];
+
+    assert.equal(FeatureTabs.spendRowsForWindow(rows, 7).length, 0);
+    assert.equal(FeatureTabs.spendRowsForWindow(rows, 0)[0].cost, 4);
+});
+
+test("spend timeframe windows end today rather than at the last recorded day", () => {
+    const today = new Date();
+    const lastRecorded = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+    lastRecorded.setUTCDate(lastRecorded.getUTCDate() - 45);
+    const staleDate = lastRecorded.toISOString().slice(0, 10);
+    const rows = [{
+        id: "stale",
+        cost: 4,
+        currency: "USD",
+        dailyCost: [{ date: staleDate, usd: 4 }],
+        dailyTokens: [{ date: staleDate, total: 40 }],
+    }];
+
+    assert.equal(FeatureTabs.spendRowsForWindow(rows, 30).length, 0);
+    assert.equal(FeatureTabs.spendRowsForWindow(rows, 0)[0].cost, 4);
 });
 
 test("spend rows keep long text from moving the amount and center it vertically", () => {
