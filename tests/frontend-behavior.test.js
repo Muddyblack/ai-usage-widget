@@ -168,6 +168,13 @@ const plasma = qmlFunction("package/contents/ui/main.qml", "applyOpenAi");
 const plasmaCost = qmlFunction("package/contents/ui/SessionsTab.qml", "sessionCostText");
 const hyprlandCost = qmlFunction("hyprland/SessionsPage.qml", "sessionCostText");
 const spendTabSource = fs.readFileSync(path.join(rootDir, "package/contents/ui/SpendTab.qml"), "utf8");
+test("QML scrollbars explicitly create horizontal attached objects", () => {
+    for (const file of ["SpendTab.qml", "MistralTab.qml", "SessionsTab.qml"]) {
+        const source = fs.readFileSync(path.join(rootDir, "package/contents/ui", file), "utf8");
+        assert.doesNotMatch(source, /ScrollBar\.horizontal\.policy/);
+        assert.match(source, /ScrollBar\.horizontal:\s+QQC2\.ScrollBar\s*\{/);
+    }
+});
 const windows = ["providerById", "activeProvider", "pillProvider", "publishTray"]
     .map(name => qmlFunction("windows/qml/Main.qml", name)
         + "\nroot." + name + " = " + name + ";")
@@ -603,6 +610,7 @@ test("spend totals ignore non-numeric and non-finite row costs", () => {
     assert.equal(FeatureTabs.spendTotal(rows, "USD"), 6);
     assert.equal(FeatureTabs.spendTotal(rows, "EUR"), 99);
 });
+
 test("spend timeframe filtering recomputes bounded rows and preserves ALL", () => {
     const rows = [{
         id: "claude",

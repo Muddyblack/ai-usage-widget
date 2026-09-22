@@ -450,7 +450,9 @@ ColumnLayout {
         model: spendTab.rateRows
         boundsBehavior: Flickable.StopAtBounds
         interactive: contentHeight > height
-        QQC2.ScrollBar.horizontal.policy: QQC2.ScrollBar.AlwaysOff
+        QQC2.ScrollBar.horizontal: QQC2.ScrollBar {
+            policy: QQC2.ScrollBar.AlwaysOff
+        }
         QQC2.ScrollBar.vertical: QQC2.ScrollBar {
             id: rateScrollBar
             policy: QQC2.ScrollBar.AsNeeded
