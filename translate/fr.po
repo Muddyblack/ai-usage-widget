@@ -747,15 +747,15 @@ msgstr "· aucun historique de jetons"
 msgid "· no cost history"
 msgstr "· aucun historique de coût"
 
-#: hyprland/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+#: hyprland/SpendTimelineChart.qml
 msgid "30d"
 msgstr "30j"
 
-#: hyprland/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+#: hyprland/SpendTimelineChart.qml
 msgid "90d"
 msgstr "90j"
 
-#: hyprland/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+#: hyprland/SpendTimelineChart.qml
 msgid "All"
 msgstr "Tout"
 
@@ -3161,6 +3161,22 @@ msgid "Views, colors, chart and popup style"
 msgstr "Vues, couleurs, graphique et style de la fenêtre contextuelle"
 
 #: package/contents/ui/main.qml
+msgid "Spend timeframe: 1 day"
+msgstr "Période de dépenses : 1 jour"
+
+#: package/contents/ui/main.qml
+msgid "Spend timeframe: 7 days"
+msgstr "Période de dépenses : 7 jours"
+
+#: package/contents/ui/main.qml
+msgid "Spend timeframe: 30 days"
+msgstr "Période de dépenses : 30 jours"
+
+#: package/contents/ui/main.qml
+msgid "Spend timeframe: all history"
+msgstr "Période de dépenses : tout l'historique"
+
+#: package/contents/ui/main.qml
 msgid "Export current tab as PNG or SVG"
 msgstr "Exporter l'onglet actuel en PNG ou SVG"
 
@@ -3651,6 +3667,10 @@ msgstr "Forfait incl. : %1"
 #: macos/Sources/AIUsage/Views/SpendView.swift
 msgid "Metered: %1"
 msgstr "Mesuré : %1"
+
+#: macos/Sources/AIUsage/Views/SpendView.swift
+msgid "Spend timeframe"
+msgstr "Période de dépenses"
 
 #: macos/Sources/AIUsage/Views/SpendView.swift
 msgid ""
