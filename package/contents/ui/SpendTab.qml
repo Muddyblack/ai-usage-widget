@@ -17,7 +17,8 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 12
 
-    readonly property var rows: spendTab.buildRows()
+    property int spendWindowDays: 0
+    readonly property var rows: FeatureTabs.spendRowsForWindow(spendTab.buildRows(), spendTab.spendWindowDays)
     readonly property real totalUsd: FeatureTabs.spendTotal(rows, "USD")
     readonly property real meteredTotalUsd: FeatureTabs.spendMeteredTotal(rows, "USD")
     readonly property real planTotalUsd: FeatureTabs.spendPlanTotal(rows, "USD")
@@ -33,7 +34,6 @@ ColumnLayout {
     // API window vs. all-time local logs), so summing them into one line
     // produced a chart that was mostly flat with one misleading spike.
     property var expandedProviders: ({})
-    property var expandedWindowDays: ({})
 
     // ── Model rate table ───────────────────────────────────────────────────
     // The shared pricing catalog the session costs are computed from, shown so
@@ -180,7 +180,6 @@ ColumnLayout {
             required property var modelData
             readonly property bool canExpand: !!((modelData.dailyCost && modelData.dailyCost.length > 1) || (modelData.dailyTokens && modelData.dailyTokens.length > 1))
             readonly property bool isExpanded: spendTab.expandedProviders[modelData.id] === true
-            readonly property int windowDays: spendTab.expandedWindowDays[modelData.id] !== undefined ? spendTab.expandedWindowDays[modelData.id] : 0
 
             Layout.fillWidth: true
             implicitHeight: body.implicitHeight + 16 + (canExpand && isExpanded ? detail.implicitHeight + 10 : 0)
@@ -273,14 +272,8 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.leftMargin: 16
                     visible: rowCard.canExpand && rowCard.isExpanded
-                    points: FeatureTabs.spendTimeline(modelData.dailyCost, modelData.dailyTokens, rowCard.windowDays)
+                    points: FeatureTabs.spendTimeline(modelData.dailyCost, modelData.dailyTokens, 0)
                     costColor: modelData.accent
-                    windowDays: rowCard.windowDays
-                    onWindowDaysSelected: days => {
-                        var next = Object.assign({}, spendTab.expandedWindowDays);
-                        next[modelData.id] = days;
-                        spendTab.expandedWindowDays = next;
-                    }
                 }
             }
 

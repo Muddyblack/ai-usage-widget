@@ -653,6 +653,20 @@ test("spend timeframe windows end today rather than at the last recorded day", (
     assert.equal(FeatureTabs.spendRowsForWindow(rows, 0)[0].cost, 4);
 });
 
+test("Plasma spend timeframe controls are global and fixed", () => {
+    assert.match(spendTabSource, /property int spendWindowDays: 0/);
+    assert.match(spendTabSource, /spendRowsForWindow/);
+    assert.doesNotMatch(spendTabSource, /rootItem\.refresh\(\)/);
+
+    const mainSource = fs.readFileSync(path.join(rootDir, "package/contents/ui/main.qml"), "utf8");
+    for (const label of ["1D", "7D", "30D", "ALL"])
+        assert.match(mainSource, new RegExp('text: "' + label + '"'));
+
+    const chartSource = fs.readFileSync(path.join(rootDir, "package/contents/ui/SpendTimelineChart.qml"), "utf8");
+    assert.doesNotMatch(chartSource, /i18n\("90d"\)/);
+    assert.doesNotMatch(chartSource, /windowDaysSelected/);
+});
+
 test("spend rows keep long text from moving the amount and center it vertically", () => {
     const rowStart = spendTabSource.indexOf("        Rectangle {\n            id: rowCard\n            required property var modelData");
     assert.notEqual(rowStart, -1);
