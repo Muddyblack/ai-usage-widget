@@ -9,6 +9,8 @@ import org.kde.plasma.plasmoid
 import "../code/FeatureTabs.js" as FeatureTabs
 import "../code/Format.js" as Format
 import "../code/PanelRotation.js" as PanelRotation
+import "../code/RefreshCoalescer.js" as RefreshCoalescer
+import "../code/RequestGeneration.js" as RequestGeneration
 import "../code/Shell.js" as Shell
 import "../code/UsageHistory.js" as UsageHistory
 
@@ -443,19 +445,33 @@ PlasmoidItem {
         var winSize = win.size;
         var maxT = now_ms - root.chartTimeOffset;
         var minT = maxT - winSize;
-        for (var i = 0; i < root.usageHistory.length; i++) {
-            var p = root.usageHistory[i];
+        // The series is ascending by t. For a large series, binary-search the
+        // visible window instead of scanning every point; the bounds are
+        // inclusive on both ends and the guard below still filters, so both
+        // paths produce the same output. A short series is scanned directly —
+        // bisecting it costs more than it saves.
+        var points = root.usageHistory;
+        var from = 0;
+        var to = points.length;
+        var bounded = points.length > 2048;
+        if (bounded) {
+            from = UsageHistory.lowerBound(points, minT);
+            to = UsageHistory.upperBound(points, maxT);
+        }
+        for (var i = from; i < to; i++) {
+            var p = points[i];
+            if (!bounded && (p.t < minT || p.t > maxT))
+                continue;
             var v = p[key];
             if ((v === undefined || v === null) && fallbackKey)
                 v = p[fallbackKey];
             if (v === undefined || v === null)
                 continue;
 
-            if (p.t >= minT && p.t <= maxT)
-                out.push({
-                    "t": p.t,
-                    "v": v
-                });
+            out.push({
+                "t": p.t,
+                "v": v
+            });
         }
         if (win.resets)
             out = UsageHistory.withResets(out, win.resetAt * 1000, win.periodMs, minT, maxT);
@@ -748,6 +764,10 @@ PlasmoidItem {
     // Poll interval is user-configurable (seconds); default 300s. Clamp to a sane floor.
     property int pollIntervalSec: Plasmoid.configuration.pollIntervalSec || 300
     property bool pricingLoading: false
+    // Coalescing state: a successful pricing refresh triggers at most one usage
+    // refresh, deferred while one is already in flight.
+    property bool usageInFlight: false
+    property bool usageRefreshPending: false
     property string pricingStatus: ""
     property string pricingError: ""
     property bool providerDefaultsReady: false
@@ -935,6 +955,9 @@ PlasmoidItem {
     // install. It also bounds the startup seed, which is built from it and travels
     // a command line.
     readonly property int historyConfigLimit: 500
+    // Plasma rewrites the whole applet config on each change, so bound the
+    // last-good envelope too and keep oversized snapshots out of the config.
+    readonly property int snapshotConfigLimit: 100000
 
     function flushHistoryConfig() {
         if (!root.historyConfigDirty)
@@ -963,11 +986,22 @@ PlasmoidItem {
         root.saveHistory();
     }
 
+    // Persistence is coalesced into one history-io run per window while the
+    // chart stays current from the in-memory store. saveHistory() arms the
+    // window; the timer fires once and sendHistory() ships whatever is queued.
+    // A controlled hide/exit flushes instead of waiting for the window.
+    readonly property int historyDebounceMs: 300000
+
+    function saveHistory() {
+        if (UsageHistory.arm(root.historyStore, new Date().getTime(), root.historyDebounceMs))
+            historyDebounceTimer.restart();
+    }
+
     // Ship the next batch to ~/.local/share/ai-usage-widget/usage-history-latest.json,
     // shared with the Quickshell frontend. history-io unions it in and hands the
     // merged series back, so this is also how the other frontend's points arrive.
     // take() decides whether there is anything to send, and what.
-    function saveHistory() {
+    function sendHistory() {
         var batch = UsageHistory.take(root.historyStore);
         if (!batch)
             return;
@@ -978,6 +1012,24 @@ PlasmoidItem {
         root.historySaveCmd = root.pythonEnv() + "WIDGET_HISTORY_JSON=\"$(printf %s '" + root.base64(JSON.stringify(batch.points)) + "' | base64 -d)\" " + root.scriptPath("history-io") + " " + batch.op;
         historyIOSource.disconnectSource(root.historySaveCmd);
         historyIOSource.connectSource(root.historySaveCmd);
+    }
+
+    function flushHistory() {
+        historyDebounceTimer.stop();
+        var batch = UsageHistory.takeForExit(root.historyStore);
+        if (!batch)
+            return;
+        root.historySaveCmd = root.pythonEnv() + "WIDGET_HISTORY_JSON=\"$(printf %s '" + root.base64(JSON.stringify(batch.points)) + "' | base64 -d)\" " + root.scriptPath("history-io") + " " + batch.op;
+        historyIOSource.disconnectSource(root.historySaveCmd);
+        historyIOSource.connectSource(root.historySaveCmd);
+    }
+
+    Timer {
+        id: historyDebounceTimer
+
+        interval: root.historyDebounceMs
+        repeat: false
+        onTriggered: root.sendHistory()
     }
 
     function finishHistorySave(merged) {
@@ -1594,7 +1646,13 @@ PlasmoidItem {
         return env + root.scriptPath("get-ai-usage") + " --provider " + root.shellQuote(ids.join(","));
     }
 
-    function applySnapshot(text) {
+    // The newest usage request generation. The executable DataSource cannot
+    // cancel a command in flight, so a slow response from an older refresh must
+    // not overwrite newer state; each command carries its generation as a
+    // trailing shell comment, invisible to the backend but preserved in `src`.
+    property int usageGeneration: 0
+
+    function applySnapshot(text, replayed) {
         var snapshot;
         try {
             snapshot = JSON.parse(text);
@@ -1604,6 +1662,7 @@ PlasmoidItem {
             return;
         }
         var providers = snapshot.providers || [];
+        var snapshotTime = snapshot.updatedAt > 0 ? Qt.formatTime(new Date(snapshot.updatedAt * 1000), "hh:mm") : "";
         root.rawProviders = providers;
         root.localSpend = snapshot.localSpend || ({});
         var active = root.enabledTabs[root.activeTab] || "";
@@ -1626,15 +1685,28 @@ PlasmoidItem {
         root.providerChartWindows = windows;
         for (var j = 0; j < providers.length; j++)
             root.applyProvider(providers[j] || {});
-        root.recordHistoryValues(UsageHistory.collect(providers));
+        if (replayed !== true)
+            root.recordHistoryValues(UsageHistory.collect(providers));
         root.updateCountdowns();
-        if (!activeSeen)
+        if (!activeSeen) {
+            if (replayed === true) {
+                root.stale = true;
+                root.lastUpdate = snapshotTime;
+            }
             return;
+        }
 
         root.errorMsg = activeError;
         if (activeError === "") {
-            root.stale = false;
-            root.lastUpdate = Qt.formatTime(new Date(), "hh:mm");
+            if (replayed === true) {
+                root.stale = true;
+                root.lastUpdate = snapshotTime;
+            } else {
+                root.stale = false;
+                root.lastUpdate = Qt.formatTime(new Date(), "hh:mm");
+                if (text.length <= root.snapshotConfigLimit && RequestGeneration.shouldPersist(text, Plasmoid.configuration.lastSnapshot))
+                    Plasmoid.configuration.lastSnapshot = text;
+            }
             offlineRetryTimer.stop();
             return;
         }
@@ -2108,8 +2180,30 @@ PlasmoidItem {
             return;
 
         var cmd = root.backendCommand(ids);
+        root.usageGeneration = RequestGeneration.nextGeneration(root.usageGeneration);
+        cmd += " #gen=" + root.usageGeneration;
+        root.usageInFlight = true;
         usageSource.disconnectSource(cmd);
         usageSource.connectSource(cmd);
+    }
+
+    // One successful pricing refresh triggers at most one usage refresh. If a
+    // usage request is already running, remember that one is owed and fire it
+    // when the running request settles, instead of cancelling and re-running.
+    function requestUsageRefreshAfterPricing() {
+        var action = RefreshCoalescer.nextAction(true, root.usageInFlight, root.usageRefreshPending);
+        if (action === "refresh-now")
+            root.refresh();
+        else if (action === "mark-pending")
+            root.usageRefreshPending = true;
+    }
+
+    function settleUsageRefresh() {
+        root.usageInFlight = false;
+        if (root.usageRefreshPending) {
+            root.usageRefreshPending = false;
+            root.refresh();
+        }
     }
 
     function refreshPricing() {
@@ -2342,8 +2436,14 @@ PlasmoidItem {
             }
         }
     }
-    Component.onDestruction: root.flushHistoryConfig()
+    Component.onDestruction: {
+        root.flushHistory();
+        root.flushHistoryConfig();
+    }
     Component.onCompleted: {
+        var cachedSnapshot = String(Plasmoid.configuration.lastSnapshot || "").trim();
+        if (cachedSnapshot !== "")
+            root.applySnapshot(cachedSnapshot, true);
         root.loadUsageHistory();
         root.normalizePanelRotation();
         // Honor the first pinned service on startup by selecting its tab.
@@ -2472,7 +2572,13 @@ PlasmoidItem {
         connectedSources: []
         onNewData: function (src, data) {
             disconnectSource(src);
+            // Drop a response from a superseded refresh: only the newest
+            // generation may reach applySnapshot, and only it settles the
+            // in-flight flag (the newer request is still running).
+            if (!RequestGeneration.isCurrent(RequestGeneration.generationOf(src), root.usageGeneration))
+                return;
             root.applySnapshot((data["stdout"] || "").trim());
+            root.settleUsageRefresh();
         }
     }
 
@@ -2527,7 +2633,7 @@ PlasmoidItem {
                 root.pricingStatus = result.status || (result.ok === true ? "refreshed" : "no-cache");
                 root.pricingError = result.error || "";
                 if (result.ok === true)
-                    root.refresh();
+                    root.requestUsageRefreshAfterPricing();
             } catch (e) {
                 root.pricingStatus = "no-cache";
                 root.pricingError = i18n("Could not refresh pricing.");

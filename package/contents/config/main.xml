@@ -133,6 +133,10 @@
     <entry name="usageHistory" type="String">
       <default></default>
     </entry>
+    <!-- Last successful provider snapshot for stale startup display. -->
+    <entry name="lastSnapshot" type="String">
+      <default></default>
+    </entry>
     <!-- Accent color mode: true = follow Plasma accent (highlightColor), false = per-service colors -->
     <entry name="useThemeAccent" type="Bool">
       <default>false</default>
