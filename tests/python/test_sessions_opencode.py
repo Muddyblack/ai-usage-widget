@@ -94,7 +94,7 @@ class OpenCodeDiscoveryTest(unittest.TestCase):
             original_cwd = os.getcwd()
             os.chdir(cwd)
             try:
-                with mock.patch.object(session_manifest.paths, "data_home_dirs", return_value=[]):
+                with mock.patch.object(session_manifest.paths, "data_home_dirs", return_value=[root]):
                     with mock.patch.dict(
                         os.environ,
                         {"OPENCODE_DB": "opencode-stable.db", "XDG_DATA_HOME": root},
@@ -107,6 +107,20 @@ class OpenCodeDiscoveryTest(unittest.TestCase):
                 os.chdir(original_cwd)
 
         self.assertEqual(relative, absolute)
+
+    def test_resolves_relative_explicit_database_name_under_data_home(self):
+        with tempfile.TemporaryDirectory() as root:
+            data = os.path.join(root, "opencode")
+            os.mkdir(data)
+            expected = _create_database(data, "opencode-stable.db", [])
+            with mock.patch.dict(
+                os.environ,
+                {"OPENCODE_DB": "opencode-stable.db", "XDG_DATA_HOME": root},
+                clear=True,
+            ):
+                found = opencode.discover_database_paths()
+
+        self.assertEqual(found, [expected])
 
     def test_uses_opencode_cli_database_path(self):
         with tempfile.TemporaryDirectory() as root:

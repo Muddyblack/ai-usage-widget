@@ -595,10 +595,49 @@ function spendTimeline(costSeries, tokenSeries, windowDays) {
     });
     if (!windowDays || windowDays <= 0 || points.length === 0)
         return points;
-    var cutoff = new Date(points[points.length - 1].date + "T00:00:00Z").getTime() - (windowDays - 1) * 86400000;
+    var now = new Date();
+    var today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    var cutoff = today - (windowDays - 1) * 86400000;
     return points.filter(function (p) {
-        return new Date(p.date + "T00:00:00Z").getTime() >= cutoff;
+        var time = new Date(p.date + "T00:00:00Z").getTime();
+        return time >= cutoff && time <= today;
     });
+}
+
+function spendRowsForWindow(rows, windowDays) {
+    var days = Number(windowDays);
+    if (!isFinite(days) || days <= 0)
+        return rows || [];
+    if (days !== 1 && days !== 7 && days !== 30)
+        return rows || [];
+
+    var source = rows || [];
+    var out = [];
+    for (var i = 0; i < source.length; i++) {
+        var row = source[i];
+        if (!row)
+            continue;
+        var points = spendTimeline(row.dailyCost, row.dailyTokens, days);
+
+        var dailyCost = [];
+        var dailyTokens = [];
+        var cost = 0;
+        for (var j = 0; j < points.length; j++) {
+            var point = points[j];
+            var usd = typeof point.usd === "number" && isFinite(point.usd) ? point.usd : 0;
+            var total = typeof point.total === "number" && isFinite(point.total) ? point.total : 0;
+            dailyCost.push({ date: point.date, usd: usd });
+            dailyTokens.push({ date: point.date, total: total });
+            cost += usd;
+        }
+
+        var filtered = Object.assign({}, row);
+        filtered.cost = cost;
+        filtered.dailyCost = dailyCost;
+        filtered.dailyTokens = dailyTokens;
+        out.push(filtered);
+    }
+    return out;
 }
 
 function formatMoney(value, currency) {

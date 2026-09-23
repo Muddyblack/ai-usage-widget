@@ -381,6 +381,9 @@ ColumnLayout {
             QQC2.ScrollView {
                 anchors.fill: parent
                 anchors.margins: 2
+                QQC2.ScrollBar.horizontal: QQC2.ScrollBar {
+                    policy: QQC2.ScrollBar.AlwaysOff
+                }
                 contentWidth: availableWidth
 
                 ColumnLayout {
