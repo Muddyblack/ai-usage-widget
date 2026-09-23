@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import datetime
 import hashlib
 import json
+import math
 import sqlite3
 import time
 from collections.abc import Iterable, Mapping, Sequence
@@ -11,6 +13,7 @@ from pathlib import Path
 from typing import Any, Callable, Final, Protocol, TypedDict
 
 from .contract import finite_number
+from .session_manifest import source_fingerprint
 
 # Single source of truth for which public fields are searchable, shared with
 # the fallback (`sessions.py`) search path so the two never drift apart.
@@ -227,6 +230,201 @@ def _valid_open_key(value: object) -> str:
     return value if isinstance(value, str) and len(value) == 64 and all(char in "0123456789abcdef" for char in value) else ""
 
 
+# Shared with the Swift decoder: permit binary-float roundoff only, not a USD mismatch.
+_MIXED_COST_REL_TOLERANCE = 1e-9
+_MIXED_COST_ABS_TOLERANCE = 1e-12
+
+
+def _local_contribution(provider, cost, status, provenance, source, billing_provider=None):
+    if status not in ("exact", "partial") or not isinstance(provider, str) or not provider:
+        return None
+    if provider == "cline" and provenance == "actual":
+        return None
+    if cost is None:
+        return None
+    rollup_provider = billing_provider if source == "opencode" and isinstance(billing_provider, str) and billing_provider else provider
+    rollup_source = source.strip().lower() if isinstance(source, str) and source.strip() else ""
+    rollup = f"{rollup_provider}::{rollup_source}" if rollup_source else rollup_provider
+    return rollup, cost, status
+
+
+def _local_contributions(session, provenance):
+    if not isinstance(session, dict):
+        return []
+    provider_costs = session.get("providerCosts")
+    if isinstance(provider_costs, dict) and provider_costs:
+        # Multi-provider OpenCode session: one contribution per upstream
+        # provider; the top-level aggregate is skipped so nothing is counted
+        # twice.
+        contributions = []
+        for provider, cost_row in provider_costs.items():
+            if not isinstance(cost_row, dict):
+                continue
+            contributions.extend(_local_contributions({**cost_row, "provider": provider, "source": session.get("source")}, provenance))
+        return contributions
+
+    session_provenance = session.get("costProvenance")
+    mixed = session_provenance == "mixed"
+    if session_provenance == provenance:
+        cost = finite_number(session.get("costUSD"), minimum=0) or None
+    elif mixed:
+        parent_cost = finite_number(session.get("costUSD"), minimum=0)
+        breakdown = session.get("costBreakdown")
+        if not isinstance(breakdown, dict):
+            return []
+        actual_cost = finite_number(breakdown.get("actualUSD"), minimum=0)
+        estimated_cost = finite_number(breakdown.get("estimatedUSD"), minimum=0)
+        if (
+            parent_cost is None
+            or actual_cost is None
+            or estimated_cost is None
+            or not math.isclose(
+                math.fsum((actual_cost, estimated_cost)),
+                parent_cost,
+                rel_tol=_MIXED_COST_REL_TOLERANCE,
+                abs_tol=_MIXED_COST_ABS_TOLERANCE,
+            )
+        ):
+            return []
+        cost = actual_cost if provenance == "actual" else estimated_cost
+    else:
+        return []
+    contribution = _local_contribution(
+        session.get("provider"),
+        cost,
+        session.get("costStatus"),
+        provenance,
+        session.get("source"),
+        billing_provider=session.get("billingProvider"),
+    )
+    return [contribution] if contribution is not None else []
+
+
+def _billing_mode(session):
+    mode = session.get("costBilling") if isinstance(session, dict) else None
+    return mode if mode in ("subscription", "api") else "api"
+
+
+def _session_date(session):
+    """Local calendar day a session's cost lands on, or "" when unknown.
+
+    Local, not UTC, for the same reason the per-provider stats use local days:
+    "which day did I spend that" is a question about the user's own calendar.
+    """
+    activity = finite_number(session.get("lastActivityAt"), minimum=0) if isinstance(session, dict) else None
+    if not activity:
+        return ""
+    try:
+        return datetime.datetime.fromtimestamp(activity).strftime("%Y-%m-%d")
+    except (OverflowError, OSError, ValueError):
+        return ""
+
+
+def _row_cost_groups(row, provenance=None):
+    """Materialized contribution rows for one redacted session row.
+
+    Returns (billing, provenance, rollup, cost, status, day, token_share)
+    tuples — one per contribution, for both provenances unless one is asked
+    for. The token share is the session's tokens split across that
+    provenance's contributions, so a multi-provider session never counts its
+    tokens once per upstream provider.
+    """
+    billing = _billing_mode(row)
+    day = _session_date(row)
+    tokens = finite_number(row.get("tokens"), minimum=0) or 0
+    groups = []
+    for prov in ("actual", "estimated"):
+        if provenance is not None and prov != provenance:
+            continue
+        contributions = _local_contributions(row, prov)
+        if not contributions:
+            continue
+        share = tokens / len(contributions) if day and tokens else 0
+        for rollup, cost, status in contributions:
+            groups.append((billing, prov, rollup, cost, status, day, share))
+    return groups
+
+
+class _GroupState:
+    __slots__ = ("totals", "partial", "costs", "daily", "daily_tokens")
+
+    def __init__(self) -> None:
+        self.totals: dict[str, float] = {}
+        self.partial: set[str] = set()
+        self.costs: list[float] = []
+        self.daily: dict[str, dict[str, float]] = {}
+        self.daily_tokens: dict[str, dict[str, float]] = {}
+
+    def add(self, rollup: str, cost: float, status: str, day: str, token_share: float) -> None:
+        self.totals[rollup] = self.totals.get(rollup, 0) + cost
+        self.costs.append(cost)
+        if status == "partial":
+            self.partial.add(rollup)
+        if day:
+            per_provider = self.daily.setdefault(rollup, {})
+            per_provider[day] = per_provider.get(day, 0) + cost
+        if day and token_share:
+            per_provider_tokens = self.daily_tokens.setdefault(rollup, {})
+            per_provider_tokens[day] = per_provider_tokens.get(day, 0) + token_share
+
+    def finish(self, provenance: str) -> dict:
+        if not self.totals:
+            return {"costStatus": "unavailable"}
+        total = math.fsum(self.costs)
+        if not math.isfinite(total) or any(not math.isfinite(cost) for cost in self.totals.values()):
+            return {"costStatus": "unavailable"}
+        return {
+            "totalUSD": total,
+            "costStatus": "partial" if self.partial else "exact",
+            "costProvenance": provenance,
+            "providers": {
+                provider: {
+                    "costUSD": cost,
+                    "costStatus": "partial" if provider in self.partial else "exact",
+                    "costProvenance": provenance,
+                    **(
+                        {"dailyUSD": [{"date": date, "usd": usd} for date, usd in sorted(self.daily[provider].items())]}
+                        if self.daily.get(provider)
+                        else {}
+                    ),
+                    **(
+                        {"dailyTokens": [{"date": date, "total": round(total)} for date, total in sorted(self.daily_tokens[provider].items())]}
+                        if self.daily_tokens.get(provider)
+                        else {}
+                    ),
+                    **({"source": provider.rsplit("::", 1)[1]} if "::" in provider else {}),
+                }
+                for provider, cost in self.totals.items()
+            },
+        }
+
+
+def _accumulate_group(contributions, provenance):
+    """Accumulate (rollup, cost, status, day, token_share) tuples into one group."""
+    state = _GroupState()
+    for contribution in contributions:
+        state.add(*contribution)
+    return state.finish(provenance)
+
+
+def _spend_groups_from_rows(rows):
+    """Accumulate materialized contribution rows into the four spend groups."""
+    states = {
+        ("api", "actual"): _GroupState(),
+        ("api", "estimated"): _GroupState(),
+        ("subscription", "estimated"): _GroupState(),
+        ("subscription", "actual"): _GroupState(),
+    }
+    for billing, provenance, rollup, cost, status, day, token_share in rows:
+        states[(billing, provenance)].add(rollup, cost, status, day, token_share)
+    return {
+        "actual": states[("api", "actual")].finish("actual"),
+        "estimated": states[("api", "estimated")].finish("estimated"),
+        "subscription": states[("subscription", "estimated")].finish("estimated"),
+        "subscriptionActual": states[("subscription", "actual")].finish("actual"),
+    }
+
+
 class SessionIndex:
     """Keep redacted session rows keyed by a private source fingerprint."""
 
@@ -276,11 +474,16 @@ class SessionIndex:
                     if key not in source_map:
                         mutated = True
                         connection.execute("DELETE FROM session_rows WHERE source_key = ?", (key,))
+                        connection.execute("DELETE FROM session_cost_groups WHERE source_key = ?", (key,))
                         connection.execute("DELETE FROM source_meta WHERE source_key = ?", (key,))
 
                 for source_order, (key, source) in enumerate(source_map.items()):
-                    metadata = (source.mtime_ns, source.size)
-                    if not force and stored.get(key) == metadata and cached_rows.get(key, 0) > 0:
+                    fingerprint = source_fingerprint(source.source_id, source.mtime_ns, source.size)
+                    stored_metadata = stored.get(key)
+                    unchanged = (
+                        stored_metadata is not None and source_fingerprint(source.source_id, *stored_metadata).fingerprint == fingerprint.fingerprint
+                    )
+                    if not force and unchanged and cached_rows.get(key, 0) > 0:
                         if key in stored_orders and stored_orders[key] != source_order:
                             mutated = True
                         connection.execute(
@@ -298,7 +501,7 @@ class SessionIndex:
                         "VALUES (?, ?, ?, ?) ON CONFLICT(source_key) DO UPDATE SET "
                         "mtime_ns = excluded.mtime_ns, size = excluded.size, "
                         "source_order = excluded.source_order",
-                        (key, source.mtime_ns, source.size, source_order),
+                        (key, fingerprint.mtime_ns, fingerprint.size, source_order),
                     )
                     connection.execute("DELETE FROM session_rows WHERE source_key = ?", (key,))
                     connection.executemany(
@@ -332,6 +535,17 @@ class SessionIndex:
                             for row_order, row in enumerate(rows)
                         ),
                     )
+                    connection.execute("DELETE FROM session_cost_groups WHERE source_key = ?", (key,))
+                    connection.executemany(
+                        "INSERT INTO session_cost_groups (source_key, row_order, billing, "
+                        "provenance, rollup, cost, status, day, token_share) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            (key, row_order, billing, provenance, rollup, cost, status, day, token_share)
+                            for row_order, row in enumerate(rows)
+                            for billing, provenance, rollup, cost, status, day, token_share in _row_cost_groups(row)
+                        ),
+                    )
                 connection.commit()
             if mutated:
                 try:
@@ -359,6 +573,31 @@ class SessionIndex:
         finally:
             connection.close()
         return [_row_from_columns(row) for row in page]
+
+    def spend_groups(self) -> dict | None:
+        """The four local-spend groups from the materialized contribution table.
+
+        Returns None when the cache was built by different code: the caller
+        then falls back to the full-row path, which is what the old envelope
+        did with that cache.
+        """
+        from .session_index_storage import _schema_version
+
+        connection = self._open()
+        try:
+            row = connection.execute("PRAGMA user_version").fetchone()
+            stored = int(row[0]) if row else 0
+            if stored != _schema_version():
+                return None
+            rows = connection.execute(
+                "SELECT g.billing, g.provenance, g.rollup, g.cost, g.status, g.day, g.token_share "
+                "FROM session_cost_groups g "
+                "JOIN source_meta m ON m.source_key = g.source_key "
+                "ORDER BY m.source_order, g.row_order"
+            ).fetchall()
+        finally:
+            connection.close()
+        return _spend_groups_from_rows(rows)
 
     def query(
         self,

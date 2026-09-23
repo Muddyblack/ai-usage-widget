@@ -363,6 +363,95 @@ def _titled_parser(title: str) -> Parser:
     return parse
 
 
+class ContributionTableTest(unittest.TestCase):
+    """The materialized local-spend table is maintained by reconcile and read
+    by spend_groups, which must agree with the full-row path."""
+
+    def _cost_parser(self, rows):
+        def parse(source: Source) -> list[Row]:
+            return rows
+
+        return parse
+
+    def test_reconcile_materializes_contributions_and_spend_groups_reads_them(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / "sessions.sqlite3"
+            source = _source(root, "one.jsonl", "one")
+            index = _index_class()(cache)
+            index.reconcile(
+                [source],
+                self._cost_parser(
+                    [
+                        {
+                            "provider": "opencode",
+                            "source": "opencode",
+                            "costUSD": 0.42,
+                            "costStatus": "exact",
+                            "costProvenance": "actual",
+                            "lastActivityAt": 1_789_046_340,
+                        }
+                    ]
+                ),
+            )
+            groups = index.spend_groups()
+
+        self.assertEqual(groups["actual"]["totalUSD"], 0.42)
+        self.assertEqual(groups["actual"]["providers"]["opencode::opencode"]["costUSD"], 0.42)
+
+    def test_removed_source_drops_its_contributions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / "sessions.sqlite3"
+            kept = _source(root, "one.jsonl", "one")
+            removed = _source(root, "two.jsonl", "two")
+            index = _index_class()(cache)
+            index.reconcile(
+                [kept, removed],
+                self._cost_parser(
+                    [
+                        {
+                            "provider": "cline",
+                            "source": "cline",
+                            "costUSD": 1.0,
+                            "costStatus": "exact",
+                            "costProvenance": "estimated",
+                        }
+                    ]
+                ),
+            )
+            index.reconcile([kept], self._cost_parser([]))
+            groups = index.spend_groups()
+
+        self.assertEqual(groups["estimated"]["totalUSD"], 1.0)
+
+    def test_spend_groups_returns_none_when_the_cache_is_stale(self):
+        storage = importlib.import_module("aiusage.session_index_storage")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / "sessions.sqlite3"
+            source = _source(root, "one.jsonl", "one")
+            index = _index_class()(cache)
+            index.reconcile(
+                [source],
+                self._cost_parser(
+                    [
+                        {
+                            "provider": "cline",
+                            "source": "cline",
+                            "costUSD": 1.0,
+                            "costStatus": "exact",
+                            "costProvenance": "estimated",
+                        }
+                    ]
+                ),
+            )
+            with mock.patch.object(storage, "_schema_version", lambda: 123456):
+                groups = index.spend_groups()
+
+        self.assertIsNone(groups)
+
+
 class SchemaVersionInvalidationTest(unittest.TestCase):
     """Cached rows are the product of the parser that produced them, so a
     parser change has to invalidate them even when no session file moved.
