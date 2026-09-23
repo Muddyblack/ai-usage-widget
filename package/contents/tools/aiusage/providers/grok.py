@@ -10,7 +10,9 @@ billing/credits path as unverified until checked against one.
 import os
 import re
 import time
+import urllib.parse
 from collections import deque
+from dataclasses import dataclass
 
 from ..contract import epoch_of
 from ..http import as_json, fetch_json, resolve_key
@@ -48,6 +50,124 @@ def grok_home():
     """``$GROK_HOME`` when set, else ``~/.grok`` — where the Grok CLI keeps its
     login, settings, session logs and unified log, on every platform."""
     return os.path.expanduser(os.environ.get("GROK_HOME") or "~/.grok")
+
+
+@dataclass(frozen=True, slots=True)
+class GrokSession:
+    """One discovered session directory and the markers it carries.
+
+    ``mtime`` is the marker the resume/target view keys on (summary wins when
+    both layouts are present); ``summary_mtime``/``signals_mtime`` keep each
+    layout's own timestamp for the readers that use them.
+    """
+
+    session_id: str
+    directory: str
+    cwd: str
+    mtime: float
+    summary_path: str
+    summary_mtime: float
+    signals_path: str
+    signals_mtime: float
+
+    @property
+    def marker(self) -> str:
+        return "summary.json" if self.summary_path else "signals.json"
+
+
+_DISCOVERY_TTL_SECONDS = 30.0
+_DISCOVERY_CACHE: dict[tuple[str, str], tuple[float, list[GrokSession]]] = {}
+
+
+def _discovery_ttl():
+    raw = os.environ.get("GROK_DISCOVERY_TTL_SECONDS")
+    if raw:
+        try:
+            return float(raw)
+        except ValueError:
+            pass
+    return _DISCOVERY_TTL_SECONDS
+
+
+def _decode_workspace(name):
+    if name.startswith("%2F"):
+        try:
+            return urllib.parse.unquote(name)
+        except Exception:
+            return ""
+    return ""
+
+
+def _walk_sessions(sessions_dir):
+    """One recursive pass over the store, recording every session directory.
+
+    The four local Grok views (signals, summaries, legacy entries, resume
+    targets) each used to walk this tree independently. This is the single
+    pass they now share.
+    """
+    records = []
+    for root, _dirs, files in os.walk(sessions_dir):
+        if root == sessions_dir:
+            continue
+        names = set(files)
+        summary = os.path.join(root, "summary.json") if "summary.json" in names else ""
+        signals = os.path.join(root, "signals.json") if "signals.json" in names else ""
+        if not summary and not signals:
+            continue
+        session_id = os.path.basename(root)
+        if not session_id or session_id == "sessions":
+            continue
+        try:
+            summary_mtime = os.path.getmtime(summary) if summary else 0.0
+            signals_mtime = os.path.getmtime(signals) if signals else 0.0
+        except OSError:
+            continue
+        parent = os.path.basename(os.path.dirname(root.rstrip("/\\")))
+        records.append(
+            GrokSession(
+                session_id=session_id,
+                directory=root,
+                cwd=_decode_workspace(parent),
+                mtime=summary_mtime or signals_mtime,
+                summary_path=summary,
+                summary_mtime=summary_mtime,
+                signals_path=signals,
+                signals_mtime=signals_mtime,
+            )
+        )
+    return records
+
+
+def discover_sessions(sessions_dir=None, *, identity="", now=None):
+    """Return the store's sessions from one walk, memoized per identity.
+
+    The memo is scoped by the canonical sessions directory and the account
+    ``identity`` (token/team) so a changed account can never reuse another
+    account's discovery, and it expires after ``GROK_DISCOVERY_TTL_SECONDS``
+    (default 30) so a changed store is re-read promptly. Within the window all
+    four local views share the one walk.
+    """
+    sessions_dir = sessions_dir or os.path.join(grok_home(), "sessions")
+    if not os.path.isdir(sessions_dir):
+        return []
+    now = time.time() if now is None else now
+    key = (os.path.normcase(os.path.realpath(os.path.abspath(sessions_dir))), identity)
+    cached = _DISCOVERY_CACHE.get(key)
+    if cached is not None and 0 <= (now - cached[0]) < _discovery_ttl():
+        return cached[1]
+    records = _walk_sessions(sessions_dir)
+    _DISCOVERY_CACHE[key] = (now, records)
+    return records
+
+
+def reset_discovery_cache():
+    _DISCOVERY_CACHE.clear()
+
+
+def account_identity():
+    """Opaque token/team identity for the discovery cache scope."""
+    auth = _read_grok_auth(os.path.join(grok_home(), "auth.json"))
+    return f"{auth.get('team_id', '')}\0{auth.get('user_id', '')}"
 
 
 def _resolve_api_key():
@@ -92,15 +212,8 @@ def _grok_local_stats():
     sessions_dir = os.path.join(grok_home(), "sessions")
     if not os.path.isdir(sessions_dir):
         return default
-    paths = []
-    for root, _dirs, files in os.walk(sessions_dir):
-        for name in files:
-            if name == "signals.json":
-                paths.append(os.path.join(root, name))
-                if len(paths) >= 200:
-                    break
-        if len(paths) >= 200:
-            break
+    records = discover_sessions(sessions_dir, identity=account_identity())
+    paths = [record.signals_path for record in records if record.signals_path][:200]
 
     docs = []
     for p in paths:
