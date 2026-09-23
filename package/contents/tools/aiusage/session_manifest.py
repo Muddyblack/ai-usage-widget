@@ -93,7 +93,9 @@ def _opencode_records() -> list[tuple[str, str, int, int, int]]:
     records: list[tuple[str, str, int, int, int]] = []
     explicit = os.environ.get("OPENCODE_DB", "").strip()
     if explicit:
-        records.append(_stat_record(os.path.expanduser(explicit), "file"))
+        resolved = opencode.explicit_database_path(explicit)
+        if resolved:
+            records.append(_stat_record(resolved, "file"))
     for base in paths.data_home_dirs():
         for directory in (base, os.path.join(base, "opencode")):
             records.append(_stat_record(directory, "directory"))

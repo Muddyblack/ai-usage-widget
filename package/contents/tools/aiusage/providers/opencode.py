@@ -41,6 +41,13 @@ def _existing_file(value: str) -> str:
     return str(candidate) if candidate.is_file() else ""
 
 
+def explicit_database_path(value: str) -> str:
+    candidate = Path(value).expanduser()
+    if not candidate.is_absolute():
+        candidate = Path(paths.data_home()) / "opencode" / candidate
+    return str(candidate) if candidate.is_file() else ""
+
+
 def _cli_database_path() -> str:
     binary = shutil.which("opencode")
     if not binary:
@@ -64,7 +71,7 @@ def _cli_database_path() -> str:
 def discover_database_paths() -> list[str]:
     explicit = os.environ.get("OPENCODE_DB", "").strip()
     if explicit:
-        path = _existing_file(explicit)
+        path = explicit_database_path(explicit)
         return [path] if path else []
     candidates: list[str] = []
     for base in paths.data_home_dirs():
