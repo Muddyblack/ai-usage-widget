@@ -1,0 +1,15 @@
+{"benchmark":"history","operation":"union","points":500,"median_ns":1362499,"warmups":3,"iterations":7}
+{"benchmark":"history","operation":"normalize","points":500,"median_ns":509228,"warmups":3,"iterations":7}
+{"benchmark":"history","operation":"union","points":5000,"median_ns":9170413,"warmups":3,"iterations":7}
+{"benchmark":"history","operation":"normalize","points":5000,"median_ns":3470150,"warmups":3,"iterations":7}
+{"benchmark":"history","operation":"union","points":10000,"median_ns":20341823,"warmups":3,"iterations":7}
+{"benchmark":"history","operation":"normalize","points":10000,"median_ns":7579577,"warmups":3,"iterations":7}
+{"benchmark":"history_persistence","operation":"autosave","points":100,"median_ns":1451737,"warmups":3,"iterations":7}
+{"benchmark":"history_persistence","operation":"autosave","points":1000,"median_ns":22493690,"warmups":3,"iterations":7}
+{"benchmark":"history_persistence","operation":"autosave","points":10000,"median_ns":126436050,"warmups":3,"iterations":7}
+{"benchmark":"session_index","operation":"reconcile","points":100,"median_ns":31311185,"warmups":3,"iterations":7}
+{"benchmark":"session_index","operation":"query","points":100,"median_ns":3571862,"warmups":3,"iterations":7}
+{"benchmark":"session_index","operation":"reconcile","points":1000,"median_ns":55488887,"warmups":3,"iterations":7}
+{"benchmark":"session_index","operation":"query","points":1000,"median_ns":7455665,"warmups":3,"iterations":7}
+{"benchmark":"session_index","operation":"reconcile","points":10000,"median_ns":233234519,"warmups":3,"iterations":7}
+{"benchmark":"session_index","operation":"query","points":10000,"median_ns":67909298,"warmups":3,"iterations":7}

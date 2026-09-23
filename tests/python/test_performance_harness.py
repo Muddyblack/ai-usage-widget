@@ -19,11 +19,11 @@ from performance_harness import (  # noqa: E402
 from performance_harness_io import report_from_json, report_to_json  # noqa: E402
 from performance_harness_types import JsonObject  # noqa: E402
 
-BASELINE_OUTPUT = REPOSITORY_ROOT / ".omo" / "evidence" / "performance-hardening" / "wave0" / "task-1" / "benchmark-1.stdout"
+BASELINE_OUTPUT = REPOSITORY_ROOT / "tests" / "fixtures" / "benchmark-baseline.jsonl"
 
 
 class BenchmarkOutputCharacterizationTests(unittest.TestCase):
-    def test_task_one_output_is_fifteen_jsonl_timing_records(self) -> None:
+    def test_benchmark_baseline_is_fifteen_jsonl_timing_records(self) -> None:
         lines = BASELINE_OUTPUT.read_text(encoding="utf-8").splitlines()
 
         self.assertEqual(len(lines), 15)
