@@ -154,6 +154,28 @@ ColumnLayout {
             }
         }
 
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.topMargin: 6
+            spacing: 8
+
+            SettingsButton {
+                text: page.shell.providerDetectBusy ? page.shell.i18n("Detecting…") : page.shell.i18n("Detect installed providers")
+                enabled: !page.shell.providerDetectBusy
+                onClicked: page.shell.redetectProviders()
+            }
+
+            Text {
+                Layout.fillWidth: true
+                visible: page.shell.providerDetectStatus !== ""
+                text: page.shell.providerDetectStatus
+                font.pixelSize: 9
+                opacity: 0.6
+                color: "#f8fafc"
+                wrapMode: Text.WordWrap
+            }
+        }
+
         Text {
             Layout.fillWidth: true
             Layout.topMargin: 6

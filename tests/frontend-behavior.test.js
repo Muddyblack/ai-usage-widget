@@ -158,11 +158,32 @@ test("source popup stages multiple selections and commits once on close", () => 
     }
 });
 
-test("provider registries require an explicit true toggle", () => {
-    assert.equal(ProviderRegistry.enabled({}, "claude"), false);
+test("provider registries require an explicit true toggle once defaults are applied", () => {
+    const applied = { providerDefaultsApplied: true };
+    assert.equal(ProviderRegistry.enabled(Object.assign({}, applied), "claude"), false);
+    assert.equal(ProviderRegistry.enabled(Object.assign({ providers: {} }, applied), "cursor"), false);
+    assert.equal(ProviderRegistry.enabled(Object.assign({ providers: { claude: false } }, applied), "claude"), false);
+    assert.equal(ProviderRegistry.enabled(Object.assign({ providers: { claude: true } }, applied), "claude"), true);
+});
+
+test("re-detection only switches providers on and reports what changed", () => {
+    const settings = { providerDefaultsApplied: true, providers: { claude: true, cursor: false }, keys: { x: "k" } };
+    const applied = ProviderRegistry.applyDetected(settings, ["claude", "cursor", "opencode"]);
+    assert.deepEqual(Array.from(applied.added), ["cursor", "opencode"]);
+    assert.equal(applied.settings.providers.cursor, true);
+    assert.equal(applied.settings.providers.opencode, true);
+    assert.equal(applied.settings.keys.x, "k");
+    assert.equal(settings.providers.cursor, false, "input settings are not mutated");
+    const none = ProviderRegistry.applyDetected(applied.settings, ["claude"]);
+    assert.equal(none.added.length, 0);
+    assert.equal(ProviderRegistry.labels(["claude", "opencode"]), "Claude, OpenCode");
+});
+
+test("provider registries keep legacy defaults until defaults are applied", () => {
+    assert.equal(ProviderRegistry.enabled({}, "claude"), true);
     assert.equal(ProviderRegistry.enabled({ providers: {} }, "cursor"), false);
     assert.equal(ProviderRegistry.enabled({ providers: { claude: false } }, "claude"), false);
-    assert.equal(ProviderRegistry.enabled({ providers: { claude: true } }, "claude"), true);
+    assert.equal(ProviderRegistry.enabled({ providers: { cursor: true } }, "cursor"), true);
 });
 
 test("startup initializes provider defaults before normal provider refresh", () => {
@@ -171,7 +192,7 @@ test("startup initializes provider defaults before normal provider refresh", () 
     const windows = qmlSource("windows/app.py");
     const macos = qmlSource("macos/Sources/AIUsage/App/AppDelegate.swift");
 
-    assert.match(plasma, /--initialize-provider-defaults/);
+    assert.match(plasma, /--detect-providers/);
     assert.match(qmlFunctionBlock("package/contents/ui/main.qml", "refresh"), /providerDefaultsReady/);
     assert.match(hyprland, /--initialize-provider-defaults/);
     assert.match(qmlFunctionBlock("hyprland/AiUsageShell.qml", "refresh"), /providerDefaultsReady/);
@@ -398,7 +419,7 @@ test("OpenCode tab separates Zen activity from Go account quotas", () => {
     assert.match(normalizer, /r\["historyValues"\]/);
     assert.match(source, /Local OpenCode activity/);
     assert.match(source, /OpenCodeUsageChart/);
-    assert.ok(source.indexOf("OpenCodeUsageChart") < source.indexOf("Secondary stats grid"));
+    assert.ok(source.indexOf("OpenCodeUsageChart") > source.indexOf("Secondary stats grid"));
 });
 
 test("OpenCode Go API errors stay unavailable without zero-valued quota rows", () => {
@@ -473,8 +494,8 @@ test("OpenCode usage chart range selects matching daily data and period summary"
     assert.match(source, /30D/);
     assert.match(source, /key:\s*"all",\s*label:\s*i18n\("All"\)/);
     assert.match(source, /stats\.dailySeries && stats\.dailySeries\.length \? stats\.dailySeries : stats\.dailyTokens/);
-    assert.match(source, /parent\.modelData\.total > 0 && dailyChart\.maxValue > 0/);
-    assert.ok(tabSource.indexOf("OpenCodeUsageChart") < tabSource.indexOf("Secondary stats grid"));
+    assert.match(source, /SpendTimelineChart \{/);
+    assert.ok(tabSource.indexOf("OpenCodeUsageChart") > tabSource.indexOf("Secondary stats grid"));
 });
 
 test("OpenCode has a panel slot gated by its provider selection", () => {

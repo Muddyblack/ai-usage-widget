@@ -29,6 +29,18 @@ msgid "usage backend returned no data"
 msgstr "le backend d'utilisation n'a renvoyé aucune donnée"
 
 #: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
+msgid "Detection failed."
+msgstr "La détection a échoué."
+
+#: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
+msgid "No new providers found."
+msgstr "Aucun nouveau fournisseur trouvé."
+
+#: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
+msgid "Enabled: %1"
+msgstr "Activés : %1"
+
+#: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
 msgid "Could not refresh pricing."
 msgstr "Impossible d'actualiser les tarifs."
 
@@ -385,6 +397,14 @@ msgstr "Avancé"
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "Info"
 msgstr "Infos"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Detecting…"
+msgstr "Détection…"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Detect installed providers"
+msgstr "Détecter les fournisseurs installés"
 
 #: hyprland/SettingsPage.qml
 msgid ""
@@ -2222,18 +2242,6 @@ msgid "Daily usage"
 msgstr "Utilisation quotidienne"
 
 #: package/contents/ui/OpenCodeUsageChart.qml package/contents/ui/main.qml
-msgid "Last 7 days"
-msgstr "7 derniers jours"
-
-#: package/contents/ui/OpenCodeUsageChart.qml package/contents/ui/main.qml
-msgid "Last 30 days"
-msgstr "30 derniers jours"
-
-#: package/contents/ui/OpenCodeUsageChart.qml
-msgid "All time"
-msgstr "Tout l'historique"
-
-#: package/contents/ui/OpenCodeUsageChart.qml package/contents/ui/main.qml
 msgid "7D"
 msgstr "7 J"
 
@@ -2245,13 +2253,25 @@ msgstr "30 J"
 msgid "Show OpenCode usage for %1"
 msgstr "Afficher l'utilisation d'OpenCode pour %1"
 
+#: package/contents/ui/OpenCodeUsageChart.qml package/contents/ui/main.qml
+msgid "Last 7 days"
+msgstr "7 derniers jours"
+
+#: package/contents/ui/OpenCodeUsageChart.qml package/contents/ui/main.qml
+msgid "Last 30 days"
+msgstr "30 derniers jours"
+
 #: package/contents/ui/OpenCodeUsageChart.qml
-msgid "Daily OpenCode token usage"
-msgstr "Utilisation quotidienne des jetons OpenCode"
+msgid "All time"
+msgstr "Tout l'historique"
 
 #: package/contents/ui/OpenCodeUsageChart.qml
 msgid "No daily usage in this range"
 msgstr "Aucune utilisation quotidienne dans cette plage"
+
+#: package/contents/ui/OpenCodeUsageChart.qml
+msgid "Daily OpenCode token usage"
+msgstr "Utilisation quotidienne des jetons OpenCode"
 
 #: package/contents/ui/OpenRouterTab.qml
 msgid "OpenRouter support is in BETA and currently untested."

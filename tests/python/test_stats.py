@@ -116,6 +116,15 @@ class OpenCodeStatsTest(unittest.TestCase):
 
         self.assertEqual(stats, {"available": False})
 
+    def test_go_usage_counts_as_opencode_activity(self):
+        stats = opencode_stats(
+            {"sessions": [_session("go", NOW - 3600, "/projects/go", [_bucket("opencode-go", "kimi", output_tokens=11)])]},
+            NOW,
+        )
+
+        self.assertEqual(stats["totalSessions"], 1)
+        self.assertEqual(stats["totalTokens"], 11)
+
 
 if __name__ == "__main__":
     unittest.main()

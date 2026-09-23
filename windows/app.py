@@ -40,7 +40,7 @@ FROZEN = getattr(sys, "frozen", False)
 ROOT = Path(getattr(sys, "_MEIPASS", "")) if FROZEN else Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "package" / "contents" / "tools"))
 
-from aiusage import config, history, historyio, paths  # noqa: E402
+from aiusage import config, detect, history, historyio, paths  # noqa: E402
 from aiusage.__main__ import _refresh_pricing, snapshot  # noqa: E402
 from aiusage.sessions import collect_sessions, open_session, refresh_sessions  # noqa: E402
 
@@ -552,6 +552,15 @@ class Backend(QObject):
                 return fh.read()
         except OSError:
             return "{}"
+
+    @Slot(result=str)
+    def detectProvidersJson(self):
+        """Locally evidenced providers, for the settings page's re-detect
+        button. Stat-only (no network, no file contents), so it runs inline."""
+        try:
+            return json.dumps({"ok": True, "data": detect.detect_providers()})
+        except Exception as exc:
+            return json.dumps({"ok": False, "error": str(exc)})
 
     @Property(bool, constant=True)
     def firstRun(self):
@@ -1463,7 +1472,13 @@ def main(argv):
     # No settings file yet: the first start after installing. Main.qml writes
     # one as it loads (Backend.firstRun), so this holds only once.
     first_run = not headless and not os.path.isfile(config.config_path())
-    config.initialize_provider_defaults()
+    if not headless:
+        # Best effort: a settings file that cannot be written leaves the legacy
+        # provider defaults in force (config.provider_enabled) and retries next start.
+        try:
+            config.initialize_provider_defaults()
+        except OSError as e:
+            print(f"AI Usage: could not initialize provider defaults: {e}", file=sys.stderr)
     backend = Backend(first_run)
     engine = QQmlApplicationEngine()
     warnings = []

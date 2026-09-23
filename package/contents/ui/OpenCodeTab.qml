@@ -129,14 +129,6 @@ ColumnLayout {
         color: Kirigami.Theme.textColor
     }
 
-    // ── Daily token usage: primary OpenCode view ──────────────────────────────
-    OpenCodeUsageChart {
-        visible: tab.available
-        stats: tab.stats
-        accent: tab.accent
-        formatTokens: rootItem.formatTokens
-    }
-
     // ── Secondary stats grid + top lists ─────────────────────────────────────
     ColumnLayout {
         visible: tab.available
@@ -177,7 +169,9 @@ ColumnLayout {
             }
             StatTile {
                 visible: stats.favoriteModel !== undefined && stats.favoriteModel !== ""
-                tileValue: rootItem.shortenModelName(stats.favoriteModel || "")
+                // A full "provider/model" id overflows a single quarter-width tile.
+                Layout.columnSpan: 2
+                tileValue: rootItem.shortenModelName((stats.favoriteModel || "").replace(/^[^\/]+\//, ""))
                 tileLabel: i18n("top model")
             }
         }
@@ -234,6 +228,15 @@ ColumnLayout {
                 }
             }
         }
+    }
+
+    // ── Daily token usage chart: at the bottom, like UsageChart on other tabs ──
+    OpenCodeUsageChart {
+        visible: tab.available
+        stats: tab.stats
+        accent: tab.accent
+        cardColor: rootItem.resolvedCardBg
+        formatTokens: rootItem.formatTokens
     }
 
     component StatTile: StatTileBase {

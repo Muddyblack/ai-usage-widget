@@ -44,11 +44,18 @@ class ProviderDetectionTest(IsolatedHomeTest):
 
 
 class ProviderDefaultsTest(IsolatedHomeTest):
-    def test_missing_provider_values_are_disabled(self):
-        self.assertFalse(config.provider_enabled({"providers": {}}, "claude"))
+    def test_missing_provider_values_are_disabled_once_defaults_applied(self):
+        latched = {"providerDefaultsApplied": True}
+        self.assertFalse(config.provider_enabled({**latched, "providers": {}}, "claude"))
+        self.assertFalse(config.provider_enabled({**latched, "providers": {}}, "cursor"))
+        self.assertTrue(config.provider_enabled({**latched, "providers": {"claude": True}}, "claude"))
+        self.assertFalse(config.provider_enabled({**latched, "providers": {"claude": False}}, "claude"))
+
+    def test_unapplied_settings_keep_legacy_defaults(self):
+        self.assertTrue(config.provider_enabled({"providers": {}}, "claude"))
         self.assertFalse(config.provider_enabled({"providers": {}}, "cursor"))
-        self.assertTrue(config.provider_enabled({"providers": {"claude": True}}, "claude"))
         self.assertFalse(config.provider_enabled({"providers": {"claude": False}}, "claude"))
+        self.assertTrue(config.provider_enabled({"providers": {"cursor": True}}, "cursor"))
 
     def test_new_settings_are_zero_default_except_for_detected_providers(self):
         with mock.patch.object(detect, "detect_providers", return_value=["cursor"]):
@@ -67,7 +74,7 @@ class ProviderDefaultsTest(IsolatedHomeTest):
             "futureField": {"kept": True},
         }
         self.write("config.json", original)
-        with mock.patch.object(detect, "detect_providers", return_value=["claude", "openai"]):
+        with mock.patch.object(detect, "detect_providers", side_effect=AssertionError("existing settings were probed")):
             result = config.initialize_provider_defaults()
 
         self.assertFalse(result["providers"]["claude"])
@@ -78,6 +85,24 @@ class ProviderDefaultsTest(IsolatedHomeTest):
         self.assertEqual(result["keys"], original["keys"])
         self.assertEqual(result["futureField"], original["futureField"])
         self.assertTrue(result["providerDefaultsApplied"])
+
+    def test_existing_settings_never_gain_detected_providers(self):
+        self.write("config.json", {"providers": {"mistral": False}})
+        result = config.initialize_provider_defaults(detected=["cursor", "opencode"])
+        self.assertFalse(result["providers"]["cursor"])
+        self.assertFalse(result["providers"]["opencode"])
+        self.assertFalse(result["providers"]["mistral"])
+        self.assertTrue(result["providers"]["claude"])
+
+    def test_symlinked_settings_are_not_replaced(self):
+        target = self.write("store/settings.json", {"providers": {"claude": True}})
+        link = self.home / "config.json"
+        link.parent.mkdir(parents=True, exist_ok=True)
+        link.symlink_to(target)
+        result = config.initialize_provider_defaults(detected=[])
+        self.assertTrue(link.is_symlink())
+        self.assertEqual(json.loads(target.read_text(encoding="utf-8")), {"providers": {"claude": True}})
+        self.assertTrue(result["providers"]["claude"])
 
     def test_latch_prevents_future_detection_and_writes(self):
         original = {"providers": {"cursor": False}, "providerDefaultsApplied": True, "future": 1}

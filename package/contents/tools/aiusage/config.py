@@ -30,8 +30,8 @@ ALL_PROVIDERS = [
     "opencode",
 ]
 
-# Legacy classification used only when migrating settings created before the
-# zero-default policy. New settings always require an explicit true value.
+# Legacy classification: what a missing toggle means in settings that have
+# not had the zero-default policy applied (providerDefaultsApplied unset).
 OPT_IN_PROVIDERS = {"zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "ollama", "selfhosted"}
 PROVIDER_DEFAULTS_LATCH = "providerDefaultsApplied"
 
@@ -128,12 +128,28 @@ def muse_quota_enabled():
     return os.environ.get("WIDGET_MUSE_QUOTA", "0").strip().lower() not in ("0", "false", "no", "off")
 
 
+def _legacy_enabled(value, provider_id):
+    if provider_id in OPT_IN_PROVIDERS:
+        return value is True
+    return value is not False
+
+
 def provider_enabled(cfg, provider_id):
     providers = cfg.get("providers") or {}
-    return providers.get(provider_id) is True
+    value = providers.get(provider_id)
+    # Until the defaults are applied (or when applying them failed), a missing
+    # toggle keeps its legacy meaning, so a hand-written or declarative
+    # settings file behaves exactly as it did before zero-default.
+    if cfg.get(PROVIDER_DEFAULTS_LATCH) is not True:
+        return _legacy_enabled(value, provider_id)
+    return value is True
 
 
 def _write_settings(path, settings):
+    # A symlink is a managed file (e.g. Home Manager's xdg.configFile into the
+    # read-only Nix store): replacing it would clobber the declaration.
+    if os.path.islink(path):
+        return
     directory = os.path.dirname(path) or "."
     os.makedirs(directory, exist_ok=True)
     temporary = None
@@ -151,32 +167,32 @@ def _write_settings(path, settings):
 
 
 def initialize_provider_defaults(detected=None):
-    """Apply the shared provider policy once and return persisted settings."""
+    """Apply the shared provider policy once and return the settings.
+
+    Only a fresh install (no settings file) is probed: it starts with every
+    provider off except the locally detected ones. An existing file (an
+    upgrade, or one seeded by a declarative setup such as Home Manager) keeps
+    exactly the providers it already showed: missing toggles are frozen to
+    their legacy values and nothing is enabled behind the user's back.
+    """
     path = config_path()
     existed = os.path.isfile(path)
     settings = load_settings()
     if settings.get(PROVIDER_DEFAULTS_LATCH) is True:
         return settings
 
-    if detected is None:
-        from .detect import detect_providers
-
-        detected = detect_providers()
-    detected_ids = {provider for provider in detected if provider in ALL_PROVIDERS}
-    explicit = set()
     if existed:
         providers = settings.get("providers")
         providers = dict(providers) if isinstance(providers, dict) else {}
-        explicit = {provider for provider in ALL_PROVIDERS if isinstance(providers.get(provider), bool)}
         for provider in ALL_PROVIDERS:
-            if provider not in providers or not isinstance(providers[provider], bool):
-                providers[provider] = provider not in OPT_IN_PROVIDERS
+            if not isinstance(providers.get(provider), bool):
+                providers[provider] = _legacy_enabled(providers.get(provider), provider)
     else:
-        providers = dict.fromkeys(ALL_PROVIDERS, False)
+        if detected is None:
+            from .detect import detect_providers
 
-    for provider in detected_ids:
-        if provider not in explicit:
-            providers[provider] = True
+            detected = detect_providers()
+        providers = {provider: provider in detected for provider in ALL_PROVIDERS}
     settings["providers"] = providers
     settings[PROVIDER_DEFAULTS_LATCH] = True
     _write_settings(path, settings)
