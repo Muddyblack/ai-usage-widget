@@ -17,7 +17,6 @@ macos/.build/
 # Nix
 result
 .direnv/
-.envrc
 
 # Editor junk
 *~

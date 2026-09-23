@@ -166,13 +166,28 @@
               kdePackages.libplasma
               kdePackages.plasma5support
               kdePackages.plasma-sdk
+              # gettext provides gettext, msgfmt, xgettext, msgmerge, msgcat, and msgattrib.
               gettext
               pre-commit
               zip
-              python3
+              (python3.withPackages (ps: [
+                ps.pyinstrument
+                ps.memory-profiler
+              ]))
               ruff
               jq
               nodejs
+              perf
+              hotspot
+              heaptrack
+              valgrind
+              gdb
+              strace
+              util-linux
+              gnumake
+              bash
+              coreutils
+              git
             ];
             shellHook = ''
               # qmllint does not discover KDE's QML modules from the Qt import
