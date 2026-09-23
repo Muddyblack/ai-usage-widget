@@ -154,17 +154,128 @@ ColumnLayout {
         return out;
     }
 
-    PlasmaComponents.Label {
+    RowLayout {
+        id: spendSubTabs
         Layout.fillWidth: true
-        text: i18n("Totals come from each provider's own usage APIs and local CLI logs. Ranges differ (30-day, all-time, lifetime).")
-        wrapMode: Text.WordWrap
-        font.pixelSize: 10
-        opacity: 0.45
-        color: Kirigami.Theme.textColor
+        spacing: 1
+
+        PlasmaComponents.ToolButton {
+            text: i18n("Providers")
+            checkable: true
+            checked: !spendTab.ratesOpen
+            opacity: checked ? 1 : 0.65
+            onClicked: spendTab.ratesOpen = false
+        }
+
+        PlasmaComponents.ToolButton {
+            text: i18n("Model rates")
+            checkable: true
+            checked: spendTab.ratesOpen
+            opacity: checked ? 1 : 0.65
+            onClicked: spendTab.ratesOpen = true
+        }
+
+        Item {
+            Layout.fillWidth: true
+        }
+
+        RowLayout {
+            id: ratesPagination
+            visible: spendTab.ratesOpen && spendTab.ratePages > 1
+            spacing: 4
+
+            PlasmaComponents.Button {
+                implicitWidth: 28
+                implicitHeight: 28
+                text: "‹"
+                enabled: !spendTab.rateLoading && spendTab.rateOffset > 0
+                onClicked: spendTab.loadRates(Math.max(0, spendTab.rateOffset - spendTab.rateLimit))
+            }
+
+            PlasmaComponents.Label {
+                text: spendTab.ratePage + "/" + spendTab.ratePages
+                font.pixelSize: 10
+                font.family: "monospace"
+                opacity: 0.7
+                color: Kirigami.Theme.textColor
+                Layout.leftMargin: 2
+                Layout.rightMargin: 2
+            }
+
+            PlasmaComponents.Button {
+                implicitWidth: 28
+                implicitHeight: 28
+                text: "›"
+                enabled: !spendTab.rateLoading && (spendTab.rateOffset + spendTab.rateLimit) < spendTab.rateTotal
+                onClicked: spendTab.loadRates(spendTab.rateOffset + spendTab.rateLimit)
+            }
+        }
+
+        RowLayout {
+            id: spendTimeframeControls
+            visible: !spendTab.ratesOpen
+            spacing: 1
+
+            PlasmaComponents.ToolButton {
+                text: "1D"
+                display: PlasmaComponents.AbstractButton.TextOnly
+                checkable: true
+                checked: spendTab.spendWindowDays === 1
+                implicitWidth: 28
+                implicitHeight: 24
+                opacity: checked ? 1 : 0.65
+                onClicked: spendTab.spendWindowDays = 1
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.delay: 400
+                QQC2.ToolTip.text: i18n("Spend timeframe: 1 day")
+            }
+
+            PlasmaComponents.ToolButton {
+                text: "7D"
+                display: PlasmaComponents.AbstractButton.TextOnly
+                checkable: true
+                checked: spendTab.spendWindowDays === 7
+                implicitWidth: 28
+                implicitHeight: 24
+                opacity: checked ? 1 : 0.65
+                onClicked: spendTab.spendWindowDays = 7
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.delay: 400
+                QQC2.ToolTip.text: i18n("Spend timeframe: 7 days")
+            }
+
+            PlasmaComponents.ToolButton {
+                text: "30D"
+                display: PlasmaComponents.AbstractButton.TextOnly
+                checkable: true
+                checked: spendTab.spendWindowDays === 30
+                implicitWidth: 32
+                implicitHeight: 24
+                opacity: checked ? 1 : 0.65
+                onClicked: spendTab.spendWindowDays = 30
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.delay: 400
+                QQC2.ToolTip.text: i18n("Spend timeframe: 30 days")
+            }
+
+            PlasmaComponents.ToolButton {
+                text: "ALL"
+                display: PlasmaComponents.AbstractButton.TextOnly
+                checkable: true
+                checked: spendTab.spendWindowDays === 0
+                implicitWidth: 32
+                implicitHeight: 24
+                opacity: checked ? 1 : 0.65
+                onClicked: spendTab.spendWindowDays = 0
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.delay: 400
+                QQC2.ToolTip.text: i18n("Spend timeframe: all history")
+            }
+        }
     }
 
     PlasmaComponents.Label {
-        visible: spendTab.rows.length === 0
+        visible: !spendTab.ratesOpen && spendTab.rows.length === 0
         Layout.fillWidth: true
         text: i18n("No cost figures yet. Enable providers that report spend, or use them until local logs appear.")
         wrapMode: Text.WordWrap
@@ -173,7 +284,7 @@ ColumnLayout {
     }
 
     Repeater {
-        model: spendTab.rows
+        model: spendTab.ratesOpen ? [] : spendTab.rows
 
         Rectangle {
             id: rowCard
@@ -295,112 +406,24 @@ ColumnLayout {
         }
     }
 
+    PlasmaComponents.Label {
+        visible: !spendTab.ratesOpen
+        Layout.fillWidth: true
+        Layout.topMargin: 4
+        text: i18n("Totals come from each provider's own usage APIs and local CLI logs. Ranges differ (30-day, all-time, lifetime).")
+        wrapMode: Text.WordWrap
+        font.pixelSize: 10
+        opacity: 0.45
+        color: Kirigami.Theme.textColor
+    }
+
     // ── Model rates ────────────────────────────────────────────────────────
-    Rectangle {
-        Layout.fillWidth: true
-        Layout.topMargin: 4
-        implicitHeight: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
-    }
-
-    // The click target has to wrap the row, not sit inside it: a MouseArea
-    // parented straight to a RowLayout becomes a layout item, and Qt refuses
-    // anchors there — which left this header with nothing to click.
-    Item {
-        Layout.fillWidth: true
-        Layout.topMargin: 4
-        implicitHeight: ratesHeader.implicitHeight
-
-        RowLayout {
-            id: ratesHeader
-            anchors.fill: parent
-            spacing: 6
-
-            PlasmaComponents.Label {
-                text: i18n("Model rates")
-                font.bold: true
-                font.pixelSize: 12
-                color: Kirigami.Theme.textColor
-            }
-
-            PlasmaComponents.Label {
-                visible: spendTab.rateTotal > 0
-                text: spendTab.rateUnit
-                font.pixelSize: 9
-                opacity: 0.45
-                color: Kirigami.Theme.textColor
-            }
-
-            PlasmaComponents.Label {
-                visible: text !== ""
-                text: FeatureTabs.rateAge(spendTab.rateFetchedAt, i18n)
-                font.pixelSize: 9
-                opacity: 0.45
-                color: Kirigami.Theme.textColor
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            PlasmaComponents.Label {
-                text: spendTab.rateLoading ? i18n("Loading…") : (spendTab.ratesOpen ? "▾" : "▸")
-                font.pixelSize: 11
-                opacity: 0.6
-                color: Kirigami.Theme.textColor
-            }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: spendTab.ratesOpen = !spendTab.ratesOpen
-        }
-    }
-
-    RowLayout {
+    PlasmaComponents.TextField {
         visible: spendTab.ratesOpen
         Layout.fillWidth: true
-        spacing: 8
-
-        PlasmaComponents.TextField {
-            Layout.fillWidth: true
-            placeholderText: i18n("Filter by provider or model…")
-            text: spendTab.rateFilter
-            onTextChanged: spendTab.rateFilter = text
-        }
-
-        RowLayout {
-            visible: spendTab.ratePages > 1
-            spacing: 4
-            Layout.alignment: Qt.AlignVCenter
-
-            PlasmaComponents.Button {
-                implicitWidth: 28
-                implicitHeight: 28
-                text: "‹"
-                enabled: !spendTab.rateLoading && spendTab.rateOffset > 0
-                onClicked: spendTab.loadRates(Math.max(0, spendTab.rateOffset - spendTab.rateLimit))
-            }
-
-            PlasmaComponents.Label {
-                text: spendTab.ratePage + "/" + spendTab.ratePages
-                font.pixelSize: 10
-                font.family: "monospace"
-                opacity: 0.7
-                color: Kirigami.Theme.textColor
-                Layout.leftMargin: 2
-                Layout.rightMargin: 2
-            }
-
-            PlasmaComponents.Button {
-                implicitWidth: 28
-                implicitHeight: 28
-                text: "›"
-                enabled: !spendTab.rateLoading && (spendTab.rateOffset + spendTab.rateLimit) < spendTab.rateTotal
-                onClicked: spendTab.loadRates(spendTab.rateOffset + spendTab.rateLimit)
-            }
-        }
+        placeholderText: i18n("Filter by provider or model…")
+        text: spendTab.rateFilter
+        onTextChanged: spendTab.rateFilter = text
     }
 
     PlasmaComponents.Label {
@@ -518,16 +541,26 @@ ColumnLayout {
     }
 
     RowLayout {
-        visible: spendTab.ratesOpen && spendTab.ratePages > 1
+        id: ratesFooter
+        visible: spendTab.ratesOpen
         Layout.fillWidth: true
         Layout.topMargin: 4
         Layout.bottomMargin: 12
         spacing: 6
 
         PlasmaComponents.Label {
-            text: i18n("%1 of %2", spendTab.ratePage, spendTab.ratePages)
-            font.pixelSize: 10
-            opacity: 0.5
+            visible: spendTab.rateTotal > 0
+            text: spendTab.rateUnit
+            font.pixelSize: 9
+            opacity: 0.45
+            color: Kirigami.Theme.textColor
+        }
+
+        PlasmaComponents.Label {
+            visible: text !== ""
+            text: FeatureTabs.rateAge(spendTab.rateFetchedAt, i18n)
+            font.pixelSize: 9
+            opacity: 0.45
             color: Kirigami.Theme.textColor
         }
 
@@ -535,16 +568,12 @@ ColumnLayout {
             Layout.fillWidth: true
         }
 
-        PlasmaComponents.Button {
-            text: i18n("Previous")
-            enabled: !spendTab.rateLoading && spendTab.rateOffset > 0
-            onClicked: spendTab.loadRates(Math.max(0, spendTab.rateOffset - spendTab.rateLimit))
-        }
-
-        PlasmaComponents.Button {
-            text: i18n("Next")
-            enabled: !spendTab.rateLoading && (spendTab.rateOffset + spendTab.rateLimit) < spendTab.rateTotal
-            onClicked: spendTab.loadRates(spendTab.rateOffset + spendTab.rateLimit)
+        PlasmaComponents.Label {
+            visible: spendTab.rateLoading
+            text: i18n("Loading…")
+            font.pixelSize: 11
+            opacity: 0.6
+            color: Kirigami.Theme.textColor
         }
     }
 }

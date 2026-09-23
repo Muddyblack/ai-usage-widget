@@ -637,10 +637,12 @@ test("spend timeframe filtering recomputes bounded rows and preserves ALL", () =
     assert.strictEqual(all, rows);
 });
 
-test("spend timeframe filtering omits rows without bounded history", () => {
+test("spend timeframe filtering zeroes out rows without bounded history instead of dropping them", () => {
     const rows = [{ id: "legacy", cost: 4, currency: "USD", dailyCost: [], dailyTokens: [] }];
 
-    assert.equal(FeatureTabs.spendRowsForWindow(rows, 7).length, 0);
+    const sevenDays = FeatureTabs.spendRowsForWindow(rows, 7);
+    assert.equal(sevenDays.length, 1);
+    assert.equal(sevenDays[0].cost, 0);
     assert.equal(FeatureTabs.spendRowsForWindow(rows, 0)[0].cost, 4);
 });
 
@@ -657,7 +659,9 @@ test("spend timeframe windows end today rather than at the last recorded day", (
         dailyTokens: [{ date: staleDate, total: 40 }],
     }];
 
-    assert.equal(FeatureTabs.spendRowsForWindow(rows, 30).length, 0);
+    const thirtyDays = FeatureTabs.spendRowsForWindow(rows, 30);
+    assert.equal(thirtyDays.length, 1);
+    assert.equal(thirtyDays[0].cost, 0);
     assert.equal(FeatureTabs.spendRowsForWindow(rows, 0)[0].cost, 4);
 });
 
@@ -666,9 +670,8 @@ test("Plasma spend timeframe controls are global and fixed", () => {
     assert.match(spendTabSource, /spendRowsForWindow/);
     assert.doesNotMatch(spendTabSource, /rootItem\.refresh\(\)/);
 
-    const mainSource = fs.readFileSync(path.join(rootDir, "package/contents/ui/main.qml"), "utf8");
     for (const label of ["1D", "7D", "30D", "ALL"])
-        assert.match(mainSource, new RegExp('text: "' + label + '"'));
+        assert.match(spendTabSource, new RegExp('text: "' + label + '"'));
 
     const chartSource = fs.readFileSync(path.join(rootDir, "package/contents/ui/SpendTimelineChart.qml"), "utf8");
     assert.doesNotMatch(chartSource, /i18n\("90d"\)/);

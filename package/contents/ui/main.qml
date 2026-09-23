@@ -3140,69 +3140,6 @@ PlasmoidItem {
                     Layout.fillWidth: true
                 }
 
-                RowLayout {
-                    id: spendTimeframeControls
-                    visible: !root.showSettings && root.enabledTabs[root.activeTab] === "spend"
-                    spacing: 1
-                    Layout.alignment: Qt.AlignVCenter
-
-                    PlasmaComponents.ToolButton {
-                        text: "1D"
-                        display: PlasmaComponents.AbstractButton.TextOnly
-                        checkable: true
-                        checked: spendTabView && spendTabView.spendWindowDays === 1
-                        implicitWidth: 28
-                        implicitHeight: 24
-                        opacity: checked ? 1 : 0.65
-                        onClicked: spendTabView.spendWindowDays = 1
-                        QQC2.ToolTip.visible: hovered
-                        QQC2.ToolTip.delay: 400
-                        QQC2.ToolTip.text: i18n("Spend timeframe: 1 day")
-                    }
-
-                    PlasmaComponents.ToolButton {
-                        text: "7D"
-                        display: PlasmaComponents.AbstractButton.TextOnly
-                        checkable: true
-                        checked: spendTabView && spendTabView.spendWindowDays === 7
-                        implicitWidth: 28
-                        implicitHeight: 24
-                        opacity: checked ? 1 : 0.65
-                        onClicked: spendTabView.spendWindowDays = 7
-                        QQC2.ToolTip.visible: hovered
-                        QQC2.ToolTip.delay: 400
-                        QQC2.ToolTip.text: i18n("Spend timeframe: 7 days")
-                    }
-
-                    PlasmaComponents.ToolButton {
-                        text: "30D"
-                        display: PlasmaComponents.AbstractButton.TextOnly
-                        checkable: true
-                        checked: spendTabView && spendTabView.spendWindowDays === 30
-                        implicitWidth: 32
-                        implicitHeight: 24
-                        opacity: checked ? 1 : 0.65
-                        onClicked: spendTabView.spendWindowDays = 30
-                        QQC2.ToolTip.visible: hovered
-                        QQC2.ToolTip.delay: 400
-                        QQC2.ToolTip.text: i18n("Spend timeframe: 30 days")
-                    }
-
-                    PlasmaComponents.ToolButton {
-                        text: "ALL"
-                        display: PlasmaComponents.AbstractButton.TextOnly
-                        checkable: true
-                        checked: spendTabView && spendTabView.spendWindowDays === 0
-                        implicitWidth: 32
-                        implicitHeight: 24
-                        opacity: checked ? 1 : 0.65
-                        onClicked: spendTabView.spendWindowDays = 0
-                        QQC2.ToolTip.visible: hovered
-                        QQC2.ToolTip.delay: 400
-                        QQC2.ToolTip.text: i18n("Spend timeframe: all history")
-                    }
-                }
-
                 // ── Export button ─────────────────────────────────────────
                 PlasmaComponents.ToolButton {
                     id: exportBtn

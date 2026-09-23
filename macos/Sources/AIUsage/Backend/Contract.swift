@@ -199,7 +199,7 @@ struct SpendRow: Identifiable {
         self.costBreakdown = CostBreakdown(actualUSD: actualUSD, estimatedUSD: estimatedUSD)
     }
 
-    fileprivate func filtered(to timeframe: SpendTimeframe, referenceDate: Date) -> SpendRow? {
+    fileprivate func filtered(to timeframe: SpendTimeframe, referenceDate: Date) -> SpendRow {
         guard timeframe != .all else { return self }
 
         let calendar = SpendTimeframe.calendar
@@ -210,7 +210,6 @@ struct SpendRow: Identifiable {
         let endKey = formatter.string(from: end)
         let cost = dailyCost.filter { $0.date >= startKey && $0.date <= endKey }
         let tokens = dailyTokens.filter { $0.date >= startKey && $0.date <= endKey }
-        guard !cost.isEmpty || !tokens.isEmpty else { return nil }
 
         return SpendRow(copying: self, series: SpendSeries(
             cost: cost.reduce(0) { $0 + $1.usd }, dailyCost: cost, dailyTokens: tokens))
@@ -324,19 +323,19 @@ enum SpendTimeframe: CaseIterable, Hashable {
         }
     }
 
-    fileprivate static var calendar: Calendar {
+    fileprivate static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = .current
         return calendar
-    }
+    }()
 
-    fileprivate static var dateFormatter: DateFormatter {
+    fileprivate static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.calendar = calendar
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter
-    }
+    }()
 }
 
 /// One day of a provider's spend, from the session rows the totals are summed
@@ -510,7 +509,7 @@ struct LocalSpend: Decodable, Equatable {
 // of the generic details dictionary so no new per-provider contract is needed.
 enum SpendRows {
     static func filtered(_ rows: [SpendRow], timeframe: SpendTimeframe, referenceDate: Date = Date()) -> [SpendRow] {
-        rows.compactMap { $0.filtered(to: timeframe, referenceDate: referenceDate) }
+        rows.map { $0.filtered(to: timeframe, referenceDate: referenceDate) }
     }
 
     static func build(_ providers: [Provider], localSpend: LocalSpend = LocalSpend()) -> [SpendRow] {

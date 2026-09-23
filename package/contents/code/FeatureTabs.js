@@ -618,8 +618,6 @@ function spendRowsForWindow(rows, windowDays) {
         if (!row)
             continue;
         var points = spendTimeline(row.dailyCost, row.dailyTokens, days);
-        if (points.length === 0)
-            continue;
 
         var dailyCost = [];
         var dailyTokens = [];

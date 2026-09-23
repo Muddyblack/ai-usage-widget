@@ -477,10 +477,12 @@ final class SpendTimeframeTests: XCTestCase {
         XCTAssertEqual(all.first?.cost, 10)
     }
 
-    func testBoundedWindowsOmitRowsWithoutDateHistory() {
+    func testBoundedWindowsZeroOutRowsWithoutDateHistory() {
         let undated = SpendRow(localCost: 2, label: "Legacy", provenance: nil)
 
-        XCTAssertTrue(SpendRows.filtered([undated], timeframe: .sevenDays, referenceDate: referenceDate).isEmpty)
-        XCTAssertEqual(SpendRows.filtered([undated], timeframe: .all, referenceDate: referenceDate).count, 1)
+        let sevenDays = SpendRows.filtered([undated], timeframe: .sevenDays, referenceDate: referenceDate)
+        XCTAssertEqual(sevenDays.count, 1)
+        XCTAssertEqual(sevenDays.first?.cost, 0)
+        XCTAssertEqual(SpendRows.filtered([undated], timeframe: .all, referenceDate: referenceDate).first?.cost, 2)
     }
 }
