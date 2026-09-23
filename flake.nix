@@ -190,6 +190,10 @@
               git
             ];
             shellHook = ''
+              # KPackage discovers Plasma package structures through Qt plugins.
+              # Prefer the plugin built with this shell's pinned KDE stack over
+              # incompatible system plugins inherited through QT_PLUGIN_PATH.
+              export QT_PLUGIN_PATH="${pkgs.kdePackages.libplasma}/lib/qt-6/plugins''${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
               # qmllint does not discover KDE's QML modules from the Qt import
               # path automatically. Keep this in the development shell so the
               # same imports work for CI, pre-commit, and local editor checks.
