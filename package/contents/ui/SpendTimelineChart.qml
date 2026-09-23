@@ -17,9 +17,6 @@ ColumnLayout {
     property color costColor: Kirigami.Theme.positiveTextColor
     property color tokenColor: Kirigami.Theme.highlightColor
     property color textColor: Kirigami.Theme.textColor
-    property int windowDays: 0
-
-    signal windowDaysSelected(int days)
 
     spacing: 6
 
@@ -181,51 +178,6 @@ ColumnLayout {
 
         Item {
             Layout.fillWidth: true
-        }
-
-        Repeater {
-            model: [
-                {
-                    label: i18n("30d"),
-                    days: 30
-                },
-                {
-                    label: i18n("90d"),
-                    days: 90
-                },
-                {
-                    label: i18n("All"),
-                    days: 0
-                }
-            ]
-            Rectangle {
-                required property var modelData
-                implicitWidth: pillLabel.implicitWidth + 14
-                implicitHeight: 20
-                radius: 6
-                color: chart.windowDays === modelData.days ? Kirigami.Theme.highlightColor : (pillArea.containsMouse ? Kirigami.Theme.hoverColor : "transparent")
-                opacity: chart.windowDays === modelData.days ? 0.28 : 1.0
-                border.width: 1
-                border.color: Kirigami.Theme.separatorColor
-
-                PlasmaComponents.Label {
-                    id: pillLabel
-                    anchors.centerIn: parent
-                    text: modelData.label
-                    font.pixelSize: 9
-                    font.bold: chart.windowDays === modelData.days
-                    color: chart.textColor
-                    opacity: chart.windowDays === modelData.days ? 1.0 : 0.6
-                }
-
-                MouseArea {
-                    id: pillArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: chart.windowDaysSelected(modelData.days)
-                }
-            }
         }
     }
 

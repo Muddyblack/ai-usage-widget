@@ -428,3 +428,61 @@ final class SpendHistoryContractTests: XCTestCase {
         XCTAssertEqual(mistral?.dailyCost, [DailyCostPoint(date: "2026-01-01", usd: 4)])
     }
 }
+
+final class SpendTimeframeTests: XCTestCase {
+    private let referenceDate = Date(timeIntervalSince1970: 1_767_528_000)
+
+    private func rows() -> [SpendRow] {
+        SpendRows.build([], localSpend: LocalSpend(
+            actual: LocalSpendTotal(
+                totalUSD: 10,
+                costStatus: "exact",
+                costProvenance: "actual",
+                providers: ["claude": LocalSpendProvider(
+                    costUSD: 10,
+                    costStatus: "exact",
+                    dailyUSD: [
+                        DailyCostPoint(date: "2026-01-01", usd: 1),
+                        DailyCostPoint(date: "2026-01-02", usd: 2),
+                        DailyCostPoint(date: "2026-01-03", usd: 3),
+                        DailyCostPoint(date: "2026-01-04", usd: 4)
+                    ],
+                    dailyTokens: [
+                        DailyPoint(date: "2026-01-01", total: 100),
+                        DailyPoint(date: "2026-01-02", total: 200),
+                        DailyPoint(date: "2026-01-03", total: 300),
+                        DailyPoint(date: "2026-01-04", total: 400)
+                    ])])))
+    }
+
+    func testOneDayKeepsOnlyTheReferenceDate() {
+        let filtered = SpendRows.filtered(rows(), timeframe: .oneDay, referenceDate: referenceDate)
+
+        XCTAssertEqual(filtered.first?.dailyCost, [DailyCostPoint(date: "2026-01-04", usd: 4)])
+        XCTAssertEqual(filtered.first?.cost, 4)
+    }
+
+    func testSevenAndThirtyDaysUseCalendarDayWindows() {
+        let sevenDays = SpendRows.filtered(rows(), timeframe: .sevenDays, referenceDate: referenceDate)
+        let thirtyDays = SpendRows.filtered(rows(), timeframe: .thirtyDays, referenceDate: referenceDate)
+
+        XCTAssertEqual(sevenDays.first?.dailyCost.count, 4)
+        XCTAssertEqual(thirtyDays.first?.dailyTokens.reduce(0) { $0 + $1.total }, 1000)
+    }
+
+    func testAllKeepsTheOriginalRowsAndTotals() {
+        let all = SpendRows.filtered(rows(), timeframe: .all, referenceDate: referenceDate)
+
+        XCTAssertEqual(all.first?.dailyCost.count, 4)
+        XCTAssertEqual(all.first?.cost, 10)
+    }
+
+    func testBoundedWindowsZeroOutRowsWithoutDateHistory() {
+        let undated = SpendRow(localCost: 2, label: "Legacy", provenance: nil)
+
+        let sevenDays = SpendRows.filtered([undated], timeframe: .sevenDays, referenceDate: referenceDate)
+        XCTAssertEqual(sevenDays.count, 1)
+        XCTAssertEqual(sevenDays.first?.cost, 0)
+        XCTAssertEqual(SpendRows.filtered([undated], timeframe: .all, referenceDate: referenceDate).first?.cost, 2)
+    }
+}

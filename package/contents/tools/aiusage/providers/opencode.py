@@ -65,7 +65,17 @@ def discover_database_paths() -> list[str]:
     explicit = os.environ.get("OPENCODE_DB", "").strip()
     if explicit:
         path = _existing_file(explicit)
-        return [path] if path else []
+        if path:
+            return [path]
+        relative = Path(explicit).expanduser()
+        if relative.is_absolute():
+            return []
+        for base in paths.data_home_dirs():
+            for directory in (Path(base), Path(base) / "opencode"):
+                path = _existing_file(str(directory / relative))
+                if path:
+                    return [path]
+        return []
     candidates: list[str] = []
     for base in paths.data_home_dirs():
         for directory in (Path(base), Path(base) / "opencode"):
