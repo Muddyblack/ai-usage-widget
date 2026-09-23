@@ -117,7 +117,8 @@ Performance comparisons are opt-in local evidence, not CI gates. `make help`
 lists the existing `benchmark` target. `make test` and `make test-py` do not run
 benchmarks, and neither CI nor this documentation adds timing thresholds.
 Start from the repository root. Keep each change wave in its own evidence
-directory; never replace an earlier wave's records:
+directory; never replace an earlier wave's records. These receipts are local
+working artifacts and are not committed (`.omo/` is ignored):
 
 ```bash
 EVIDENCE=.omo/evidence/performance-hardening/waveN/task-N

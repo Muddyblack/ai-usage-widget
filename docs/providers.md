@@ -329,9 +329,10 @@ the caches and never make a network request or trigger a refresh.
 ## Measured performance
 
 The hardening work was benchmark-gated with a paired, interleaved before/after
-harness (see `CONTRIBUTING.md` → *Performance captures and per-wave acceptance*)
-and every task's raw receipts live under `.omo/evidence/performance-hardening/`.
-Highlights, all measured with raw artifacts:
+harness (see `CONTRIBUTING.md` → *Performance captures and per-wave acceptance*).
+Each task's raw receipts were kept locally as uncommitted working artifacts
+under `.omo/evidence/performance-hardening/`; the harness and its commands are
+what is shipped, not the captures. Highlights, all measured with raw artifacts:
 
 - History no-op saves are suppressed; the changed-save path regresses nothing
   and no-op writes drop.
