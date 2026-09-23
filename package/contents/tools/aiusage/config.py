@@ -6,6 +6,7 @@ values through WIDGET_* environment variables. Environment always wins.
 
 import json
 import os
+import tempfile
 
 from . import paths
 
@@ -29,11 +30,10 @@ ALL_PROVIDERS = [
     "opencode",
 ]
 
-# Providers that stay off until explicitly enabled: most need a token the user
-# has to paste, so defaulting them on would only produce error rows. Muse,
-# Cursor and Cline need no token at all — they are opt-in because a machine
-# without the tool installed should not grow a tab for it.
+# Legacy classification used only when migrating settings created before the
+# zero-default policy. New settings always require an explicit true value.
 OPT_IN_PROVIDERS = {"zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "ollama", "selfhosted"}
+PROVIDER_DEFAULTS_LATCH = "providerDefaultsApplied"
 
 _KEY_EXPORTS = [
     ("WIDGET_CLAUDE_ADMIN_KEY", "claudeAdmin"),
@@ -130,7 +130,54 @@ def muse_quota_enabled():
 
 def provider_enabled(cfg, provider_id):
     providers = cfg.get("providers") or {}
-    value = providers.get(provider_id)
-    if provider_id in OPT_IN_PROVIDERS:
-        return value is True
-    return value is not False
+    return providers.get(provider_id) is True
+
+
+def _write_settings(path, settings):
+    directory = os.path.dirname(path) or "."
+    os.makedirs(directory, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=directory, delete=False) as stream:
+            temporary = stream.name
+            json.dump(settings, stream, separators=(",", ":"), ensure_ascii=False)
+        os.replace(temporary, path)
+    finally:
+        if temporary:
+            try:
+                os.unlink(temporary)
+            except OSError:
+                pass
+
+
+def initialize_provider_defaults(detected=None):
+    """Apply the shared provider policy once and return persisted settings."""
+    path = config_path()
+    existed = os.path.isfile(path)
+    settings = load_settings()
+    if settings.get(PROVIDER_DEFAULTS_LATCH) is True:
+        return settings
+
+    if detected is None:
+        from .detect import detect_providers
+
+        detected = detect_providers()
+    detected_ids = {provider for provider in detected if provider in ALL_PROVIDERS}
+    explicit = set()
+    if existed:
+        providers = settings.get("providers")
+        providers = dict(providers) if isinstance(providers, dict) else {}
+        explicit = {provider for provider in ALL_PROVIDERS if isinstance(providers.get(provider), bool)}
+        for provider in ALL_PROVIDERS:
+            if provider not in providers or not isinstance(providers[provider], bool):
+                providers[provider] = provider not in OPT_IN_PROVIDERS
+    else:
+        providers = dict.fromkeys(ALL_PROVIDERS, False)
+
+    for provider in detected_ids:
+        if provider not in explicit:
+            providers[provider] = True
+    settings["providers"] = providers
+    settings[PROVIDER_DEFAULTS_LATCH] = True
+    _write_settings(path, settings)
+    return settings

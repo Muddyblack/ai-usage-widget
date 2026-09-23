@@ -741,6 +741,8 @@ PlasmoidItem {
     property bool pricingLoading: false
     property string pricingStatus: ""
     property string pricingError: ""
+    property bool providerDefaultsReady: false
+    property bool providerDefaultsInitializing: false
 
     function shellQuote(s) {
         return Shell.quote(s);
@@ -1491,6 +1493,29 @@ PlasmoidItem {
         return env;
     }
 
+    function applyProviderDefaults(settings) {
+        var providers = settings && settings.providers ? settings.providers : {};
+        var ids = ["claude", "antigravity", "openai", "kiro", "mistral", "openrouter", "ollama", "selfhosted", "grok", "zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode"];
+        for (var i = 0; i < ids.length; i++) {
+            var id = ids[i];
+            var key = id + "Enabled";
+            if (providers[id] === true)
+                Plasmoid.configuration[key] = true;
+        }
+        Plasmoid.configuration.providerDefaultsApplied = true;
+    }
+
+    function initializeProviderDefaults() {
+        if (Plasmoid.configuration.providerDefaultsApplied === true) {
+            root.providerDefaultsReady = true;
+            return;
+        }
+        root.providerDefaultsInitializing = true;
+        var cmd = root.pythonEnv() + root.scriptPath("get-ai-usage") + " --initialize-provider-defaults";
+        providerDefaultsSource.disconnectSource(cmd);
+        providerDefaultsSource.connectSource(cmd);
+    }
+
     function backendCommand(ids) {
         var env = root.pythonEnv();
         env += root.envAssign("WIDGET_CLAUDE_ADMIN_KEY", Plasmoid.configuration.claudeAdminApiKey);
@@ -1994,6 +2019,8 @@ PlasmoidItem {
     }
 
     function refresh() {
+        if (!root.providerDefaultsReady || root.providerDefaultsInitializing)
+            return;
         if (root.enabledTabs.length === 0)
             return;
 
@@ -2272,6 +2299,7 @@ PlasmoidItem {
             if (idx >= 0)
                 root.activeTab = idx;
         }
+        root.initializeProviderDefaults();
     }
 
     Plasma5Support.DataSource {
@@ -2392,6 +2420,25 @@ PlasmoidItem {
         onNewData: function (src, data) {
             disconnectSource(src);
             root.applySnapshot((data["stdout"] || "").trim());
+        }
+    }
+
+    Plasma5Support.DataSource {
+        id: providerDefaultsSource
+
+        engine: "executable"
+        connectedSources: []
+        onNewData: function (src, data) {
+            disconnectSource(src);
+            try {
+                var result = JSON.parse((data["stdout"] || "").trim());
+                if (result.ok === true && result.data)
+                    root.applyProviderDefaults(result.data);
+            } catch (e) {}
+            Plasmoid.configuration.providerDefaultsApplied = true;
+            root.providerDefaultsInitializing = false;
+            root.providerDefaultsReady = true;
+            root.refresh();
         }
     }
 

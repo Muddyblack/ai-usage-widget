@@ -15,6 +15,13 @@ vm.runInNewContext(
     FeatureTabs,
 );
 
+const ProviderRegistry = {};
+vm.runInNewContext(
+    fs.readFileSync(path.join(rootDir, "hyprland/ProviderRegistry.js"), "utf8")
+        .replace(/^\.pragma library\s*/, ""),
+    ProviderRegistry,
+);
+
 // Execute the production QML adapter functions, without starting the desktop
 // shell or its network polling. No copies of their mapping logic live here.
 function qmlFunction(file, name) {
@@ -142,6 +149,29 @@ test("source popup stages multiple selections and commits once on close", () => 
         state.commitSourceSelection();
         assert.equal(state.queryCount, 1);
     }
+});
+
+test("provider registries require an explicit true toggle", () => {
+    assert.equal(ProviderRegistry.enabled({}, "claude"), false);
+    assert.equal(ProviderRegistry.enabled({ providers: {} }, "cursor"), false);
+    assert.equal(ProviderRegistry.enabled({ providers: { claude: false } }, "claude"), false);
+    assert.equal(ProviderRegistry.enabled({ providers: { claude: true } }, "claude"), true);
+});
+
+test("startup initializes provider defaults before normal provider refresh", () => {
+    const plasma = qmlSource("package/contents/ui/main.qml");
+    const hyprland = qmlSource("hyprland/AiUsageShell.qml");
+    const windows = qmlSource("windows/app.py");
+    const macos = qmlSource("macos/Sources/AIUsage/App/AppDelegate.swift");
+
+    assert.match(plasma, /--initialize-provider-defaults/);
+    assert.match(qmlFunctionBlock("package/contents/ui/main.qml", "refresh"), /providerDefaultsReady/);
+    assert.match(hyprland, /--initialize-provider-defaults/);
+    assert.match(qmlFunctionBlock("hyprland/AiUsageShell.qml", "refresh"), /providerDefaultsReady/);
+    assert.match(windows, /config\.initialize_provider_defaults\(\)/);
+    assert.ok(windows.indexOf("config.initialize_provider_defaults()") < windows.indexOf("backend = Backend(first_run)"));
+    assert.match(macos, /Backend\.initializeProviderDefaults\(\)/);
+    assert.ok(macos.indexOf("Backend.initializeProviderDefaults()") < macos.indexOf("model.refresh()"));
 });
 
 test("source changes keep normal rows and preserve stale-response recovery clears", () => {

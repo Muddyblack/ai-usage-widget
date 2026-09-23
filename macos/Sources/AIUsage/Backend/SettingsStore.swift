@@ -92,8 +92,7 @@ final class SettingsStore: ObservableObject {
 
     func providerEnabled(_ id: String) -> Bool {
         let toggles = raw["providers"] as? [String: Any] ?? [:]
-        if let value = toggles[id] as? Bool { return value }
-        return !Self.optInProviders.contains(id)
+        return (toggles[id] as? Bool) == true
     }
 
     func setProvider(_ id: String, enabled: Bool) {

@@ -118,13 +118,7 @@ var providers = [
     }
 ];
 
-// Mirrors OPT_IN_PROVIDERS in aiusage/config.py: these stay off until switched
-// on, the rest stay on until switched off.
-var OPT_IN = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "ollama", "selfhosted"];
-
 function enabled(settings, id) {
     var toggles = (settings && settings.providers) || {};
-    if (OPT_IN.indexOf(id) !== -1)
-        return toggles[id] === true;
-    return toggles[id] !== false;
+    return toggles[id] === true;
 }

@@ -74,6 +74,10 @@ enum Backend {
         }
     }
 
+    static func initializeProviderDefaults() throws {
+        _ = try run(arguments: ["--initialize-provider-defaults"])
+    }
+
     /// Recent local agent sessions for the optional Sessions view, from the
     /// already-reconciled cache.
     static func sessions(

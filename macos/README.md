@@ -51,10 +51,12 @@ session cost fields for the Usage & Spend and Sessions views. A provider added
 to the backend still shows up in the core views with no Swift change; only a
 new contract field or provider-specific presentation needs one.
 
-So: no provider names in `Views/`, no per-provider cases, no icon table — the
+So: no provider names in `Views/`, no per-provider cases, no icon table. The
 contract carries the label, the accent, the icon filename and the rows. The
 one place provider ids appear is `SettingsStore.allProviders`, so the settings
-window can offer a provider the backend has not reported yet; a test in
+window can offer a provider the backend has not reported yet. A new provider
+must also follow the detection and registration checklist in
+[`docs/provider-detection.md`](../docs/provider-detection.md). A test in
 `tests/python/test_macos_contract.py` checks that list against the backend's,
 along with the field names and the severity thresholds, because this is the
 one frontend that cannot be compiled on the machine it is developed from.

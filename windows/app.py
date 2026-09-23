@@ -1463,6 +1463,7 @@ def main(argv):
     # No settings file yet: the first start after installing. Main.qml writes
     # one as it loads (Backend.firstRun), so this holds only once.
     first_run = not headless and not os.path.isfile(config.config_path())
+    config.initialize_provider_defaults()
     backend = Backend(first_run)
     engine = QQmlApplicationEngine()
     warnings = []

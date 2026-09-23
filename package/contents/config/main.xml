@@ -5,16 +5,16 @@
   <kcfgfile name=""/>
   <group name="General">
     <entry name="claudeEnabled" type="Bool">
-      <default>true</default>
+      <default>false</default>
     </entry>
     <entry name="antigravityEnabled" type="Bool">
-      <default>true</default>
+      <default>false</default>
     </entry>
     <entry name="openaiEnabled" type="Bool">
-      <default>true</default>
+      <default>false</default>
     </entry>
     <entry name="kiroEnabled" type="Bool">
-      <default>true</default>
+      <default>false</default>
     </entry>
     <!-- API keys stored in plasmoid config (user's KDE wallet area, not world-readable) -->
     <entry name="claudeAdminApiKey" type="String">
@@ -45,7 +45,7 @@
       <default></default>
     </entry>
     <entry name="grokEnabled" type="Bool">
-      <default>true</default>
+      <default>false</default>
     </entry>
     <entry name="zaiEnabled" type="Bool">
       <default>false</default>
@@ -66,6 +66,12 @@
       <default>false</default>
     </entry>
     <entry name="museEnabled" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="opencodeEnabled" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="providerDefaultsApplied" type="Bool">
       <default>false</default>
     </entry>
     <entry name="museQuotaEnabled" type="Bool">

@@ -147,6 +147,10 @@ ShellRoot {
             pythonPath: "",
             language: ""
         })
+    property bool providerDefaultsReady: false
+    property bool providerDefaultsInitializing: false
+    property bool providerDefaultsResponseDone: false
+    property bool providerDefaultsExited: false
     property bool showSettings: false
     // Tray-triggered reveal is legitimately global — one tray icon controls
     // every monitor's pill together. Edge-hover reveal is NOT: with a pill on
@@ -254,7 +258,58 @@ ShellRoot {
                     s.language = d.language || "";
                     root.settings = s;
                 } catch (e) {}
+                root.initializeProviderDefaults();
             }
+        }
+    }
+
+    function mergeProviderDefaults(settings) {
+        var merged = Object.assign({}, root.settings || {}, settings || {});
+        merged.providers = Object.assign({}, (root.settings || {}).providers || {}, (settings || {}).providers || {});
+        root.settings = merged;
+    }
+
+    function finishProviderDefaults() {
+        if (!root.providerDefaultsResponseDone || !root.providerDefaultsExited || root.providerDefaultsReady)
+            return;
+        root.providerDefaultsInitializing = false;
+        root.providerDefaultsReady = true;
+        root.refresh();
+    }
+
+    function initializeProviderDefaults() {
+        if (root.providerDefaultsReady || root.providerDefaultsInitializing)
+            return;
+        if (root.settings.providerDefaultsApplied === true) {
+            root.providerDefaultsReady = true;
+            root.refresh();
+            return;
+        }
+        root.providerDefaultsInitializing = true;
+        root.providerDefaultsResponseDone = false;
+        root.providerDefaultsExited = false;
+        providerDefaultsProcess.exec({
+            command: ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --initialize-provider-defaults", "ai-usage", root.settings.pythonPath || "", root.backendCommand],
+            workingDirectory: root.baseDir + "/.."
+        });
+    }
+
+    Process {
+        id: providerDefaultsProcess
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    var result = JSON.parse((this.text || "").trim());
+                    if (result.ok === true && result.data)
+                        root.mergeProviderDefaults(result.data);
+                } catch (e) {}
+                root.providerDefaultsResponseDone = true;
+                root.finishProviderDefaults();
+            }
+        }
+        onExited: {
+            root.providerDefaultsExited = true;
+            root.finishProviderDefaults();
         }
     }
 
@@ -940,6 +995,8 @@ ShellRoot {
     }
 
     function refresh() {
+        if (!root.providerDefaultsReady || root.providerDefaultsInitializing)
+            return;
         if (backendProcess.running)
             return;
         root.loading = true;

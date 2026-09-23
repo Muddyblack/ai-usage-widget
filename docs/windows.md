@@ -146,6 +146,21 @@ VS Code-family IDEs (Cursor, Kiro) are read from `%APPDATA%`. Its own files:
 
 Antigravity is found through `psutil`, which the build bundles.
 
+### Provider defaults and detection
+
+Windows uses the shared backend and the shared JSON settings file at
+`%APPDATA%\ai-usage-widget\hyprland-settings.json`. New settings are zero
+based. The explicit `--initialize-provider-defaults` operation may enable only
+providers with approved local evidence, then sets `providerDefaultsApplied` so
+the operation does not repeat. Refresh and `--all` never initialize settings.
+The Windows app must not be described as using Plasma's KConfig defaults.
+
+Detection is stat-only and reports local evidence, not authentication or
+usability. It does not read credential contents, use the network, open SQLite,
+run a command, or return secrets. See
+[`provider-detection.md`](provider-detection.md) for the current allowlist and
+the shared provider-addition checklist.
+
 ## How it fits together
 
 `windows/` is a PySide6 host for the same popup the Hyprland panel draws. It
@@ -158,7 +173,7 @@ adds no provider logic of its own:
 | Platform directories | `aiusage/paths.py` | every frontend |
 | Popup layout | `hyprland/PopupContent.qml` | Hyprland |
 | Settings page, rows, chart, stats | `hyprland/*.qml` | Hyprland |
-| Provider list, opt-in rule | `hyprland/ProviderRegistry.js` | Hyprland |
+| Provider display registry | `hyprland/ProviderRegistry.js` | Hyprland |
 | Countdown / history JS | `package/contents/code/*.js` | Plasma + Hyprland |
 | Window, tray icon, autostart | `windows/app.py`, `windows/qml/Main.qml` | — |
 
