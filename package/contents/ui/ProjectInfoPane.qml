@@ -85,7 +85,15 @@ ColumnLayout {
         if (visible && !requested)
             loadCounts();
     }
-    Component.onCompleted: loadCounts()
+    // Defer the network work to the first time this pane is actually shown.
+    // Loading on Component.onCompleted fired the release/statistics requests as
+    // soon as the popup opened, before the user ever visited Settings → Info.
+    // The `requested` guard keeps it to one load; a pane created already
+    // visible still starts its load once.
+    Component.onCompleted: {
+        if (info.visible)
+            loadCounts();
+    }
     Component.onDestruction: cancelRequests()
 
     Timer {
