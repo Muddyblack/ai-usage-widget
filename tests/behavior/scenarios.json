@@ -293,5 +293,137 @@
       "history": {},
       "rowValues": []
     }
+  },
+  {
+    "name": "panel-threshold-0",
+    "envelope": {
+      "schemaVersion": 1,
+      "active": "openai",
+      "providers": [{
+        "id": "openai",
+        "details": {
+          "accountId": "acct-threshold",
+          "codex": {
+            "available": true,
+            "session": {"available": true, "pct": 0, "resetAt": 1785003600},
+            "weekly": {"available": false, "pct": 0, "resetAt": 0}
+          }
+        },
+        "quotaWindows": [{"key": "codex_session", "label": "5-hour session", "available": true, "pct": 0}],
+        "slots": [{"pct": 0, "text": "0%"}],
+        "historyValues": {"cp": 0}
+      }]
+    },
+    "expected": {"rowKeys": ["codex_session"], "panelText": ["0%"], "history": {"cp": 0}, "rowValues": [0]}
+  },
+  {
+    "name": "panel-threshold-69",
+    "envelope": {
+      "schemaVersion": 1,
+      "active": "openai",
+      "providers": [{
+        "id": "openai",
+        "details": {
+          "accountId": "acct-threshold",
+          "codex": {
+            "available": true,
+            "session": {"available": true, "pct": 69, "resetAt": 1785003600},
+            "weekly": {"available": false, "pct": 0, "resetAt": 0}
+          }
+        },
+        "quotaWindows": [{"key": "codex_session", "label": "5-hour session", "available": true, "pct": 69}],
+        "slots": [{"pct": 69, "text": "69%"}],
+        "historyValues": {"cp": 69}
+      }]
+    },
+    "expected": {"rowKeys": ["codex_session"], "panelText": ["69%"], "history": {"cp": 69}, "rowValues": [69]}
+  },
+  {
+    "name": "panel-threshold-70",
+    "envelope": {
+      "schemaVersion": 1,
+      "active": "openai",
+      "providers": [{
+        "id": "openai",
+        "details": {
+          "accountId": "acct-threshold",
+          "codex": {
+            "available": true,
+            "session": {"available": true, "pct": 70, "resetAt": 1785003600},
+            "weekly": {"available": false, "pct": 0, "resetAt": 0}
+          }
+        },
+        "quotaWindows": [{"key": "codex_session", "label": "5-hour session", "available": true, "pct": 70}],
+        "slots": [{"pct": 70, "text": "70%"}],
+        "historyValues": {"cp": 70}
+      }]
+    },
+    "expected": {"rowKeys": ["codex_session"], "panelText": ["70%"], "history": {"cp": 70}, "rowValues": [70]}
+  },
+  {
+    "name": "panel-threshold-89",
+    "envelope": {
+      "schemaVersion": 1,
+      "active": "openai",
+      "providers": [{
+        "id": "openai",
+        "details": {
+          "accountId": "acct-threshold",
+          "codex": {
+            "available": true,
+            "session": {"available": true, "pct": 89, "resetAt": 1785003600},
+            "weekly": {"available": false, "pct": 0, "resetAt": 0}
+          }
+        },
+        "quotaWindows": [{"key": "codex_session", "label": "5-hour session", "available": true, "pct": 89}],
+        "slots": [{"pct": 89, "text": "89%"}],
+        "historyValues": {"cp": 89}
+      }]
+    },
+    "expected": {"rowKeys": ["codex_session"], "panelText": ["89%"], "history": {"cp": 89}, "rowValues": [89]}
+  },
+  {
+    "name": "panel-threshold-90",
+    "envelope": {
+      "schemaVersion": 1,
+      "active": "openai",
+      "providers": [{
+        "id": "openai",
+        "details": {
+          "accountId": "acct-threshold",
+          "codex": {
+            "available": true,
+            "session": {"available": true, "pct": 90, "resetAt": 1785003600},
+            "weekly": {"available": false, "pct": 0, "resetAt": 0}
+          }
+        },
+        "quotaWindows": [{"key": "codex_session", "label": "5-hour session", "available": true, "pct": 90}],
+        "slots": [{"pct": 90, "text": "90%"}],
+        "historyValues": {"cp": 90}
+      }]
+    },
+    "expected": {"rowKeys": ["codex_session"], "panelText": ["90%"], "history": {"cp": 90}, "rowValues": [90]}
+  },
+  {
+    "name": "panel-threshold-100",
+    "envelope": {
+      "schemaVersion": 1,
+      "active": "openai",
+      "providers": [{
+        "id": "openai",
+        "details": {
+          "accountId": "acct-threshold",
+          "codex": {
+            "available": true,
+            "session": {"available": true, "pct": 100, "resetAt": 1785003600},
+            "weekly": {"available": false, "pct": 0, "resetAt": 0}
+          }
+        },
+        "quotaWindows": [{"key": "codex_session", "label": "5-hour session", "available": true, "pct": 100}],
+        "slots": [{"pct": 100, "text": "100%"}],
+        "historyValues": {"cp": 100}
+      }]
+    },
+    "expected": {"rowKeys": ["codex_session"], "panelText": ["100%"], "history": {"cp": 100}, "rowValues": [100]}
   }
 ]

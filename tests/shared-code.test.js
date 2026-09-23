@@ -7,6 +7,9 @@ const PanelRotation = require("../package/contents/code/PanelRotation.js");
 const UsageHistory = require("../package/contents/code/UsageHistory.js");
 const Shell = require("../package/contents/code/Shell.js");
 const SessionSources = require("../package/contents/code/SessionSources.js");
+const RefreshCoalescer = require("../package/contents/code/RefreshCoalescer.js");
+const PanelColor = require("../package/contents/code/PanelColor.js");
+const RequestGeneration = require("../package/contents/code/RequestGeneration.js");
 const { execFileSync } = require("node:child_process");
 
 test("panel rotation is opt-in and only runs with multiple pins", () => {
@@ -53,6 +56,7 @@ test("panel rotation preserves valid selection and wraps in pin order", () => {
     const pins = ["openai", "claude", "muse"];
     assert.equal(PanelRotation.normalizeSelection(pins, "claude"), "claude");
     assert.equal(PanelRotation.normalizeSelection(["claude", "muse"], "openai"), "claude");
+    assert.equal(PanelRotation.nextSelection(["claude", "muse"], "removed"), "muse");
     assert.equal(PanelRotation.nextSelection(pins, "openai"), "claude");
     assert.equal(PanelRotation.nextSelection(pins, "muse"), "openai");
 });
@@ -62,6 +66,15 @@ test("panel rotation stops changing selection for zero or one pin", () => {
     assert.equal(PanelRotation.nextSelection([], "claude"), "");
     assert.equal(PanelRotation.nextSelection(["claude"], "claude"), "claude");
     assert.equal(PanelRotation.nextSelection(["claude"], "removed"), "claude");
+});
+
+test("concurrent history writers keep both provider keys at one timestamp", () => {
+    const mirror = [{ t: 1785000000000, w: 40 }];
+    const plasmaBatch = [{ t: 1785000000000, w: 41 }];
+    const quickBatch = [{ t: 1785000000000, cp: 9 }];
+    assert.deepEqual(UsageHistory.union(mirror, plasmaBatch, 500), [{ t: 1785000000000, w: 41 }]);
+    assert.deepEqual(UsageHistory.union(mirror, quickBatch, 500), [{ t: 1785000000000, w: 40, cp: 9 }]);
+    assert.deepEqual(UsageHistory.union(plasmaBatch, quickBatch, 500), [{ t: 1785000000000, w: 41, cp: 9 }]);
 });
 
 test("formats a countdown down to the minute", () => {
@@ -536,11 +549,13 @@ function fileOf(home) {
 // delivers the answer, which is the gap an asynchronous response opens and where
 // samples land.
 class Frontend {
-    constructor(home, limit = 500) {
+    constructor(home, limit = 500, debounceMs = 0) {
         this.home = home;
         this.store = UsageHistory.newStore(limit);
         this.answer = null;
         this.env = {};
+        this.debounceMs = debounceMs;
+        this.now = 0;
     }
 
     // What it has stored. The chart's view adds the latest reading on top, which
@@ -565,17 +580,42 @@ class Frontend {
     load() {
         UsageHistory.adopt(this.store, this.run("autoload", null).data);
         UsageHistory.opened(this.store);
-        this.send();
+        this.save();
         this.settle();
     }
 
     // recordHistoryValues() / recordHistory()
     record(values, nowMs) {
         UsageHistory.record(this.store, values, nowMs);
-        this.send();
+        this.now = nowMs;
+        this.save();
     }
 
-    // saveHistory()
+    // saveHistory(): arm the debounce window, or send straight away without one.
+    save() {
+        if (this.debounceMs) {
+            if (UsageHistory.arm(this.store, this.now, this.debounceMs))
+                this.armedAt = this.now;
+        } else {
+            this.send();
+        }
+    }
+
+    // The debounce timer fires: send once the window has elapsed.
+    advance(nowMs) {
+        this.now = nowMs;
+        if (this.debounceMs && UsageHistory.due(this.store, nowMs))
+            this.send();
+    }
+
+    // A controlled hide/exit.
+    flush() {
+        const batch = UsageHistory.takeForExit(this.store);
+        if (batch)
+            this.run(batch.op, JSON.stringify(batch.points));
+    }
+
+    // sendHistory()
     send() {
         const batch = UsageHistory.take(this.store);
         if (batch)
@@ -594,7 +634,7 @@ class Frontend {
             return;
         }
         UsageHistory.done(this.store, res.data);
-        this.send();
+        this.save();
     }
 }
 
@@ -645,6 +685,37 @@ test("a save in flight cannot replace a sample recorded while it ran", () => {
     // The batch held back while the first save ran goes out with the next one.
     f.settle();
     assert.deepEqual(fileOf(home), [{ t: 1000, w: 10 }, { t: 121001, w: 20 }]);
+});
+
+test("exit flush persists active and queued batches before a late success", () => {
+    const home = newHome();
+    const f = new Frontend(home);
+    f.load();
+    UsageHistory.record(f.store, { w: 10 }, 1000);
+    const first = UsageHistory.take(f.store);
+    UsageHistory.record(f.store, { w: 20 }, 1000 + UsageHistory.MERGE_WINDOW_MS + 1);
+
+    f.flush();
+    f.run(first.op, JSON.stringify(first.points));
+    UsageHistory.done(f.store, fileOf(home));
+
+    assert.deepEqual(fileOf(home), [{ t: 1000, w: 10 }, { t: 121001, w: 20 }]);
+    assert.equal(fileOf(home).length, 2);
+});
+
+test("exit flush persists active and queued batches before a late failure", () => {
+    const home = newHome();
+    const f = new Frontend(home);
+    f.load();
+    UsageHistory.record(f.store, { w: 10 }, 1000);
+    UsageHistory.take(f.store);
+    UsageHistory.record(f.store, { w: 20 }, 1000 + UsageHistory.MERGE_WINDOW_MS + 1);
+
+    f.flush();
+    UsageHistory.failed(f.store);
+
+    assert.deepEqual(fileOf(home), [{ t: 1000, w: 10 }, { t: 121001, w: 20 }]);
+    assert.equal(fileOf(home).length, 2);
 });
 
 test("a startup restore adds what the file lacks and adopts the rest", () => {
@@ -735,6 +806,154 @@ test("a save that could not merge keeps its batch for the next poll", () => {
     assert.deepEqual(fileOf(home), [{ t: 1000, w: 10 }, { t: 200000, w: 20 }]);
 });
 
+// ── The persistence debounce ────────────────────────────────────────────────
+// Persistence is coalesced into one history-io run per window while the chart
+// stays current from the in-memory store. The window is fixed from the first
+// changed reading, so a fast poll batches up instead of sliding the save away.
+
+test("repeated snapshots within the window coalesce into one persistence", () => {
+    const WINDOW = 300000;
+    const now = 1785000000000;
+    const store = UsageHistory.newStore(500);
+    UsageHistory.opened(store);
+
+    // The first changed reading arms the window; later ones do not re-arm it.
+    UsageHistory.record(store, { w: 10 }, now);
+    assert.equal(UsageHistory.arm(store, now, WINDOW), true);
+    assert.equal(UsageHistory.arm(store, now + 1000, WINDOW), false, "already armed");
+    UsageHistory.record(store, { w: 11 }, now + 60000);
+    assert.equal(UsageHistory.arm(store, now + 60000, WINDOW), false);
+
+    // Nothing is due before the window ends; one batch carries everything after.
+    assert.equal(UsageHistory.due(store, now + WINDOW - 1), false);
+    assert.equal(UsageHistory.due(store, now + WINDOW), true);
+    const batch = UsageHistory.take(store);
+    assert.equal(batch.op, "autosave");
+    assert.deepEqual(batch.points, [{ t: now, w: 11 }], "the second reading patched the first");
+    assert.equal(UsageHistory.due(store, now + WINDOW), false, "the window is spent");
+});
+
+test("a flush sends the pending batch immediately", () => {
+    const WINDOW = 300000;
+    const now = 1785000000000;
+    const store = UsageHistory.newStore(500);
+    UsageHistory.opened(store);
+
+    UsageHistory.record(store, { w: 10 }, now);
+    assert.equal(UsageHistory.arm(store, now, WINDOW), true);
+    assert.equal(UsageHistory.due(store, now + 1000), false);
+
+    assert.equal(UsageHistory.flush(store), true);
+    assert.deepEqual(UsageHistory.take(store).points, [{ t: now, w: 10 }]);
+    assert.equal(UsageHistory.due(store, now + 1000), false, "flush cancels the window");
+});
+
+test("a failed write is retried after the next window", () => {
+    const WINDOW = 300000;
+    const now = 1785000000000;
+    const store = UsageHistory.newStore(500);
+    UsageHistory.opened(store);
+
+    UsageHistory.record(store, { w: 10 }, now);
+    UsageHistory.arm(store, now, WINDOW);
+    assert.equal(UsageHistory.due(store, now + WINDOW), true);
+    assert.deepEqual(UsageHistory.take(store).points, [{ t: now, w: 10 }]);
+
+    UsageHistory.failed(store);
+    assert.deepEqual(store.fresh, [{ t: now, w: 10 }], "the batch is kept, not dropped");
+    assert.equal(UsageHistory.take(store), null, "not retried until the next poll");
+
+    // The next poll releases the retry and arms a fresh window.
+    UsageHistory.record(store, {}, now + 200000);
+    assert.equal(UsageHistory.arm(store, now + 200000, WINDOW), true);
+    assert.equal(UsageHistory.due(store, now + 200000 + WINDOW), true);
+    assert.deepEqual(UsageHistory.take(store).points, [{ t: now, w: 10 }]);
+});
+
+test("exit during a pending batch flushes it", () => {
+    const WINDOW = 300000;
+    const now = 1785000000000;
+    const store = UsageHistory.newStore(500);
+    UsageHistory.opened(store);
+
+    UsageHistory.record(store, { w: 10 }, now);
+    UsageHistory.arm(store, now, WINDOW);
+    assert.equal(UsageHistory.due(store, now + 1000), false, "the window has not elapsed");
+
+    assert.equal(UsageHistory.flush(store), true);
+    assert.deepEqual(UsageHistory.take(store).points, [{ t: now, w: 10 }]);
+});
+
+test("a flush also releases a batch held back by a failure", () => {
+    const WINDOW = 300000;
+    const now = 1785000000000;
+    const store = UsageHistory.newStore(500);
+    UsageHistory.opened(store);
+
+    UsageHistory.record(store, { w: 10 }, now);
+    UsageHistory.arm(store, now, WINDOW);
+    UsageHistory.take(store);
+    UsageHistory.failed(store);
+    assert.equal(UsageHistory.take(store), null, "waiting for the next poll");
+
+    // A controlled exit does not wait for the next poll.
+    assert.equal(UsageHistory.flush(store), true);
+    assert.deepEqual(UsageHistory.take(store).points, [{ t: now, w: 10 }]);
+});
+
+test("an unchanged reading never arms the debounce", () => {
+    const WINDOW = 300000;
+    const now = 1785000000000;
+    const store = UsageHistory.newStore(500);
+    UsageHistory.opened(store);
+
+    UsageHistory.record(store, { w: 40 }, now);
+    assert.deepEqual(UsageHistory.take(store).points, [{ t: now, w: 40 }]);
+    UsageHistory.done(store, [{ t: now, w: 40 }]);
+
+    // A repeat reading queues nothing, so nothing arms.
+    UsageHistory.record(store, { w: 40 }, now + 31000);
+    assert.equal(UsageHistory.arm(store, now + 31000, WINDOW), false);
+    assert.equal(UsageHistory.due(store, now + 31000 + WINDOW), false);
+});
+
+test("nothing arms the debounce before the startup read has answered", () => {
+    const WINDOW = 300000;
+    const now = 1785000000000;
+    const store = UsageHistory.newStore(500);
+
+    UsageHistory.record(store, { w: 10 }, now);
+    assert.equal(UsageHistory.arm(store, now, WINDOW), false);
+    UsageHistory.opened(store);
+    assert.equal(UsageHistory.arm(store, now, WINDOW), true);
+});
+
+test("a debounced frontend persists once per window and flushes on exit", () => {
+    const home = newHome();
+    const f = new Frontend(home, 500, 300000);
+    f.load();
+
+    // Three polls inside one window coalesce into one save.
+    f.record({ w: 10 }, 1000);
+    f.record({ w: 11 }, 61000);
+    f.record({ w: 12 }, 121000);
+    const latest = path.join(home, "ai-usage-widget", "usage-history-latest.json");
+    assert.equal(fs.existsSync(latest), false, "nothing is written before the window ends");
+
+    f.advance(301000);
+    f.settle();
+    // The run that ended at 61000 is closed by its last sighting, so the one
+    // save carries the whole window: the patched first point, the hold, and
+    // the reading that ended the run.
+    assert.deepEqual(fileOf(home), [{ t: 1000, w: 11 }, { t: 61000, w: 11 }, { t: 121000, w: 12 }]);
+
+    // A controlled exit flushes whatever is still queued.
+    f.record({ w: 13 }, 400000);
+    f.flush();
+    f.settle();
+    assert.deepEqual(fileOf(home), [{ t: 1000, w: 11 }, { t: 61000, w: 11 }, { t: 121000, w: 12 }, { t: 400000, w: 13 }]);
+});
+
 test("replays a reset that happened while nothing was recorded", () => {
     const H = 3600000;
     const resetAt = 100 * H;          // next reset
@@ -822,4 +1041,210 @@ test("delivers the value byte-for-byte through a real shell", () => {
 test("quotes a path for the shell without losing a quote", () => {
     const cmd = "printf %s " + Shell.quote("/home/u/it's a dir/get-ai-usage");
     assert.equal(execFileSync("/bin/sh", ["-c", cmd], { encoding: "utf8" }), "/home/u/it's a dir/get-ai-usage");
+});
+
+test("request generations advance monotonically and reject stale responses", () => {
+    let generation = 0;
+    generation = RequestGeneration.nextGeneration(generation);
+    assert.equal(generation, 1);
+    generation = RequestGeneration.nextGeneration(generation);
+    assert.equal(generation, 2);
+    // A late response from the first refresh must not be applied.
+    assert.equal(RequestGeneration.isCurrent(1, generation), false);
+    assert.equal(RequestGeneration.isCurrent(2, generation), true);
+    // A corrupt/negative counter restarts rather than sticking at zero.
+    assert.equal(RequestGeneration.nextGeneration(-5), 1);
+    assert.equal(RequestGeneration.nextGeneration("x"), 1);
+});
+
+test("extracts a tagged generation and treats an untagged response as current", () => {
+    assert.equal(RequestGeneration.generationOf("env ... get-ai-usage --provider claude #gen=7"), 7);
+    assert.equal(RequestGeneration.generationOf("get-ai-usage --provider claude"), 0);
+    assert.equal(RequestGeneration.generationOf(null), 0);
+    // A legacy untagged caller carries generation 0, matching a zeroed counter.
+    assert.equal(RequestGeneration.isCurrent(RequestGeneration.generationOf("plain cmd"), 0), true);
+});
+
+test("persists a snapshot only when its text actually changed", () => {
+    const stored = '{"schemaVersion":1,"providers":[]}';
+    assert.equal(RequestGeneration.shouldPersist(stored, stored), false);
+    assert.equal(RequestGeneration.shouldPersist(stored + " ", stored), true);
+    assert.equal(RequestGeneration.shouldPersist('{"schemaVersion":1,"providers":[{}]}', stored), true);
+    assert.equal(RequestGeneration.shouldPersist("", ""), false);
+    assert.equal(RequestGeneration.shouldPersist("x", null), true);
+});
+
+test("the generation tag is a shell no-op and survives into the source string", () => {
+    // The tag rides as a trailing shell comment: the backend never sees it,
+    // but Plasma keeps the whole command as `src`, so generationOf can read it.
+    const cmd = 'printf %s done #gen=5';
+    const output = execFileSync("/bin/sh", ["-c", cmd], { encoding: "utf8" });
+    assert.equal(output, "done");
+    assert.equal(RequestGeneration.generationOf(cmd), 5);
+});
+
+test("a failed pricing refresh triggers no usage work", () => {
+    assert.equal(RefreshCoalescer.nextAction(false, false, false), "none");
+    assert.equal(RefreshCoalescer.nextAction(false, true, false), "none");
+    assert.equal(RefreshCoalescer.nextAction(undefined, false, false), "none");
+});
+
+test("pricing refreshes usage immediately only when usage is idle", () => {
+    assert.equal(RefreshCoalescer.nextAction(true, false, false), "refresh-now");
+    assert.equal(RefreshCoalescer.nextAction(true, true, false), "mark-pending");
+});
+
+test("a pricing refresh during an in-flight usage request coalesces to one", () => {
+    // First pricing completion during a running usage request marks one pending.
+    assert.equal(RefreshCoalescer.nextAction(true, true, false), "mark-pending");
+    // Further completions while still in flight do not stack another.
+    assert.equal(RefreshCoalescer.nextAction(true, true, true), "none");
+    // When the request settles, the pending refresh fires once.
+    assert.equal(RefreshCoalescer.nextAction(true, false, true), "refresh-now");
+});
+
+test("a pricing-only status change never blanks usage", () => {
+    assert.equal(RefreshCoalescer.blanksUsage("refreshed", "no-cache"), false);
+    assert.equal(RefreshCoalescer.blanksUsage("", "stale-good"), false);
+});
+
+test("Project Info network work is deferred to first visibility", () => {
+    // The pane must not fetch on construction; a popup open with Settings
+    // closed would otherwise fire release/statistics requests the user never
+    // asked for. The load is gated on `visible` (and still runs once, guarded
+    // by `requested`).
+    const source = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/ProjectInfoPane.qml"), "utf8");
+    assert.doesNotMatch(source, /Component\.onCompleted:\s*loadCounts\(\)/);
+    assert.match(source, /onVisibleChanged:\s*\{[^}]*visible && !requested[^}]*loadCounts\(\)/s);
+    // The one-load guard and cancellation survive.
+    assert.match(source, /if \(!onlineEnabled \|\| requested\)/);
+    assert.match(source, /function cancelRequests\(\)/);
+    assert.match(source, /Component\.onDestruction: cancelRequests\(\)/);
+});
+
+test("panel-critical state stays resident while popup views are conditional", () => {
+    // The panel slot and provider icons are always constructed; only the
+    // popup-only views depend on showSettings/active tab. This guards the
+    // rule that lazy-loading must not unload panel state.
+    const main = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/main.qml"), "utf8");
+    assert.match(main, /compactRepresentation:/);
+    assert.match(main, /fullRepresentation:/);
+    // The compact panel does not reference the popup-only Info pane.
+    const compact = main.slice(main.indexOf("compactRepresentation:"), main.indexOf("fullRepresentation:"));
+    assert.doesNotMatch(compact, /ProjectInfoPane|SettingsPanel/);
+});
+
+test("binary window bounds match a linear filter exactly", () => {
+    const points = Array.from({ length: 2000 }, (_, i) => ({ t: 1000 + i * 7, v: (i * 13) % 101 }));
+    const linear = (minT, maxT) => points.filter(p => p.t >= minT && p.t <= maxT);
+    for (const [minT, maxT] of [[1000, 1000 + 1999 * 7], [1000, 1000], [-5000, 999], [999999, 1000000], [3000, 9000], [0, 0]]) {
+        const from = UsageHistory.lowerBound(points, minT);
+        const to = UsageHistory.upperBound(points, maxT);
+        assert.deepEqual(points.slice(from, to), linear(minT, maxT), `window ${minT}..${maxT}`);
+    }
+});
+
+test("binary bounds are inclusive on both ends", () => {
+    const points = [{ t: 10 }, { t: 20 }, { t: 30 }];
+    assert.equal(UsageHistory.lowerBound(points, 20), 1);
+    assert.equal(UsageHistory.upperBound(points, 20), 2);
+    assert.deepEqual(points.slice(1, 2), [{ t: 20 }]);
+    assert.equal(UsageHistory.lowerBound(points, 5), 0);
+    assert.equal(UsageHistory.upperBound(points, 99), 3);
+    assert.deepEqual(points.slice(0, 0), []);
+});
+
+test("binary bounds tolerate empty and single-element series", () => {
+    assert.equal(UsageHistory.lowerBound([], 5), 0);
+    assert.equal(UsageHistory.upperBound([], 5), 0);
+    assert.equal(UsageHistory.lowerBound([{ t: 7 }], 7), 0);
+    assert.equal(UsageHistory.upperBound([{ t: 7 }], 7), 1);
+    assert.equal(UsageHistory.lowerBound([{ t: 7 }], 8), 1);
+    assert.equal(UsageHistory.upperBound([{ t: 7 }], 6), 0);
+});
+
+test("panel thresholds stay exact at their boundaries after the popup changes", () => {
+    // The panel is always visible, so its thresholds are a contract. Amber at
+    // 70, red at 90, both inclusive.
+    const normal = "#000000";
+    assert.equal(PanelColor.level(0), "normal");
+    assert.equal(PanelColor.level(69), "normal");
+    assert.equal(PanelColor.level(70), "warning");
+    assert.equal(PanelColor.level(89), "warning");
+    assert.equal(PanelColor.level(90), "danger");
+    assert.equal(PanelColor.level(100), "danger");
+    // The exact colours the panel paints.
+    assert.equal(PanelColor.colorFor(0, normal), normal);
+    assert.equal(PanelColor.colorFor(69, normal), normal);
+    assert.equal(PanelColor.colorFor(70, normal), "#ffa64d");
+    assert.equal(PanelColor.colorFor(89, normal), "#ffa64d");
+    assert.equal(PanelColor.colorFor(90, normal), "#ff4d4d");
+    assert.equal(PanelColor.colorFor(100, normal), "#ff4d4d");
+});
+
+test("panel colour rule tolerates invalid readings without leaving the normal state", () => {
+    const normal = "#123456";
+    for (const bad of [NaN, undefined, null, -1, "x"]) {
+        assert.equal(PanelColor.colorFor(bad, normal), normal, String(bad));
+    }
+});
+
+test("PanelSlot delegates its threshold colour to PanelColor", () => {
+    const source = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/PanelSlot.qml"), "utf8");
+    assert.match(source, /PanelColor\.colorFor\(slot\.pct/);
+    assert.doesNotMatch(source, /slot\.pct >= 90 \? slot\.dangerColor/);
+});
+
+test("panel works with zero, one, and multiple pins after popup changes", () => {
+    // Rotation is disabled without multiple pins; the panel still chooses a
+    // provider. These are the panel's provider-selection invariants.
+    assert.equal(PanelRotation.isEnabled(600, []), false);
+    assert.equal(PanelRotation.isEnabled(600, ["claude"]), false);
+    assert.equal(PanelRotation.isEnabled(600, ["claude", "openai"]), true);
+    assert.equal(PanelRotation.normalizeSelection(["claude", "openai"], ""), "claude");
+    assert.equal(PanelRotation.normalizeSelection(["claude", "openai"], "openai"), "openai");
+    assert.equal(PanelRotation.normalizeSelection(["claude", "openai"], "removed"), "claude");
+    assert.equal(PanelRotation.nextSelection(["claude"], "claude"), "claude");
+});
+
+test("stale opacity is a panel contract, not a popup effect", () => {
+    const source = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/PanelSlot.qml"), "utf8");
+    assert.match(source, /opacity: stale \? 0\.55 : 1/);
+    assert.match(source, /text: slot\.tooltipText/);
+    assert.match(source, /visible: slotHover\.containsMouse && slot\.tooltipText !== ""/);
+});
+
+test("Hyprland and Plasma share one refresh/session policy instead of duplicating it", () => {
+    const plasmaShell = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/main.qml"), "utf8");
+    const plasmaSessions = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/SessionsTab.qml"), "utf8");
+    const hyprland = fs.readFileSync(path.join(__dirname, "..", "hyprland/AiUsageShell.qml"), "utf8");
+    // Both adapters delegate the cadence/expiry rule to the shared module.
+    assert.match(plasmaSessions, /SessionRefreshPolicy\.refreshDelayMs/);
+    assert.match(hyprland, /SessionRefreshPolicy\.refreshDelayMs/);
+    assert.match(plasmaSessions, /SessionRefreshPolicy\.RECONCILE_INTERVAL_MS/);
+    assert.match(hyprland, /SessionRefreshPolicy\.cacheExpired/);
+    // Both coalesce the pricing-triggered usage refresh through the shared rule.
+    assert.match(plasmaShell, /RefreshCoalescer\.nextAction/);
+    assert.match(hyprland, /RefreshCoalescer\.nextAction/);
+    // Neither reimplements the interval as a literal.
+    assert.doesNotMatch(hyprland, /600000/);
+});
+
+test("both Linux shells retry a failed history save on the next poll", () => {
+    const plasma = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/main.qml"), "utf8");
+    const hyprland = fs.readFileSync(path.join(__dirname, "..", "hyprland/AiUsageShell.qml"), "utf8");
+    // failed() is what releases the batch for retry; both must call it.
+    assert.match(plasma, /UsageHistory\.failed\(root\.historyStore\)/);
+    assert.match(hyprland, /UsageHistory\.failed\(root\.historyStore\)/);
+    // Both bound the in-flight save with a watchdog.
+    assert.match(plasma, /historySaveTimeout/);
+    assert.match(hyprland, /historySaveTimeout/);
+});
+
+test("both Linux shells reject a superseded session page", () => {
+    const plasma = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/SessionsTab.qml"), "utf8");
+    const hyprland = fs.readFileSync(path.join(__dirname, "..", "hyprland/AiUsageShell.qml"), "utf8");
+    // A response only applies when its request id/query/source signature is current.
+    assert.match(plasma, /requestSerial/);
+    assert.match(hyprland, /sessionsActiveRequestId === root\.sessionsRequestId/);
 });

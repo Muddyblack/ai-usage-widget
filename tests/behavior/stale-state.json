@@ -1,0 +1,52 @@
+[
+  {
+    "name": "valid-live",
+    "response": {
+      "text": "{\"updatedAt\":1785000000,\"providers\":[{\"id\":\"openai\",\"details\":{\"accountId\":\"acct-a\",\"codex\":{\"available\":true,\"session\":{\"available\":true,\"pct\":69,\"resetAt\":1785003600},\"weekly\":{\"available\":false,\"pct\":0,\"resetAt\":0}}}}]}",
+      "replayed": false
+    },
+    "expected": {"accountId": "acct-a", "pct": 69, "available": true, "stale": false, "error": ""}
+  },
+  {
+    "name": "transient-empty",
+    "response": {
+      "text": "{\"updatedAt\":1785000060,\"providers\":[]}",
+      "replayed": true
+    },
+    "expected": {"accountId": "acct-a", "pct": 69, "available": true, "stale": true, "error": ""}
+  },
+  {
+    "name": "timeout-error",
+    "response": {"text": "not json", "replayed": false},
+    "expected": {"accountId": "acct-a", "pct": 69, "available": true, "stale": true, "error": "usage backend unavailable"}
+  },
+  {
+    "name": "stale-good-age",
+    "response": {
+      "text": "{\"updatedAt\":1784996400,\"providers\":[{\"id\":\"openai\",\"details\":{\"accountId\":\"acct-a\",\"codex\":{\"available\":true,\"session\":{\"available\":true,\"pct\":69,\"resetAt\":1785003600},\"weekly\":{\"available\":false,\"pct\":0,\"resetAt\":0}}}}]}",
+      "replayed": true
+    },
+    "expected": {"accountId": "acct-a", "pct": 69, "available": true, "stale": true, "error": ""}
+  },
+  {
+    "name": "expired-no-cache",
+    "response": {
+      "text": "{\"updatedAt\":0,\"providers\":[]}",
+      "replayed": true
+    },
+    "expected": {"accountId": "acct-a", "pct": 69, "available": true, "stale": true, "error": ""}
+  },
+  {
+    "name": "changed-account-identity",
+    "response": {
+      "text": "{\"updatedAt\":1785000120,\"providers\":[{\"id\":\"openai\",\"details\":{\"accountId\":\"acct-b\",\"codex\":{\"available\":true,\"session\":{\"available\":true,\"pct\":89,\"resetAt\":1785003600},\"weekly\":{\"available\":false,\"pct\":0,\"resetAt\":0}}}}]}",
+      "replayed": false
+    },
+    "expected": {"accountId": "acct-b", "pct": 89, "available": true, "stale": false, "error": ""}
+  },
+  {
+    "name": "late-request-generation",
+    "generation": {"current": 2, "late": 1},
+    "expected": {"accepted": false, "lastGoodPct": 69}
+  }
+]
