@@ -464,6 +464,14 @@ def opencode_stats(s, now):
         return {"available": False}
     sessions = [row for row in (s.get("sessions") or []) if isinstance(row, dict)]
     sessions = [row for row in sessions if row.get("id") or row.get("usage")]
+    filtered_sessions = []
+    for session in sessions:
+        usage = [row for row in (session.get("usage") or []) if isinstance(row, dict) and row.get("provider") == "opencode"]
+        if usage:
+            filtered_session = dict(session)
+            filtered_session["usage"] = usage
+            filtered_sessions.append(filtered_session)
+    sessions = filtered_sessions
     if not sessions:
         return {"available": False}
 

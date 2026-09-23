@@ -50,9 +50,9 @@ Rectangle {
         // Left arrow button
         Rectangle {
             radius: 4
-            implicitHeight: 16
-            implicitWidth: 16
-            color: leftNavMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
+            implicitHeight: 18
+            implicitWidth: 18
+            color: leftNavMouse.containsMouse ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.3) : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.18)
             opacity: enabled ? 1.0 : 0.3
             enabled: {
                 var key = rootItem._historyKey();
@@ -75,7 +75,7 @@ Rectangle {
             PlasmaComponents.Label {
                 anchors.centerIn: parent
                 text: "<"
-                font.pixelSize: 9
+                font.pixelSize: 11
                 font.bold: true
                 color: Kirigami.Theme.textColor
             }
@@ -93,24 +93,24 @@ Rectangle {
         // Center label showing current range
         PlasmaComponents.Label {
             text: rootItem.getChartRangeText()
-            font.pixelSize: 9
+            font.pixelSize: 10
             font.bold: true
-            opacity: 0.6
+            opacity: 0.8
             color: Kirigami.Theme.textColor
         }
 
         // Right arrow button
         Rectangle {
             radius: 4
-            implicitHeight: 16
-            implicitWidth: 16
-            color: rightNavMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
+            implicitHeight: 18
+            implicitWidth: 18
+            color: rightNavMouse.containsMouse ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.3) : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.18)
             opacity: enabled ? 1.0 : 0.3
             enabled: rootItem.chartTimeOffset > 0
             PlasmaComponents.Label {
                 anchors.centerIn: parent
                 text: ">"
-                font.pixelSize: 9
+                font.pixelSize: 11
                 font.bold: true
                 color: Kirigami.Theme.textColor
             }
@@ -143,7 +143,7 @@ Rectangle {
                 radius: 4
                 implicitHeight: 16
                 implicitWidth: winLabel.implicitWidth + 12
-                color: rootItem.chartWindow === modelData.id ? rootItem.activeAccent : Qt.rgba(1, 1, 1, 0.06)
+                color: rootItem.chartWindow === modelData.id ? rootItem.activeAccent : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.18)
                 opacity: rootItem.chartWindow === modelData.id ? 0.9 : 1.0
                 Behavior on color {
                     ColorAnimation {
@@ -154,11 +154,11 @@ Rectangle {
                     id: winLabel
                     anchors.centerIn: parent
                     text: rootItem.windowLabel(modelData.label)
-                    font.pixelSize: 9
+                    font.pixelSize: 10
                     font.bold: rootItem.chartWindow === modelData.id
                     // Near-white accents (Grok, Cursor) would swallow white text.
                     color: rootItem.chartWindow === modelData.id ? ((0.299 * rootItem.activeAccent.r + 0.587 * rootItem.activeAccent.g + 0.114 * rootItem.activeAccent.b) > 0.6 ? "#1a1a1a" : "#ffffff") : Kirigami.Theme.textColor
-                    opacity: rootItem.chartWindow === modelData.id ? 1.0 : 0.6
+                    opacity: rootItem.chartWindow === modelData.id ? 1.0 : 0.8
                 }
                 MouseArea {
                     anchors.fill: parent
@@ -218,7 +218,7 @@ Rectangle {
                 radius: 4
                 implicitHeight: 16
                 implicitWidth: filterPillContent.implicitWidth + 12
-                color: rootItem.antigravityChartFilter === modelData.id ? rootItem.activeAccent : Qt.rgba(1, 1, 1, 0.06)
+                color: rootItem.antigravityChartFilter === modelData.id ? rootItem.activeAccent : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.18)
                 opacity: rootItem.antigravityChartFilter === modelData.id ? 0.9 : 1.0
                 Behavior on color {
                     ColorAnimation {
@@ -239,10 +239,10 @@ Rectangle {
                     }
                     PlasmaComponents.Label {
                         text: rootItem.windowLabel(modelData.label)
-                        font.pixelSize: 9
+                        font.pixelSize: 10
                         font.bold: rootItem.antigravityChartFilter === modelData.id
                         color: rootItem.antigravityChartFilter === modelData.id ? "#ffffff" : Kirigami.Theme.textColor
-                        opacity: rootItem.antigravityChartFilter === modelData.id ? 1.0 : 0.65
+                        opacity: rootItem.antigravityChartFilter === modelData.id ? 1.0 : 0.8
                     }
                 }
                 MouseArea {
@@ -301,8 +301,8 @@ Rectangle {
         anchors.rightMargin: 4
         y: chartCanvas.y + 2
         text: usageChartContainer.chartYLabel(1.0)
-        font.pixelSize: 9
-        opacity: 0.35
+        font.pixelSize: 10
+        opacity: 1.0
         color: Kirigami.Theme.textColor
     }
     PlasmaComponents.Label {
@@ -310,8 +310,8 @@ Rectangle {
         anchors.rightMargin: 4
         y: chartCanvas.y + chartCanvas.height / 2 - 6
         text: usageChartContainer.chartYLabel(0.5)
-        font.pixelSize: 9
-        opacity: 0.35
+        font.pixelSize: 10
+        opacity: 1.0
         color: Kirigami.Theme.textColor
     }
     PlasmaComponents.Label {
@@ -319,8 +319,8 @@ Rectangle {
         anchors.rightMargin: 4
         y: chartCanvas.y + chartCanvas.height - 14
         text: usageChartContainer.chartYLabel(0.0)
-        font.pixelSize: 9
-        opacity: 0.35
+        font.pixelSize: 10
+        opacity: 1.0
         color: Kirigami.Theme.textColor
     }
 
@@ -340,6 +340,7 @@ Rectangle {
         property var restHistory: usageChartContainer.restHistory
         property bool isBoth: usageChartContainer.isBoth
         property color accentColor: rootItem.activeAccent
+        property color chartGridColor: Kirigami.Theme.textColor
         // pulse phase 0..1, driven while usage is climbing fast; scales the latest dot's halo
         property real pulse: 0
         // hover-scrub index into history (-1 = none)
@@ -353,6 +354,7 @@ Rectangle {
         onRestHistoryChanged: requestPaint()
         onIsBothChanged: requestPaint()
         onAccentColorChanged: requestPaint()
+        onChartGridColorChanged: requestPaint()
         onPulseChanged: requestPaint()
         onScrubIndexChanged: requestPaint()
         // Both mode keeps scrubIndex at 0 while the selected points move.
@@ -363,6 +365,13 @@ Rectangle {
             requestPaint()
         onWidthChanged: requestPaint()
         onHeightChanged: requestPaint()
+
+        function themeRgba(alpha) {
+            var red = Math.round(chartGridColor.r * 255);
+            var green = Math.round(chartGridColor.g * 255);
+            var blue = Math.round(chartGridColor.b * 255);
+            return "rgba(" + red + "," + green + "," + blue + "," + alpha + ")";
+        }
 
         // Pulse when the selected window is climbing >2%/h
         readonly property bool climbingFast: {
@@ -411,8 +420,8 @@ Rectangle {
             // dashed grid lines at 25 / 50 / 75 / 100%
             ctx.save();
             ctx.setLineDash([3, 5]);
-            ctx.strokeStyle = "rgba(255,255,255,0.08)";
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = chartCanvas.themeRgba(0.24);
+            ctx.lineWidth = 1.2;
             [25, 50, 75, 100].forEach(function (pct) {
                 var y = h - (pct / 100) * h * 0.88 - h * 0.04;
                 ctx.beginPath();
@@ -543,7 +552,7 @@ Rectangle {
                 var rx = ((resetMs - minT) / tRange) * w;
                 ctx.save();
                 ctx.setLineDash([2, 4]);
-                ctx.strokeStyle = "rgba(255,255,255,0.22)";
+                ctx.strokeStyle = chartCanvas.themeRgba(0.38);
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo(rx, 12);
@@ -552,8 +561,8 @@ Rectangle {
                 ctx.restore();
                 if (drawLabel) {
                     ctx.save();
-                    ctx.font = "9px sans-serif";
-                    ctx.fillStyle = "rgba(255,255,255,0.45)";
+                    ctx.font = "10px sans-serif";
+                    ctx.fillStyle = chartCanvas.themeRgba(0.9);
                     var tw = ctx.measureText(label).width;
                     var tx = Math.min(Math.max(rx + 3, 0), w - tw);
                     ctx.fillText(label, tx, 9);
@@ -888,8 +897,8 @@ Rectangle {
                         var minT = maxT - winSize;
                         return xAxisRow.formatLabel(minT + winSize * parent.frac);
                     }
-                    font.pixelSize: 9
-                    opacity: 0.40
+                    font.pixelSize: 10
+                    opacity: 0.9
                     horizontalAlignment: Text.AlignHCenter
                     lineHeight: 0.9
                     color: Kirigami.Theme.textColor
@@ -923,9 +932,9 @@ Rectangle {
                 }
                 visible: frac > 0 && frac < 1
                 text: rootItem.chartWindow === "weekly" || rootItem.chartWindow === "codex_weekly" ? Qt.formatDate(new Date(modelData), "MMM d") : Qt.formatTime(new Date(modelData), "hh:mm")
-                font.pixelSize: 9
+                font.pixelSize: 10
                 color: rootItem.activeAccent
-                opacity: 0.85
+                opacity: 1.0
                 // center under the reset line, clamped inside the row
                 x: Math.max(0, Math.min(frac * resetLabelsRow.width - implicitWidth / 2, resetLabelsRow.width - implicitWidth))
             }

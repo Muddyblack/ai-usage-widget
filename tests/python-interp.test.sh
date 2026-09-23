@@ -93,6 +93,10 @@ case "$list" in
     *claude*openai*) ;;
     *) printf 'python-interp: --list broken without an interpreter: %s\n' "$list" >&2; exit 1 ;;
 esac
+case "$list" in
+    *opencode*) ;;
+    *) printf 'python-interp: --list missing opencode: %s\n' "$list" >&2; exit 1 ;;
+esac
 
 # With no interpreter the launcher still emits a contract-shaped envelope
 # carrying the fixed "python3 missing" vocabulary (docs/provider-contract.md).

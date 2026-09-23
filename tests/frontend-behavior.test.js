@@ -345,6 +345,123 @@ test("OpenCode local rows retain separate upstream billing providers", () => {
     ]);
 });
 
+test("OpenCode tab reads live provider stats from rawProviders", () => {
+    const source = qmlSource("package/contents/ui/OpenCodeTab.qml");
+    assert.match(source, /readonly property var provider: [^\n]*rootItem\.rawProviders/);
+    assert.doesNotMatch(source, /readonly property var provider: [^\n]*rootItem\.providerById\("opencode"\)/);
+});
+
+test("shared usage chart controls and Zen caveat use readable theme contrast", () => {
+    const chart = qmlSource("package/contents/ui/UsageChart.qml");
+    const openCode = qmlSource("package/contents/ui/OpenCodeTab.qml");
+    assert.match(chart, /color: rootItem\.chartWindow === modelData\.id \? rootItem\.activeAccent : Qt\.rgba\(Kirigami\.Theme\.textColor\.r,\s*Kirigami\.Theme\.textColor\.g,\s*Kirigami\.Theme\.textColor\.b,\s*0\.18\)/);
+    assert.match(chart, /property color chartGridColor: Kirigami\.Theme\.textColor/);
+    assert.match(chart, /font\.pixelSize: 10/);
+    assert.match(openCode, /visible: !tab\.available && !tab\.goMode[\s\S]*?font\.pixelSize: 11[\s\S]*?opacity: 0\.9/);
+});
+
+test("OpenCode tab separates Zen activity from Go account quotas", () => {
+    const source = qmlSource("package/contents/ui/OpenCodeTab.qml");
+    const normalizer = qmlSource("package/contents/tools/aiusage/normalize/opencode.py");
+    assert.match(source, /details\.accountMode === "go"/);
+    assert.match(source, /accountModeLabel/);
+    assert.match(source, /device-local/);
+    assert.match(source, /no account quota/i);
+    assert.match(source, /visible: tab\.goMode && tab\.provider\.ok/);
+    assert.match(source, /quotaWindows/);
+    assert.match(source, /modelData\.showMeter/);
+    assert.match(source, /modelData\.available/);
+    assert.match(source, /rootItem\.countdownTick/);
+    assert.match(source, /dateFromEpoch\(modelData\.resetAt\)/);
+    for (const key of ["opencode_go_rolling_pct", "opencode_go_weekly_pct", "opencode_go_monthly_pct"])
+        assert.ok(normalizer.includes(`"${key}"`), `Go quota/history contract includes ${key}`);
+    assert.match(normalizer, /r\["historyValues"\]/);
+    assert.match(source, /Local OpenCode activity/);
+    assert.match(source, /OpenCodeUsageChart/);
+    assert.ok(source.indexOf("OpenCodeUsageChart") < source.indexOf("Secondary stats grid"));
+});
+
+test("OpenCode Go API errors stay unavailable without zero-valued quota rows", () => {
+    const source = qmlSource("package/contents/ui/OpenCodeTab.qml");
+    assert.match(source, /details\.accountMode === "go"/);
+    assert.match(source, /details\.goError/);
+    assert.match(source, /provider\.ok/);
+    assert.match(source, /quotaWindows/);
+    assert.match(source, /visible: [^\n]*provider\.ok/);
+    assert.doesNotMatch(source, /quotaWindows[^\n]*\|\|\s*\[\s*\{[^\n]*(?:pct|value):\s*0/);
+});
+
+test("OpenCode usage chart range selects matching daily data and period summary", () => {
+    const file = "package/contents/ui/OpenCodeUsageChart.qml";
+    const source = qmlSource(file);
+    const tabSource = qmlSource("package/contents/ui/OpenCodeTab.qml");
+    const functions = ["seriesForRange", "periodForRange"]
+        .map(name => qmlFunctionBlock(file, name))
+        .join("\n");
+    const tab = { rangeLabel: () => "Last 7 days" };
+    vm.runInNewContext(`${functions}
+        tab.seriesForRange = seriesForRange;
+        tab.periodForRange = periodForRange;`, { tab });
+
+    const now = new Date(2026, 8, 22, 12).getTime();
+    const series = [
+        { date: "2026-08-22", total: 900 },
+        { date: "2026-09-01", total: 50 },
+        { date: "2026-09-16", total: 100 },
+        { date: "2026-09-22", total: 200 },
+    ];
+    const dailyTotals = points => Array.from(points, point => [point.date, point.total]);
+    const periods = [
+        { key: "7d", label: "Last 7 days", tokens: 300, sessions: 2 },
+        { key: "30d", label: "Last 30 days", tokens: 350, sessions: 3 },
+        { key: "all", label: "All time", tokens: 1250, sessions: 4 },
+    ];
+
+    assert.deepEqual(dailyTotals(tab.seriesForRange("7d", series, now)), [
+        ["2026-09-16", 100], ["2026-09-17", 0], ["2026-09-18", 0], ["2026-09-19", 0],
+        ["2026-09-20", 0], ["2026-09-21", 0], ["2026-09-22", 200],
+    ]);
+    assert.equal(tab.periodForRange("7d", periods).tokens, 300);
+    assert.equal(tab.periodForRange("7d", periods).label, "Last 7 days");
+    const thirtyDays = Array.from(tab.seriesForRange("30d", series, now));
+    assert.equal(thirtyDays.length, 30);
+    assert.deepEqual(dailyTotals(thirtyDays.filter(point => ["2026-09-01", "2026-09-16", "2026-09-22"].includes(point.date))), [
+        ["2026-09-01", 50], ["2026-09-16", 100], ["2026-09-22", 200],
+    ]);
+    assert.equal(thirtyDays.find(point => point.date === "2026-09-02").total, 0);
+    assert.equal(tab.periodForRange("30d", periods).tokens, 350);
+    assert.equal(tab.periodForRange("30d", periods).label, "Last 30 days");
+    const allDays = Array.from(tab.seriesForRange("all", series, now));
+    assert.equal(allDays.length, 32);
+    assert.deepEqual(dailyTotals(allDays.filter(point => point.total > 0)), [
+        ["2026-08-22", 900], ["2026-09-01", 50], ["2026-09-16", 100], ["2026-09-22", 200],
+    ]);
+    assert.equal(allDays.find(point => point.date === "2026-08-23").total, 0);
+    const longHistory = [
+        { date: "2000-01-01", total: 100 },
+        { date: "2026-09-22", total: 200 },
+    ];
+    const boundedAll = Array.from(tab.seriesForRange("all", longHistory, now));
+    assert.ok(boundedAll.length <= 366);
+    assert.equal(boundedAll.reduce((sum, point) => sum + point.total, 0), 300);
+    assert.ok(boundedAll.some(point => point.total === 0));
+    assert.ok(boundedAll[0].endDate, "grouped all-time points expose their covered date interval");
+    assert.ok(boundedAll.every((point, index) => index === 0 || boundedAll[index - 1].date < point.date));
+    assert.equal(tab.periodForRange("all", periods).tokens, 1250);
+    assert.equal(tab.periodForRange("all", periods).label, "All time");
+    assert.match(source, /7D/);
+    assert.match(source, /30D/);
+    assert.match(source, /key:\s*"all",\s*label:\s*i18n\("All"\)/);
+    assert.match(source, /stats\.dailySeries && stats\.dailySeries\.length \? stats\.dailySeries : stats\.dailyTokens/);
+    assert.match(source, /parent\.modelData\.total > 0 && dailyChart\.maxValue > 0/);
+    assert.ok(tabSource.indexOf("OpenCodeUsageChart") < tabSource.indexOf("Secondary stats grid"));
+});
+
+test("OpenCode has a panel slot gated by its provider selection", () => {
+    const main = qmlSource("package/contents/ui/main.qml");
+    assert.match(main, /PanelSlot\s*\{[\s\S]*?property var openCodeStats[\s\S]*?visible:\s*root\.panelShows\("opencode"\)\s*&&/);
+});
+
 test("local spend rows keep legacy flat totals and reject unavailable groups", () => {
     assert.equal(FeatureTabs.localSpendRows({
         actual: { totalUSD: 1, costStatus: "unavailable" },

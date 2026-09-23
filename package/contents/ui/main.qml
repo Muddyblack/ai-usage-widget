@@ -673,6 +673,14 @@ PlasmoidItem {
         }
         return null;
     }
+
+    function rawProviderById(providerId) {
+        for (var i = 0; i < root.rawProviders.length; i++) {
+            if (root.rawProviders[i] && root.rawProviders[i].id === providerId)
+                return root.rawProviders[i];
+        }
+        return null;
+    }
     // ── Accent (theme-aware) ────────────────────────────────────────────────────
     property bool useThemeAccent: Plasmoid.configuration.useThemeAccent
     // Accent for the currently active tab
@@ -2858,6 +2866,26 @@ PlasmoidItem {
                 showCost: !root.cursorAvailable
                 costText: root.cursorAvailable ? "" : "—"
                 tooltipText: "Cursor" + (root.cursorPlanName ? "\n" + i18n("Plan: %1", root.cursorPlanName) : "") + (root.cursorAvailable ? "\n" + i18n("Included usage: %1%", Math.round(root.cursorTotalPct)) : "\n" + (root.cursorError || i18n("Not signed in"))) + (root.cursorResetTime ? "\n" + i18n("Resets: %1", root.cursorResetTime) : "")
+            }
+
+            PanelSlot {
+                property var openCodeStats: {
+                    var provider = root.rawProviderById("opencode");
+                    return provider && provider.details ? (provider.details.stats || ({})) : ({});
+                }
+                pct: 0
+                iconColor: "#B7B1B1"
+                iconSource: Qt.resolvedUrl("../icons/opencode-color.svg")
+                iconText: "OC"
+                stale: root.stale && root.panelShows("opencode")
+                visible: root.panelShows("opencode") && !root.showSettings
+                showCost: true
+                costText: openCodeStats.totalTokens > 0 ? root.formatTokens(openCodeStats.totalTokens) : "—"
+                tooltipText: {
+                    var sessions = Math.round(openCodeStats.totalSessions || 0);
+                    var tokens = root.formatTokens(openCodeStats.totalTokens || 0);
+                    return "OpenCode\n" + i18n("%1 tokens", tokens) + " · " + i18np("%1 session", "%1 sessions", sessions);
+                }
             }
 
             PanelSlot {

@@ -140,6 +140,35 @@ The widget reads credentials from the `antigravity-usage` CLI configuration (sto
 
 The OpenAI tab has two independent sections. API usage is fetched from the official OpenAI organization usage endpoint with an API key and summarized over the last 30 days. Codex subscription limits are read through the local Codex app-server, with the authenticated web usage endpoint retained as a compatibility fallback. Windows are classified by their actual duration instead of assuming that `primary` means five hours. Codex plan limits are separate from API billing usage.
 
+## OpenCode
+
+OpenCode remains one provider. The widget selects its mode from the top-level
+`opencode` and `opencode-go` entries in OpenCode's `auth.json`:
+`$XDG_DATA_HOME/opencode/auth.json`, or `~/.local/share/opencode/auth.json`
+when that variable is unset. Only API entries with a non-empty key are valid.
+If a valid Go entry exists, it takes precedence even when a valid Zen entry is
+also present. Otherwise, the provider uses Zen mode.
+
+In **Go mode**, account usage comes from
+`GET https://opencode.ai/zen/go/v1/usage`, authenticated with the Go key. The
+server-reported rolling (5-hour), weekly, and monthly windows are authoritative;
+displayed percentages and reset times are used only when reported and valid.
+Missing values and authentication, entitlement, network, or response errors
+remain unavailable. A failed Go request does not fall back to Zen activity or
+turn missing values into zero usage.
+
+In **Zen mode**, the widget shows informational activity read from OpenCode's
+device-local SQLite session ledger, such as local session and token counts and
+daily activity when available. These counts describe activity recorded on this
+device, not account-wide usage. OpenCode has no supported Zen account-quota
+endpoint, so the widget does not show or infer a Zen account cap, remaining
+allowance, balance, percentage, or reset time. It does not scrape billing pages
+or infer an allowance from local activity.
+
+The auth key is used only for the Go request and is not exposed in provider
+output or logs. The Zen local ledger remains separate from Go account quota and
+its history.
+
 ## Grok *(free tier tested; paid plans untested)*
 
 The Grok tab reads the Grok CLI login from `~/.grok/auth.json`, fetches the same credit/billing data used by the CLI, and summarizes local CLI sessions from `~/.grok/sessions`. For the tested free tier, the CLI only records the exact token allowance after it returns `free-usage-exhausted`, so the widget can show the confirmed exhausted amount and rolling 24-hour window but cannot infer progressive usage before that event. Paid-plan billing parsing is implemented but remains unverified. An xAI API key is optional; CLI OAuth is the primary source for quota data.
