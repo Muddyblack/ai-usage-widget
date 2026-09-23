@@ -356,6 +356,7 @@ msgid "No pricing rates available; try again."
 msgstr "Aucun tarif disponible ; réessayez."
 
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: package/contents/ui/SpendTab.qml
 msgid "Providers"
 msgstr "Fournisseurs"
 
@@ -719,15 +720,15 @@ msgid "Cached"
 msgstr "En cache"
 
 #: hyprland/SpendPage.qml package/contents/ui/KimiTab.qml
-#: package/contents/ui/MistralTab.qml package/contents/ui/SpendTab.qml
+#: package/contents/ui/MistralTab.qml
 msgid "%1 of %2"
 msgstr "%1 sur %2"
 
-#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+#: hyprland/SpendPage.qml
 msgid "Previous"
 msgstr "Précédent"
 
-#: hyprland/SpendPage.qml package/contents/ui/SpendTab.qml
+#: hyprland/SpendPage.qml
 msgid "Next"
 msgstr "Suivant"
 
@@ -2464,6 +2465,22 @@ msgstr "local"
 msgid "on-demand"
 msgstr "à la demande"
 
+#: package/contents/ui/SpendTab.qml
+msgid "Spend timeframe: 1 day"
+msgstr "Période de dépenses : 1 jour"
+
+#: package/contents/ui/SpendTab.qml
+msgid "Spend timeframe: 7 days"
+msgstr "Période de dépenses : 7 jours"
+
+#: package/contents/ui/SpendTab.qml
+msgid "Spend timeframe: 30 days"
+msgstr "Période de dépenses : 30 jours"
+
+#: package/contents/ui/SpendTab.qml
+msgid "Spend timeframe: all history"
+msgstr "Période de dépenses : tout l'historique"
+
 #: package/contents/ui/StatsSparkline.qml
 msgid "%1 / day"
 msgstr "%1 / jour"
@@ -3159,22 +3176,6 @@ msgstr "Moniteur d'utilisation IA"
 #: package/contents/ui/main.qml
 msgid "Views, colors, chart and popup style"
 msgstr "Vues, couleurs, graphique et style de la fenêtre contextuelle"
-
-#: package/contents/ui/main.qml
-msgid "Spend timeframe: 1 day"
-msgstr "Période de dépenses : 1 jour"
-
-#: package/contents/ui/main.qml
-msgid "Spend timeframe: 7 days"
-msgstr "Période de dépenses : 7 jours"
-
-#: package/contents/ui/main.qml
-msgid "Spend timeframe: 30 days"
-msgstr "Période de dépenses : 30 jours"
-
-#: package/contents/ui/main.qml
-msgid "Spend timeframe: all history"
-msgstr "Période de dépenses : tout l'historique"
 
 #: package/contents/ui/main.qml
 msgid "Export current tab as PNG or SVG"
