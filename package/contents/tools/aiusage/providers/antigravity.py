@@ -20,10 +20,64 @@ import subprocess
 import urllib.error
 import urllib.request
 
+from .. import config as _config
 from .. import paths
 from ..http import as_json
 
 _HAS_PROC = os.path.isdir("/proc/self")
+
+
+def _ttl():
+    # Keep this below the widget's 300-second default poll so a cache entry
+    # cannot make a later poll permanently display an old quota snapshot.
+    try:
+        return max(0, int(os.environ.get("ANTIGRAVITY_TTL_SECONDS", "90")))
+    except ValueError:
+        return 90
+
+
+def _cache_path():
+    return os.path.join(_config.cache_dir(), "antigravity.json")
+
+
+def _read_cache(ttl):
+    try:
+        with open(_cache_path(), encoding="utf-8", errors="replace") as stream:
+            cached = json.load(stream)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(cached, dict) or not isinstance(cached.get("usage"), dict):
+        return None
+    usage = cached["usage"]
+    if usage.get("method") != "cli":
+        return None
+    try:
+        age = datetime.datetime.now(datetime.timezone.utc).timestamp() - float(cached.get("fetchedAt") or 0)
+    except (TypeError, ValueError):
+        return None
+    if not 0 <= age < ttl:
+        return None
+    safe_usage = dict(usage)
+    safe_usage["email"] = _account_email()
+    return safe_usage
+
+
+def _write_cache(usage):
+    if "error" in usage:
+        return
+    safe_usage = dict(usage)
+    # The live formatter also reports the account email. Keep the cache to the
+    # CLI usage shape, but never persist identity data (or language-server data).
+    safe_usage["email"] = None
+    try:
+        os.makedirs(_config.cache_dir(), exist_ok=True)
+        with open(_cache_path(), "w", encoding="utf-8") as stream:
+            json.dump(
+                {"fetchedAt": datetime.datetime.now(datetime.timezone.utc).timestamp(), "usage": safe_usage},
+                stream,
+            )
+    except (OSError, ValueError):
+        pass
 
 
 def _psutil():
@@ -358,11 +412,20 @@ def get_antigravity_usage():
     # No reachable local server - fall back to agy's own /usage command.
     # It needs neither a running IDE nor the language server's CSRF token,
     # just the CLI itself, but only reports coarse per-family quota.
+    ttl = _ttl()
+    if found_any_process and ttl > 0:
+        cached = _read_cache(ttl)
+        if cached is not None:
+            return cached
+
     agy = shutil.which("agy")
     if agy:
         agy_data = _run_agy_usage(agy)
         if agy_data is not None:
-            return _format_agy_usage(agy_data)
+            usage = _format_agy_usage(agy_data)
+            if ttl > 0:
+                _write_cache(usage)
+            return usage
 
     if found_any_process:
         return {"error": "Antigravity language server found but could not connect to API"}
