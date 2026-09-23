@@ -314,7 +314,6 @@ ColumnLayout {
 
                 contentItem: QQC2.ScrollView {
                     clip: true
-                    QQC2.ScrollBar.horizontal.policy: QQC2.ScrollBar.AlwaysOff
                     QQC2.ScrollBar.vertical: QQC2.ScrollBar {
                         width: 6
                         policy: QQC2.ScrollBar.AsNeeded
@@ -493,7 +492,6 @@ ColumnLayout {
         // A full page keeps the wheel here; a short one lets it through to the
         // popup instead of swallowing it against an unscrollable list.
         interactive: contentHeight > height
-        QQC2.ScrollBar.horizontal.policy: QQC2.ScrollBar.AlwaysOff
         QQC2.ScrollBar.vertical: QQC2.ScrollBar {
             id: verticalScrollBar
             policy: QQC2.ScrollBar.AsNeeded

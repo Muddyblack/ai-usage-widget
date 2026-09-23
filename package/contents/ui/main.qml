@@ -2750,7 +2750,7 @@ PlasmoidItem {
                 iconText: i18n("7D")
                 stale: root.stale && root.panelShows("ollama")
                 visible: root.panelShows("ollama") && root.ollamaWindows.length > 0 && root.ollamaWindows[0].key === "ollama_session" && root.ollamaWeeklyWindow !== null
-                tooltipText: "Ollama Cloud\n" + root.ollamaWeeklyWindow.label + ": " + Math.round(root.ollamaWeeklyWindow.pct) + "%"
+                tooltipText: "Ollama Cloud\n" + (root.ollamaWeeklyWindow ? root.ollamaWeeklyWindow.label + ": " + Math.round(root.ollamaWeeklyWindow.pct) + "%" : "")
             }
 
             PanelSlot {

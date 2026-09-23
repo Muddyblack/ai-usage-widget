@@ -174,6 +174,20 @@ test("startup initializes provider defaults before normal provider refresh", () 
     assert.ok(macos.indexOf("Backend.initializeProviderDefaults()") < macos.indexOf("model.refresh()"));
 });
 
+test("popup avoids null Ollama bindings and missing horizontal scrollbars", () => {
+    const main = qmlSource("package/contents/ui/main.qml");
+    const spend = qmlSource("package/contents/ui/SpendTab.qml");
+
+    assert.match(main, /root\.ollamaWeeklyWindow \? root\.ollamaWeeklyWindow\.label/);
+    for (const file of [
+        "package/contents/ui/SpendTab.qml",
+        "package/contents/ui/SessionsTab.qml",
+        "package/contents/ui/MistralTab.qml",
+    ]) {
+        assert.doesNotMatch(qmlSource(file), /QQC2\.ScrollBar\.horizontal(?:\.policy)?\s*:/);
+    }
+});
+
 test("source changes keep normal rows and preserve stale-response recovery clears", () => {
     const kde = qmlSource("package/contents/ui/SessionsTab.qml");
     const hyprland = qmlSource("hyprland/AiUsageShell.qml");
