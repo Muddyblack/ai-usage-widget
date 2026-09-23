@@ -1,6 +1,7 @@
 """The codex app-server client against a fake `codex` on PATH — a shell script
 on POSIX, a .cmd shim on Windows, the way npm installs the real one there."""
 
+import json
 import os
 import shutil
 import stat
@@ -11,7 +12,13 @@ import unittest
 from unittest import mock
 
 import _support  # noqa: F401  (sys.path)
+from _support import IsolatedHomeTest
+from aiusage import collect
+from aiusage.http import HttpResult
+from aiusage.providers import codex_last_good
+from aiusage.providers.codex_last_good import TTL_SECONDS, identity_key
 from aiusage.providers.codex_rate_limits import get_codex_rate_limits
+from aiusage.providers.openai_credentials import codex_home
 
 FAKE_SERVER = r"""
 import json, os, sys, queue, threading
@@ -19,6 +26,10 @@ pid_file = os.environ.get("FAKE_CODEX_PID")
 if pid_file:
     with open(pid_file, "w") as fh:
         fh.write(str(os.getpid()))
+launch_file = os.environ.get("FAKE_CODEX_LAUNCHES")
+if launch_file:
+    with open(launch_file, "a") as fh:
+        fh.write("1\n")
 def read_line():
     line = b""
     while not line.endswith(b"\n"):
@@ -45,6 +56,12 @@ print(json.dumps({"id": 1, "result": {"userAgent": "test"}}), flush=True)
 pending.get(timeout=10)
 reader.join()
 if os.environ.get("FAKE_CODEX_MODE") == "closed":
+    sys.exit(0)
+if os.environ.get("FAKE_CODEX_MODE") == "error":
+    print(json.dumps({"id": 2, "error": {"code": -32601, "message": "method not found"}}), flush=True)
+    sys.exit(0)
+if os.environ.get("FAKE_CODEX_MODE") == "empty":
+    print(json.dumps({"id": 2, "result": {}}), flush=True)
     sys.exit(0)
 if os.environ.get("FAKE_CODEX_MODE") == "ok":
     limits = {"primary": {"usedPercent": 42, "windowDurationMins": 10080, "resetsAt": 200}}
@@ -92,15 +109,24 @@ class CodexRateLimitsTest(unittest.TestCase):
 
     def test_a_server_that_never_answers_gives_up(self):
         started = time.monotonic()
-        self.assertEqual(self.call("silent"), {})
+        result = self.call("silent")
+        self.assertEqual(result.pop("_codexSource"), "unavailable")
+        self.assertIsNone(result.pop("_codexAge"))
+        self.assertEqual(result, {})
         self.assertLess(time.monotonic() - started, 15)
 
     def test_no_codex_on_path(self):
         with mock.patch.dict(os.environ, {"PATH": tempfile.gettempdir()}):
-            self.assertEqual(get_codex_rate_limits(), {})
+            result = get_codex_rate_limits()
+        self.assertEqual(result.pop("_codexSource"), "unavailable")
+        self.assertIsNone(result.pop("_codexAge"))
+        self.assertEqual(result, {})
 
     def test_a_server_that_exits_without_limits_returns_empty(self):
-        self.assertEqual(self.call("closed"), {})
+        result = self.call("closed")
+        self.assertEqual(result.pop("_codexSource"), "unavailable")
+        self.assertIsNone(result.pop("_codexAge"))
+        self.assertEqual(result, {})
 
     @unittest.skipUnless(shutil.which("true") or os.name == "nt", "needs a shell")
     def test_the_server_does_not_outlive_the_call(self):
@@ -117,6 +143,185 @@ class CodexRateLimitsTest(unittest.TestCase):
         while _pid_alive(pid) and time.monotonic() < deadline:
             time.sleep(0.1)
         self.assertFalse(_pid_alive(pid), "the fake server was left running")
+
+
+class CodexRateLimitsCacheTest(unittest.TestCase):
+    """The positive TTL cache: a repeated refresh inside the TTL must not
+    launch `codex app-server` again, and the cache must never cross accounts."""
+
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.cache_patch = mock.patch("aiusage.providers.codex_rate_limits.config.cache_dir", return_value=self.directory.name)
+        self.cache_patch.start()
+        self.addCleanup(self.cache_patch.stop)
+        self.bin = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.bin, True)
+        server = os.path.join(self.bin, "fake_codex.py")
+        with open(server, "w", encoding="utf-8") as fh:
+            fh.write(FAKE_SERVER)
+        if os.name == "nt":
+            with open(os.path.join(self.bin, "codex.cmd"), "w", encoding="utf-8") as fh:
+                fh.write(f'@echo off\r\n"{sys.executable}" "{server}" %*\r\n')
+        else:
+            shim = os.path.join(self.bin, "codex")
+            with open(shim, "w", encoding="utf-8") as fh:
+                fh.write(f'#!/bin/sh\nexec "{sys.executable}" "{server}" "$@"\n')
+            os.chmod(shim, os.stat(shim).st_mode | stat.S_IEXEC)
+        self.launch_file = os.path.join(self.bin, "launches")
+        self.env = {
+            "PATH": self.bin + os.pathsep + os.environ.get("PATH", ""),
+            "FAKE_CODEX_MODE": "ok",
+            "FAKE_CODEX_LAUNCHES": self.launch_file,
+        }
+
+    def call(self, token, home, now):
+        with mock.patch.dict(os.environ, self.env):
+            return get_codex_rate_limits(token, home, now)
+
+    def launches(self):
+        try:
+            with open(self.launch_file, encoding="utf-8") as fh:
+                return len(fh.read().split())
+        except OSError:
+            return 0
+
+    def test_cold_then_warm_launches_app_server_once(self):
+        result = self.call("token-a", "/tmp/codex", 100)
+        self.assertEqual(result.pop("_codexSource"), "live")
+        self.assertEqual(result.pop("_codexAge"), 0)
+        self.assertEqual(result["rateLimits"]["primary"]["usedPercent"], 42)
+        self.assertEqual(self.launches(), 1)
+
+        result = self.call("token-a", "/tmp/codex", 150)
+        self.assertEqual(result.pop("_codexSource"), "cached")
+        self.assertEqual(result.pop("_codexAge"), 50)
+        self.assertEqual(result["rateLimits"]["primary"]["usedPercent"], 42)
+        self.assertEqual(self.launches(), 1)
+
+    def test_expired_cache_launches_again(self):
+        self.call("token-a", "/tmp/codex", 100)
+        self.assertEqual(self.launches(), 1)
+        result = self.call("token-a", "/tmp/codex", 100 + TTL_SECONDS + 1)
+        self.assertEqual(result.pop("_codexSource"), "live")
+        self.assertEqual(self.launches(), 2)
+
+    def test_clock_rollback_does_not_reuse_cache(self):
+        self.call("token-a", "/tmp/codex", 100)
+        result = self.call("token-a", "/tmp/codex", 99)
+        self.assertEqual(result.pop("_codexSource"), "live")
+        self.assertEqual(self.launches(), 2)
+
+    def test_changed_identity_does_not_reuse_cache(self):
+        self.call("token-a", "/tmp/codex", 100)
+        self.assertEqual(self.launches(), 1)
+        result = self.call("token-b", "/tmp/codex", 101)
+        self.assertEqual(result.pop("_codexSource"), "live")
+        self.assertEqual(self.launches(), 2)
+        result = self.call("token-a", "/tmp/other", 102)
+        self.assertEqual(result.pop("_codexSource"), "live")
+        self.assertEqual(self.launches(), 3)
+
+    def test_rpc_protocol_error_is_not_cached(self):
+        with mock.patch.dict(os.environ, {**self.env, "FAKE_CODEX_MODE": "error"}):
+            result = get_codex_rate_limits("token-a", "/tmp/codex", 100)
+        self.assertEqual(result.pop("_codexSource"), "unavailable")
+        self.assertEqual(self.launches(), 1)
+        result = self.call("token-a", "/tmp/codex", 101)
+        self.assertEqual(result.pop("_codexSource"), "live")
+        self.assertEqual(self.launches(), 2)
+
+    def test_startup_timeout_is_not_cached(self):
+        with mock.patch.dict(os.environ, {**self.env, "FAKE_CODEX_MODE": "silent"}):
+            result = get_codex_rate_limits("token-a", "/tmp/codex", 100)
+        self.assertEqual(result.pop("_codexSource"), "unavailable")
+        self.assertEqual(self.launches(), 1)
+        result = self.call("token-a", "/tmp/codex", 101)
+        self.assertEqual(result.pop("_codexSource"), "live")
+        self.assertEqual(self.launches(), 2)
+
+    def test_explicit_no_limits_is_cached_and_served(self):
+        with mock.patch.dict(os.environ, {**self.env, "FAKE_CODEX_MODE": "empty"}):
+            result = get_codex_rate_limits("token-a", "/tmp/codex", 100)
+        self.assertEqual(result.pop("_codexSource"), "live")
+        self.assertEqual(result.pop("_codexAge"), 0)
+        self.assertEqual(result.pop("_codexNoLimits"), True)
+        self.assertEqual(result, {})
+        self.assertEqual(self.launches(), 1)
+        result = self.call("token-a", "/tmp/codex", 150)
+        self.assertEqual(result.pop("_codexSource"), "cached")
+        self.assertEqual(result.pop("_codexAge"), 50)
+        self.assertEqual(result.pop("_codexNoLimits"), True)
+        self.assertEqual(result, {})
+        self.assertEqual(self.launches(), 1)
+
+    def test_cache_has_only_safe_metadata_and_hashed_identity(self):
+        self.call("secret.jwt.value", "/tmp/codex", 100)
+        names = os.listdir(self.directory.name)
+        self.assertEqual(len(names), 1)
+        with open(os.path.join(self.directory.name, names[0]), encoding="utf-8") as fh:
+            content = fh.read()
+        self.assertNotIn("secret", content)
+        self.assertNotIn("/tmp/codex", content)
+        payload = json.loads(content)
+        self.assertEqual(set(payload["data"]), {"rateLimits"})
+        self.assertEqual(payload["identity"], identity_key("secret.jwt.value", "/tmp/codex"))
+
+
+class CodexCollectFallbackTest(IsolatedHomeTest):
+    """collect_openai's HTTP fallback must still run when the app-server path
+    produced nothing, and a failed fallback must keep its error provenance."""
+
+    def setUp(self):
+        super().setUp()
+        self.creds = {"codexAccessToken": "token-a", "accountId": "acct-1"}
+        self.patches = [
+            mock.patch.object(collect, "get_openai_credentials", return_value=self.creds),
+            mock.patch.object(collect, "get_codex_stats", return_value={}),
+            mock.patch.object(collect, "provider_status", return_value=None),
+        ]
+        for patch in self.patches:
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def test_fallback_success_when_app_server_empty(self):
+        with (
+            mock.patch.object(collect, "get_codex_rate_limits", return_value={"_codexSource": "unavailable", "_codexAge": None}),
+            mock.patch.object(collect, "fetch_json", return_value=HttpResult(200, '{"rateLimits": {"primary": {"usedPercent": 7}}}')) as fetch,
+        ):
+            raw = collect.collect_openai(1_800_000_000)
+        self.assertEqual(raw["inputs"]["codex"]["rateLimits"]["primary"]["usedPercent"], 7)
+        self.assertEqual(raw["inputs"]["codexSource"], "live")
+        self.assertEqual(raw["inputs"]["codexAgeSeconds"], 0)
+        self.assertEqual(raw["inputs"]["codexError"], "")
+        fetch.assert_called_once()
+
+    def test_fallback_failure_keeps_error_and_stale_provenance(self):
+        codex_last_good.snapshot({"rateLimits": {"primary": {"usedPercent": 42}}}, "token-a", codex_home(), time.time())
+        with (
+            mock.patch.object(collect, "get_codex_rate_limits", return_value={"_codexSource": "unavailable", "_codexAge": None}),
+            mock.patch.object(collect, "fetch_json", return_value=HttpResult(401, "unauthorized")),
+        ):
+            raw = collect.collect_openai(1_800_000_000)
+        self.assertEqual(raw["inputs"]["codex"]["rateLimits"]["primary"]["usedPercent"], 42)
+        self.assertEqual(raw["inputs"]["codexSource"], "stale")
+        self.assertIsInstance(raw["inputs"]["codexAgeSeconds"], int)
+        self.assertNotEqual(raw["inputs"]["codexError"], "")
+
+    def test_cached_app_server_result_keeps_cached_provenance(self):
+        with (
+            mock.patch.object(
+                collect,
+                "get_codex_rate_limits",
+                return_value={"_codexSource": "cached", "_codexAge": 40, "rateLimits": {"primary": {"usedPercent": 42}}},
+            ),
+            mock.patch.object(collect, "codex_snapshot") as snapshot,
+        ):
+            raw = collect.collect_openai(1_800_000_000)
+        self.assertEqual(raw["inputs"]["codexSource"], "cached")
+        self.assertEqual(raw["inputs"]["codexAgeSeconds"], 40)
+        self.assertEqual(raw["inputs"]["codexError"], "")
+        snapshot.assert_not_called()
 
 
 if __name__ == "__main__":

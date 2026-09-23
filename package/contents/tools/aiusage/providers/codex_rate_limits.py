@@ -5,16 +5,27 @@ child is always reaped.
 
 Replies are read on a helper thread rather than with `selectors`: Windows can
 only select() on sockets, never on a pipe, and a thread works the same on both.
+
+Successful replies are cached under the same identity scope as the last-good
+snapshot (SHA-256 of the access token plus normalized CODEX_HOME) for a short
+TTL, so a repeated refresh inside the TTL does not launch the app-server again.
+The cached reply is returned with `_codexSource`/`_codexAge` metadata that the
+collector pops before the payload reaches the frontend.
 """
 
+import hmac
 import json
+import math
+import os
 import queue
 import shutil
 import subprocess
+import tempfile
 import threading
 import time
 
-from .. import paths
+from .. import config, paths
+from .codex_last_good import _FIELDS, TTL_SECONDS, _has_limits, identity_key
 
 
 def _pump(stream, lines):
@@ -85,7 +96,8 @@ def _stop(proc):
             pass
 
 
-def get_codex_rate_limits():
+def _live_codex_rate_limits():
+    """One live `codex app-server` round trip; the raw reply dict."""
     # The resolved path, not the bare name: Popen does not apply PATHEXT, so on
     # Windows "codex" would never find codex.cmd or codex.exe.
     codex = shutil.which("codex")
@@ -147,8 +159,10 @@ def get_codex_rate_limits():
                 read_limits_reply = None
             else:
                 read_limits_reply = _read_until_id(lines, 2, 5)
-            if read_limits_reply is not None:
+            if read_limits_reply is not None and "result" in read_limits_reply:
                 result = read_limits_reply.get("result") or {}
+                if isinstance(result, dict) and not result:
+                    result = {"_codexNoLimits": True}
     finally:
         try:
             if stdin is not None:
@@ -169,3 +183,79 @@ def get_codex_rate_limits():
                 pass
 
     return result
+
+
+def _cache_path(key):
+    return os.path.join(config.cache_dir(), f"codex-rate-limits-{key}.json")
+
+
+def _read_cache(key):
+    """A validated same-identity cache payload, or None."""
+    try:
+        with open(_cache_path(key), encoding="utf-8") as stream:
+            payload = json.load(stream)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(payload, dict) or payload.get("version") != 1:
+        return None
+    stored_identity = payload.get("identity")
+    if not isinstance(stored_identity, str) or not hmac.compare_digest(stored_identity, key):
+        return None
+    saved_at = payload.get("savedAt")
+    data = payload.get("data")
+    if isinstance(saved_at, bool) or not isinstance(saved_at, (int, float)) or not math.isfinite(saved_at):
+        return None
+    if not isinstance(data, dict) or not _has_limits(data):
+        return None
+    return {"savedAt": float(saved_at), "data": {field: data[field] for field in _FIELDS if field in data}}
+
+
+def _write_cache(key, saved_at, data):
+    path = _cache_path(key)
+    payload = {
+        "version": 1,
+        "identity": key,
+        "savedAt": saved_at,
+        "data": {field: data[field] for field in _FIELDS if field in data},
+    }
+    directory = os.path.dirname(path)
+    try:
+        os.makedirs(directory, exist_ok=True)
+        descriptor, temporary = tempfile.mkstemp(prefix=".codex-rate-limits-", dir=directory)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+                json.dump(payload, stream, separators=(",", ":"))
+            os.replace(temporary, path)
+        except OSError:
+            try:
+                os.unlink(temporary)
+            except OSError:
+                pass
+    except OSError:
+        pass
+
+
+def get_codex_rate_limits(token="", home="", now=None):
+    """Rate limits with a short positive TTL cache.
+
+    A successful app-server reply is cached under the same identity scope as
+    the last-good snapshot. A fresh cache hit returns the cached data without
+    launching the app-server; the reply carries `_codexSource` ("cached") and
+    `_codexAge` metadata that the collector pops. A live reply is "live" with
+    age 0; a failed attempt is "unavailable" with no age. Without a token there
+    is no identity to scope the cache to, so every call is live.
+    """
+    checked_at = time.time() if now is None else now
+    key = identity_key(token, home) if token else None
+    if key is not None:
+        cached = _read_cache(key)
+        if cached is not None:
+            age = checked_at - cached["savedAt"]
+            if 0 <= age <= TTL_SECONDS:
+                return {**cached["data"], "_codexSource": "cached", "_codexAge": int(age)}
+
+    result = _live_codex_rate_limits()
+    if key is not None and _has_limits(result):
+        _write_cache(key, checked_at, result)
+        return {**result, "_codexSource": "live", "_codexAge": 0}
+    return {**result, "_codexSource": "unavailable", "_codexAge": None}
