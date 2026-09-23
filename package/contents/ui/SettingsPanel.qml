@@ -653,6 +653,25 @@ ColumnLayout {
                     rootItem.backgroundHints = hints;
                 }
             }
+            PlasmaComponents.Label {
+                text: i18n("Popup Decoration")
+                font.pixelSize: 11
+                color: Kirigami.Theme.textColor
+                Layout.preferredWidth: 120
+                elide: Text.ElideRight
+            }
+            QQC2.ComboBox {
+                Layout.columnSpan: 2
+                Layout.fillWidth: true
+                implicitHeight: 22
+                font.pixelSize: 10
+                model: [i18n("Accent Glow"), i18n("Provider Logo"), i18n("None")]
+                currentIndex: rootItem.popupDecoration
+                onActivated: {
+                    Plasmoid.configuration.popupDecoration = index;
+                    rootItem.popupDecoration = index;
+                }
+            }
         }
     }
 

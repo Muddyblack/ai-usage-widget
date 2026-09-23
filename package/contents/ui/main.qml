@@ -687,6 +687,7 @@ PlasmoidItem {
     readonly property color activeAccent: root.accentFor(root.enabledTabs[root.activeTab] || "claude")
     // ── Appearance Customization ────────────────────────────────────────────────
     property int backgroundHints: Plasmoid.configuration.backgroundHints !== undefined ? Plasmoid.configuration.backgroundHints : 1
+    property int popupDecoration: Plasmoid.configuration.popupDecoration !== undefined ? Plasmoid.configuration.popupDecoration : 0
     property color cardBgColor: Plasmoid.configuration.cardBgColor || "#100a1a"
     property real cardBgOpacity: Plasmoid.configuration.cardBgOpacity !== undefined ? Plasmoid.configuration.cardBgOpacity : 0.9
     property color popupBgColor: Plasmoid.configuration.popupBgColor || "#000000"
@@ -1266,7 +1267,7 @@ PlasmoidItem {
         if (FeatureTabs.isFeatureTab(tabId))
             return "";
         var p = root.providerById(tabId);
-        return p ? Qt.resolvedUrl("../icons/" + p.icon) : "";
+        return p && p.icon ? Qt.resolvedUrl("../icons/" + p.icon) : "";
     }
 
     function accentFor(tabId) {
@@ -2960,8 +2961,19 @@ PlasmoidItem {
             anchors.fill: parent
             anchors.margins: -popupRoot.popupMargin
             radius: 12
+            clip: true
             border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.12)
+
+            // Custom background tint overlay (defaults to 0 opacity, i.e. invisible/glassy).
+            // Sits under the accent glow / provider watermark so raising the opacity
+            // tints the glass without blotting out the decoration on top of it.
+            Rectangle {
+                anchors.fill: parent
+                radius: parent.radius
+                color: root.resolvedPopupBg
+                visible: root.popupBgOpacity > 0
+            }
 
             // soft accent glow in the top-left, tinted by the active service accent
             Rectangle {
@@ -2971,6 +2983,7 @@ PlasmoidItem {
                 anchors.left: parent.left
                 radius: width / 2
                 opacity: 0.12
+                visible: root.popupDecoration === 0 || (root.popupDecoration === 1 && (providerWatermark.source === "" || providerWatermark.status === Image.Error))
 
                 gradient: Gradient {
                     GradientStop {
@@ -2983,6 +2996,21 @@ PlasmoidItem {
                         color: "transparent"
                     }
                 }
+            }
+
+            Image {
+                id: providerWatermark
+                anchors.top: parent.top
+                anchors.left: parent.left
+                width: parent.width * 0.7
+                height: parent.height * 0.7
+                sourceSize.width: 280
+                sourceSize.height: 280
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                opacity: 0.12
+                visible: root.popupDecoration === 1 && source !== "" && status !== Image.Error
+                source: root.showSettings ? Qt.resolvedUrl("../icons/org.muddyblack.aiUsageWidget.svg") : root.tabIcon(root.enabledTabs[root.activeTab] || "claude")
             }
 
             // crisp inner top highlight line
@@ -3011,15 +3039,6 @@ PlasmoidItem {
                     color: Qt.rgba(0, 0, 0, 0.06)
                 }
             }
-        }
-
-        // Custom background tint overlay (defaults to 0 opacity, i.e. invisible/glassy)
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -popupRoot.popupMargin
-            radius: 12
-            color: root.resolvedPopupBg
-            visible: root.popupBgOpacity > 0
         }
 
         ColumnLayout {

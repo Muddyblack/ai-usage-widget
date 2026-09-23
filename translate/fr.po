@@ -2498,6 +2498,22 @@ msgid "Glassmorphic (Shadow + Blur)"
 msgstr "Glassmorphique (ombre + flou)"
 
 #: package/contents/ui/SettingsPanel.qml
+msgid "Popup Decoration"
+msgstr "Décoration du popup"
+
+#: package/contents/ui/SettingsPanel.qml
+msgid "Accent Glow"
+msgstr "Halo d'accent"
+
+#: package/contents/ui/SettingsPanel.qml
+msgid "Provider Logo"
+msgstr "Logo du fournisseur"
+
+#: package/contents/ui/SettingsPanel.qml
+msgid "None"
+msgstr "Aucun"
+
+#: package/contents/ui/SettingsPanel.qml
 msgid "How often usage is re-read"
 msgstr "Fréquence de relecture de l'utilisation"
 
