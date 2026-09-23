@@ -18,6 +18,7 @@ from . import config, detect, envelope, pricing
 from .contract import finalize
 from .normalize import normalize
 from .session_index import SOURCE_REGISTRY
+from .timing import ProviderTimingCollector, emit_diagnostics, timing_enabled
 
 USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize | --sessions | --refresh-pricing | --pricing-table |
 --detect-providers | --initialize-provider-defaults]
@@ -287,7 +288,10 @@ def main(argv):
     else:
         selected = envelope.enabled(cfg)
 
-    _emit(envelope.build(selected))
+    timings = ProviderTimingCollector() if timing_enabled() else None
+    _emit(envelope.build(selected, timing=timings))
+    if timings is not None:
+        emit_diagnostics(timings.records(), sys.stderr)
     return 0
 
 

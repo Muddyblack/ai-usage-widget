@@ -4,6 +4,7 @@ The Hyprland shell writes the settings file; the Plasma widget passes the same
 values through WIDGET_* environment variables. Environment always wins.
 """
 
+import copy
 import json
 import os
 import tempfile
@@ -67,6 +68,14 @@ def cache_dir():
     )
 
 
+_SETTINGS_CACHE = {}
+
+
+def reset_settings_cache():
+    """Drop the per-process settings memo. Tests and long-lived callers use this."""
+    _SETTINGS_CACHE.clear()
+
+
 def status_ttl():
     try:
         return int(os.environ.get("AI_USAGE_STATUS_TTL", "300"))
@@ -75,15 +84,33 @@ def status_ttl():
 
 
 def load_settings():
+    """Parse the shared settings file, memoized by file identity.
+
+    A single collection reaches the settings file from several providers and
+    the CLI; re-reading and re-parsing the same JSON for each is wasted work.
+    The memo is keyed by ``(path, mtime_ns, size)``, so a changed file (or a
+    file that appears after a miss) is always re-read — only an unchanged
+    identity reuses the parsed dict. Call ``reset_settings_cache()`` when a
+    caller needs a guaranteed fresh read.
+    """
     path = config_path()
-    if not os.path.isfile(path):
+    try:
+        stat = os.stat(path)
+        identity = (path, stat.st_mtime_ns, stat.st_size)
+    except OSError:
+        _SETTINGS_CACHE.clear()
         return {}
+    cached = _SETTINGS_CACHE.get(path)
+    if cached is not None and cached[0] == identity:
+        return copy.deepcopy(cached[1])
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
-        return data if isinstance(data, dict) else {}
+        settings = data if isinstance(data, dict) else {}
     except (OSError, ValueError):
-        return {}
+        settings = {}
+    _SETTINGS_CACHE[path] = (identity, settings)
+    return copy.deepcopy(settings)
 
 
 def cfg_key(cfg, key):
