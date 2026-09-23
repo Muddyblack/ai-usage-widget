@@ -10,9 +10,11 @@ import Quickshell.Io
 // root (see ../shell.qml) rather than this directory — from `hyprland/` they
 // would escape it and load as qrc:/qs-blackhole.
 import "../package/contents/code/Format.js" as Format
+import "../package/contents/code/RefreshCoalescer.js" as RefreshCoalescer
 import "../package/contents/code/UsageHistory.js" as UsageHistory
 import "../package/contents/code/FeatureTabs.js" as FeatureTabs
 import "../package/contents/code/SessionSources.js" as SessionSources
+import "../package/contents/code/SessionRefreshPolicy.js" as SessionRefreshPolicy
 import "ProviderRegistry.js" as ProviderRegistry
 import "../package/contents/code/I18n.js" as I18n
 
@@ -377,6 +379,12 @@ ShellRoot {
     // Local sessions for the optional Sessions tab.
     property var sessions: []
     property bool sessionsLoading: false
+    property string sessionsCacheStatus: "unknown"
+    property var sessionsCacheAgeSeconds: null
+    property string sessionsRefreshStatus: "not-run"
+    property int sessionsRemovedSourceCount: 0
+    property double sessionsLastReconcile: 0
+    property double previousSessionClockMs: Date.now()
     property string sessionsError: ""
     // Last `--open-session` result, shown as a status line under the list.
     property string sessionsNotice: ""
@@ -397,6 +405,7 @@ ShellRoot {
     property int sessionsActiveRequestId: 0
     readonly property int sessionsLimit: 60
     property int sessionsTotal: 0
+    property bool sessionsTotalExact: false
     property bool sessionsHasMore: false
     property int sessionsOffset: 0
     property int sessionsActiveOffset: 0
@@ -415,7 +424,7 @@ ShellRoot {
     // leave it empty until the next tick or a manual refresh.
     onSessionsViewVisibleChanged: {
         if (root.sessionsViewVisible && !root.sessionsLoading)
-            root.reconcileSessions(root.sessionsQuery);
+            root.querySessions(root.sessionsQuery, root.sessionsOffset, false, root.sessionsSourceIds);
     }
     property string activeId: ""
     // The last real provider selected (never a feature tab id) — what the
@@ -719,9 +728,6 @@ ShellRoot {
             return;
         root.sessionsQuery = query;
         root.sessionsRequestId += 1;
-        root.sessionsOffset = 0;
-        root.sessionsTotal = 0;
-        root.sessionsHasMore = false;
         if (sessionsProcess.running)
             root.queueSessionsRequest(0, false, false);
     }
@@ -771,11 +777,6 @@ ShellRoot {
         root.sessionsFollowup = false;
         root.sessionsResponseDone = false;
         root.sessionsProcessExited = false;
-        if (!append) {
-            root.sessionsOffset = 0;
-            root.sessionsTotal = 0;
-            root.sessionsHasMore = false;
-        }
         root.sessionsLoading = true;
         root.sessionsError = "";
         root.sessionsNotice = "";
@@ -844,7 +845,7 @@ ShellRoot {
                     root.pricingStatus = data.status || (data.ok === true ? "refreshed" : "no-cache");
                     root.pricingError = data.error || "";
                     if (data.ok === true)
-                        root.refresh();
+                        root.requestUsageRefreshAfterPricing();
                 } catch (e) {
                     root.pricingStatus = "no-cache";
                     root.pricingError = root.i18n("Could not refresh pricing.");
@@ -949,6 +950,12 @@ ShellRoot {
         root.sessionsLoading = false;
         try {
             var data = JSON.parse((text || "").trim());
+            if (data.cacheStatus === "failed") {
+                root.sessionsRefreshStatus = "failed";
+                root.sessionsError = root.i18n("Could not load cached sessions.");
+                sessionsReconcileTimer.restart();
+                return;
+            }
             var page = data.sessions || [];
             var responseSources = root.normalizeSessionSources(data.sources);
             var staleSelection = root.sessionSourceSelectionHasStaleIds(responseSources);
@@ -971,12 +978,24 @@ ShellRoot {
             }
             root.sessionsSourceResetSignature = "";
             root.sessionsTotal = Number(data.total) || 0;
+            root.sessionsTotalExact = data.totalExact === true;
             root.sessionsOffset = Number(data.offset) || root.sessionsActiveOffset;
             root.sessionsHasMore = data.hasMore === true;
             root.sessions = root.sessionsActiveAppend ? root.sessions.concat(page) : page;
+            root.sessionsCacheStatus = data.cacheStatus || "unknown";
+            root.sessionsCacheAgeSeconds = data.cacheAgeSeconds === undefined ? null : data.cacheAgeSeconds;
+            root.sessionsRefreshStatus = data.refreshStatus || "not-run";
+            root.sessionsRemovedSourceCount = Number(data.removedSourceCount) || 0;
             root.sessionsError = "";
+            sessionsReconcileTimer.restart();
+            if (root.sessionsActiveRefresh)
+                root.sessionsLastReconcile = Date.now();
+            else if (root.sessionsViewVisible && SessionRefreshPolicy.cacheExpired(root.sessionsCacheAgeSeconds))
+                root.reconcileSessions(root.sessionsQuery, root.sessionsSourceIds);
         } catch (e) {
             root.sessionsError = root.i18n("Could not load sessions.");
+            root.sessionsRefreshStatus = "failed";
+            sessionsReconcileTimer.restart();
         }
     }
 
@@ -990,7 +1009,9 @@ ShellRoot {
             if (exitCode !== 0 && root.sessionsLoading) {
                 root.sessionsLoading = false;
                 root.sessionsError = root.i18n("Could not load sessions.");
+                root.sessionsRefreshStatus = "failed";
                 root.sessionsResponseDone = true;
+                sessionsReconcileTimer.restart();
             }
             root.finishSessionsProcess();
         }
@@ -1054,6 +1075,25 @@ ShellRoot {
         });
     }
 
+    // One successful pricing refresh triggers at most one usage refresh,
+    // deferred while a backend request is already running.
+    property bool usageRefreshPending: false
+
+    function requestUsageRefreshAfterPricing() {
+        var action = RefreshCoalescer.nextAction(true, root.loading || backendProcess.running, root.usageRefreshPending);
+        if (action === "refresh-now")
+            root.refresh();
+        else if (action === "mark-pending")
+            root.usageRefreshPending = true;
+    }
+
+    onLoadingChanged: {
+        if (!root.loading && root.usageRefreshPending) {
+            root.usageRefreshPending = false;
+            root.refresh();
+        }
+    }
+
     Process {
         id: backendProcess
         stdout: StdioCollector {
@@ -1073,14 +1113,22 @@ ShellRoot {
     }
 
     Timer {
+        id: sessionsReconcileTimer
+        interval: SessionRefreshPolicy.refreshDelayMs(root.sessionsCacheAgeSeconds, root.sessionsRefreshStatus)
+        running: root.sessionsViewVisible
+        onTriggered: {
+            if (!root.sessionsLoading)
+                root.reconcileSessions(root.sessionsQuery, root.sessionsSourceIds);
+        }
+    }
+
+    Timer {
         interval: Math.max(30, root.settings.pollSec || 300) * 1000
         running: true
         repeat: true
         triggeredOnStart: true
         onTriggered: {
             root.refresh();
-            if (root.sessionsViewVisible)
-                root.reconcileSessions(root.sessionsQuery);
         }
     }
 
@@ -1088,7 +1136,13 @@ ShellRoot {
         interval: 30000
         running: true
         repeat: true
-        onTriggered: root.nowTick = new Date().getTime()
+        onTriggered: {
+            var now = Date.now();
+            if (root.sessionsViewVisible && SessionRefreshPolicy.resumed(root.previousSessionClockMs, now) && !root.sessionsLoading)
+                root.reconcileSessions(root.sessionsQuery, root.sessionsSourceIds);
+            root.previousSessionClockMs = now;
+            root.nowTick = now;
+        }
     }
 
     // `qs ipc call panel toggle` from a keybind or script
