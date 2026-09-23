@@ -1,21 +1,29 @@
 """Aggregate lifetime Codex usage from ~/.codex/sessions rollouts into a stats
 blob shaped like Claude's ~/.claude/stats-cache.json.
 
-Results are cached and only recomputed when a rollout is newer than the cache.
+Results are cached per normalized sessions home and only recomputed when the
+rollout store's shared source fingerprint changes. The cache is keyed by an
+opaque digest of the canonical sessions and config paths, so two different
+``CODEX_HOME`` values can never share statistics.
 """
 
 import datetime
+import hashlib
+import hmac
 import itertools
 import json
 import os
 import re
+import tempfile
 
 from .. import paths
 from ..contract import _parse_utc
+from ..session_manifest import source_fingerprint
 from .openai_credentials import codex_home
 
 _DATE_RE = re.compile(r".*/(\d{4})/(\d{2})/(\d{2})/[^/]*$")
 _TOML_KEY_RE_CACHE = {}
+_CACHE_VERSION = 2
 
 
 def _field(text, key):
@@ -66,6 +74,82 @@ def _iter_jsonl_files(sessions_dir):
         for name in files:
             if name.endswith(".jsonl"):
                 yield os.path.join(root, name)
+
+
+def _cache_key(sessions, config_file):
+    """Opaque identity for one normalized Codex home.
+
+    The canonical sessions path and config file path are joined and hashed so
+    only the digest ever reaches disk — never the paths themselves. Two
+    different ``CODEX_HOME`` values resolve to different sessions/config paths
+    and therefore different cache files.
+    """
+    normalized = "\0".join(os.path.normcase(os.path.realpath(os.path.abspath(os.path.expanduser(path)))) for path in (sessions, config_file))
+    return hashlib.sha256(os.fsencode(normalized)).hexdigest()
+
+
+def _shared_fingerprint(files, config_file):
+    """One opaque digest over every rollout file plus the config file.
+
+    Each record is the task-10 ``SourceFingerprint`` triple (opaque source id,
+    mtime_ns, size), so the shared digest changes when a rollout is added,
+    removed, renamed, or rewritten — and stays stable when nothing changed.
+    Raises ``OSError`` if a listed rollout disappears mid-walk; the caller then
+    treats the store as changed and rescans.
+    """
+    records = []
+    for path in files:
+        stat = os.stat(path)
+        fp = source_fingerprint(path, stat.st_mtime_ns, stat.st_size)
+        records.append((fp.source_id, fp.mtime_ns, fp.size))
+    try:
+        stat = os.stat(config_file)
+        fp = source_fingerprint(config_file, stat.st_mtime_ns, stat.st_size)
+        records.append((fp.source_id, fp.mtime_ns, fp.size))
+    except OSError:
+        pass
+    records.sort()
+    encoded = json.dumps(records, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _read_cache(path, key, fingerprint):
+    """Return the cached stats only when home and fingerprint both match."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            payload = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(payload, dict) or payload.get("version") != _CACHE_VERSION:
+        return None
+    stored_home = payload.get("home")
+    if not isinstance(stored_home, str) or not hmac.compare_digest(stored_home, key):
+        return None
+    stored_fingerprint = payload.get("fingerprint")
+    if not isinstance(stored_fingerprint, str) or not hmac.compare_digest(stored_fingerprint, fingerprint):
+        return None
+    stats = payload.get("stats")
+    return stats if isinstance(stats, dict) else None
+
+
+def _write_cache(path, key, fingerprint, stats):
+    payload = {"version": _CACHE_VERSION, "home": key, "fingerprint": fingerprint, "stats": stats}
+    directory = os.path.dirname(path)
+    try:
+        os.makedirs(directory, exist_ok=True)
+        descriptor, temporary = tempfile.mkstemp(prefix=".codex-stats-", dir=directory)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as fh:
+                json.dump(payload, fh, separators=(",", ":"))
+            os.replace(temporary, path)
+        except OSError:
+            try:
+                os.unlink(temporary)
+            except OSError:
+                pass
+            raise
+    except OSError:
+        pass
 
 
 def _secs(iso):
@@ -219,25 +303,21 @@ def get_codex_stats():
     sessions = os.environ.get("CODEX_SESSIONS_DIR") or os.path.join(codex_home(), "sessions")
     config_file = os.environ.get("CODEX_CONFIG_FILE") or os.path.join(codex_home(), "config.toml")
     cache_dir = os.path.join(paths.cache_home(), "kde-ai-usage")
-    cache_path = os.path.join(cache_dir, "codex-stats.json")
+    key = _cache_key(sessions, config_file)
+    cache_path = os.path.join(cache_dir, f"codex-stats-{key}.json")
 
     if not os.path.isdir(sessions):
         return {}
 
     files = list(_iter_jsonl_files(sessions))
+    try:
+        fingerprint = _shared_fingerprint(files, config_file)
+    except OSError:
+        fingerprint = None
 
-    if os.path.isfile(cache_path):
-        try:
-            cache_mtime = os.path.getmtime(cache_path)
-            stale = any(os.path.getmtime(f) > cache_mtime for f in files)
-        except OSError:
-            stale = True
-        if not stale:
-            try:
-                with open(cache_path, encoding="utf-8") as fh:
-                    return json.load(fh)
-            except (OSError, ValueError):
-                pass
+    cached = None if fingerprint is None else _read_cache(cache_path, key, fingerprint)
+    if cached is not None:
+        return cached
 
     cfg_model = _grep_toml(config_file, "model")
     cfg_effort = _grep_toml(config_file, "model_reasoning_effort")
@@ -255,12 +335,6 @@ def get_codex_stats():
             records.append(rec)
 
     result = _aggregate(records, cfg_model, cfg_effort)
-
-    try:
-        os.makedirs(cache_dir, exist_ok=True)
-        with open(cache_path, "w", encoding="utf-8") as fh:
-            json.dump(result, fh)
-    except OSError:
-        pass
+    _write_cache(cache_path, key, fingerprint, result)
 
     return result
