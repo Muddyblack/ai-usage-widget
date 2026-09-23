@@ -35,6 +35,7 @@ test: ## run the provider backend contract tests
 	@$(MAKE) --no-print-directory test-py
 	@./tests/python-interp.test.sh
 	@./tests/history-io.test.sh
+	@./tests/test_install_script.sh
 	@./tests/translation-provider-parity.test.sh
 	@if command -v node >/dev/null 2>&1; then node --test tests/*.test.js; \
 	  else echo "skipping tests/shared-code.test.js (node not found)"; fi
