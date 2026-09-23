@@ -46,6 +46,8 @@ get-ai-usage --normalize < envelope.json  # replay a raw envelope, no network
 get-ai-usage --list                       # known provider ids
 get-ai-usage --sessions --query <text>    # search local sessions through the backend
 get-ai-usage --sessions --source <ids>      # filter cached sessions by source
+get-ai-usage --detect-providers             # report local evidence, no collection
+get-ai-usage --initialize-provider-defaults # apply and return persisted settings
 ```
 
 The terminal frontend renders that same model, either fetching it itself or
@@ -61,6 +63,51 @@ get-ai-usage --all | ai-usage-cli   # render a fetched envelope, no second fetch
 (`$XDG_CONFIG_HOME/ai-usage-widget/hyprland-settings.json`, overridable with
 `AI_USAGE_CONFIG`). `--provider` fetches exactly what was asked for, because the
 Plasma widget keeps its own toggles in the plasmoid configuration.
+
+### Provider defaults and one-shot detection
+
+Provider defaults are zero based. A new shared settings file starts with every
+entry in `config.ALL_PROVIDERS` set to `false`. The explicit initializer is the
+only operation that changes those defaults automatically. It runs detection once,
+enables only providers returned by `detect_providers()`, writes the resulting
+settings, and sets `providerDefaultsApplied: true`. Once that latch is true, the
+initializer returns the persisted settings without probing or rewriting them.
+
+The initializer is not implicit. In particular, `--all` only reads the current
+shared settings and never initializes them. This keeps a fetch from changing a
+user's configuration as a side effect. A frontend that wants first-run defaults
+must call `--initialize-provider-defaults` explicitly and use the returned
+`data` object according to its own settings model.
+
+The two CLI modes have stable, separate contracts:
+
+```json
+{"ok":true,"data":["claude","cursor"]}
+```
+
+`--detect-providers` returns a data list in canonical provider order. It does not
+read file contents, open SQLite databases, invoke subprocesses, contact a
+network, or return credentials. Its result is local evidence, not proof that a
+provider account is authenticated or that a quota request will succeed.
+
+```json
+{"ok":true,"data":{"providers":{"claude":true},"providerDefaultsApplied":true}}
+```
+
+`--initialize-provider-defaults` returns the persisted settings object, including
+any existing fields. For an existing settings file, boolean provider choices
+are explicit user choices and are preserved. Missing or non-boolean provider
+entries are materialized using the legacy defaults, then detected providers are
+enabled unless they had an explicit choice. This is the migration path for
+older shared JSON files. A failed atomic write leaves the existing file intact.
+
+The shared JSON policy applies to Hyprland, Windows, and macOS. Plasma has a
+separate KConfig store in `Plasmoid.configuration.<id>Enabled`, with its own
+per-provider defaults and user choices. Plasma must not be described as reading
+the shared JSON toggles for its provider tabs. The backend's `--all` mode still
+uses shared JSON, regardless of which frontend is displaying it. See
+[`provider-detection.md`](provider-detection.md) for the complete policy and
+the maintainer checklist.
 
 ## Pricing catalog refresh
 

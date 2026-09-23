@@ -14,12 +14,13 @@ presentation only; see docs/provider-contract.md for the schema.
 import json
 import sys
 
-from . import config, envelope, pricing
+from . import config, detect, envelope, pricing
 from .contract import finalize
 from .normalize import normalize
 from .session_index import SOURCE_REGISTRY
 
-USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize | --sessions | --refresh-pricing | --pricing-table]
+USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize | --sessions | --refresh-pricing | --pricing-table |
+--detect-providers | --initialize-provider-defaults]
 
   --all                 fetch every provider enabled in the shared settings file
   --provider <ids>      fetch the named providers regardless of the toggles
@@ -28,6 +29,9 @@ USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize 
   --refresh-pricing     force one shared pricing catalog refresh
   --pricing-table       cached model rates as a searchable page
                         (--query, --limit, --offset)
+  --detect-providers    report locally evidenced providers without fetching data
+  --initialize-provider-defaults
+                        apply shared provider defaults once and print settings
   --query-only          query the shared session index without refreshing
   --refresh             refresh all session providers before querying
   --query <text>        search all local session records by safe display fields
@@ -109,6 +113,10 @@ def main(argv):
             mode = "refresh-pricing"
         elif arg == "--pricing-table":
             mode = "pricing-table"
+        elif arg == "--detect-providers":
+            mode = "detect-providers"
+        elif arg == "--initialize-provider-defaults":
+            mode = "initialize-provider-defaults"
         elif arg == "--query-only":
             query_only = True
         elif arg == "--refresh":
@@ -235,6 +243,14 @@ def main(argv):
 
     if mode == "refresh-pricing":
         return _refresh_pricing()
+
+    if mode == "detect-providers":
+        _emit({"ok": True, "data": detect.detect_providers()})
+        return 0
+
+    if mode == "initialize-provider-defaults":
+        _emit({"ok": True, "data": config.initialize_provider_defaults()})
+        return 0
 
     if mode == "open-session":
         from .sessions import open_session

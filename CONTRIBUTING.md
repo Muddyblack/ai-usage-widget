@@ -123,6 +123,14 @@ that a statistic must not cost the user money to read.
 Per-provider specifics (credential resolution, endpoints, API quirks) are
 described in [`docs/providers.md`](docs/providers.md).
 
+For provider defaulting and detection, follow the complete checklist in
+[`docs/provider-detection.md`](docs/provider-detection.md). It covers
+`config.py`, `collect.py`, `envelope.py`, Plasma KConfig, `ProviderRegistry.js`,
+`SettingsStore.swift`, fixtures, tests, and every affected document. A new
+provider must not be called automatically detected unless it is in the backend
+`AUTO_DETECT_PROVIDERS` allowlist and has stat-only, no-network, no-credential-read
+tests.
+
 For behavior shared by frontends, add a case to
 [`tests/behavior/scenarios.json`](tests/behavior/scenarios.json). The
 [behavioral test guide](tests/behavior/README.md) explains how Python, Plasma,

@@ -147,6 +147,10 @@ ShellRoot {
             pythonPath: "",
             language: ""
         })
+    property bool providerDefaultsReady: false
+    property bool providerDefaultsInitializing: false
+    property bool providerDefaultsResponseDone: false
+    property bool providerDefaultsExited: false
     property bool showSettings: false
     // Tray-triggered reveal is legitimately global — one tray icon controls
     // every monitor's pill together. Edge-hover reveal is NOT: with a pill on
@@ -254,7 +258,58 @@ ShellRoot {
                     s.language = d.language || "";
                     root.settings = s;
                 } catch (e) {}
+                root.initializeProviderDefaults();
             }
+        }
+    }
+
+    function mergeProviderDefaults(settings) {
+        var merged = Object.assign({}, root.settings || {}, settings || {});
+        merged.providers = Object.assign({}, (root.settings || {}).providers || {}, (settings || {}).providers || {});
+        root.settings = merged;
+    }
+
+    function finishProviderDefaults() {
+        if (!root.providerDefaultsResponseDone || !root.providerDefaultsExited || root.providerDefaultsReady)
+            return;
+        root.providerDefaultsInitializing = false;
+        root.providerDefaultsReady = true;
+        root.refresh();
+    }
+
+    function initializeProviderDefaults() {
+        if (root.providerDefaultsReady || root.providerDefaultsInitializing)
+            return;
+        if (root.settings.providerDefaultsApplied === true) {
+            root.providerDefaultsReady = true;
+            root.refresh();
+            return;
+        }
+        root.providerDefaultsInitializing = true;
+        root.providerDefaultsResponseDone = false;
+        root.providerDefaultsExited = false;
+        providerDefaultsProcess.exec({
+            command: ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --initialize-provider-defaults", "ai-usage", root.settings.pythonPath || "", root.backendCommand],
+            workingDirectory: root.baseDir + "/.."
+        });
+    }
+
+    Process {
+        id: providerDefaultsProcess
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    var result = JSON.parse((this.text || "").trim());
+                    if (result.ok === true && result.data)
+                        root.mergeProviderDefaults(result.data);
+                } catch (e) {}
+                root.providerDefaultsResponseDone = true;
+                root.finishProviderDefaults();
+            }
+        }
+        onExited: {
+            root.providerDefaultsExited = true;
+            root.finishProviderDefaults();
         }
     }
 
@@ -326,6 +381,8 @@ ShellRoot {
     // Last `--open-session` result, shown as a status line under the list.
     property string sessionsNotice: ""
     property bool pricingLoading: false
+    property bool providerDetectBusy: false
+    property string providerDetectStatus: ""
     property string pricingStatus: ""
     property string pricingError: ""
     property string sessionsQuery: ""
@@ -727,6 +784,48 @@ ShellRoot {
         });
     }
 
+    // Settings → Providers → "Detect installed providers": re-runs the
+    // stat-only detection and switches on what it finds (never off).
+    function applyProviderDetection(result) {
+        root.providerDetectBusy = false;
+        if (!result || result.ok !== true || !Array.isArray(result.data)) {
+            root.providerDetectStatus = root.i18n("Detection failed.");
+            return;
+        }
+        var applied = ProviderRegistry.applyDetected(root.settings, result.data);
+        if (applied.added.length === 0) {
+            root.providerDetectStatus = root.i18n("No new providers found.");
+            return;
+        }
+        root.settings = applied.settings;
+        root.saveSettings();
+        root.providerDetectStatus = root.i18n("Enabled: %1", ProviderRegistry.labels(applied.added));
+        root.refresh();
+    }
+
+    function redetectProviders() {
+        if (providerDetectProcess.running)
+            return;
+        root.providerDetectBusy = true;
+        root.providerDetectStatus = "";
+        providerDetectProcess.exec({
+            command: ["sh", "-c", "PYTHON3=\"$1\" exec \"$2\" --detect-providers", "ai-usage", root.settings.pythonPath || "", root.backendCommand]
+        });
+    }
+
+    Process {
+        id: providerDetectProcess
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var result = null;
+                try {
+                    result = JSON.parse((this.text || "").trim());
+                } catch (e) {}
+                root.applyProviderDetection(result);
+            }
+        }
+    }
+
     function refreshPricing() {
         if (pricingProcess.running)
             return;
@@ -940,6 +1039,8 @@ ShellRoot {
     }
 
     function refresh() {
+        if (!root.providerDefaultsReady || root.providerDefaultsInitializing)
+            return;
         if (backendProcess.running)
             return;
         root.loading = true;

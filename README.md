@@ -21,7 +21,7 @@
   <img src="https://img.shields.io/badge/Started-May_2026-9c27b0?style=for-the-badge" alt="Project started May 2026" />
 </p>
 
-A KDE Plasma 6 panel widget for tracking AI API quota usage across multiple services. Monitor your **Claude** subscription windows and local activity stats, **Antigravity/Google AI Studio**, **OpenAI API and Codex plan limits**, **Grok CLI**, **Kiro**, **Mistral AI**, **OpenRouter**, **Ollama Cloud**, **Z.AI**, **GitHub Copilot**, **DeepSeek**, **Kimi / Moonshot AI**, and **Muse** usage or balance at a glance with animated segmented bars, live countdown timers, account status, and per-model breakdowns.
+A KDE Plasma 6 panel widget for tracking AI API quota usage across 17 provider services. Monitor subscription windows, account balances, local activity, and per-model usage through the shared backend, with animated segmented bars, live countdown timers, and account status.
 
 
 ## Screenshots
@@ -48,7 +48,7 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across multiple serv
 
 ## Features
 
-- **Multi-service support** — 15 providers in one popup, each on its own tab
+- **Multi-service support** — 17 providers in one popup, each on its own tab
 - **Panel view** — Compact percentage readouts in the taskbar, color-coded by usage level, with an inline spark-line trend
 - **Popup view** — Segmented bars showing exact fill level with reset times and live countdowns that show "resetting..." when a window flips
 - **Usage chart** — Smooth, glowing area chart of historical usage with availability-aware 5H / 24H / 7D choices and hover-scrub
@@ -142,6 +142,7 @@ settings, menu bar styles, and build instructions.
 | Kiro | Monthly credits, remaining balance, reset date, overage, and plan — from kiro-cli's login or the Kiro IDE | Supported |
 | Mistral AI | Key status, available models, and local vibe CLI cost/token statistics | Supported |
 | OpenRouter | Spend, credit limit, usage percentage, and account label | Untested |
+| Local Models | Telemetry from configured Ollama, vLLM, or llama.cpp servers without generation requests | Supported |
 | Z.AI | 5-hour token quota, monthly tools quota, reset countdowns, model details, and today's token consumption | Supported |
 | Ollama Cloud | Account usage limits and recent activity cost via API key or OpenCode login | Experimental; undocumented endpoint, live account test needed |
 | GitHub Copilot | Premium request usage against the plan's own entitlement, the real reset day, and local Copilot CLI activity stats | Personal billing supported; organization/enterprise billing not yet supported |
@@ -153,6 +154,12 @@ settings, menu bar styles, and build instructions.
 
 What each provider needs signed in, and what it reads, is in
 **[docs/providers.md](docs/providers.md)**.
+
+Provider startup is zero based. The explicit one-shot initializer can enable
+approved providers with local evidence, while seven providers remain manual-only.
+Detection is stat-only and does not prove authentication or usability. The
+complete policy, platform paths, and future-provider checklist are in
+[docs/provider-detection.md](docs/provider-detection.md).
 
 ---
 
@@ -231,6 +238,7 @@ All configuration is done in the widget's settings panel (right-click the widget
 | [docs/windows.md](docs/windows.md) | The Windows tray app: installing, using and building it |
 | [docs/macos.md](docs/macos.md) | The macOS menu bar app: why it is native Swift, where each provider's data is on a Mac, and how to build it |
 | [docs/provider-contract.md](docs/provider-contract.md) | The JSON model every frontend reads, and the backend architecture behind it |
+| [docs/provider-detection.md](docs/provider-detection.md) | Zero-default detection policy, platform settings, privacy limits, and provider addition checklist |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Development install, tests, packaging, releasing |
 
 ---

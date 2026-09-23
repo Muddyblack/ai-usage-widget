@@ -32,6 +32,7 @@ from .providers.muse_quota import get_muse_quota
 from .providers.ollama import get_ollama_usage
 from .providers.openai_credentials import get_openai_credentials
 from .providers.opencode import usage_snapshot as get_opencode_usage
+from .providers.opencode_account import account_mode, get_go_usage
 from .providers.openrouter import get_openrouter_usage
 from .providers.zai import get_zai_usage
 
@@ -232,7 +233,19 @@ def collect_kimi(now):
 
 
 def collect_opencode(now):
-    return {"id": "opencode", "now": now, "inputs": {"usage": get_opencode_usage()}}
+    mode = account_mode()
+    go_usage = None
+    go_error = ""
+    if mode == "go":
+        go_usage, go_error = get_go_usage()
+    return {
+        "id": "opencode",
+        "now": now,
+        "inputs": {
+            "usage": get_opencode_usage(),
+            "account": {"mode": mode, "goUsage": go_usage, "goError": go_error},
+        },
+    }
 
 
 _SIMPLE = {

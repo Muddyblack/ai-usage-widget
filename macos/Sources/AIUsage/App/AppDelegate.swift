@@ -24,8 +24,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        let initialSettings = SettingsStore()
+        let firstRun = initialSettings.isFirstRun
+        if !initialSettings.bool("providerDefaultsApplied", default: false) {
+            do {
+                try Backend.initializeProviderDefaults()
+            } catch {
+                NSLog("AI Usage: could not initialize provider defaults: \(error.localizedDescription)")
+            }
+        }
         let settings = SettingsStore()
-        let firstRun = settings.isFirstRun
         Catalog.load(language: settings.language)
         model = AppModel(settings: settings)
 

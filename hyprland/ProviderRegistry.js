@@ -118,13 +118,46 @@ var providers = [
     }
 ];
 
-// Mirrors OPT_IN_PROVIDERS in aiusage/config.py: these stay off until switched
-// on, the rest stay on until switched off.
+// Mirrors OPT_IN_PROVIDERS in aiusage/config.py: what a missing toggle means
+// until providerDefaultsApplied is set (or when applying the defaults failed).
 var OPT_IN = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "ollama", "selfhosted"];
 
 function enabled(settings, id) {
     var toggles = (settings && settings.providers) || {};
-    if (OPT_IN.indexOf(id) !== -1)
-        return toggles[id] === true;
-    return toggles[id] !== false;
+    if (!settings || settings.providerDefaultsApplied !== true) {
+        if (OPT_IN.indexOf(id) !== -1)
+            return toggles[id] === true;
+        return toggles[id] !== false;
+    }
+    return toggles[id] === true;
+}
+
+// Re-run of detection from the settings page: switch on every detected
+// provider that is currently off. It never switches anything off, so a
+// provider the user disabled by hand only comes back if it is detected.
+// Returns the new settings and the ids that were switched on.
+function applyDetected(settings, detected) {
+    var next = JSON.parse(JSON.stringify(settings || {}));
+    next.providers = next.providers || {};
+    var added = [];
+    (detected || []).forEach(function (id) {
+        if (!enabled(next, id)) {
+            next.providers[id] = true;
+            added.push(id);
+        }
+    });
+    return {
+        settings: next,
+        added: added
+    };
+}
+
+// Display names for a list of provider ids, for the detection status line.
+function labels(ids) {
+    return (ids || []).map(function (id) {
+        for (var i = 0; i < providers.length; i++)
+            if (providers[i].id === id)
+                return providers[i].label || id;
+        return id;
+    }).join(", ");
 }

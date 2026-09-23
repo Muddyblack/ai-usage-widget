@@ -65,9 +65,13 @@ model key in the dynamic catalog. Aliases, normalized names, near matches, and
 metadata-only records do not produce estimates. Multi-provider sessions roll up per upstream
 provider (for example `ollama-cloud::opencode`).
 
-## Setup per provider
+## Defaults and setup per provider
 
-Enable only the services you use. Each one has its own setup requirement:
+There are 17 provider IDs in the backend. New shared settings are zero based.
+The one-shot initializer can enable only the 10 providers in the backend's
+`AUTO_DETECT_PROVIDERS` allowlist when local evidence exists. The other 7 are
+manual-only and need an explicit choice, key, or endpoint. Detection does not
+prove authentication or usability. Each service has its own setup requirement:
 
 | Service | What you need |
 |---|---|
@@ -78,7 +82,7 @@ Enable only the services you use. Each one has its own setup requirement:
 | Kiro | kiro-cli signed in (`kiro-cli login`), or the Kiro IDE signed in at least once |
 | Mistral AI | A Mistral API key; vibe CLI is optional and adds local session statistics |
 | OpenRouter | An OpenRouter API key entered in widget settings |
-| Ollama Cloud | Enable the provider, then use an Ollama API key in widget settings or `$OLLAMA_API_KEY`; the `ollama-cloud` API-key login from OpenCode is also detected automatically |
+| Ollama Cloud | Enable the provider, then use an Ollama API key in widget settings or `$OLLAMA_API_KEY`; when enabled, the `ollama-cloud` API-key login from OpenCode can also be read automatically |
 | Local Models | Enable the separate Local Models provider. It checks Ollama (`127.0.0.1:11434`), vLLM (`127.0.0.1:8000`), and llama.cpp (`127.0.0.1:8080`). Set one or more comma-separated URLs in provider settings, or use `WIDGET_SELFHOSTED_ENDPOINT`, `WIDGET_SELFHOSTED_ENGINE`, and optional `WIDGET_SELFHOSTED_KEY`. Empty URLs auto-discover all three defaults. Token counters are since server start, where exposed. |
 
 The local provider only reads health, model, slot, and metrics endpoints. It never sends a generation request. On a local URL, NVIDIA VRAM and GPU activity are read with a 300 ms `nvidia-smi` timeout. This is host-level telemetry and may appear under multiple servers on the same machine. Remote servers use only telemetry exposed by their runtime. Ollama's `/api/ps` reports loaded model size but not total GPU memory or token counters; those values are shown without a percentage or invented token total when no hardware telemetry is available. Runtime counters reset when the server restarts. The panel gauge uses the highest available utilization across configured servers.
@@ -92,6 +96,10 @@ The local provider only reads health, model, slot, and metrics endpoints. It nev
 
 All configuration is done in the widget's settings panel (right-click the widget
 → *Configure*).
+
+For the exact detection signals, platform paths, shared JSON versus Plasma
+KConfig behavior, and future-provider registration checklist, see
+[`provider-detection.md`](provider-detection.md).
 
 Provider APIs do not all expose the same information. In particular,
 Codex/ChatGPT plan limits are separate from OpenAI API organization usage,
@@ -131,6 +139,35 @@ The widget reads credentials from the `antigravity-usage` CLI configuration (sto
 ## OpenAI
 
 The OpenAI tab has two independent sections. API usage is fetched from the official OpenAI organization usage endpoint with an API key and summarized over the last 30 days. Codex subscription limits are read through the local Codex app-server, with the authenticated web usage endpoint retained as a compatibility fallback. Windows are classified by their actual duration instead of assuming that `primary` means five hours. Codex plan limits are separate from API billing usage.
+
+## OpenCode
+
+OpenCode remains one provider. The widget selects its mode from the top-level
+`opencode` and `opencode-go` entries in OpenCode's `auth.json`:
+`$XDG_DATA_HOME/opencode/auth.json`, or `~/.local/share/opencode/auth.json`
+when that variable is unset. Only API entries with a non-empty key are valid.
+If a valid Go entry exists, it takes precedence even when a valid Zen entry is
+also present. Otherwise, the provider uses Zen mode.
+
+In **Go mode**, account usage comes from
+`GET https://opencode.ai/zen/go/v1/usage`, authenticated with the Go key. The
+server-reported rolling (5-hour), weekly, and monthly windows are authoritative;
+displayed percentages and reset times are used only when reported and valid.
+Missing values and authentication, entitlement, network, or response errors
+remain unavailable. A failed Go request does not fall back to Zen activity or
+turn missing values into zero usage.
+
+In **Zen mode**, the widget shows informational activity read from OpenCode's
+device-local SQLite session ledger, such as local session and token counts and
+daily activity when available. These counts describe activity recorded on this
+device, not account-wide usage. OpenCode has no supported Zen account-quota
+endpoint, so the widget does not show or infer a Zen account cap, remaining
+allowance, balance, percentage, or reset time. It does not scrape billing pages
+or infer an allowance from local activity.
+
+The auth key is used only for the Go request and is not exposed in provider
+output or logs. The Zen local ledger remains separate from Go account quota and
+its history.
 
 ## Grok *(free tier tested; paid plans untested)*
 

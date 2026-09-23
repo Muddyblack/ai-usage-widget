@@ -43,13 +43,18 @@ final class SettingsTests: XCTestCase {
 
     func testProviderTogglesDefaultTheWayTheBackendDoes() {
         let settings = SettingsStore(url: url)
-        XCTAssertTrue(settings.providerEnabled("claude"), "a provider that needs no pasted token is on")
+        XCTAssertTrue(settings.providerEnabled("claude"), "before the defaults are applied a tokenless provider keeps its legacy on")
         XCTAssertFalse(settings.providerEnabled("kimi"), "one that needs a token stays off until asked for")
 
         settings.setProvider("kimi", enabled: true)
         XCTAssertTrue(settings.providerEnabled("kimi"))
+        settings.setProvider("claude", enabled: true)
+        XCTAssertTrue(settings.providerEnabled("claude"))
         settings.setProvider("claude", enabled: false)
         XCTAssertFalse(settings.providerEnabled("claude"))
+
+        settings.set("providerDefaultsApplied", true)
+        XCTAssertFalse(settings.providerEnabled("antigravity"), "after the defaults are applied a missing toggle is off")
     }
 
     func testTogglingOneProviderLeavesTheOthersAlone() throws {

@@ -9,33 +9,55 @@ import org.kde.kirigami as Kirigami
 ColumnLayout {
     id: tab
     property Item rootItem
-    readonly property var provider: rootItem.providerById("opencode") || ({})
+
+    function providerFromRawProviders(providers) {
+        var list = providers || [];
+        for (var i = 0; i < list.length; i++) {
+            if (list[i] && list[i].id === "opencode")
+                return list[i];
+        }
+        return {};
+    }
+
+    readonly property var provider: providerFromRawProviders(rootItem.rawProviders)
     readonly property var details: provider.details || ({})
     readonly property var stats: details.stats || ({})
     readonly property bool available: stats.available === true
+    readonly property bool goMode: details.accountMode === "go"
+    readonly property string accountModeLabel: goMode ? i18n("OpenCode Go") : i18n("OpenCode Zen")
     // Official OpenCode brand color (from opencode.ai logo — light pixel blocks)
     readonly property color accent: "#B7B1B1"
-
     visible: rootItem.enabledTabs[rootItem.activeTab] === "opencode" && !rootItem.showSettings
     Layout.fillWidth: true
     spacing: 8
 
     // ── Empty state ─────────────────────────────────────────────────────────
     PlasmaComponents.Label {
-        visible: !tab.available
+        visible: !tab.available && !tab.goMode
         Layout.fillWidth: true
         Layout.topMargin: 8
         horizontalAlignment: Text.AlignHCenter
-        text: i18n("No OpenCode sessions yet.\nEnable OpenCode and run a local session; usage is read from its SQLite database.")
+        text: i18n("No OpenCode sessions yet.\nZen activity is device-local and does not report account quota. Run a local session to see usage from its SQLite database.")
+        font.pixelSize: 11
+        opacity: 0.9
+        color: Kirigami.Theme.textColor
+        wrapMode: Text.WordWrap
+    }
+
+    PlasmaComponents.Label {
+        visible: tab.goMode && !tab.provider.ok
+        Layout.fillWidth: true
+        Layout.topMargin: 8
+        text: tab.details.goError ? i18n("OpenCode Go usage unavailable: %1", tab.details.goError) : (tab.provider.summary || {}).detail || i18n("OpenCode Go usage unavailable")
         font.pixelSize: 10
-        opacity: 0.5
+        opacity: 0.7
         color: Kirigami.Theme.textColor
         wrapMode: Text.WordWrap
     }
 
     // ── Provider header with icon ────────────────────────────────────────────
     RowLayout {
-        visible: tab.available
+        visible: tab.available || tab.goMode
         Layout.fillWidth: true
         spacing: 8
 
@@ -61,7 +83,7 @@ ColumnLayout {
         }
 
         PlasmaComponents.Label {
-            text: i18n("SQLite · local")
+            text: tab.goMode ? i18n("%1 · account", tab.accountModeLabel) : i18n("%1 · device-local · no account quota", tab.accountModeLabel)
             font.pixelSize: 9
             opacity: 0.4
             color: Kirigami.Theme.textColor
@@ -73,30 +95,47 @@ ColumnLayout {
         }
     }
 
-    // ── Recent-period summary card ───────────────────────────────────────────
-    StatValueCard {
-        visible: tab.available && (stats.periods || []).length > 0
-        accent: tab.accent
-        rows: (stats.periods || []).map(function (period) {
-            var count = Math.round(period.sessions || 0);
-            var value = rootItem.formatTokens(period.tokens || 0) + " tok · " + count + " " + (count === 1 ? i18n("session") : i18n("sessions"));
-            if ((period.cost || 0) > 0)
-                value += " · " + rootItem.formatMoney(period.cost, "USD");
-            return {
-                label: period.label || "",
-                value: value,
-                strong: period.key === "7d"
-            };
-        })
+    ColumnLayout {
+        visible: tab.goMode && tab.provider.ok
+        Layout.fillWidth: true
+        spacing: 8
+
+        Repeater {
+            model: tab.provider.quotaWindows || []
+            PopupRow {
+                visible: modelData.showMeter === true && modelData.available === true
+                readonly property string countdown: {
+                    rootItem.countdownTick;
+                    return rootItem.formatCountdown(rootItem.dateFromEpoch(modelData.resetAt));
+                }
+                label: modelData.label || ""
+                value: modelData.pct
+                barColor: tab.accent
+                countdownText: countdown === "resetting..." ? countdown : (countdown ? i18n("in %1", countdown) : "")
+                resetText: modelData.resetText || ""
+                tokenText: modelData.detail || ""
+                tooltipText: modelData.detail || modelData.label || ""
+            }
+        }
     }
 
-    // ── Stats grid + sparkline + top lists ──────────────────────────────────
+    PlasmaComponents.Label {
+        visible: tab.goMode && tab.available
+        Layout.fillWidth: true
+        text: i18n("Local OpenCode activity")
+        font.pixelSize: 10
+        font.bold: true
+        opacity: 0.65
+        color: Kirigami.Theme.textColor
+    }
+
+    // ── Secondary stats grid + top lists ─────────────────────────────────────
     ColumnLayout {
         visible: tab.available
         Layout.fillWidth: true
         spacing: 6
 
-        // 4-column grid keeps everything in two compact rows without scrolling
+        // Lifetime totals and detail stay secondary to the selected daily range.
         GridLayout {
             Layout.fillWidth: true
             columns: 4
@@ -130,16 +169,11 @@ ColumnLayout {
             }
             StatTile {
                 visible: stats.favoriteModel !== undefined && stats.favoriteModel !== ""
-                tileValue: rootItem.shortenModelName(stats.favoriteModel || "")
+                // A full "provider/model" id overflows a single quarter-width tile.
+                Layout.columnSpan: 2
+                tileValue: rootItem.shortenModelName((stats.favoriteModel || "").replace(/^[^\/]+\//, ""))
                 tileLabel: i18n("top model")
             }
-        }
-
-        StatsSparkline {
-            series: stats.dailySeries || []
-            unit: i18n("tokens")
-            barColor: tab.accent
-            formatValue: rootItem.formatTokens
         }
 
         StatsTopList {
@@ -194,6 +228,15 @@ ColumnLayout {
                 }
             }
         }
+    }
+
+    // ── Daily token usage chart: at the bottom, like UsageChart on other tabs ──
+    OpenCodeUsageChart {
+        visible: tab.available
+        stats: tab.stats
+        accent: tab.accent
+        cardColor: rootItem.resolvedCardBg
+        formatTokens: rootItem.formatTokens
     }
 
     component StatTile: StatTileBase {

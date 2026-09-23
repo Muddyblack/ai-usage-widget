@@ -41,6 +41,28 @@ def _existing_file(value: str) -> str:
     return str(candidate) if candidate.is_file() else ""
 
 
+def explicit_database_path(value: str) -> str:
+    """Resolve ``OPENCODE_DB`` to an existing file, absolute or relative.
+
+    An absolute path (or one that already exists as given) wins. A relative
+    name is searched under every data home, both directly and under its
+    ``opencode`` subdirectory, so the same value resolves identically no
+    matter the cwd or which caller asks.
+    """
+    path = _existing_file(value)
+    if path:
+        return path
+    relative = Path(value).expanduser()
+    if relative.is_absolute():
+        return ""
+    for base in paths.data_home_dirs():
+        for directory in (Path(base), Path(base) / "opencode"):
+            path = _existing_file(str(directory / relative))
+            if path:
+                return path
+    return ""
+
+
 def _cli_database_path() -> str:
     binary = shutil.which("opencode")
     if not binary:
@@ -64,18 +86,8 @@ def _cli_database_path() -> str:
 def discover_database_paths() -> list[str]:
     explicit = os.environ.get("OPENCODE_DB", "").strip()
     if explicit:
-        path = _existing_file(explicit)
-        if path:
-            return [path]
-        relative = Path(explicit).expanduser()
-        if relative.is_absolute():
-            return []
-        for base in paths.data_home_dirs():
-            for directory in (Path(base), Path(base) / "opencode"):
-                path = _existing_file(str(directory / relative))
-                if path:
-                    return [path]
-        return []
+        path = explicit_database_path(explicit)
+        return [path] if path else []
     candidates: list[str] = []
     for base in paths.data_home_dirs():
         for directory in (Path(base), Path(base) / "opencode"):

@@ -59,9 +59,11 @@ so a missing key does not look like a service you never enabled.
 
 Without a widget there is no settings page to write the config, so create it
 once by hand at `~/.config/ai-usage-widget/hyprland-settings.json` (or under
-`$XDG_CONFIG_HOME`; `AI_USAGE_CONFIG` overrides the path). Providers not listed
-default to on; credentials go in `keys`, and the `WIDGET_*` environment
-variables win over the file if you would rather not store them:
+`$XDG_CONFIG_HOME`; `AI_USAGE_CONFIG` overrides the path). Provider defaults are
+zero based. Run `get-ai-usage --initialize-provider-defaults` when you want the
+one-shot local detection policy applied, or set the `providers` booleans
+yourself. Credentials go in `keys`, and the `WIDGET_*` environment variables
+win over the file if you would rather not store them:
 
 ```json
 {
@@ -69,6 +71,12 @@ variables win over the file if you would rather not store them:
   "keys": { "zai": "…", "moonshot": "…" }
 }
 ```
+
+The initializer returns `{"ok":true,"data":{...settings...}}` and persists
+`providerDefaultsApplied: true`. It does not run implicitly for `--all`.
+Detection enables only the approved providers with local evidence. See
+[`provider-detection.md`](provider-detection.md) for the allowlist, privacy
+limits, migration behavior, and platform differences.
 
 Claude needs no key — a local Claude Code login is enough. See
 [`providers.md`](providers.md) for what each of the others reads.

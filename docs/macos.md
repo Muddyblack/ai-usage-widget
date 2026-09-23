@@ -77,6 +77,22 @@ offers both, best first, and the provider picks whichever exists.
 | `gh` / Copilot | the Keychain, read by `gh auth token` itself | nothing to do |
 | everything else | XDG, as on Linux | nothing to do |
 
+### Provider defaults and detection
+
+The native app shares the backend settings file and format with Hyprland and
+Windows. New shared JSON settings are zero based. The explicit
+`--initialize-provider-defaults` operation enables only approved providers with
+local evidence and sets `providerDefaultsApplied`; it is not implicit in
+refresh or `--all`. `SettingsStore.swift` mirrors the backend provider list and
+opt-in classification, but detection remains a backend policy rather than a
+Swift-only feature.
+
+Detection is stat-only. It checks local file and directory evidence without
+reading credentials, opening SQLite, starting commands, or making network
+requests. Evidence does not establish authentication or quota usability. See
+[`provider-detection.md`](provider-detection.md) for the allowlist, migration
+rules, and provider addition checklist.
+
 Every Keychain read goes through `/usr/bin/security`, never the Security
 framework, and that is not a shortcut — it is the only way that does not
 prompt. These items are created by the vendor's own tool running `security`,

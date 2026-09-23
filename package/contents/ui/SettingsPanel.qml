@@ -93,6 +93,30 @@ ColumnLayout {
             }
         }
 
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.topMargin: 6
+            spacing: 8
+
+            PlasmaComponents.Button {
+                text: rootItem.providerDetectBusy ? i18n("Detecting…") : i18n("Detect installed providers")
+                implicitHeight: 26
+                font.pixelSize: 10
+                enabled: !rootItem.providerDetectBusy
+                onClicked: rootItem.redetectProviders()
+            }
+
+            PlasmaComponents.Label {
+                Layout.fillWidth: true
+                visible: rootItem.providerDetectStatus !== ""
+                text: rootItem.providerDetectStatus
+                font.pixelSize: 9
+                opacity: 0.6
+                color: Kirigami.Theme.textColor
+                wrapMode: Text.WordWrap
+            }
+        }
+
         PlasmaComponents.Label {
             Layout.fillWidth: true
             Layout.topMargin: 4

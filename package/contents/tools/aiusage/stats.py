@@ -458,12 +458,25 @@ def copilot_stats(s, now):
     return r
 
 
+# OpenCode-billed usage (Zen and Go). Sessions run on a bring-your-own key
+# (anthropic, openai, ...) belong to that provider, not the OpenCode account.
+_OPENCODE_BILLED = ("opencode", "opencode-go")
+
+
 def opencode_stats(s, now):
     """Build one stable stats shape from OpenCode's local SQLite ledger."""
     if not isinstance(s, dict):
         return {"available": False}
     sessions = [row for row in (s.get("sessions") or []) if isinstance(row, dict)]
     sessions = [row for row in sessions if row.get("id") or row.get("usage")]
+    filtered_sessions = []
+    for session in sessions:
+        usage = [row for row in (session.get("usage") or []) if isinstance(row, dict) and row.get("provider") in _OPENCODE_BILLED]
+        if usage:
+            filtered_session = dict(session)
+            filtered_session["usage"] = usage
+            filtered_sessions.append(filtered_session)
+    sessions = filtered_sessions
     if not sessions:
         return {"available": False}
 

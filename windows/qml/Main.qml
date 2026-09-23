@@ -149,6 +149,8 @@ Window {
     property string sessionsError: ""
     property string sessionsNotice: ""
     readonly property bool pricingLoading: backend.pricingBusy
+    property bool providerDetectBusy: false
+    property string providerDetectStatus: ""
     property string pricingStatus: ""
     property string pricingError: ""
     property string sessionsQuery: ""
@@ -456,6 +458,33 @@ Window {
             backend.refreshSessions(root.sessionsQuery, root.sessionsRequestId, offset, root.sessionsSourceIds);
         else
             backend.refreshSessions(root.sessionsQuery, root.sessionsRequestId, offset);
+    }
+
+    // Settings → Providers → "Detect installed providers": re-runs the
+    // stat-only detection and switches on what it finds (never off).
+    function applyProviderDetection(result) {
+        root.providerDetectBusy = false;
+        if (!result || result.ok !== true || !Array.isArray(result.data)) {
+            root.providerDetectStatus = root.i18n("Detection failed.");
+            return;
+        }
+        var applied = ProviderRegistry.applyDetected(root.settings, result.data);
+        if (applied.added.length === 0) {
+            root.providerDetectStatus = root.i18n("No new providers found.");
+            return;
+        }
+        root.settings = applied.settings;
+        root.saveSettings();
+        root.providerDetectStatus = root.i18n("Enabled: %1", ProviderRegistry.labels(applied.added));
+        root.refresh();
+    }
+
+    function redetectProviders() {
+        var result = null;
+        try {
+            result = JSON.parse(backend.detectProvidersJson() || "{}");
+        } catch (e) {}
+        root.applyProviderDetection(result);
     }
 
     function refreshPricing() {

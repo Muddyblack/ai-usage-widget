@@ -29,6 +29,18 @@ msgid "usage backend returned no data"
 msgstr "le backend d'utilisation n'a renvoyé aucune donnée"
 
 #: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
+msgid "Detection failed."
+msgstr "La détection a échoué."
+
+#: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
+msgid "No new providers found."
+msgstr "Aucun nouveau fournisseur trouvé."
+
+#: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
+msgid "Enabled: %1"
+msgstr "Activés : %1"
+
+#: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
 msgid "Could not refresh pricing."
 msgstr "Impossible d'actualiser les tarifs."
 
@@ -385,6 +397,14 @@ msgstr "Avancé"
 #: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
 msgid "Info"
 msgstr "Infos"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Detecting…"
+msgstr "Détection…"
+
+#: hyprland/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+msgid "Detect installed providers"
+msgstr "Détecter les fournisseurs installés"
 
 #: hyprland/SettingsPage.qml
 msgid ""
@@ -756,7 +776,7 @@ msgstr "30j"
 msgid "90d"
 msgstr "90j"
 
-#: hyprland/SpendTimelineChart.qml
+#: hyprland/SpendTimelineChart.qml package/contents/ui/OpenCodeUsageChart.qml
 msgid "All"
 msgstr "Tout"
 
@@ -835,7 +855,7 @@ msgstr ""
 "Aucune session Cline pour le moment.\n"
 "Lancez le CLI Cline : ses journaux de session dans ~/.cline apparaîtront ici."
 
-#: hyprland/StatsSection.qml package/contents/ui/OpenCodeTab.qml
+#: hyprland/StatsSection.qml
 msgid ""
 "No OpenCode sessions yet.\n"
 "Enable OpenCode and run a local session; usage is read from its SQLite "
@@ -1198,7 +1218,7 @@ msgstr "réinitialisation..."
 #: package/contents/ui/CopilotTab.qml package/contents/ui/CursorTab.qml
 #: package/contents/ui/KimiTab.qml package/contents/ui/KiroTab.qml
 #: package/contents/ui/MuseTab.qml package/contents/ui/OpenAiTab.qml
-#: package/contents/ui/ZaiTab.qml
+#: package/contents/ui/OpenCodeTab.qml package/contents/ui/ZaiTab.qml
 msgid "in %1"
 msgstr "dans %1"
 
@@ -1404,7 +1424,8 @@ msgstr "Total des jetons entrée+sortie pour tous les modèles (toute période)"
 
 #: package/contents/ui/ClaudeTab.qml package/contents/ui/ClineTab.qml
 #: package/contents/ui/CursorTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenCodeTab.qml package/contents/ui/StatsSparkline.qml
+#: package/contents/ui/OpenCodeUsageChart.qml
+#: package/contents/ui/StatsSparkline.qml
 msgid "tokens"
 msgstr "jetons"
 
@@ -1528,7 +1549,8 @@ msgstr "Réinitialisation"
 msgid "next month"
 msgstr "le mois prochain"
 
-#: package/contents/ui/CopilotTab.qml package/contents/ui/OpenCodeTab.qml
+#: package/contents/ui/CopilotTab.qml
+#: package/contents/ui/OpenCodeUsageChart.qml
 msgid "sessions"
 msgstr "sessions"
 
@@ -2156,16 +2178,46 @@ msgid "Function and custom tool invocations across all sessions"
 msgstr "Appels de fonctions et outils personnalisés sur toutes les sessions"
 
 #: package/contents/ui/OpenCodeTab.qml
+msgid "OpenCode Go"
+msgstr "OpenCode Go"
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid "OpenCode Zen"
+msgstr "OpenCode Zen"
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid ""
+"No OpenCode sessions yet.\n"
+"Zen activity is device-local and does not report account quota. Run a local "
+"session to see usage from its SQLite database."
+msgstr ""
+"Aucune session OpenCode pour le moment.\n"
+"L'activité Zen est locale à l'appareil et ne signale aucun quota de compte. "
+"Lancez une session locale pour voir l'utilisation depuis sa base SQLite."
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid "OpenCode Go usage unavailable: %1"
+msgstr "Utilisation d'OpenCode Go indisponible : %1"
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid "OpenCode Go usage unavailable"
+msgstr "Utilisation d'OpenCode Go indisponible"
+
+#: package/contents/ui/OpenCodeTab.qml
 msgid "OpenCode"
 msgstr "OpenCode"
 
 #: package/contents/ui/OpenCodeTab.qml
-msgid "SQLite · local"
-msgstr "SQLite · local"
+msgid "%1 · account"
+msgstr "%1 · compte"
 
 #: package/contents/ui/OpenCodeTab.qml
-msgid "session"
-msgstr "session"
+msgid "%1 · device-local · no account quota"
+msgstr "%1 · local à l'appareil · aucun quota de compte"
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid "Local OpenCode activity"
+msgstr "Activité OpenCode locale"
 
 #: package/contents/ui/OpenCodeTab.qml
 msgctxt "stat label"
@@ -2180,6 +2232,46 @@ msgstr ""
 #: package/contents/ui/OpenCodeTab.qml
 msgid "top model"
 msgstr "meilleur modèle"
+
+#: package/contents/ui/OpenCodeUsageChart.qml
+msgid "Usage trend"
+msgstr "Tendance d'utilisation"
+
+#: package/contents/ui/OpenCodeUsageChart.qml
+msgid "Daily usage"
+msgstr "Utilisation quotidienne"
+
+#: package/contents/ui/OpenCodeUsageChart.qml package/contents/ui/main.qml
+msgid "7D"
+msgstr "7 J"
+
+#: package/contents/ui/OpenCodeUsageChart.qml package/contents/ui/main.qml
+msgid "30D"
+msgstr "30 J"
+
+#: package/contents/ui/OpenCodeUsageChart.qml
+msgid "Show OpenCode usage for %1"
+msgstr "Afficher l'utilisation d'OpenCode pour %1"
+
+#: package/contents/ui/OpenCodeUsageChart.qml package/contents/ui/main.qml
+msgid "Last 7 days"
+msgstr "7 derniers jours"
+
+#: package/contents/ui/OpenCodeUsageChart.qml package/contents/ui/main.qml
+msgid "Last 30 days"
+msgstr "30 derniers jours"
+
+#: package/contents/ui/OpenCodeUsageChart.qml
+msgid "All time"
+msgstr "Tout l'historique"
+
+#: package/contents/ui/OpenCodeUsageChart.qml
+msgid "No daily usage in this range"
+msgstr "Aucune utilisation quotidienne dans cette plage"
+
+#: package/contents/ui/OpenCodeUsageChart.qml
+msgid "Daily OpenCode token usage"
+msgstr "Utilisation quotidienne des jetons OpenCode"
 
 #: package/contents/ui/OpenRouterTab.qml
 msgid "OpenRouter support is in BETA and currently untested."
@@ -2426,6 +2518,22 @@ msgid "Glassmorphic (Shadow + Blur)"
 msgstr "Glassmorphique (ombre + flou)"
 
 #: package/contents/ui/SettingsPanel.qml
+msgid "Popup Decoration"
+msgstr "Décoration du popup"
+
+#: package/contents/ui/SettingsPanel.qml
+msgid "Accent Glow"
+msgstr "Halo d'accent"
+
+#: package/contents/ui/SettingsPanel.qml
+msgid "Provider Logo"
+msgstr "Logo du fournisseur"
+
+#: package/contents/ui/SettingsPanel.qml
+msgid "None"
+msgstr "Aucun"
+
+#: package/contents/ui/SettingsPanel.qml
 msgid "How often usage is re-read"
 msgstr "Fréquence de relecture de l'utilisation"
 
@@ -2598,14 +2706,6 @@ msgid "24H"
 msgstr "24 H"
 
 #: package/contents/ui/main.qml
-msgid "7D"
-msgstr "7 J"
-
-#: package/contents/ui/main.qml
-msgid "30D"
-msgstr "30 J"
-
-#: package/contents/ui/main.qml
 msgid "Gemini Models"
 msgstr "Modèles Gemini"
 
@@ -2650,14 +2750,6 @@ msgstr "Quota du forfait épuisé"
 #: package/contents/ui/main.qml
 msgid "Today"
 msgstr "Aujourd'hui"
-
-#: package/contents/ui/main.qml
-msgid "Last 7 days"
-msgstr "7 derniers jours"
-
-#: package/contents/ui/main.qml
-msgid "Last 30 days"
-msgstr "30 derniers jours"
 
 #: package/contents/ui/main.qml
 msgid "rolling 24h"
@@ -3288,10 +3380,6 @@ msgstr "Google"
 #: macos/Sources/AIUsage/Backend/Contract.swift
 msgid "ZenMux"
 msgstr "ZenMux"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "OpenCode Zen"
-msgstr "OpenCode Zen"
 
 #: macos/Sources/AIUsage/Backend/Contract.swift
 msgid "Claude Code"

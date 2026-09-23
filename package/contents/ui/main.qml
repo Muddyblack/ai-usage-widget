@@ -673,6 +673,14 @@ PlasmoidItem {
         }
         return null;
     }
+
+    function rawProviderById(providerId) {
+        for (var i = 0; i < root.rawProviders.length; i++) {
+            if (root.rawProviders[i] && root.rawProviders[i].id === providerId)
+                return root.rawProviders[i];
+        }
+        return null;
+    }
     // ── Accent (theme-aware) ────────────────────────────────────────────────────
     property bool useThemeAccent: Plasmoid.configuration.useThemeAccent
     // Accent for the currently active tab
@@ -742,6 +750,10 @@ PlasmoidItem {
     property bool pricingLoading: false
     property string pricingStatus: ""
     property string pricingError: ""
+    property bool providerDefaultsReady: false
+    property bool providerDefaultsInitializing: false
+    property bool providerDetectBusy: false
+    property string providerDetectStatus: ""
 
     function shellQuote(s) {
         return Shell.quote(s);
@@ -1492,6 +1504,71 @@ PlasmoidItem {
         return env;
     }
 
+    // Providers main.xml ships switched on. A fresh widget turns these off
+    // unless detected; every other provider already defaults off.
+    readonly property var legacyDefaultOnProviders: ["claude", "antigravity", "openai", "kiro", "grok"]
+
+    function applyDetectedProviders(detected) {
+        var ids = ["claude", "antigravity", "openai", "kiro", "mistral", "openrouter", "ollama", "selfhosted", "grok", "zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode"];
+        for (var i = 0; i < ids.length; i++) {
+            var id = ids[i];
+            var key = id + "Enabled";
+            if (detected.indexOf(id) !== -1)
+                Plasmoid.configuration[key] = true;
+            else if (root.legacyDefaultOnProviders.indexOf(id) !== -1)
+                Plasmoid.configuration[key] = false;
+        }
+    }
+
+    function initializeProviderDefaults() {
+        if (Plasmoid.configuration.providerDefaultsApplied === true) {
+            root.providerDefaultsReady = true;
+            return;
+        }
+        // A widget that has stored usage history was in use before
+        // zero-default: keep exactly the providers it shows and never probe.
+        if ((Plasmoid.configuration.usageHistory || "") !== "") {
+            Plasmoid.configuration.providerDefaultsApplied = true;
+            root.providerDefaultsReady = true;
+            return;
+        }
+        root.providerDefaultsInitializing = true;
+        var cmd = root.pythonEnv() + root.scriptPath("get-ai-usage") + " --detect-providers";
+        providerDefaultsSource.disconnectSource(cmd);
+        providerDefaultsSource.connectSource(cmd);
+    }
+
+    // Settings → Providers → "Detect installed providers": re-runs the
+    // stat-only detection and switches on what it finds (never off).
+    function redetectProviders() {
+        if (root.providerDetectBusy)
+            return;
+        root.providerDetectBusy = true;
+        root.providerDetectStatus = "";
+        var cmd = root.pythonEnv() + root.scriptPath("get-ai-usage") + " --detect-providers";
+        providerRedetectSource.disconnectSource(cmd);
+        providerRedetectSource.connectSource(cmd);
+    }
+
+    function applyProviderRedetect(result) {
+        root.providerDetectBusy = false;
+        if (!result || result.ok !== true || !Array.isArray(result.data)) {
+            root.providerDetectStatus = i18n("Detection failed.");
+            return;
+        }
+        var added = [];
+        for (var i = 0; i < root.providers.length; i++) {
+            var p = root.providers[i];
+            if (result.data.indexOf(p.id) !== -1 && !Plasmoid.configuration[p.id + "Enabled"]) {
+                Plasmoid.configuration[p.id + "Enabled"] = true;
+                added.push(p.label || p.id);
+            }
+        }
+        root.providerDetectStatus = added.length ? i18n("Enabled: %1", added.join(", ")) : i18n("No new providers found.");
+        if (added.length)
+            root.refresh();
+    }
+
     function backendCommand(ids) {
         var env = root.pythonEnv();
         env += root.envAssign("WIDGET_CLAUDE_ADMIN_KEY", Plasmoid.configuration.claudeAdminApiKey);
@@ -1995,6 +2072,8 @@ PlasmoidItem {
     }
 
     function refresh() {
+        if (!root.providerDefaultsReady || root.providerDefaultsInitializing)
+            return;
         if (root.enabledTabs.length === 0)
             return;
 
@@ -2273,6 +2352,7 @@ PlasmoidItem {
             if (idx >= 0)
                 root.activeTab = idx;
         }
+        root.initializeProviderDefaults();
     }
 
     Plasma5Support.DataSource {
@@ -2393,6 +2473,43 @@ PlasmoidItem {
         onNewData: function (src, data) {
             disconnectSource(src);
             root.applySnapshot((data["stdout"] || "").trim());
+        }
+    }
+
+    Plasma5Support.DataSource {
+        id: providerDefaultsSource
+
+        engine: "executable"
+        connectedSources: []
+        onNewData: function (src, data) {
+            disconnectSource(src);
+            // Latch only on a real answer: a missing python3 or a broken
+            // backend keeps the shipped defaults and retries next start.
+            try {
+                var result = JSON.parse((data["stdout"] || "").trim());
+                if (result.ok === true && Array.isArray(result.data)) {
+                    root.applyDetectedProviders(result.data);
+                    Plasmoid.configuration.providerDefaultsApplied = true;
+                }
+            } catch (e) {}
+            root.providerDefaultsInitializing = false;
+            root.providerDefaultsReady = true;
+            root.refresh();
+        }
+    }
+
+    Plasma5Support.DataSource {
+        id: providerRedetectSource
+
+        engine: "executable"
+        connectedSources: []
+        onNewData: function (src, data) {
+            disconnectSource(src);
+            var result = null;
+            try {
+                result = JSON.parse((data["stdout"] || "").trim());
+            } catch (e) {}
+            root.applyProviderRedetect(result);
         }
     }
 
@@ -2696,7 +2813,7 @@ PlasmoidItem {
                 iconText: i18n("7D")
                 stale: root.stale && root.panelShows("ollama")
                 visible: root.panelShows("ollama") && root.ollamaWindows.length > 0 && root.ollamaWindows[0].key === "ollama_session" && root.ollamaWeeklyWindow !== null
-                tooltipText: "Ollama Cloud\n" + root.ollamaWeeklyWindow.label + ": " + Math.round(root.ollamaWeeklyWindow.pct) + "%"
+                tooltipText: "Ollama Cloud\n" + (root.ollamaWeeklyWindow ? root.ollamaWeeklyWindow.label + ": " + Math.round(root.ollamaWeeklyWindow.pct) + "%" : "")
             }
 
             PanelSlot {
@@ -2812,6 +2929,26 @@ PlasmoidItem {
                 showCost: !root.cursorAvailable
                 costText: root.cursorAvailable ? "" : "—"
                 tooltipText: "Cursor" + (root.cursorPlanName ? "\n" + i18n("Plan: %1", root.cursorPlanName) : "") + (root.cursorAvailable ? "\n" + i18n("Included usage: %1%", Math.round(root.cursorTotalPct)) : "\n" + (root.cursorError || i18n("Not signed in"))) + (root.cursorResetTime ? "\n" + i18n("Resets: %1", root.cursorResetTime) : "")
+            }
+
+            PanelSlot {
+                property var openCodeStats: {
+                    var provider = root.rawProviderById("opencode");
+                    return provider && provider.details ? (provider.details.stats || ({})) : ({});
+                }
+                pct: 0
+                iconColor: "#B7B1B1"
+                iconSource: Qt.resolvedUrl("../icons/opencode-color.svg")
+                iconText: "OC"
+                stale: root.stale && root.panelShows("opencode")
+                visible: root.panelShows("opencode") && !root.showSettings
+                showCost: true
+                costText: openCodeStats.totalTokens > 0 ? root.formatTokens(openCodeStats.totalTokens) : "—"
+                tooltipText: {
+                    var sessions = Math.round(openCodeStats.totalSessions || 0);
+                    var tokens = root.formatTokens(openCodeStats.totalTokens || 0);
+                    return "OpenCode\n" + i18n("%1 tokens", tokens) + " · " + i18np("%1 session", "%1 sessions", sessions);
+                }
             }
 
             PanelSlot {

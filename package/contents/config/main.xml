@@ -68,6 +68,12 @@
     <entry name="museEnabled" type="Bool">
       <default>false</default>
     </entry>
+    <entry name="opencodeEnabled" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="providerDefaultsApplied" type="Bool">
+      <default>false</default>
+    </entry>
     <entry name="museQuotaEnabled" type="Bool">
       <default>false</default>
     </entry>
