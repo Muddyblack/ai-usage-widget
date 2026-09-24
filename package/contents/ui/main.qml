@@ -1124,6 +1124,26 @@ PlasmoidItem {
         return p ? p.label : tabId;
     }
 
+    // Open the tab used last time, or the first provider on a fresh widget —
+    // never a feature view by default, since the panel mirrors the active tab
+    // and a feature view has no meter of its own. Resolved by id, so it stays
+    // on the same tab when providers are enabled or disabled around it.
+    function restoreTab() {
+        if (root.pinnedTabs.length > 0) {
+            var pinned = root.enabledTabs.indexOf(root.pinnedTabs[0]);
+            if (pinned >= 0) {
+                root.activeTab = pinned;
+                return;
+            }
+        }
+        var idx = root.enabledTabs.indexOf(root.savedTab);
+        for (var i = 0; idx < 0 && i < root.enabledTabs.length; i++) {
+            if (!FeatureTabs.isFeatureTab(root.enabledTabs[i]))
+                idx = i;
+        }
+        root.activeTab = Math.max(0, idx);
+    }
+
     // Switch the popup to a provider (or feature) tab by id.
     function selectTab(tabId) {
         var idx = root.enabledTabs.indexOf(tabId);
@@ -2104,6 +2124,10 @@ PlasmoidItem {
             if (ids.indexOf(pins[i]) < 0)
                 ids.push(pins[i]);
         }
+        // The panel shows a provider even while a feature tab is open; fetch
+        // it too, or the panel stays blank.
+        if (root.panelTab !== "" && ids.indexOf(root.panelTab) < 0)
+            ids.push(root.panelTab);
         if (ids.length === 0)
             return;
 
@@ -2312,6 +2336,21 @@ PlasmoidItem {
     onChartWindowChanged: {
         root.chartTimeOffset = 0;
     }
+    // Plasma fills in the stored settings after startup, one key at a time, so
+    // the tab is re-resolved as they arrive. While the popup is open, enabling
+    // or disabling a provider shifts the indices; stay on the tab in view.
+    readonly property string savedTab: Plasmoid.configuration.lastTab || ""
+    onSavedTabChanged: {
+        if (!root.expanded)
+            root.restoreTab();
+    }
+    onEnabledTabsChanged: {
+        var idx = root.expanded ? root.enabledTabs.indexOf(root.savedTab) : -1;
+        if (idx >= 0)
+            root.activeTab = idx;
+        else
+            root.restoreTab();
+    }
     onActiveTabChanged: {
         // Map the remembered granularity (5h/24h/7d) onto the new tab so the
         // selected time range carries across services. Single-window tabs just
@@ -2324,6 +2363,10 @@ PlasmoidItem {
         }
         if (tab !== "" && !FeatureTabs.isFeatureTab(tab))
             root.lastProviderId = tab;
+        // Only a tab picked in the open popup is remembered; the startup
+        // restore runs before the stored value has loaded.
+        if (root.expanded && tab !== "" && root.savedTab !== tab)
+            Plasmoid.configuration.lastTab = tab;
         root.chartTimeOffset = 0;
         // A rate limit belongs to the provider that hit it; don't let it keep
         // the tab you just switched to empty.
@@ -2346,12 +2389,7 @@ PlasmoidItem {
     Component.onCompleted: {
         root.loadUsageHistory();
         root.normalizePanelRotation();
-        // Honor the first pinned service on startup by selecting its tab.
-        if (root.pinnedTabs.length > 0) {
-            var idx = root.enabledTabs.indexOf(root.pinnedTabs[0]);
-            if (idx >= 0)
-                root.activeTab = idx;
-        }
+        root.restoreTab();
         root.initializeProviderDefaults();
     }
 
