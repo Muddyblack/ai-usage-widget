@@ -42,8 +42,11 @@ class AdapterTimeoutOwnershipTest(unittest.TestCase):
         for path in (UI / "ProjectInfoPane.qml", HYPRLAND / "ProjectInfoPane.qml"):
             with self.subTest(adapter=path.name):
                 source = _read(path)
-                self.assertRegex(source, r"interval:\s*8000")
-                self.assertIn("cancelRequests", source)
+                self.assertIn("ProjectInfoRequests.js", source)
+                self.assertIn("client.pause()", source)
+        requests = _read(UI / ".." / "code" / "ProjectInfoRequests.js")
+        self.assertRegex(requests, r"now\(\) - entry\.started >= 8000")
+        self.assertIn("request.abort()", requests)
 
     def test_macos_drains_both_pipes_before_waiting(self):
         # The deadlock guard: a provider list can outgrow the 64 KB pipe buffer,
