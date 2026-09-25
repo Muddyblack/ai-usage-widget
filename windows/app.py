@@ -87,6 +87,14 @@ def collect_sessions_json(query: str = "", limit: int | None = 60, offset: int =
             _restore_environ(saved)
 
 
+def collect_sessions_cache_json(query: str = "", limit: int | None = 60, offset: int = 0, source_ids=None) -> str:
+    if source_ids is None:
+        result = collect_sessions(query, limit=limit, offset=offset)
+    else:
+        result = collect_sessions(query, limit=limit, offset=offset, source_ids=source_ids)
+    return json.dumps(result, separators=(",", ":"), ensure_ascii=False)
+
+
 def refresh_sessions_json(query: str = "", limit: int | None = 60, offset: int = 0, source_ids=None) -> str:
     with _env_lock:
         saved = dict(os.environ)
@@ -534,11 +542,20 @@ class Backend(QObject):
 
     def _refresh_sessions(self, query, request_id, offset, refresh=False, source_ids=None):
         try:
-            helper = refresh_sessions_json if refresh else collect_sessions_json
-            if source_ids is None:
-                result = helper(query, limit=60, offset=offset)
+            if refresh:
+                refresh_future = self._pool.submit(
+                    refresh_sessions_json, query, limit=60, offset=offset, source_ids=source_ids
+                )
+                while not refresh_future.done():
+                    result = collect_sessions_cache_json(query, limit=60, offset=offset, source_ids=source_ids)
+                    self._sessionsCompleted.emit(result, "", query, request_id)
+                    try:
+                        refresh_future.result(timeout=0.35)
+                    except TimeoutError:
+                        continue
+                result = refresh_future.result()
             else:
-                result = helper(query, source_ids=source_ids, limit=60, offset=offset)
+                result = collect_sessions_cache_json(query, limit=60, offset=offset, source_ids=source_ids)
         except Exception as exc:
             self._sessionsCompleted.emit("", str(exc), query, request_id)
         else:

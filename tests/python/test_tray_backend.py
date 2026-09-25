@@ -79,7 +79,7 @@ class RequestGenerationBehaviorTest(unittest.TestCase):
         self.assertFalse(state.loading)
 
 
-def load_backend_method(name):
+def load_backend_method(name, extra=None):
     tree = ast.parse(WINDOWS_APP.read_text(encoding="utf-8"), filename=str(WINDOWS_APP))
     backend_class = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "Backend")
     method = next(node for node in backend_class.body if isinstance(node, ast.FunctionDef) and node.name == name)
@@ -88,7 +88,7 @@ def load_backend_method(name):
         type_ignores=[],
     )
     ast.fix_missing_locations(extracted)
-    namespace = {"Slot": lambda *args: lambda function: function, "json": json}
+    namespace = {"Slot": lambda *args: lambda function: function, "json": json, **(extra or {})}
     exec(compile(extracted, str(WINDOWS_APP), "exec"), namespace)
     return namespace["ExtractedBackend"]
 
@@ -142,6 +142,40 @@ class RateQueryOffThreadTest(unittest.TestCase):
         start = source.index("def refresh_pricing_json():")
         end = source.index("def _restore_environ", start)
         self.assertNotIn("_env_lock", source[start:end])
+
+
+class SessionRefreshResponseTest(unittest.TestCase):
+    def test_cached_page_is_emitted_before_background_refresh_finishes(self):
+        class RefreshFuture:
+            is_done = False
+
+            def done(self):
+                return self.is_done
+
+            def result(self, timeout=None):
+                self.is_done = True
+                return '{"sessions":[{"title":"refreshed"}]}'
+
+        responses = RequestGenerationSignal()
+        cache_reads = []
+        refresh_future = RefreshFuture()
+        backend_type = load_backend_method(
+            "_refresh_sessions",
+            {
+                "collect_sessions_cache_json": lambda *args, **kwargs: cache_reads.append((args, kwargs))
+                or '{"sessions":[{"title":"cached"}]}',
+                "refresh_sessions_json": lambda *args, **kwargs: '{"sessions":[{"title":"unused"}]}',
+            },
+        )
+        backend = object.__new__(backend_type)
+        backend._pool = mock.Mock()
+        backend._pool.submit.return_value = refresh_future
+        backend._sessionsCompleted = responses
+
+        backend._refresh_sessions("", 4, 0, True, None)
+
+        self.assertEqual(len(cache_reads), 1)
+        self.assertEqual([json.loads(event[0])["sessions"][0]["title"] for event in responses.events], ["cached", "refreshed"])
 
 
 if HAS_PYSIDE:
