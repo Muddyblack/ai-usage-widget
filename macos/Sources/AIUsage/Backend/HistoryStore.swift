@@ -281,7 +281,7 @@ final class HistoryStore: ObservableObject {
     /// Returns a new array, ascending by `t` and trimmed to the cap. A port of
     /// `UsageHistory.union`, which the two QML frontends share; the same
     /// history must merge the same way everywhere.
-    nonisolated static func union(_ base: [HistoryPoint], _ overlay: [HistoryPoint], limit: Int = Self.limit) -> [HistoryPoint] {
+    nonisolated static func union(_ base: [HistoryPoint], _ overlay: [HistoryPoint], limit: Int = 10_000) -> [HistoryPoint] {
         var byTime: [Double: HistoryPoint] = [:]
 
         // Both sides fold the same way: a repeated timestamp contributes its
