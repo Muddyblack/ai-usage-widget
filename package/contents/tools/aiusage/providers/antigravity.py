@@ -383,6 +383,15 @@ def get_antigravity_usage():
             parsed = as_json(proc.stdout)
             return parsed if isinstance(parsed, dict) else {}
 
+    if not _HAS_PROC and _psutil() is None:
+        return {"error": "Finding Antigravity on this platform needs the psutil package (pip install psutil)"}
+
+    ttl = _ttl()
+    if ttl > 0:
+        cached = _read_cache(ttl)
+        if cached is not None:
+            return cached
+
     # A reachable local language server (the standalone IDE, or the VS Code
     # extension's own server) answers with real per-model quota - richer
     # than agy's /usage, which only reports two family-level weekly
@@ -412,12 +421,6 @@ def get_antigravity_usage():
     # No reachable local server - fall back to agy's own /usage command.
     # It needs neither a running IDE nor the language server's CSRF token,
     # just the CLI itself, but only reports coarse per-family quota.
-    ttl = _ttl()
-    if found_any_process and ttl > 0:
-        cached = _read_cache(ttl)
-        if cached is not None:
-            return cached
-
     agy = shutil.which("agy")
     if agy:
         agy_data = _run_agy_usage(agy)
