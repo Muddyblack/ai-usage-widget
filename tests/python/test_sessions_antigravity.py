@@ -173,7 +173,14 @@ class AntigravitySessionBoundaryTest(unittest.TestCase):
             last_activity=2_000,
             source_path="/private/transcript.jsonl",
         )
-        with mock.patch.object(antigravity_sessions, "read_session_targets", return_value=[record]):
+        with (
+            mock.patch.object(antigravity_sessions, "read_session_targets", return_value=[record]),
+            mock.patch.object(sessions, "_codex_targets", return_value=[]),
+            mock.patch.object(sessions, "_grok_targets", return_value=[]),
+            mock.patch.object(sessions, "_claude_targets", return_value=[]),
+            mock.patch.object(sessions, "_cline_targets", return_value=[]),
+            mock.patch.object(sessions, "_opencode_targets", return_value=[]),
+        ):
             targets = sessions.collect_open_targets()
 
         key = sessions._open_key("antigravity", _CLI_ID)
