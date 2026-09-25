@@ -8,6 +8,7 @@ import json
 import math
 import sqlite3
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any, Callable, Final, Protocol, TypedDict
@@ -452,101 +453,114 @@ class SessionIndex:
         source_map = {_source_key(source): source for source in sources}
         connection = self._open(discard_stale=True)
         try:
-            with connection:
-                connection.execute("BEGIN IMMEDIATE")
-                meta = {
-                    str(row[0]): (int(row[1]), int(row[2]), int(row[3]))
-                    for row in connection.execute("SELECT source_key, mtime_ns, size, source_order FROM source_meta")
-                }
-                stored = {key: (mtime_ns, size) for key, (mtime_ns, size, _order) in meta.items()}
-                stored_orders = {key: order for key, (_mtime_ns, _size, order) in meta.items()}
-                # A source that cached no rows is never taken at its word. A
-                # parse that succeeds but yields nothing — a collector run
-                # somewhere it could not see the store, e.g. from a desktop
-                # shell with a different HOME — otherwise writes a fingerprint
-                # that makes the source look up to date forever, hiding every
-                # one of its sessions until those files happen to change.
-                cached_rows = {
-                    str(row[0]): int(row[1]) for row in connection.execute("SELECT source_key, COUNT(*) FROM session_rows GROUP BY source_key")
-                }
-                mutated = False
-                for key in stored:
-                    if key not in source_map:
+            meta = {
+                str(row[0]): (int(row[1]), int(row[2]), int(row[3]))
+                for row in connection.execute("SELECT source_key, mtime_ns, size, source_order FROM source_meta")
+            }
+            stored = {key: (mtime_ns, size) for key, (mtime_ns, size, _order) in meta.items()}
+            stored_orders = {key: order for key, (_mtime_ns, _size, order) in meta.items()}
+            # A source that cached no rows is never taken at its word. A
+            # parse that succeeds but yields nothing — a collector run
+            # somewhere it could not see the store, e.g. from a desktop
+            # shell with a different HOME — otherwise writes a fingerprint
+            # that makes the source look up to date forever, hiding every
+            # one of its sessions until those files happen to change.
+            cached_rows = {
+                str(row[0]): int(row[1]) for row in connection.execute("SELECT source_key, COUNT(*) FROM session_rows GROUP BY source_key")
+            }
+            mutated = False
+            removed = stored.keys() - source_map.keys()
+            if removed:
+                with connection:
+                    connection.execute("BEGIN IMMEDIATE")
+                    for key in removed:
                         mutated = True
                         connection.execute("DELETE FROM session_rows WHERE source_key = ?", (key,))
                         connection.execute("DELETE FROM session_cost_groups WHERE source_key = ?", (key,))
                         connection.execute("DELETE FROM source_meta WHERE source_key = ?", (key,))
 
+            with ThreadPoolExecutor() as executor:
+                pending = {}
                 for source_order, (key, source) in enumerate(source_map.items()):
                     fingerprint = source_fingerprint(source.source_id, source.mtime_ns, source.size)
                     stored_metadata = stored.get(key)
                     unchanged = (
-                        stored_metadata is not None and source_fingerprint(source.source_id, *stored_metadata).fingerprint == fingerprint.fingerprint
+                        stored_metadata is not None
+                        and source_fingerprint(source.source_id, *stored_metadata).fingerprint == fingerprint.fingerprint
                     )
                     if not force and unchanged and cached_rows.get(key, 0) > 0:
-                        if key in stored_orders and stored_orders[key] != source_order:
+                        if key not in stored_orders or stored_orders[key] != source_order:
                             mutated = True
-                        connection.execute(
-                            "UPDATE source_meta SET source_order = ? WHERE source_key = ?",
-                            (source_order, key),
-                        )
+                            with connection:
+                                connection.execute("BEGIN IMMEDIATE")
+                                connection.execute(
+                                    "UPDATE source_meta SET source_order = ? WHERE source_key = ?",
+                                    (source_order, key),
+                                )
                         continue
+                    future = executor.submit(parser, source)
+                    pending[future] = (key, source_order, fingerprint)
+
+                for future in as_completed(pending):
+                    key, source_order, fingerprint = pending[future]
                     try:
-                        rows = _redact(parser(source))
+                        rows = _redact(future.result())
                     except SkipSource:
                         continue
-                    mutated = True
-                    connection.execute(
-                        "INSERT INTO source_meta (source_key, mtime_ns, size, source_order) "
-                        "VALUES (?, ?, ?, ?) ON CONFLICT(source_key) DO UPDATE SET "
-                        "mtime_ns = excluded.mtime_ns, size = excluded.size, "
-                        "source_order = excluded.source_order",
-                        (key, fingerprint.mtime_ns, fingerprint.size, source_order),
-                    )
-                    connection.execute("DELETE FROM session_rows WHERE source_key = ?", (key,))
-                    connection.executemany(
-                        "INSERT INTO session_rows (source_key, row_order, provider, "
-                        "title, session_name, state, last_activity_at, detail, "
-                        "open_key, full_title, source, cost_usd, cost_status, "
-                        "cost_provenance, cost_breakdown, billing_provider, "
-                        "provider_costs, cost_billing, tokens) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        (
+
+                    with connection:
+                        connection.execute("BEGIN IMMEDIATE")
+                        connection.execute(
+                            "INSERT INTO source_meta (source_key, mtime_ns, size, source_order) "
+                            "VALUES (?, ?, ?, ?) ON CONFLICT(source_key) DO UPDATE SET "
+                            "mtime_ns = excluded.mtime_ns, size = excluded.size, "
+                            "source_order = excluded.source_order",
+                            (key, fingerprint.mtime_ns, fingerprint.size, source_order),
+                        )
+                        connection.execute("DELETE FROM session_rows WHERE source_key = ?", (key,))
+                        connection.executemany(
+                            "INSERT INTO session_rows (source_key, row_order, provider, "
+                            "title, session_name, state, last_activity_at, detail, "
+                            "open_key, full_title, source, cost_usd, cost_status, "
+                            "cost_provenance, cost_breakdown, billing_provider, "
+                            "provider_costs, cost_billing, tokens) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                             (
-                                key,
-                                row_order,
-                                row["provider"],
-                                row["title"],
-                                row["sessionName"],
-                                row["state"],
-                                row["lastActivityAt"],
-                                row["detail"],
-                                row["openKey"],
-                                row.get("fullTitle", ""),
-                                row.get("source", ""),
-                                row.get("costUSD"),
-                                row.get("costStatus", "unavailable"),
-                                row.get("costProvenance"),
-                                _json_or_none(row.get("costBreakdown")),
-                                row.get("billingProvider", ""),
-                                _json_or_none(row.get("providerCosts")),
-                                row.get("costBilling", "api"),
-                                int(row.get("tokens") or 0),
-                            )
-                            for row_order, row in enumerate(rows)
-                        ),
-                    )
-                    connection.execute("DELETE FROM session_cost_groups WHERE source_key = ?", (key,))
-                    connection.executemany(
-                        "INSERT INTO session_cost_groups (source_key, row_order, billing, "
-                        "provenance, rollup, cost, status, day, token_share) "
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        (
-                            (key, row_order, billing, provenance, rollup, cost, status, day, token_share)
-                            for row_order, row in enumerate(rows)
-                            for billing, provenance, rollup, cost, status, day, token_share in _row_cost_groups(row)
-                        ),
-                    )
-                connection.commit()
+                                (
+                                    key,
+                                    row_order,
+                                    row["provider"],
+                                    row["title"],
+                                    row["sessionName"],
+                                    row["state"],
+                                    row["lastActivityAt"],
+                                    row["detail"],
+                                    row["openKey"],
+                                    row.get("fullTitle", ""),
+                                    row.get("source", ""),
+                                    row.get("costUSD"),
+                                    row.get("costStatus", "unavailable"),
+                                    row.get("costProvenance"),
+                                    _json_or_none(row.get("costBreakdown")),
+                                    row.get("billingProvider", ""),
+                                    _json_or_none(row.get("providerCosts")),
+                                    row.get("costBilling", "api"),
+                                    int(row.get("tokens") or 0),
+                                )
+                                for row_order, row in enumerate(rows)
+                            ),
+                        )
+                        connection.execute("DELETE FROM session_cost_groups WHERE source_key = ?", (key,))
+                        connection.executemany(
+                            "INSERT INTO session_cost_groups (source_key, row_order, billing, "
+                            "provenance, rollup, cost, status, day, token_share) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (
+                                (key, row_order, billing, provenance, rollup, cost, status, day, token_share)
+                                for row_order, row in enumerate(rows)
+                                for billing, provenance, rollup, cost, status, day, token_share in _row_cost_groups(row)
+                            ),
+                        )
+                    mutated = True
             if mutated:
                 try:
                     connection.execute("PRAGMA wal_checkpoint(PASSIVE)")
