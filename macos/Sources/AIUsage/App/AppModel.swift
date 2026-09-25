@@ -221,13 +221,14 @@ final class AppModel: ObservableObject {
                 } catch {
                     refreshError = error.localizedDescription
                 }
+                let completedRefreshError = refreshError
                 guard let self else { return }
-                await MainActor.run { [self] in
+                await MainActor.run { [self, completedRefreshError] in
                     self.sessionsRefreshTask = nil
                     self.sessionsPollTask?.cancel()
                     self.refreshSessions(query: self.sessionsQuery, offset: 0, appending: false, refresh: false)
-                    if let refreshError {
-                        self.sessionsError = refreshError
+                    if let completedRefreshError {
+                        self.sessionsError = completedRefreshError
                         self.sessionsRefreshStatus = "failed"
                     }
                 }
