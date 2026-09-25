@@ -396,23 +396,25 @@ class OpenCodeUsageReaderTest(unittest.TestCase):
                     )
             finally:
                 connection.close()
-            calls = {"count": 0}
+            read_usage = opencode._read_usage
 
-            def fake_monotonic() -> float:
-                calls["count"] += 1
-                if calls["count"] == 4:
-                    return 100.0
-                return calls["count"] / 10
+            def expire_first_session(connection, session_id):
+                if session_id == "session-1":
+                    with mock.patch.object(opencode, "_QUERY_TIMEOUT_SECONDS", -1):
+                        return read_usage(connection, session_id)
+                return read_usage(connection, session_id)
 
-            with mock.patch.object(opencode.time, "monotonic", side_effect=fake_monotonic):
-                with mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True):
-                    records = opencode.read_recent_sessions()
+            with (
+                mock.patch.object(opencode, "_read_usage", side_effect=expire_first_session),
+                mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True),
+            ):
+                records = opencode.read_recent_sessions()
 
         self.assertEqual(len(records), 2)
         self.assertEqual(records[0].usage, ())
         self.assertEqual(records[1].usage[0].output_tokens, 50)
 
-    def test_overall_budget_stops_reading_further_sessions(self):
+    def test_usage_enrichment_has_no_total_session_read_budget(self):
         messages = [
             _assistant_message(tokens={"output": 50}),
             _assistant_message("message-2", session_id="session-2", tokens={"output": 50}),
@@ -432,30 +434,14 @@ class OpenCodeUsageReaderTest(unittest.TestCase):
                     )
             finally:
                 connection.close()
-            calls = {"count": 0}
+            with (
+                mock.patch.object(opencode, "_read_usage", return_value=()) as read_usage,
+                mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True),
+            ):
+                records = opencode.read_recent_sessions()
 
-            def fake_monotonic() -> float:
-                calls["count"] += 1
-                if calls["count"] in (6, 7):
-                    return 100.0
-                return calls["count"] / 10
-
-            with mock.patch.object(opencode.time, "monotonic", side_effect=fake_monotonic):
-                with mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True):
-                    records = opencode.read_recent_sessions()
-
-        self.assertEqual(len(records), 1)
-        self.assertEqual(records[0].session_id, "session-1")
-
-    def test_expired_overall_budget_returns_no_records(self):
-        message = _assistant_message(tokens={"output": 50})
-        with tempfile.TemporaryDirectory() as root:
-            path = _create_database(root, messages=[message])
-            with mock.patch.object(opencode, "_READ_TIMEOUT_SECONDS", -1):
-                with mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True):
-                    records = opencode.read_recent_sessions()
-
-        self.assertEqual(records, [])
+        self.assertEqual([record.session_id for record in records], ["session-1", "session-2", "session-3"])
+        self.assertEqual(read_usage.call_count, 3)
 
     def test_connection_is_read_only_and_query_only(self):
         with tempfile.TemporaryDirectory() as root:
