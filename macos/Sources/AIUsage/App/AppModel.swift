@@ -68,6 +68,8 @@ final class AppModel: ObservableObject {
     private var sessionsRequestSignature = ""
     private var sessionsDebounceTask: Task<Void, Never>?
     private var sessionsFetchTask: Task<Void, Never>?
+    private var sessionsRefreshTask: Task<Void, Never>?
+    private var sessionsPollTask: Task<Void, Never>?
     private var sessionsLastReconcile = Date.distantPast
     private nonisolated static let sessionsReconcileInterval: TimeInterval = 600
 
@@ -164,6 +166,10 @@ final class AppModel: ObservableObject {
 
     func refreshSessions(query: String = "", refresh: Bool = true) {
         let normalizedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if refresh, sessionsRefreshTask != nil {
+            refreshSessions(query: normalizedQuery, offset: 0, appending: false, refresh: false)
+            return
+        }
         let requestSignature = makeSessionsRequestSignature(for: normalizedQuery)
         guard !Self.shouldDeduplicateSessionRequest(
             isLoading: sessionsLoading,
@@ -190,7 +196,7 @@ final class AppModel: ObservableObject {
         refreshSessions(query: sessionsQuery, offset: nextOffset, appending: true, refresh: false)
     }
 
-    private func refreshSessions(query: String, offset: Int, appending: Bool, refresh: Bool) {
+    private func refreshSessions(query: String, offset: Int, appending: Bool, refresh: Bool, quiet: Bool = false) {
         sessionsFetchTask?.cancel()
         sessionsRequestID += 1
         let requestID = sessionsRequestID
@@ -198,23 +204,55 @@ final class AppModel: ObservableObject {
         let requestSignature = makeSessionsRequestSignature(for: query, sourceIDs: requestedSourceIDs)
         sessionsRequestSignature = requestSignature
         sessionsQuery = query
-        sessionsLoading = true
-        sessionsError = ""
-        sessionsNotice = ""
+        if !quiet {
+            sessionsLoading = true
+            sessionsError = ""
+            sessionsNotice = ""
+        }
         let requestedOffset = offset
         let requestedLimit: Int? = 60
+        if refresh, sessionsRefreshTask == nil {
+            sessionsRefreshTask = Task.detached(priority: .userInitiated) { [weak self] in
+                var refreshError: String?
+                do {
+                    _ = try Backend.refreshSessions(
+                        query, limit: requestedLimit, offset: requestedOffset, sourceIds: requestedSourceIDs
+                    )
+                } catch {
+                    refreshError = error.localizedDescription
+                }
+                guard let self else { return }
+                await MainActor.run { [self] in
+                    self.sessionsRefreshTask = nil
+                    self.sessionsPollTask?.cancel()
+                    self.refreshSessions(query: self.sessionsQuery, offset: 0, appending: false, refresh: false)
+                    if let refreshError {
+                        self.sessionsError = refreshError
+                        self.sessionsRefreshStatus = "failed"
+                    }
+                }
+            }
+            sessionsPollTask?.cancel()
+            sessionsPollTask = Task { @MainActor [weak self] in
+                guard let self else { return }
+                while self.sessionsRefreshTask != nil {
+                    do {
+                        try await Task.sleep(for: .milliseconds(500))
+                    } catch {
+                        return
+                    }
+                    guard !Task.isCancelled, self.sessionsRefreshTask != nil else { return }
+                    self.refreshSessions(
+                        query: self.sessionsQuery, offset: self.sessionsOffset,
+                        appending: false, refresh: false, quiet: true)
+                }
+            }
+        }
         sessionsFetchTask = Task.detached(priority: .userInitiated) { [weak self] in
             do {
-                let result: LocalSessions
-                if refresh {
-                    result = try Backend.refreshSessions(
-                        query, limit: requestedLimit, offset: requestedOffset, sourceIds: requestedSourceIDs
-                    )
-                } else {
-                    result = try Backend.sessions(
-                        query, limit: requestedLimit, offset: requestedOffset, sourceIds: requestedSourceIDs
-                    )
-                }
+                let result = try Backend.sessions(
+                    query, limit: requestedLimit, offset: requestedOffset, sourceIds: requestedSourceIDs
+                )
                 guard !Task.isCancelled else { return }
                 guard let self else { return }
                 await MainActor.run { [self] in
@@ -265,7 +303,8 @@ final class AppModel: ObservableObject {
                         if let age = result.cacheAgeSeconds {
                             self.sessionsLastReconcile = Date().addingTimeInterval(-TimeInterval(age))
                         }
-                        if Self.sessionsCacheExpired(ageSeconds: result.cacheAgeSeconds),
+                        if self.sessionsRefreshTask == nil,
+                           Self.sessionsCacheExpired(ageSeconds: result.cacheAgeSeconds),
                            self.popoverVisible, self.featureView == .sessions {
                             self.refreshSessions(query: query, refresh: true)
                         }
