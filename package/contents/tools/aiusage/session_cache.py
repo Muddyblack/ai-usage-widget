@@ -188,7 +188,7 @@ class SessionCache:
 
     def _source_count(self) -> int:
         try:
-            connection = sqlite3.connect(f"{self._cache_path.as_uri()}?mode=ro", uri=True)
+            connection = sqlite3.connect(f"{self._cache_path.resolve().as_uri()}?mode=ro", uri=True)
         except sqlite3.Error:
             return 0
         try:
