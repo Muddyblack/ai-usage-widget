@@ -543,9 +543,15 @@ class Backend(QObject):
     def _refresh_sessions(self, query, request_id, offset, refresh=False, source_ids=None):
         try:
             if refresh:
-                refresh_future = self._pool.submit(refresh_sessions_json, query, limit=60, offset=offset, source_ids=source_ids)
+                if source_ids is None:
+                    refresh_future = self._pool.submit(refresh_sessions_json, query, limit=60, offset=offset)
+                else:
+                    refresh_future = self._pool.submit(refresh_sessions_json, query, source_ids=source_ids, limit=60, offset=offset)
                 while not refresh_future.done():
-                    result = collect_sessions_cache_json(query, limit=60, offset=offset, source_ids=source_ids)
+                    if source_ids is None:
+                        result = collect_sessions_cache_json(query, limit=60, offset=offset)
+                    else:
+                        result = collect_sessions_cache_json(query, source_ids=source_ids, limit=60, offset=offset)
                     self._sessionsCompleted.emit(result, "", query, request_id)
                     try:
                         refresh_future.result(timeout=0.35)
@@ -553,7 +559,10 @@ class Backend(QObject):
                         continue
                 result = refresh_future.result()
             else:
-                result = collect_sessions_json(query, limit=60, offset=offset, source_ids=source_ids)
+                if source_ids is None:
+                    result = collect_sessions_json(query, limit=60, offset=offset)
+                else:
+                    result = collect_sessions_json(query, source_ids=source_ids, limit=60, offset=offset)
         except Exception as exc:
             self._sessionsCompleted.emit("", str(exc), query, request_id)
         else:
