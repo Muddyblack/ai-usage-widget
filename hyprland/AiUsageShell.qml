@@ -379,6 +379,8 @@ ShellRoot {
     // Local sessions for the optional Sessions tab.
     property var sessions: []
     property bool sessionsLoading: false
+    property bool sessionsRefreshRunning: false
+    property string sessionsBackgroundRefreshStatus: ""
     property string sessionsCacheStatus: "unknown"
     property var sessionsCacheAgeSeconds: null
     property string sessionsRefreshStatus: "not-run"
@@ -766,7 +768,7 @@ ShellRoot {
         root.sessionsFollowupRefresh = refreshMode === true;
     }
 
-    function startSessionsRequest(offset, append, refreshMode) {
+    function startSessionsRequest(offset, append, refreshMode, quiet) {
         root.sessionsActiveQuery = root.sessionsQuery;
         root.sessionsActiveSourceIds = root.sessionsSourceIds.slice(0);
         root.sessionsActiveSourceSignature = root.sessionsSourceSignature;
@@ -777,7 +779,8 @@ ShellRoot {
         root.sessionsFollowup = false;
         root.sessionsResponseDone = false;
         root.sessionsProcessExited = false;
-        root.sessionsLoading = true;
+        if (quiet !== true)
+            root.sessionsLoading = true;
         root.sessionsError = "";
         root.sessionsNotice = "";
         sessionsProcess.exec({
@@ -917,18 +920,31 @@ ShellRoot {
         if (sourceIds !== undefined)
             root.setSessionsSourceIds(sourceIds);
         root.setSessionsQuery(query);
+        if (root.sessionsRefreshRunning)
+            return root.querySessions(root.sessionsQuery, offset, append, sourceIds);
+        root.sessionsRefreshRunning = true;
+        root.sessionsBackgroundRefreshStatus = "";
+        root.sessionsActiveQuery = root.sessionsQuery;
+        root.sessionsActiveOffset = offset === undefined ? 0 : offset;
+        root.sessionsActiveSourceIds = root.sessionsSourceIds.slice(0);
+        root.sessionsActiveRefresh = true;
+        var command = root.sessionsCommand();
+        root.sessionsActiveRefresh = false;
+        sessionsRefreshProcess.exec({
+            command: command
+        });
         if (sessionsProcess.running) {
-            root.queueSessionsRequest(0, false, true);
+            root.queueSessionsRequest(offset === undefined ? 0 : offset, append === true, false);
             return;
         }
-        root.startSessionsRequest(offset === undefined ? 0 : offset, append === true, true);
+        root.querySessions(root.sessionsQuery, offset, append, sourceIds);
     }
 
     function reconcileSessions(query, sourceIds) {
         root.refreshSessions(query, undefined, false, sourceIds);
     }
 
-    function querySessions(query, offset, append, sourceIds) {
+    function querySessions(query, offset, append, sourceIds, quiet) {
         if (sourceIds !== undefined)
             root.setSessionsSourceIds(sourceIds);
         root.setSessionsQuery(query);
@@ -936,7 +952,7 @@ ShellRoot {
             root.queueSessionsRequest(offset === undefined ? 0 : offset, append === true, false);
             return;
         }
-        root.startSessionsRequest(offset === undefined ? 0 : offset, append === true, false);
+        root.startSessionsRequest(offset === undefined ? 0 : offset, append === true, false, quiet);
     }
 
     function handleSessionsOutput(text) {
@@ -1014,6 +1030,28 @@ ShellRoot {
                 sessionsReconcileTimer.restart();
             }
             root.finishSessionsProcess();
+        }
+    }
+
+    Process {
+        id: sessionsRefreshProcess
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    var data = JSON.parse((this.text || "").trim());
+                    root.sessionsBackgroundRefreshStatus = data.refreshStatus || "refreshed";
+                } catch (e) {
+                    root.sessionsBackgroundRefreshStatus = "failed";
+                }
+            }
+        }
+        onExited: function (exitCode) {
+            root.sessionsRefreshRunning = false;
+            if (exitCode !== 0)
+                root.sessionsBackgroundRefreshStatus = "failed";
+            root.sessionsRefreshStatus = root.sessionsBackgroundRefreshStatus || "refreshed";
+            if (root.sessionsViewVisible)
+                root.querySessions(root.sessionsQuery, root.sessionsOffset, false, root.sessionsSourceIds);
         }
     }
 
@@ -1120,6 +1158,13 @@ ShellRoot {
             if (!root.sessionsLoading)
                 root.reconcileSessions(root.sessionsQuery, root.sessionsSourceIds);
         }
+    }
+
+    Timer {
+        interval: 500
+        repeat: true
+        running: root.sessionsViewVisible && root.sessionsRefreshRunning && !root.sessionsLoading && !sessionsProcess.running
+        onTriggered: root.querySessions(root.sessionsQuery, root.sessionsOffset, false, root.sessionsSourceIds, true)
     }
 
     Timer {
