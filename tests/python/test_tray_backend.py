@@ -162,8 +162,7 @@ class SessionRefreshResponseTest(unittest.TestCase):
         backend_type = load_backend_method(
             "_refresh_sessions",
             {
-                "collect_sessions_cache_json": lambda *args, **kwargs: cache_reads.append((args, kwargs))
-                or '{"sessions":[{"title":"cached"}]}',
+                "collect_sessions_cache_json": lambda *args, **kwargs: cache_reads.append((args, kwargs)) or '{"sessions":[{"title":"cached"}]}',
                 "refresh_sessions_json": lambda *args, **kwargs: '{"sessions":[{"title":"unused"}]}',
             },
         )
