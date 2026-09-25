@@ -554,6 +554,8 @@ ShellRoot {
             root.chartWindow = win;
         if (root.activeId !== "" && !FeatureTabs.isFeatureTab(root.activeId))
             root.lastProviderId = root.activeId;
+        if (root.providerDefaultsReady && root.activeId !== "" && (root.settings || {}).lastTab !== root.activeId)
+            root.setSetting2("lastTab", root.activeId);
     }
 
     function selectChartWindow(id) {
@@ -702,19 +704,17 @@ ShellRoot {
             // feature tab, since Sessions is the default-enabled one.
             if (!root.providerById(root.lastProviderId))
                 root.lastProviderId = data.active || (root.providers[0] || {}).id || "";
-            // Keep the active tab if it's still present; otherwise fall back to
-            // the backend's suggestion or the first provider (e.g. after the
-            // active provider is disabled in settings). Feature tabs stay put.
-            var stillThere = FeatureTabs.isFeatureTab(root.activeId);
-            for (var i = 0; i < root.providers.length; i++)
-                if (root.providers[i].id === root.activeId)
-                    stillThere = true;
-            if (!stillThere) {
-                var features = FeatureTabs.enabledFeatureTabs(root.settings);
-                if (features.length > 0)
-                    root.activeId = features[0];
-                else
-                    root.activeId = data.active || (root.providers[0] || {}).id || "";
+            // Keep the active tab if it's still present; otherwise reopen the
+            // tab used last time, else the backend's suggestion or the first
+            // provider — never a feature tab by default, so the pill mirrors a
+            // real provider from the first start. Feature tabs stay put.
+            var features = FeatureTabs.enabledFeatureTabs(root.settings);
+            var isOpenable = function (id) {
+                return features.indexOf(id) !== -1 || !!root.providerById(id);
+            };
+            if (!isOpenable(root.activeId)) {
+                var last = (root.settings || {}).lastTab || "";
+                root.activeId = isOpenable(last) ? last : (data.active || (root.providers[0] || {}).id || "");
             }
             root.errorText = "";
             root.nowTick = new Date().getTime();

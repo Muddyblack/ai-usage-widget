@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
 import "../code/ProjectInfo.js" as Project
+import "../code/ProjectInfoRequests.js" as InfoRequests
 
 ColumnLayout {
     id: info
@@ -10,8 +11,8 @@ ColumnLayout {
     property var rootItem
     property var counts: ({})
     property var contributorList: []
-    property var requests: []
-    property bool requested: false
+    property var client: null
+    property bool canRefresh: false
     readonly property string currentVersion: Project.currentVersion
     property string latestVersion: ""
     property string releaseCheckState: "Not checked"
@@ -21,85 +22,40 @@ ColumnLayout {
 
     spacing: 12
 
-    function checkRelease() {
-        if (!onlineEnabled || releaseCheckState === "Checking…")
-            return;
-        latestVersion = "";
-        releaseCheckState = "Checking…";
-        const request = new XMLHttpRequest();
-        requests.push(request);
-        request.open("GET", Project.latestReleaseUrl);
-        request.onreadystatechange = function () {
-            if (request.readyState !== XMLHttpRequest.DONE)
-                return;
-            info.latestVersion = request.status === 200 ? Project.releaseVersion(request.responseText) : "";
-            info.releaseCheckState = info.latestVersion ? "Checked" : "Could not check for updates";
-        };
-        request.send();
-        timeout.restart();
-    }
-
-    function loadCounts() {
-        if (!onlineEnabled || requested)
-            return;
-        requested = true;
-        checkRelease();
-        Project.statistics.forEach(function (stat) {
-            const request = new XMLHttpRequest();
-            info.requests.push(request);
-            request.open("GET", stat.url);
-            request.onreadystatechange = function () {
-                if (request.readyState !== XMLHttpRequest.DONE || request.status !== 200)
-                    return;
-                const value = Project.count(request.responseText);
-                if (value) {
-                    const next = Object.assign({}, info.counts);
-                    next[stat.id] = value;
-                    info.counts = next;
-                }
-            };
-            request.send();
-        });
-        const contributorsRequest = new XMLHttpRequest();
-        requests.push(contributorsRequest);
-        contributorsRequest.open("GET", Project.contributorsUrl);
-        contributorsRequest.onreadystatechange = function () {
-            if (contributorsRequest.readyState === XMLHttpRequest.DONE && contributorsRequest.status === 200)
-                info.contributorList = Project.contributors(contributorsRequest.responseText);
-        };
-        contributorsRequest.send();
-        timeout.restart();
-    }
-
-    function cancelRequests() {
-        requests.forEach(function (request) {
-            request.onreadystatechange = null;
-            request.abort();
-        });
-        requests = [];
-        if (releaseCheckState === "Checking…")
-            releaseCheckState = "Could not check for updates";
+    function applyNetworkState(state) {
+        counts = state.counts;
+        contributorList = state.contributors;
+        latestVersion = state.latestVersion;
+        releaseCheckState = state.releaseState;
+        canRefresh = state.canRefresh;
     }
 
     onVisibleChanged: {
-        if (visible && !requested)
-            loadCounts();
+        if (client) {
+            if (visible && onlineEnabled)
+                client.tick();
+            else
+                client.pause();
+        }
     }
-    // Defer the network work to the first time this pane is actually shown.
-    // Loading on Component.onCompleted fired the release/statistics requests as
-    // soon as the popup opened, before the user ever visited Settings → Info.
-    // The `requested` guard keeps it to one load; a pane created already
-    // visible still starts its load once.
     Component.onCompleted: {
-        if (info.visible)
-            loadCounts();
+        client = InfoRequests.create(Project, function () {
+            return new XMLHttpRequest();
+        }, function () {
+            return Date.now();
+        }, applyNetworkState);
+        if (visible && onlineEnabled)
+            client.tick();
     }
-    Component.onDestruction: cancelRequests()
-
+    Component.onDestruction: {
+        if (client)
+            client.dispose();
+    }
     Timer {
-        id: timeout
-        interval: 8000
-        onTriggered: info.cancelRequests()
+        interval: 1000
+        repeat: true
+        running: info.visible && info.onlineEnabled && info.client !== null
+        onTriggered: info.client.tick()
     }
 
     // ── Header (Icon, Title, Author) ─────────────────────────────────────────
@@ -231,8 +187,8 @@ ColumnLayout {
                     text: i18n("Check again")
                     implicitHeight: 24
                     font.pixelSize: 10
-                    enabled: info.onlineEnabled && info.releaseCheckState !== "Checking…"
-                    onClicked: info.checkRelease()
+                    enabled: info.onlineEnabled && info.canRefresh
+                    onClicked: info.client.refresh()
                 }
             }
         }

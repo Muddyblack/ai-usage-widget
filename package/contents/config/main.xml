@@ -141,6 +141,11 @@
     <entry name="useThemeAccent" type="Bool">
       <default>false</default>
     </entry>
+    <!-- Popup tab open when the widget was last used (a provider or feature
+         tab id); empty = the first enabled provider -->
+    <entry name="lastTab" type="String">
+      <default></default>
+    </entry>
     <!-- Comma-separated pinned tab ids (e.g. "claude,openai"); empty = show active tab -->
     <entry name="pinnedTab" type="String">
       <default></default>

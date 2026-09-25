@@ -8,6 +8,7 @@ const UsageHistory = require("../package/contents/code/UsageHistory.js");
 const Shell = require("../package/contents/code/Shell.js");
 const SessionSources = require("../package/contents/code/SessionSources.js");
 const RefreshCoalescer = require("../package/contents/code/RefreshCoalescer.js");
+const ProjectInfoRequests = require("../package/contents/code/ProjectInfoRequests.js");
 const PanelColor = require("../package/contents/code/PanelColor.js");
 const RequestGeneration = require("../package/contents/code/RequestGeneration.js");
 const { execFileSync } = require("node:child_process");
@@ -1108,18 +1109,33 @@ test("a pricing-only status change never blanks usage", () => {
     assert.equal(RefreshCoalescer.blanksUsage("", "stale-good"), false);
 });
 
-test("Project Info network work is deferred to first visibility", () => {
-    // The pane must not fetch on construction; a popup open with Settings
-    // closed would otherwise fire release/statistics requests the user never
-    // asked for. The load is gated on `visible` (and still runs once, guarded
-    // by `requested`).
+test("Project Info network work is deferred until the visible pane ticks its client", () => {
     const source = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/ProjectInfoPane.qml"), "utf8");
-    assert.doesNotMatch(source, /Component\.onCompleted:\s*loadCounts\(\)/);
-    assert.match(source, /onVisibleChanged:\s*\{[^}]*visible && !requested[^}]*loadCounts\(\)/s);
-    // The one-load guard and cancellation survive.
-    assert.match(source, /if \(!onlineEnabled \|\| requested\)/);
-    assert.match(source, /function cancelRequests\(\)/);
-    assert.match(source, /Component\.onDestruction: cancelRequests\(\)/);
+    assert.match(source, /if \(visible && onlineEnabled\)\s*client\.tick\(\)/);
+    assert.match(source, /if \(client\)\s*client\.dispose\(\)/);
+
+    const requests = [];
+    const client = ProjectInfoRequests.create({
+        latestReleaseUrl: "/release",
+        statistics: [],
+        contributorsUrl: "/contributors"
+    }, () => {
+        const request = {
+            abort() { this.aborted = true; },
+            open(_method, url) { this.url = url; },
+            send() { requests.push(this); }
+        };
+        return request;
+    }, () => 1000, () => {});
+
+    assert.equal(requests.length, 0);
+    client.tick();
+    assert.equal(requests.length, 2);
+    client.pause();
+    assert.ok(requests.every(request => request.aborted));
+    client.dispose();
+    client.tick();
+    assert.equal(requests.length, 2);
 });
 
 test("panel-critical state stays resident while popup views are conditional", () => {
