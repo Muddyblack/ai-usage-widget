@@ -22,6 +22,8 @@ ColumnLayout {
 
     property var sessions: []
     property bool loading: false
+    property bool backgroundRefreshRunning: false
+    property string backgroundRefreshCommand: ""
     property string errorText: ""
     property string notice: ""
     property string filterText: ""
@@ -262,6 +264,13 @@ ColumnLayout {
             if (!sessionsTab.loading)
                 sessionsTab.refresh();
         }
+    }
+
+    Timer {
+        interval: 500
+        repeat: true
+        running: sessionsTab.foregroundSessionsVisible && sessionsTab.backgroundRefreshRunning && !sessionsTab.loading
+        onTriggered: sessionsTab.queryOnly(sessionsTab.sessionsOffset, true)
     }
 
     Timer {
@@ -847,7 +856,7 @@ ColumnLayout {
         return Kirigami.Theme.textColor;
     }
 
-    function requestSessions(offset, refreshMode) {
+    function requestSessions(offset, refreshMode, quiet) {
         requestSerial += 1;
         requestedQuery = searchQuery;
         requestedSourceSignature = sourceSignature(selectedSourceIds);
@@ -856,7 +865,8 @@ ColumnLayout {
         activeRequestSerial = requestSerial;
         activeOffset = offset;
         activeRefresh = refreshMode === true;
-        loading = true;
+        if (quiet !== true)
+            loading = true;
         errorText = "";
         notice = "";
         var mode = activeRefresh ? "--refresh" : "--query-only";
@@ -870,13 +880,21 @@ ColumnLayout {
     }
 
     function refresh() {
-        if (loading)
+        if (loading || backgroundRefreshRunning)
             return;
-        requestSessions(0, true);
+        backgroundRefreshRunning = true;
+        var cmd = "cd " + Shell.quote(rootItem.scriptDir) + " && ./get-ai-usage --sessions --refresh --query " + Shell.quote(searchQuery);
+        cmd += " --limit " + sessionsLimit + " --offset " + sessionsOffset;
+        if (selectedSourceIds.length > 0)
+            cmd += " --source " + Shell.quote(selectedSourceIds.join(","));
+        backgroundRefreshCommand = cmd;
+        backgroundRefreshSource.disconnectSource(cmd);
+        backgroundRefreshSource.connectSource(cmd);
+        queryOnly(sessionsOffset);
     }
 
-    function queryOnly(offset) {
-        requestSessions(offset === undefined ? 0 : offset, false);
+    function queryOnly(offset, quiet) {
+        requestSessions(offset === undefined ? 0 : offset, false, quiet);
     }
 
     Plasma5Support.DataSource {
@@ -938,6 +956,32 @@ ColumnLayout {
             } catch (e) {
                 sessionsTab.errorText = i18n("Could not parse sessions.");
             }
+        }
+    }
+
+    Plasma5Support.DataSource {
+        id: backgroundRefreshSource
+        engine: "executable"
+        connectedSources: []
+        onNewData: function (sourceName, data) {
+            backgroundRefreshSource.disconnectSource(sourceName);
+            if (sourceName !== sessionsTab.backgroundRefreshCommand)
+                return;
+            sessionsTab.backgroundRefreshRunning = false;
+            var stdout = data && data.stdout ? data.stdout : "";
+            var exitCode = data ? Number(data["exit code"]) : 1;
+            if (exitCode !== 0) {
+                sessionsTab.refreshStatus = "failed";
+                sessionsTab.errorText = i18n("Could not load sessions.");
+                return;
+            }
+            try {
+                var payload = JSON.parse(stdout);
+                sessionsTab.refreshStatus = payload.refreshStatus || sessionsTab.refreshStatus;
+            } catch (e) {
+                sessionsTab.refreshStatus = "failed";
+            }
+            sessionsTab.queryOnly(sessionsTab.sessionsOffset);
         }
     }
 
