@@ -35,7 +35,8 @@ def _vibe_key():
 
 
 def _vibe_session_dir():
-    return os.path.expanduser("~/.vibe/logs/session")
+    home = os.environ.get("VIBE_HOME") or os.environ.get("HOME") or os.path.expanduser("~")
+    return os.path.join(home, ".vibe", "logs", "session")
 
 
 def _cache_key(session_dir):
