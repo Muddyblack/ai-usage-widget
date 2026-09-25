@@ -9,6 +9,7 @@ import os
 import sys
 import tempfile
 import unittest
+from dataclasses import dataclass
 from pathlib import Path
 from unittest import mock
 
@@ -19,6 +20,27 @@ if TOOLS not in sys.path:
     sys.path.insert(0, TOOLS)
 
 FIXTURES = Path(REPO) / "tests" / "fixtures"
+
+
+@dataclass(frozen=True, slots=True)
+class _SeedSource:
+    source_id: str
+    mtime_ns: int
+    size: int
+
+
+def seed_session_index(directory, rows):
+    """Reconcile a fresh session index under ``directory`` with ``rows``.
+
+    Returns the cache path. The rows are redacted exactly as a real collector
+    run would redact them, so the materialized contribution table is built
+    from the same data the envelope reads.
+    """
+    from aiusage.session_index import SessionIndex
+
+    cache = Path(directory) / "sessions.sqlite3"
+    SessionIndex(cache).reconcile([_SeedSource("test", 1, 1)], lambda _source: rows)
+    return cache
 
 
 def raw_fixture(name):

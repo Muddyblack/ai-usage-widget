@@ -6,10 +6,18 @@ Ported from tools/sh/get-mistral-usage. Mistral has no public billing API, so:
 3. read ~/.vibe session logs for local cost / token / session stats
 """
 
+import hashlib
+import hmac
+import json
 import os
 import re
+import tempfile
 
+from .. import paths
 from ..http import as_json, fetch_json, resolve_key
+from ..session_manifest import source_fingerprint
+
+_CACHE_VERSION = 1
 
 
 def _vibe_key():
@@ -26,27 +34,81 @@ def _vibe_key():
     return ""
 
 
-def _vibe_stats():
-    session_dir = os.path.expanduser("~/.vibe/logs/session")
-    if not os.path.isdir(session_dir):
-        return {}
-    paths = set()
-    for root, _dirs, files in os.walk(session_dir):
-        for name in files:
-            if name == "meta.json":
-                paths.add(os.path.join(root, name))
-    docs = []
-    for p in sorted(paths):
-        try:
-            with open(p, encoding="utf-8") as f:
-                d = as_json(f.read())
-        except OSError:
-            continue
-        if isinstance(d, dict) and d.get("stats") is not None:
-            docs.append(d)
-    if not docs:
-        return {}
+def _vibe_session_dir():
+    home = os.environ.get("VIBE_HOME") or os.environ.get("HOME") or os.path.expanduser("~")
+    return os.path.join(home, ".vibe", "logs", "session")
 
+
+def _cache_key(session_dir):
+    """Opaque identity for one normalized vibe session store.
+
+    The canonical session path is hashed so only the digest ever reaches disk —
+    never the path itself. Two different ``HOME`` values resolve to different
+    session paths and therefore different cache files.
+    """
+    normalized = os.path.normcase(os.path.realpath(os.path.abspath(os.path.expanduser(session_dir))))
+    return hashlib.sha256(os.fsencode(normalized)).hexdigest()
+
+
+def _shared_fingerprint(files):
+    """One opaque digest over every ``meta.json`` file.
+
+    Each record is the task-10 ``SourceFingerprint`` triple (opaque source id,
+    mtime_ns, size), so the shared digest changes when a log is added, removed,
+    renamed, or rewritten — and stays stable when nothing changed. Raises
+    ``OSError`` if a listed log disappears mid-walk; the caller then treats the
+    store as changed and rescans.
+    """
+    records = []
+    for path in files:
+        stat = os.stat(path)
+        fp = source_fingerprint(path, stat.st_mtime_ns, stat.st_size)
+        records.append((fp.source_id, fp.mtime_ns, fp.size))
+    records.sort()
+    encoded = json.dumps(records, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _read_cache(path, key, fingerprint):
+    """Return cached vibe stats only when store identity and fingerprint match."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            payload = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(payload, dict) or payload.get("version") != _CACHE_VERSION:
+        return None
+    stored_key = payload.get("key")
+    if not isinstance(stored_key, str) or not hmac.compare_digest(stored_key, key):
+        return None
+    stored_fingerprint = payload.get("fingerprint")
+    if not isinstance(stored_fingerprint, str) or not hmac.compare_digest(stored_fingerprint, fingerprint):
+        return None
+    stats = payload.get("stats")
+    return stats if isinstance(stats, dict) else None
+
+
+def _write_cache(path, key, fingerprint, stats):
+    payload = {"version": _CACHE_VERSION, "key": key, "fingerprint": fingerprint, "stats": stats}
+    directory = os.path.dirname(path)
+    try:
+        os.makedirs(directory, exist_ok=True)
+        descriptor, temporary = tempfile.mkstemp(prefix=".vibe-stats-", dir=directory)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as fh:
+                json.dump(payload, fh, separators=(",", ":"))
+            os.replace(temporary, path)
+        except OSError:
+            try:
+                os.unlink(temporary)
+            except OSError:
+                pass
+            raise
+    except OSError:
+        return
+
+
+def _aggregate(docs):
     def s(d, key):
         return (d.get("stats") or {}).get(key) or 0
 
@@ -76,6 +138,46 @@ def _vibe_stats():
         "vibeToolFail": sum(s(d, "tool_calls_failed") for d in docs),
         "vibeRecent": recent,
     }
+
+
+def _vibe_stats():
+    session_dir = _vibe_session_dir()
+    if not os.path.isdir(session_dir):
+        return {}
+    cache_dir = os.path.join(paths.cache_home(), "kde-ai-usage")
+    key = _cache_key(session_dir)
+    cache_path = os.path.join(cache_dir, f"vibe-stats-{key}.json")
+
+    paths_list = []
+    for root, _dirs, files in os.walk(session_dir):
+        for name in files:
+            if name == "meta.json":
+                paths_list.append(os.path.join(root, name))
+    paths_list.sort()
+
+    try:
+        fingerprint = _shared_fingerprint(paths_list)
+    except OSError:
+        fingerprint = None
+
+    cached = None if fingerprint is None else _read_cache(cache_path, key, fingerprint)
+    if cached is not None:
+        return cached
+
+    docs = []
+    for p in paths_list:
+        try:
+            with open(p, encoding="utf-8") as f:
+                d = as_json(f.read())
+        except OSError:
+            continue
+        if isinstance(d, dict) and d.get("stats") is not None:
+            docs.append(d)
+
+    result = _aggregate(docs) if docs else {}
+    if fingerprint is not None:
+        _write_cache(cache_path, key, fingerprint, result)
+    return result
 
 
 def _vibe_model():

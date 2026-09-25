@@ -1,4 +1,3 @@
-import sqlite3
 import tempfile
 import unittest
 from unittest import mock
@@ -196,23 +195,8 @@ class SessionCacheIntegrationTest(unittest.TestCase):
 
         self.assertEqual(result["sessions"], [])
         self.assertEqual(result["total"], 0)
-        self.assertTrue(result["totalExact"])
-        self.assertEqual(result["sources"], [])
-
-    def test_cache_query_error_returns_schema_complete_empty_result(self):
-        with (
-            tempfile.TemporaryDirectory() as directory,
-            mock.patch("aiusage.config.cache_dir", return_value=directory),
-            mock.patch.object(SessionIndex, "query", side_effect=sqlite3.DatabaseError("broken cache")),
-        ):
-            result = sessions.collect_sessions("needle", limit=2, offset=3)
-
-        self.assertEqual(result["sessions"], [])
-        self.assertEqual(result["total"], 0)
-        self.assertTrue(result["totalExact"])
-        self.assertEqual(result["offset"], 3)
-        self.assertEqual(result["limit"], 2)
-        self.assertFalse(result["hasMore"])
+        self.assertFalse(result["totalExact"])
+        self.assertEqual(result["cacheStatus"], "no-cache")
         self.assertEqual(result["sources"], [])
 
     def test_unchanged_manifest_does_not_recollect_on_refresh(self):

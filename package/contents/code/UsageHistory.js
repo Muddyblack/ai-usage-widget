@@ -288,6 +288,36 @@ function slopePerHour(points, key, windowMs, fallbackKey) {
 // is a series it restored and only offers them. "Shared frontend code" in
 // docs/provider-contract.md has the why, and the rest of the rules.
 
+// The index of the first point with t >= value, or length when none is. The
+// series is ascending (union() sorts), so callers can slice a visible window
+// without scanning every point.
+function lowerBound(points, value) {
+    var lo = 0;
+    var hi = (points || []).length;
+    while (lo < hi) {
+        var mid = (lo + hi) >> 1;
+        if (points[mid].t < value)
+            lo = mid + 1;
+        else
+            hi = mid;
+    }
+    return lo;
+}
+
+// The index of the first point with t > value, or length when none is.
+function upperBound(points, value) {
+    var lo = 0;
+    var hi = (points || []).length;
+    while (lo < hi) {
+        var mid = (lo + hi) >> 1;
+        if (points[mid].t <= value)
+            lo = mid + 1;
+        else
+            hi = mid;
+    }
+    return lo;
+}
+
 function newStore(limit) {
     return {
         limit: limit || DEFAULT_LIMIT,
@@ -310,7 +340,10 @@ function newStore(limit) {
         sending: null,
         ready: false,
         // A save failed. The next poll is what retries it.
-        waiting: false
+        waiting: false,
+        // When the armed persistence debounce window ends (epoch ms), or null
+        // when none is armed. The frontend's timer fires then and only then.
+        dueAt: null
     };
 }
 
@@ -487,6 +520,8 @@ function take(store) {
         return null;
     }
 
+    // The window is spent once a batch goes out; the next one is armed afresh.
+    store.dueAt = null;
     return store.sending;
 }
 
@@ -513,6 +548,50 @@ function failed(store) {
         store.fresh = union(batch.points, store.fresh, store.limit);
 }
 
+// Whether take() would hand out a batch right now.
+function _hasBatch(store) {
+    return store.ready && !store.waiting && !store.sending && (store.seed.length > 0 || store.fresh.length > 0);
+}
+
+// Arm the persistence debounce. Returns true when the caller should start its
+// timer: there is a batch to send and none is armed yet. The window is fixed
+// from the first changed reading, so a fast poll coalesces into one save per
+// window instead of sliding it forever.
+function arm(store, nowMs, windowMs) {
+    if (!_hasBatch(store) || store.dueAt !== null)
+        return false;
+    store.dueAt = nowMs + windowMs;
+    return true;
+}
+
+// Whether the armed window has elapsed and a batch is waiting to go out.
+function due(store, nowMs) {
+    return store.dueAt !== null && nowMs >= store.dueAt;
+}
+
+// A controlled hide/exit: the window is over and whatever is queued goes out
+// now. A batch held back by a failed save is released too — there is no next
+// poll to wait for. Returns true when the caller should send.
+function flush(store) {
+    store.dueAt = null;
+    store.waiting = false;
+    return store.ready && (!!store.sending || store.seed.length > 0 || store.fresh.length > 0);
+}
+
+// Snapshot every unsaved point for a controlled exit. Keep `sending` owned by
+// its asynchronous request: a late answer must not settle the shutdown batch.
+function takeForExit(store) {
+    if (!flush(store))
+        return null;
+
+    var active = store.sending;
+    var op = active && active.op === "seed" || store.seed.length > 0 ? "seed" : "autosave";
+    var points = active ? active.points : [];
+    points = union(points, store.seed, store.limit);
+    points = union(points, store.fresh, store.limit);
+    return { op: op, points: points };
+}
+
 
 if (typeof module !== "undefined" && module.exports) {
     module.exports = {
@@ -520,6 +599,8 @@ if (typeof module !== "undefined" && module.exports) {
         pointTime: pointTime,
         collect: collect,
         union: union,
+        lowerBound: lowerBound,
+        upperBound: upperBound,
         normalize: normalize,
         withResets: withResets,
         slopePerHour: slopePerHour,
@@ -531,6 +612,10 @@ if (typeof module !== "undefined" && module.exports) {
         opened: opened,
         take: take,
         done: done,
-        failed: failed
+        failed: failed,
+        takeForExit: takeForExit,
+        arm: arm,
+        due: due,
+        flush: flush
     };
 }

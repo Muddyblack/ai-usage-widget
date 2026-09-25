@@ -166,13 +166,13 @@ class OpenCodeSessionRowsTest(IsolatedHomeTest):
     def test_query_reads_matching_rows_older_than_the_default_cap(self):
         rows = [
             (
-                f"ses-{index:03d}",
+                f"ses-{index:04d}",
                 "older needle" if index == 0 else f"Session {index}",
                 "/private/project",
                 1_700_000_000_000,
                 1_700_000_000_000 + index,
             )
-            for index in range(61)
+            for index in range(7_000)
         ]
         with tempfile.TemporaryDirectory() as root:
             path = _create_database(root, "opencode.db", rows)

@@ -298,3 +298,55 @@ remain unchanged.
 Each refresh records the usage values that a provider actually reports into a rolling history of up to 10,000 samples — only when a value moves, plus one sighting an hour, so a flat stretch costs two points rather than one per refresh — used by the chart, spark-lines, burn-rate ETA, and period comparison. Rolling plan windows (Claude, Codex) empty at a known instant, so when the machine was asleep across one the chart replays the drop where it actually happened instead of sloping from the last pre-sleep sample to the first one after wake-up. Most series are percentages; Mistral stores its raw vibe CLI spend and DeepSeek stores its raw balance so their charts retain meaningful units. Existing session and weekly history fields are retained even while a window is unavailable, so five-hour charts can return without migration if providers restore that limit.
 
 History lives in `~/.local/share/ai-usage-widget/usage-history-latest.json`, shared by both frontends, so it survives a full uninstall/reinstall; the widget's Plasma config keeps only a recent tail of it as a first-run fallback, because Plasma rewrites every widget's config whole on each change. You can also manually **Export** (copies the shared file to a timestamped snapshot) and **Import** from the settings panel. If a saved file is unreadable or in an unrecognized format, it's discarded and history starts fresh rather than erroring out.
+
+## Caches, TTLs, and refresh cadences
+
+Every backend cache is local, bounded, and stores no credential, prompt,
+transcript, or path. Each is keyed by an opaque digest so two accounts or two
+home directories can never share one.
+
+| Cache | Location | Key / invalidation | TTL / cadence |
+|---|---|---|---|
+| Pricing catalog | `$XDG_CACHE_HOME/kde-ai-usage/pricing-models-v2.json` | versioned source URL + file identity | 7-day success, 15-minute retry; manual `--refresh-pricing` bypasses once |
+| Codex last-good rate limits | `codex-last-good-<digest>.json` | sha256 of access token + normalized `CODEX_HOME` | same-identity transient fallback for at most 120 s |
+| Codex positive rate-limit reply | `codex-rate-limits-<digest>.json` | same identity | 120 s; expiry forces a live `codex app-server` attempt |
+| Codex local statistics | `codex-stats-<digest>.json` | sha256 of the canonical sessions + config paths; source fingerprint over every rollout | recomputed when a rollout is added/removed/changed |
+| Mistral Vibe local stats | `vibe-stats-<digest>.json` | sha256 of the canonical session dir; fingerprint over every `meta.json` | recomputed when a log changes; independent of API-key validation |
+| Antigravity usage | `antigravity` cache | account-scoped; errors and email identity are never cached | 90 s (`ANTIGRAVITY_TTL_SECONDS` overrides); a fresh valid cache skips only the `agy` fallback |
+| Session index | `sessions.sqlite3` | code-derived schema fingerprint over the row-producing modules | rows reused while the fingerprint and each source fingerprint match; re-parsed when a source changes |
+| Grok local discovery | in-memory only | canonical sessions dir + token/team identity | 30 s (`GROK_DISCOVERY_TTL_SECONDS` overrides); never written to disk |
+
+Refresh cadences differ by cost: provider usage polls on the configured interval
+(1–30 min); local sessions reconcile in the background on a 10-minute cadence
+while a session view is visible; a successful pricing refresh coalesces into at
+most one usage update instead of a second fetch. A stale or timed-out provider
+keeps its last good values on screen, marked stale, rather than blanking to
+zero — and a failed local-stat cache read falls back to a rescan.
+
+The pricing table, session search, and rate lookups are query-only: they read
+the caches and never make a network request or trigger a refresh.
+
+## Measured performance
+
+The hardening work was benchmark-gated with a paired, interleaved before/after
+harness (see `CONTRIBUTING.md` → *Performance captures and per-wave acceptance*).
+Each task's raw receipts were kept locally as uncommitted working artifacts
+under `.omo/evidence/performance-hardening/`; the harness and its commands are
+what is shipped, not the captures. Highlights, all measured with raw artifacts:
+
+- History no-op saves are suppressed; the changed-save path regresses nothing
+  and no-op writes drop.
+- Session manifest discovery is single-pass (≈29% median on the protected
+  workload).
+- The session index serves cached pages immediately and reconciles in the
+  background.
+- `envelope._local_spend` reads a materialized contribution table instead of
+  every row: **2.6×–5.0×** faster across 100–10k rows. The compensating cost is
+  a heavier background reconcile (recorded, with correctness approval).
+- Codex local stats and Mistral Vibe reuse skip the recursive file parse when
+  nothing changed; Grok's four local views share one discovery walk.
+
+Non-improving proposals are disclosed rather than retained: the Antigravity
+cache ordering was validated as already optimal (no source change), the Windows
+idle wake timer is kept because its idle cost could not be measured here, and no
+live-provider confirmation is claimed for any cache behavior.

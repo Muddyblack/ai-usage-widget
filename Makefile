@@ -1,4 +1,4 @@
-.PHONY: help view view-h view-hyprland hyprland install pack tag test test-py translations check-translations lint-py run-windows macos macos-test
+.PHONY: help view view-h view-hyprland hyprland install pack tag test test-py benchmark translations check-translations lint-py run-windows macos macos-test
 .DEFAULT_GOAL := help
 
 help: ## list targets
@@ -35,11 +35,18 @@ test: ## run the provider backend contract tests
 	@$(MAKE) --no-print-directory test-py
 	@./tests/python-interp.test.sh
 	@./tests/history-io.test.sh
+	@./tests/test_install_script.sh
+	@./tests/translation-provider-parity.test.sh
 	@if command -v node >/dev/null 2>&1; then node --test tests/*.test.js; \
 	  else echo "skipping tests/shared-code.test.js (node not found)"; fi
 
 test-py: ## run the portable unittest suites (also what CI runs on Windows)
 	@python3 -m unittest discover -s tests/python
+
+benchmark: ## run opt-in deterministic synthetic benchmarks
+	@node benchmarks/history.js
+	@python3 benchmarks/history_persistence.py
+	@python3 benchmarks/session_index.py
 
 run-windows: ## run the Windows tray app on this machine (PySide6 via 'nix develop .#windows')
 	@if command -v nix >/dev/null 2>&1 && [ -f flake.nix ]; then \
@@ -63,8 +70,8 @@ check-translations: ## fail if a locale catalog has untranslated/fuzzy entries
 
 lint-py: ## lint + format-check the Python backend, frontends and helpers (dev only, needs ruff)
 	@if command -v ruff >/dev/null 2>&1; then \
-	  ruff check package/contents/tools/aiusage windows macos scripts tests/python && \
-	  ruff format --check package/contents/tools/aiusage windows macos scripts tests/python; \
+	  ruff check package/contents/tools/aiusage windows macos scripts tests/python benchmarks && \
+	  ruff format --check package/contents/tools/aiusage windows macos scripts tests/python benchmarks; \
 	else \
 	  echo "ruff not found — install it or run 'nix develop'"; exit 1; \
 	fi

@@ -146,4 +146,37 @@ final class ContractTests: XCTestCase {
             ["openai", "antigravity"])
         XCTAssertTrue(Backend.normalizedSessionSourceIDs([" ", ""]).isEmpty)
     }
+
+    func testSessionCacheMetadataDecodesWithoutChangingExistingPageContract() throws {
+        let result = try decodeSessions(
+            #"{"updatedAt":100,"sessions":[],"sources":[],"total":0,"offset":0,"limit":60,"hasMore":false,"totalExact":true,"cacheStatus":"empty","cacheAgeSeconds":12,"refreshStatus":"refreshed","removedSourceCount":0}"#)
+        XCTAssertEqual(result.cacheStatus, "empty")
+        XCTAssertEqual(result.cacheAgeSeconds, 12)
+        XCTAssertEqual(result.refreshStatus, "refreshed")
+        XCTAssertEqual(result.total, 0)
+        XCTAssertTrue(result.totalExact)
+    }
+
+    func testSessionReconcileCadenceUsesSuppliedTimesWithoutWaiting() {
+        let start = Date(timeIntervalSince1970: 1_000)
+        XCTAssertFalse(AppModel.sessionsCacheExpired(ageSeconds: 599))
+        XCTAssertTrue(AppModel.sessionsCacheExpired(ageSeconds: nil))
+        XCTAssertTrue(AppModel.sessionsCacheExpired(ageSeconds: 600))
+        XCTAssertFalse(AppModel.sessionsReconciliationDue(last: start, now: start.addingTimeInterval(599)))
+        XCTAssertTrue(AppModel.sessionsReconciliationDue(last: start, now: start.addingTimeInterval(600)))
+    }
+
+    func testForcedSessionRefreshBypassesSameSignatureDeduplication() {
+        XCTAssertTrue(AppModel.shouldDeduplicateSessionRequest(
+            isLoading: true, sameSignature: true, forced: false))
+        XCTAssertFalse(AppModel.shouldDeduplicateSessionRequest(
+            isLoading: true, sameSignature: true, forced: true))
+        XCTAssertFalse(AppModel.shouldDeduplicateSessionRequest(
+            isLoading: false, sameSignature: true, forced: false))
+
+        let cacheRequestID = 7
+        let forcedRequestID = cacheRequestID + 1
+        XCTAssertFalse(AppModel.isCurrentSessionRequest(cacheRequestID, currentRequestID: forcedRequestID))
+        XCTAssertTrue(AppModel.isCurrentSessionRequest(forcedRequestID, currentRequestID: forcedRequestID))
+    }
 }

@@ -46,6 +46,11 @@ msgstr "Impossible d'actualiser les tarifs."
 
 #: hyprland/AiUsageShell.qml package/contents/ui/SessionsTab.qml
 #: windows/qml/Main.qml
+msgid "Could not load cached sessions."
+msgstr "Impossible de charger les sessions en cache."
+
+#: hyprland/AiUsageShell.qml package/contents/ui/SessionsTab.qml
+#: windows/qml/Main.qml
 msgid "Could not load sessions."
 msgstr "Impossible de charger les sessions."
 
@@ -254,6 +259,34 @@ msgstr "Rechercher des sessions"
 #: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
 msgid "Filter sessions by source"
 msgstr "Filtrer les sessions par source"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Refresh failed; no cached sessions are available."
+msgstr "Échec de l’actualisation ; aucune session en cache n’est disponible."
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Refresh incomplete; showing cached sessions."
+msgstr "Actualisation incomplète ; affichage des sessions en cache."
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "No cached session data yet."
+msgstr "Aucune donnée de session en cache pour le moment."
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "%1 session source was removed."
+msgid_plural "%1 session sources were removed."
+msgstr[0] "%1 source de session a été supprimée."
+msgstr[1] "%1 sources de session ont été supprimées."
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Cached session data · %1 min old"
+msgid_plural "Cached session data · %1 min old"
+msgstr[0] "Données de session en cache · datant de %1 min"
+msgstr[1] "Données de session en cache · datant de %1 min"
+
+#: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
+msgid "Session cache status unavailable."
+msgstr "Statut du cache des sessions indisponible."
 
 #: hyprland/SessionsPage.qml package/contents/ui/SessionsTab.qml
 msgid ""
@@ -3513,6 +3546,10 @@ msgid "%1 source"
 msgid_plural "%1 sources"
 msgstr[0] "%1 source"
 msgstr[1] "%1 sources"
+
+#: macos/Sources/AIUsage/Views/SessionsView.swift
+msgid "No cached sessions."
+msgstr "Aucune session en cache."
 
 #: macos/Sources/AIUsage/Views/SessionsView.swift
 msgid "Covered by plan · %1 on API"

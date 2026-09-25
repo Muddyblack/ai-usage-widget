@@ -16,16 +16,39 @@ if [ -z "$TOOL" ] || [ ! -x "$TOOL" ]; then
     exit 1
 fi
 
+# Nix shells can inherit a newer system QT_PLUGIN_PATH than the pinned KPackage
+# tool. Prefer the first libplasma package structure plugin that this tool can
+# actually load; other platforms keep their existing Qt plugin environment.
+case "$TOOL" in
+    /nix/store/*)
+        OLD_IFS="$IFS"
+        IFS=:
+        for data_dir in ${XDG_DATA_DIRS:-}; do
+            plugin_dir="${data_dir%/share}/lib/qt-6/plugins"
+            if [ -f "$plugin_dir/kf6/packagestructure/plasma_applet.so" ] && \
+                QT_PLUGIN_PATH="$plugin_dir${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}" \
+                "$TOOL" --list-types 2>/dev/null | grep -Fq 'plasma/plasmoids/'; then
+                export QT_PLUGIN_PATH="$plugin_dir${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
+                break
+            fi
+        done
+        IFS="$OLD_IFS"
+        ;;
+esac
+
 ID="$(grep -oE '"Id":[[:space:]]*"[^"]+"' "$METADATA" | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
 NAME="$(grep -oE '"Name":[[:space:]]*"[^"]+"' "$METADATA" | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
 TEST_ID="${ID}Test"
-TEMP_DIR="/tmp/$(basename "$HERE")-test"
+XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+PACKAGE_ROOT="$XDG_DATA_HOME/plasma/plasmoids"
+mkdir -p "$PACKAGE_ROOT"
 
 # The .mo catalogs are build output (git-ignored); compile them before copying.
 "$HERE/translate/build.sh"
 
-rm -rf "$TEMP_DIR"
-cp -r "$HERE/package" "$TEMP_DIR"
+TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/$(basename "$HERE")-test.XXXXXX")"
+trap 'rm -rf -- "$TEMP_DIR"' EXIT
+cp -r "$HERE/package/." "$TEMP_DIR/"
 
 sed -i "s/$ID/$TEST_ID/g" "$TEMP_DIR/metadata.json"
 sed -i "s/\"Name\": \"$NAME\"/\"Name\": \"$NAME (Test)\"/g" "$TEMP_DIR/metadata.json"
@@ -51,11 +74,11 @@ if [ -d "$TEMP_DIR/contents/locale" ]; then
 fi
 
 echo "Installing test version of the widget..."
-if "$TOOL" -t Plasma/Applet -l 2>/dev/null | grep -q "$TEST_ID"; then
-    "$TOOL" -t Plasma/Applet -u "$TEMP_DIR" 2>/dev/null
+if "$TOOL" -t Plasma/Applet -p "$PACKAGE_ROOT" -l 2>/dev/null | grep -q "$TEST_ID"; then
+    "$TOOL" -t Plasma/Applet -p "$PACKAGE_ROOT" -u "$TEMP_DIR" 2>/dev/null
     echo "Updated existing test install."
 else
-    "$TOOL" -t Plasma/Applet -i "$TEMP_DIR" 2>/dev/null
+    "$TOOL" -t Plasma/Applet -p "$PACKAGE_ROOT" -i "$TEMP_DIR" 2>/dev/null
     echo "Installed fresh test widget."
 fi
 

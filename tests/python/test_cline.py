@@ -5,8 +5,8 @@ import tempfile
 import unittest
 from unittest import mock
 
-from _support import REPO  # noqa: F401
-from aiusage import envelope, sessions
+from _support import REPO, seed_session_index  # noqa: F401
+from aiusage import config, envelope, sessions
 from aiusage.normalize.cline import normalize_cline
 from aiusage.providers import cline
 
@@ -78,8 +78,10 @@ class ClineRegressionTest(unittest.TestCase):
             ),
         ):
             local_session = sessions._cline_entries()[0]
-            with mock.patch("aiusage.sessions.all_session_rows", return_value=[local_session]):
-                local_spend = envelope._local_spend()
+            with tempfile.TemporaryDirectory() as directory:
+                seed_session_index(directory, [local_session])
+                with mock.patch.object(config, "cache_dir", return_value=directory):
+                    local_spend = envelope._local_spend()
 
         self.assertEqual(provider["details"]["stats"]["totalCostUSD"], 0.55)
         self.assertEqual(local_session["costProvenance"], "estimated")

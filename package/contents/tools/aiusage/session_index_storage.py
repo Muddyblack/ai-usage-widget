@@ -90,6 +90,7 @@ def _discard_stale_rows(connection: sqlite3.Connection) -> None:
         return
     connection.execute("DROP TABLE IF EXISTS session_rows")
     connection.execute("DROP TABLE IF EXISTS source_meta")
+    connection.execute("DROP TABLE IF EXISTS session_cost_groups")
     # The DROPs opened an implicit transaction. Close it before touching
     # user_version: a PRAGMA write inside a transaction does not stick, and
     # leaving one open makes reconcile's BEGIN IMMEDIATE fail.
@@ -129,6 +130,16 @@ def _ensure_schema(connection: sqlite3.Connection, *, discard_stale: bool = Fals
     )
     connection.execute("CREATE INDEX IF NOT EXISTS idx_session_rows_activity ON session_rows (last_activity_at DESC)")
     connection.execute("CREATE INDEX IF NOT EXISTS idx_session_rows_provider ON session_rows (provider)")
+    # Materialized local-spend contributions, one row per (session, billing,
+    # provenance, rollup). No primary key: a session row can contribute more
+    # than once per provenance (multi-provider OpenCode sessions).
+    connection.execute(
+        "CREATE TABLE IF NOT EXISTS session_cost_groups (source_key TEXT NOT NULL, "
+        "row_order INTEGER NOT NULL, billing TEXT NOT NULL, provenance TEXT NOT NULL, "
+        "rollup TEXT NOT NULL, cost REAL NOT NULL, status TEXT NOT NULL, "
+        "day TEXT NOT NULL DEFAULT '', token_share REAL NOT NULL DEFAULT 0)"
+    )
+    connection.execute("CREATE INDEX IF NOT EXISTS idx_session_cost_groups_source ON session_cost_groups (source_key)")
     required = {
         "source_meta": {"source_key", "mtime_ns", "size", "source_order"},
         "session_rows": {
@@ -151,6 +162,17 @@ def _ensure_schema(connection: sqlite3.Connection, *, discard_stale: bool = Fals
             "provider_costs",
             "cost_billing",
             "tokens",
+        },
+        "session_cost_groups": {
+            "source_key",
+            "row_order",
+            "billing",
+            "provenance",
+            "rollup",
+            "cost",
+            "status",
+            "day",
+            "token_share",
         },
     }
     for table, columns in required.items():

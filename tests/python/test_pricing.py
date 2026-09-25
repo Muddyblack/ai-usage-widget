@@ -220,6 +220,38 @@ class PricingTest(IsolatedHomeTest):
         self.assertEqual(first, second)
         self.assertEqual(read_cache.call_count, 1)
 
+    def test_snapshot_revalidates_after_cache_file_identity_changes(self):
+        path = self.write(
+            f"cache/{pricing.CACHE_FILENAME}",
+            {
+                "version": pricing.CACHE_VERSION,
+                "source": pricing.MODELS_DEV_SOURCE_URL,
+                "fetchedAt": 1,
+                "checkedAt": 1,
+                "providers": {"openai": {"first": {"input": 1, "output": 2}}},
+            },
+        )
+        with mock.patch.object(pricing, "_read_cache", wraps=pricing._read_cache) as read_cache:
+            self.assertIn("first", pricing.cached_catalog()["openai"])
+            self.assertIn("first", pricing.cached_catalog()["openai"])
+            self.assertEqual(read_cache.call_count, 1)
+            path.write_text(
+                json.dumps(
+                    {
+                        "version": pricing.CACHE_VERSION,
+                        "source": pricing.MODELS_DEV_SOURCE_URL,
+                        "fetchedAt": 2,
+                        "checkedAt": 2,
+                        "providers": {"openai": {"replacement-model": {"input": 3, "output": 4}}},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            os.utime(path, ns=(2_000_000_000, 2_000_000_000))
+            self.assertIn("replacement-model", pricing.cached_catalog()["openai"])
+
+        self.assertEqual(read_cache.call_count, 2)
+
     def test_load_catalog_refresh_invalidates_cached_catalog(self):
         path = self.write(
             f"cache/{pricing.CACHE_FILENAME}",
@@ -587,6 +619,22 @@ class CatalogRowsTest(unittest.TestCase):
         self.assertEqual(result["total"], 1)
         self.assertEqual(result["rows"][0], {"provider": "anthropic", "model": "claude-x", "input": 3.0, "output": 15.0, "cached": 0.3})
         self.assertEqual(result["unit"], "USD per 1M tokens")
+
+    def test_repeated_table_queries_validate_once_without_mutating_catalog_rules(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self._cache(directory, {"anthropic": {"claude-x": {"input": 3, "output": 15}}})
+            with (
+                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch.object(pricing, "_read_cache", wraps=pricing._read_cache) as read_cache,
+                mock.patch.object(pricing, "fetch_json", side_effect=AssertionError("table query fetched rates")),
+            ):
+                pricing._CATALOG_CACHE.clear()
+                pricing._CURRENT_SNAPSHOTS.clear()
+                first = pricing.catalog_rows("claude")
+                second = pricing.catalog_rows("anthropic")
+
+        self.assertEqual(first["rows"], second["rows"])
+        self.assertEqual(read_cache.call_count, 1)
 
     def test_filters_on_provider_or_model_and_pages_stably(self):
         providers = {

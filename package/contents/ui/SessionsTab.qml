@@ -7,6 +7,7 @@ import org.kde.plasma.plasma5support as Plasma5Support
 import "../code/FeatureTabs.js" as FeatureTabs
 import "../code/Shell.js" as Shell
 import "../code/SessionSources.js" as SessionSources
+import "../code/SessionRefreshPolicy.js" as SessionRefreshPolicy
 
 // Local agent sessions across Claude, Codex, Muse, Cline and Grok.
 // Paths and transcripts never leave the backend.
@@ -15,11 +16,14 @@ ColumnLayout {
     property Item rootItem
 
     visible: rootItem.enabledTabs[rootItem.activeTab] === "sessions" && !rootItem.showSettings
+    readonly property bool foregroundSessionsVisible: visible && rootItem.expanded === true
     Layout.fillWidth: true
     spacing: 10
 
     property var sessions: []
     property bool loading: false
+    property bool backgroundRefreshRunning: false
+    property string backgroundRefreshCommand: ""
     property string errorText: ""
     property string notice: ""
     property string filterText: ""
@@ -32,9 +36,16 @@ ColumnLayout {
     property bool activeRefresh: false
     readonly property int sessionsLimit: 60
     property int sessionsTotal: 0
+    property bool sessionsTotalExact: false
     property int sessionsOffset: 0
     property int activeOffset: 0
     property double clockMs: Date.now()
+    property string cacheStatus: "unknown"
+    property var cacheAgeSeconds: null
+    property string refreshStatus: "not-run"
+    property int removedSourceCount: 0
+    property double previousClockMs: Date.now()
+    readonly property int reconcileIntervalMs: SessionRefreshPolicy.RECONCILE_INTERVAL_MS
     readonly property int totalPages: Math.max(1, Math.ceil(sessionsTotal / sessionsLimit))
     readonly property int currentPage: Math.min(totalPages, Math.max(1, Math.floor(sessionsOffset / sessionsLimit) + 1))
 
@@ -169,8 +180,18 @@ ColumnLayout {
     }
 
     onVisibleChanged: {
-        if (visible)
+        if (foregroundSessionsVisible)
             clockMs = Date.now();
+    }
+
+    onForegroundSessionsVisibleChanged: {
+        if (foregroundSessionsVisible && !loading)
+            queryOnly(sessionsOffset);
+    }
+
+    Component.onCompleted: {
+        if (foregroundSessionsVisible)
+            queryOnly(0);
     }
 
     onFilterTextChanged: {
@@ -179,7 +200,6 @@ ColumnLayout {
             requestedQuery = query;
             requestSerial += 1;
             sessionsOffset = 0;
-            sessionsTotal = 0;
         }
         searchTimer.restart();
     }
@@ -206,7 +226,6 @@ ColumnLayout {
             return;
         sessionsTab.selectedSourceIds = normalized;
         sessionsTab.sessionsOffset = 0;
-        sessionsTab.sessionsTotal = 0;
         sessionsTab.queryOnly();
     }
 
@@ -238,22 +257,33 @@ ColumnLayout {
     }
 
     Timer {
-        interval: Math.max(30, rootItem.pollIntervalSec || 300) * 1000
+        id: sessionsReconcileTimer
+        interval: SessionRefreshPolicy.refreshDelayMs(sessionsTab.cacheAgeSeconds, sessionsTab.refreshStatus)
+        running: sessionsTab.foregroundSessionsVisible
+        onTriggered: {
+            if (!sessionsTab.loading)
+                sessionsTab.refresh();
+        }
+    }
+
+    Timer {
+        interval: 500
         repeat: true
-        running: sessionsTab.visible
-        // Fires the moment the tab becomes visible, including the very first
-        // time. onVisibleChanged cannot cover that: when the popup opens
-        // straight onto Sessions the property is already true at creation, so
-        // it never changes and the list sat empty until a manual refresh.
-        triggeredOnStart: true
-        onTriggered: sessionsTab.refresh()
+        running: sessionsTab.foregroundSessionsVisible && sessionsTab.backgroundRefreshRunning && !sessionsTab.loading
+        onTriggered: sessionsTab.queryOnly(sessionsTab.sessionsOffset, true)
     }
 
     Timer {
         interval: 30000
         repeat: true
-        running: sessionsTab.visible && sessionsTab.sessions.length > 0
-        onTriggered: sessionsTab.clockMs = Date.now()
+        running: sessionsTab.foregroundSessionsVisible
+        onTriggered: {
+            var now = Date.now();
+            if (SessionRefreshPolicy.resumed(sessionsTab.previousClockMs, now) && sessionsTab.foregroundSessionsVisible && !sessionsTab.loading)
+                sessionsTab.refresh();
+            sessionsTab.previousClockMs = now;
+            sessionsTab.clockMs = now;
+        }
     }
 
     RowLayout {
@@ -438,6 +468,28 @@ ColumnLayout {
                 }
             }
         }
+    }
+
+    PlasmaComponents.Label {
+        visible: sessionsTab.cacheStatus === "no-cache" || sessionsTab.cacheStatus === "stale" || sessionsTab.cacheStatus === "empty" || sessionsTab.refreshStatus === "incomplete" || sessionsTab.refreshStatus === "failed" || sessionsTab.removedSourceCount > 0
+        Layout.fillWidth: true
+        text: {
+            if ((sessionsTab.refreshStatus === "incomplete" || sessionsTab.refreshStatus === "failed") && sessionsTab.cacheStatus === "no-cache")
+                return i18n("Refresh failed; no cached sessions are available.");
+            if (sessionsTab.refreshStatus === "incomplete" || sessionsTab.refreshStatus === "failed")
+                return i18n("Refresh incomplete; showing cached sessions.");
+            if (sessionsTab.cacheStatus === "no-cache")
+                return i18n("No cached session data yet.");
+            if (sessionsTab.removedSourceCount > 0)
+                return i18np("%1 session source was removed.", "%1 session sources were removed.", sessionsTab.removedSourceCount);
+            if (sessionsTab.cacheAgeSeconds !== null)
+                return i18np("Cached session data · %1 min old", "Cached session data · %1 min old", Math.floor(sessionsTab.cacheAgeSeconds / 60));
+            return i18n("Session cache status unavailable.");
+        }
+        wrapMode: Text.WordWrap
+        opacity: 0.65
+        color: Kirigami.Theme.textColor
+        font.pixelSize: 10
     }
 
     PlasmaComponents.Label {
@@ -804,7 +856,7 @@ ColumnLayout {
         return Kirigami.Theme.textColor;
     }
 
-    function requestSessions(offset, refreshMode) {
+    function requestSessions(offset, refreshMode, quiet) {
         requestSerial += 1;
         requestedQuery = searchQuery;
         requestedSourceSignature = sourceSignature(selectedSourceIds);
@@ -813,11 +865,8 @@ ColumnLayout {
         activeRequestSerial = requestSerial;
         activeOffset = offset;
         activeRefresh = refreshMode === true;
-        if (offset === 0) {
-            sessionsOffset = 0;
-            sessionsTotal = 0;
-        }
-        loading = true;
+        if (quiet !== true)
+            loading = true;
         errorText = "";
         notice = "";
         var mode = activeRefresh ? "--refresh" : "--query-only";
@@ -831,13 +880,21 @@ ColumnLayout {
     }
 
     function refresh() {
-        if (loading)
+        if (loading || backgroundRefreshRunning)
             return;
-        requestSessions(0, true);
+        backgroundRefreshRunning = true;
+        var cmd = "cd " + Shell.quote(rootItem.scriptDir) + " && ./get-ai-usage --sessions --refresh --query " + Shell.quote(searchQuery);
+        cmd += " --limit " + sessionsLimit + " --offset " + sessionsOffset;
+        if (selectedSourceIds.length > 0)
+            cmd += " --source " + Shell.quote(selectedSourceIds.join(","));
+        backgroundRefreshCommand = cmd;
+        backgroundRefreshSource.disconnectSource(cmd);
+        backgroundRefreshSource.connectSource(cmd);
+        queryOnly(sessionsOffset);
     }
 
-    function queryOnly(offset) {
-        requestSessions(offset === undefined ? 0 : offset, false);
+    function queryOnly(offset, quiet) {
+        requestSessions(offset === undefined ? 0 : offset, false, quiet);
     }
 
     Plasma5Support.DataSource {
@@ -862,6 +919,12 @@ ColumnLayout {
             }
             try {
                 var payload = JSON.parse(stdout);
+                if (payload.cacheStatus === "failed") {
+                    sessionsTab.refreshStatus = "failed";
+                    sessionsTab.errorText = i18n("Could not load cached sessions.");
+                    sessionsReconcileTimer.restart();
+                    return;
+                }
                 var page = payload.sessions || [];
                 var responseSources = sessionsTab.normalizeSources(payload.sources);
                 var staleSelection = sessionsTab.sourceSelectionHasStaleIds(responseSources);
@@ -880,11 +943,45 @@ ColumnLayout {
                 }
                 sessionsTab.sourceResetSignature = "";
                 sessionsTab.sessionsTotal = Number(payload.total) || 0;
+                sessionsTab.sessionsTotalExact = payload.totalExact === true;
                 sessionsTab.sessionsOffset = Number(payload.offset) || sessionsTab.activeOffset;
                 sessionsTab.sessions = page;
+                sessionsTab.cacheStatus = payload.cacheStatus || "unknown";
+                sessionsTab.cacheAgeSeconds = payload.cacheAgeSeconds === undefined ? null : payload.cacheAgeSeconds;
+                sessionsTab.refreshStatus = payload.refreshStatus || "not-run";
+                sessionsTab.removedSourceCount = Number(payload.removedSourceCount) || 0;
+                sessionsReconcileTimer.restart();
+                if (!sessionsTab.activeRefresh && SessionRefreshPolicy.cacheExpired(sessionsTab.cacheAgeSeconds))
+                    sessionsTab.refresh();
             } catch (e) {
                 sessionsTab.errorText = i18n("Could not parse sessions.");
             }
+        }
+    }
+
+    Plasma5Support.DataSource {
+        id: backgroundRefreshSource
+        engine: "executable"
+        connectedSources: []
+        onNewData: function (sourceName, data) {
+            backgroundRefreshSource.disconnectSource(sourceName);
+            if (sourceName !== sessionsTab.backgroundRefreshCommand)
+                return;
+            sessionsTab.backgroundRefreshRunning = false;
+            var stdout = data && data.stdout ? data.stdout : "";
+            var exitCode = data ? Number(data["exit code"]) : 1;
+            if (exitCode !== 0) {
+                sessionsTab.refreshStatus = "failed";
+                sessionsTab.errorText = i18n("Could not load sessions.");
+                return;
+            }
+            try {
+                var payload = JSON.parse(stdout);
+                sessionsTab.refreshStatus = payload.refreshStatus || sessionsTab.refreshStatus;
+            } catch (e) {
+                sessionsTab.refreshStatus = "failed";
+            }
+            sessionsTab.queryOnly(sessionsTab.sessionsOffset);
         }
     }
 

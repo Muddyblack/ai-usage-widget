@@ -110,6 +110,8 @@ def normalize_openai(raw):
         "orgId": creds.get("orgId") or "",
         "accountId": creds.get("accountId") or "",
         "authMode": creds.get("authMode") or "",
+        "codexSource": inp.get("codexSource", "live"),
+        "codexAgeSeconds": inp.get("codexAgeSeconds"),
         "codex": {
             "available": codex_available,
             "limitReached": codex["limitReached"],

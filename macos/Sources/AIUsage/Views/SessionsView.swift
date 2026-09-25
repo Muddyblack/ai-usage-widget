@@ -52,6 +52,11 @@ struct SessionsView: View {
             if !model.sessionsError.isEmpty {
                 Text(model.sessionsError).font(.system(size: 11)).foregroundStyle(.red)
             }
+            if model.sessionsCacheStatus == "no-cache" || model.sessionsCacheStatus == "stale" || model.sessionsCacheStatus == "empty" || model.sessionsRefreshStatus == "incomplete" || model.sessionsRefreshStatus == "failed" || model.sessionsRemovedSourceCount > 0 {
+                Text(sessionCacheStatus)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
             if !model.sessionsNotice.isEmpty {
                 Text(model.sessionsNotice).font(.system(size: 11)).foregroundStyle(.secondary)
             }
@@ -82,7 +87,7 @@ struct SessionsView: View {
                 .disabled(model.sessionsLoading)
             }
         }
-        .onAppear { model.refreshSessions(query: filterText, refresh: true) }
+        .onAppear { model.refreshSessions(query: filterText, refresh: false) }
         .onChange(of: filterText) { model.scheduleSessionsRefresh(query: $0) }
     }
 
@@ -129,6 +134,26 @@ struct SessionsView: View {
             return i18n("All sources")
         }
         return i18np("%1 source", "%1 sources", model.selectedSessionSourceIDs.count)
+    }
+
+    private var sessionCacheStatus: String {
+        if model.sessionsRefreshStatus == "incomplete" || model.sessionsRefreshStatus == "failed" {
+            if model.sessionsCacheStatus == "no-cache" {
+                return i18n("Refresh failed; no cached sessions are available.")
+            }
+            return i18n("Refresh incomplete; showing cached sessions.")
+        }
+        if model.sessionsRemovedSourceCount > 0 {
+            return i18np("%1 session source was removed.", "%1 session sources were removed.", model.sessionsRemovedSourceCount)
+        }
+        if model.sessionsCacheStatus == "no-cache" {
+            return i18n("No cached session data yet.")
+        }
+        if model.sessionsCacheStatus == "empty" {
+            return i18n("No cached sessions.")
+        }
+        let ageMinutes = (model.sessionsCacheAgeSeconds ?? 0) / 60
+        return i18np("Cached session data · %1 min old", "Cached session data · %1 min old", ageMinutes)
     }
 
     @ViewBuilder

@@ -1,15 +1,182 @@
 """Worker results must reach QML and its property bindings on the GUI thread."""
 
+import ast
 import importlib.util
+import json
 import os
 import sys
 import threading
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from _support import REPO
 
 HAS_PYSIDE = importlib.util.find_spec("PySide6") is not None
+WINDOWS_APP = Path(REPO) / "windows" / "app.py"
+
+
+def load_production_finish_sessions():
+    tree = ast.parse(WINDOWS_APP.read_text(encoding="utf-8"), filename=str(WINDOWS_APP))
+    backend_class = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "Backend")
+    method = next(node for node in backend_class.body if isinstance(node, ast.FunctionDef) and node.name == "_finish_sessions")
+    extracted = ast.Module(
+        body=[ast.ClassDef(name="ExtractedBackend", bases=[], keywords=[], body=[method], decorator_list=[])],
+        type_ignores=[],
+    )
+    ast.fix_missing_locations(extracted)
+    namespace = {"Slot": lambda *args: lambda function: function, "json": json}
+    exec(compile(extracted, str(WINDOWS_APP), "exec"), namespace)
+    return namespace["ExtractedBackend"]
+
+
+class RequestGenerationSignal:
+    def __init__(self):
+        self.events = []
+        self.listeners = []
+
+    def connect(self, listener):
+        self.listeners.append(listener)
+
+    def emit(self, *args):
+        self.events.append(args)
+        for listener in self.listeners:
+            listener(*args)
+
+
+class SessionStateModel:
+    def __init__(self, request_id, sessions):
+        self.request_id = request_id
+        self.sessions = sessions
+        self.loading = True
+
+    def apply_completion(self, result, query, request_id):
+        del query
+        if request_id != self.request_id:
+            return
+        self.sessions = json.loads(result)["sessions"]
+        self.loading = False
+
+
+class RequestGenerationBehaviorTest(unittest.TestCase):
+    def test_late_completion_does_not_replace_data_or_clear_newer_loading_state(self):
+        backend_type = load_production_finish_sessions()
+        backend = object.__new__(backend_type)
+        backend._sessions_request_id = 2
+        signal = RequestGenerationSignal()
+        backend.sessionsReady = signal
+        state = SessionStateModel(2, [{"id": "loading"}])
+        signal.connect(state.apply_completion)
+
+        backend._finish_sessions('{"sessions":[{"id":"late"}]}', "", "old", 1)
+        self.assertEqual(signal.events, [])
+        self.assertEqual(state.sessions, [{"id": "loading"}])
+        self.assertTrue(state.loading)
+
+        backend._finish_sessions('{"sessions":[{"id":"current"}]}', "", "current", 2)
+        self.assertEqual(signal.events, [('{"sessions":[{"id":"current"}]}', "current", 2)])
+        self.assertEqual(state.sessions, [{"id": "current"}])
+        self.assertFalse(state.loading)
+
+
+def load_backend_method(name, extra=None):
+    tree = ast.parse(WINDOWS_APP.read_text(encoding="utf-8"), filename=str(WINDOWS_APP))
+    backend_class = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "Backend")
+    method = next(node for node in backend_class.body if isinstance(node, ast.FunctionDef) and node.name == name)
+    extracted = ast.Module(
+        body=[ast.ClassDef(name="ExtractedBackend", bases=[], keywords=[], body=[method], decorator_list=[])],
+        type_ignores=[],
+    )
+    ast.fix_missing_locations(extracted)
+    namespace = {"Slot": lambda *args: lambda function: function, "json": json, **(extra or {})}
+    exec(compile(extracted, str(WINDOWS_APP), "exec"), namespace)
+    return namespace["ExtractedBackend"]
+
+
+class RateQueryOffThreadTest(unittest.TestCase):
+    """The pricing catalog parse must not run on the GUI thread, and a
+    superseded query's result must not reach the UI."""
+
+    def _source(self, name):
+        tree = ast.parse(WINDOWS_APP.read_text(encoding="utf-8"), filename=str(WINDOWS_APP))
+        backend_class = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "Backend")
+        method = next(node for node in backend_class.body if isinstance(node, ast.FunctionDef) and node.name == name)
+        return ast.unparse(method)
+
+    def test_request_rates_submits_to_the_pool_not_inline(self):
+        source = self._source("requestRates")
+        self.assertIn("_pool.submit", source)
+        self.assertNotIn("catalog_rows", source)
+
+    def test_catalog_parse_happens_in_the_worker(self):
+        source = self._source("_query_rates")
+        self.assertIn("catalog_rows", source)
+        self.assertIn("_ratesCompleted.emit", source)
+
+    def test_a_superseded_rate_result_is_dropped(self):
+        backend_type = load_backend_method("_finish_rates")
+        backend = object.__new__(backend_type)
+        backend._rates_request_id = 5
+        signal = RequestGenerationSignal()
+        backend.ratesReady = signal
+        backend._finish_rates("old", 4)
+        self.assertEqual(signal.events, [])
+        backend._finish_rates("current", 5)
+        self.assertEqual(signal.events, [("current",)])
+
+    def test_request_rates_ignores_a_non_newer_request_id(self):
+        backend_type = load_backend_method("requestRates")
+        backend = object.__new__(backend_type)
+        backend._rates_request_id = 3
+        submitted = []
+        backend._query_rates = lambda *a: None
+        backend._pool = mock.Mock()
+        backend._pool.submit = lambda *a, **k: submitted.append(a)
+        backend.requestRates("q", 40, 0, 2)
+        self.assertEqual(submitted, [])
+        backend.requestRates("q", 40, 0, 4)
+        self.assertEqual(len(submitted), 1)
+
+    def test_pricing_refresh_does_not_take_the_environment_lock(self):
+        source = Path(REPO).joinpath("windows", "app.py").read_text(encoding="utf-8")
+        start = source.index("def refresh_pricing_json():")
+        end = source.index("def _restore_environ", start)
+        self.assertNotIn("_env_lock", source[start:end])
+
+
+class SessionRefreshResponseTest(unittest.TestCase):
+    def test_cached_page_is_emitted_before_background_refresh_finishes(self):
+        class RefreshFuture:
+            is_done = False
+
+            def done(self):
+                return self.is_done
+
+            def result(self, timeout=None):
+                self.is_done = True
+                return '{"sessions":[{"title":"refreshed"}]}'
+
+        responses = RequestGenerationSignal()
+        cache_reads = []
+        refresh_future = RefreshFuture()
+        backend_type = load_backend_method(
+            "_refresh_sessions",
+            {
+                "collect_sessions_cache_json": lambda *args, **kwargs: cache_reads.append((args, kwargs)) or '{"sessions":[{"title":"cached"}]}',
+                "refresh_sessions_json": lambda *args, **kwargs: '{"sessions":[{"title":"unused"}]}',
+            },
+        )
+        backend = object.__new__(backend_type)
+        backend._pool = mock.Mock()
+        backend._pool.submit.return_value = refresh_future
+        backend._sessionsCompleted = responses
+
+        backend._refresh_sessions("", 4, 0, True, None)
+
+        self.assertEqual(len(cache_reads), 1)
+        self.assertEqual([json.loads(event[0])["sessions"][0]["title"] for event in responses.events], ["cached", "refreshed"])
+
+
 if HAS_PYSIDE:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     sys.path.insert(0, os.path.join(REPO, "windows"))
@@ -187,6 +354,16 @@ class BackendThreadTest(unittest.TestCase):
             second.result(timeout=5)
 
         self.assertEqual(collect.call_args_list, [mock.call("second", limit=60, offset=0)])
+
+    def test_late_session_completion_cannot_replace_newer_generation(self):
+        events = []
+        self.backend.sessionsReady.connect(lambda result, query, request_id: events.append((result, query, request_id)))
+        self.backend._sessions_request_id = 2
+
+        self.backend._finish_sessions('{"sessions":["late"]}', "", "first", 1)
+        self.backend._finish_sessions('{"sessions":["current"]}', "", "second", 2)
+
+        self.assertEqual(events, [('{"sessions":["current"]}', "second", 2)])
 
 
 if __name__ == "__main__":

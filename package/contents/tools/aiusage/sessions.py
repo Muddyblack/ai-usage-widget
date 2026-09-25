@@ -31,14 +31,13 @@ import shlex
 import shutil
 import subprocess
 import time
-import urllib.parse
 from collections.abc import Sequence
 
 from . import billing, billing_mode, pricing
 from .contract import epoch_of, num
 from .providers import antigravity_sessions, cursor_sessions, mistral_sessions, opencode
 from .providers.cline import get_cline_session_records
-from .providers.grok import grok_home
+from .providers.grok import account_identity, discover_sessions, grok_home
 from .providers.muse import sessions_root as muse_sessions_root
 from .providers.openai_credentials import codex_home
 from .session_cache import SessionCache
@@ -648,24 +647,17 @@ def _grok_summary_entries(sessions_dir, *, include_all=False):
     reader still runs for anyone on one, and simply finds nothing here.
     """
     found = []
-    for workspace in sorted(os.listdir(sessions_dir)):
-        workspace_dir = os.path.join(sessions_dir, workspace)
-        if not os.path.isdir(workspace_dir):
+    for record in discover_sessions(sessions_dir, identity=account_identity()):
+        if not record.summary_path:
             continue
-        for name in sorted(os.listdir(workspace_dir)):
-            session_dir = os.path.join(workspace_dir, name)
-            summary_path = os.path.join(session_dir, "summary.json")
-            try:
-                if not os.path.isfile(summary_path):
-                    continue
-                stat = os.stat(summary_path)
-                with open(summary_path, encoding="utf-8") as f:
-                    summary = json.load(f)
-            except (OSError, ValueError):
-                continue
-            if not isinstance(summary, dict):
-                continue
-            found.append((stat.st_mtime, session_dir, name, summary))
+        try:
+            with open(record.summary_path, encoding="utf-8") as f:
+                summary = json.load(f)
+        except (OSError, ValueError):
+            continue
+        if not isinstance(summary, dict):
+            continue
+        found.append((record.summary_mtime, record.directory, record.session_id, summary))
 
     found.sort(reverse=True)
     out = []
@@ -714,42 +706,39 @@ def _grok_entries(*, include_all=False):
         out = _grok_summary_entries(sessions_dir, include_all=include_all)
     except OSError:
         out = []
-    for root, _dirs, files in os.walk(sessions_dir):
-        for name in files:
-            if name != "signals.json":
-                continue
-            path = os.path.join(root, name)
-            try:
-                st = os.stat(path)
-                with open(path, encoding="utf-8") as f:
-                    data = json.load(f)
-            except (OSError, ValueError):
-                continue
-            if not isinstance(data, dict):
-                continue
-            models = data.get("modelsUsed") or []
-            model = models[0] if isinstance(models, list) and models else ""
-            tokens = num(data.get("contextTokensUsed"))
-            detail_bits = []
-            if tokens > 0:
-                detail_bits.append(f"{_format_tokens(tokens)} tok")
-            if model:
-                detail_bits.append(str(model))
-            # The session dir sits inside the url-encoded cwd ("%2F…"); that
-            # parent is the workspace, the dir name itself is the session id.
-            session_id = os.path.basename(os.path.dirname(path))
-            out.append(
-                _entry(
-                    "grok",
-                    str(model) if model else "Grok",
-                    st.st_mtime,
-                    session_name="Grok CLI",
-                    detail=" · ".join(detail_bits),
-                    session_id=session_id if session_id and session_id != "sessions" else "",
-                )
+    for record in discover_sessions(sessions_dir, identity=account_identity()):
+        if not record.signals_path:
+            continue
+        try:
+            with open(record.signals_path, encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, ValueError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        models = data.get("modelsUsed") or []
+        model = models[0] if isinstance(models, list) and models else ""
+        tokens = num(data.get("contextTokensUsed"))
+        detail_bits = []
+        if tokens > 0:
+            detail_bits.append(f"{_format_tokens(tokens)} tok")
+        if model:
+            detail_bits.append(str(model))
+        # The session dir sits inside the url-encoded cwd ("%2F…"); that
+        # parent is the workspace, the dir name itself is the session id.
+        session_id = record.session_id
+        out.append(
+            _entry(
+                "grok",
+                str(model) if model else "Grok",
+                record.signals_mtime,
+                session_name="Grok CLI",
+                detail=" · ".join(detail_bits),
+                session_id=session_id if session_id and session_id != "sessions" else "",
             )
-            if not include_all and len(out) >= _MAX_SESSIONS:
-                return out
+        )
+        if not include_all and len(out) >= _MAX_SESSIONS:
+            return out
     return out
 
 
@@ -1226,27 +1215,11 @@ def _grok_targets():
     if not os.path.isdir(sessions_dir):
         return []
     out = []
-    for root, _dirs, files in os.walk(sessions_dir):
+    for record in discover_sessions(sessions_dir, identity=account_identity()):
         # summary.json is the current layout, signals.json the older one.
-        marker = "summary.json" if "summary.json" in files else "signals.json" if "signals.json" in files else ""
-        if not marker:
+        if not record.marker:
             continue
-        session_id = os.path.basename(root)
-        if not session_id or session_id == "sessions":
-            continue
-        try:
-            mtime = os.path.getmtime(os.path.join(root, marker))
-        except OSError:
-            continue
-        # The session dir's parent is the url-encoded workspace ("%2F…").
-        cwd = ""
-        parent = os.path.basename(os.path.dirname(root.rstrip("/\\")))
-        if parent.startswith("%2F"):
-            try:
-                cwd = urllib.parse.unquote(parent)
-            except Exception:
-                cwd = ""
-        out.append({"provider": "grok", "id": session_id, "mtime": mtime, "cwd": cwd})
+        out.append({"provider": "grok", "id": record.session_id, "mtime": record.mtime, "cwd": record.cwd})
     return out
 
 

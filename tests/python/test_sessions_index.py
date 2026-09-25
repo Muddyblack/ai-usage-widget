@@ -11,6 +11,7 @@ import importlib
 import json
 import sqlite3
 import tempfile
+import threading
 import unittest
 from dataclasses import dataclass
 from pathlib import Path
@@ -94,6 +95,7 @@ def _connection(
 
     connection.execute.side_effect = execute
     connection.commit.side_effect = lambda: events.append("commit")
+    connection.__exit__.side_effect = lambda error_type, _error, _traceback: events.append("commit") if error_type is None else None
     return connection
 
 
@@ -195,7 +197,7 @@ class SessionIndexTest(unittest.TestCase):
             ):
                 index.reconcile([source], _parser([]))
 
-        self.assertEqual(events, ["commit"])
+        self.assertEqual(events, [])
         self.assertEqual(checkpoints, [])
         query.assert_not_called()
 
@@ -288,6 +290,84 @@ class SessionIndexTest(unittest.TestCase):
         )
         self.assertEqual(result["total"], 2)
 
+    def test_completed_source_is_visible_while_next_source_is_still_collecting(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / "sessions.sqlite3"
+            fast = _source(root, "fast.jsonl", "fast")
+            slow = _source(root, "slow.jsonl", "slow")
+            index = _index_class()(cache)
+
+            def row(source: Source, version: str) -> Row:
+                return {
+                    "provider": "claude",
+                    "title": f"{source.source_id} {version}",
+                    "sessionName": "Fixture",
+                    "state": "idle",
+                    "lastActivityAt": source.mtime_ns,
+                    "detail": "safe",
+                    "openKey": "",
+                }
+
+            index.reconcile([slow, fast], lambda source: [row(source, "old")])
+            changed_fast = _source(root, "fast.jsonl", "fast", version=2)
+            changed_slow = _source(root, "slow.jsonl", "slow", version=2)
+            slow_started = threading.Event()
+            fast_committed = threading.Event()
+            finish_slow = threading.Event()
+            failures: list[Exception] = []
+
+            def parse(source: Source) -> list[Row]:
+                if source.source_id == "slow":
+                    slow_started.set()
+                    if not finish_slow.wait(5):
+                        raise TimeoutError("slow source was not released")
+                return [row(source, "new")]
+
+            def refresh() -> None:
+                try:
+                    index.reconcile([changed_slow, changed_fast], parse)
+                except Exception as error:
+                    failures.append(error)
+
+            open_index = index._open
+
+            class ObservedConnection:
+                def __init__(self, connection):
+                    self.connection = connection
+
+                def __getattr__(self, name):
+                    return getattr(self.connection, name)
+
+                def __enter__(self):
+                    self.connection.__enter__()
+                    return self
+
+                def __exit__(self, error_type, error, traceback):
+                    result = self.connection.__exit__(error_type, error, traceback)
+                    if error_type is None:
+                        fast_committed.set()
+                    return result
+
+            def traced_open(*, discard_stale=False):
+                return ObservedConnection(open_index(discard_stale=discard_stale))
+
+            worker = threading.Thread(target=refresh)
+            with mock.patch.object(index, "_open", side_effect=traced_open):
+                worker.start()
+                try:
+                    self.assertTrue(slow_started.wait(5))
+                    self.assertTrue(fast_committed.wait(5))
+                    interim = {entry["title"] for entry in index.query(limit=10)["sessions"]}
+                finally:
+                    finish_slow.set()
+                    worker.join(5)
+
+            self.assertFalse(worker.is_alive())
+            self.assertEqual(failures, [])
+            self.assertEqual(interim, {"fast new", "slow old"})
+            self.assertEqual({entry["title"] for entry in index.query(limit=10)["sessions"]}, {"fast new", "slow new"})
+
     def test_query_preserves_filter_order_and_exact_pagination(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -361,6 +441,95 @@ def _titled_parser(title: str) -> Parser:
         ]
 
     return parse
+
+
+class ContributionTableTest(unittest.TestCase):
+    """The materialized local-spend table is maintained by reconcile and read
+    by spend_groups, which must agree with the full-row path."""
+
+    def _cost_parser(self, rows):
+        def parse(source: Source) -> list[Row]:
+            return rows
+
+        return parse
+
+    def test_reconcile_materializes_contributions_and_spend_groups_reads_them(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / "sessions.sqlite3"
+            source = _source(root, "one.jsonl", "one")
+            index = _index_class()(cache)
+            index.reconcile(
+                [source],
+                self._cost_parser(
+                    [
+                        {
+                            "provider": "opencode",
+                            "source": "opencode",
+                            "costUSD": 0.42,
+                            "costStatus": "exact",
+                            "costProvenance": "actual",
+                            "lastActivityAt": 1_789_046_340,
+                        }
+                    ]
+                ),
+            )
+            groups = index.spend_groups()
+
+        self.assertEqual(groups["actual"]["totalUSD"], 0.42)
+        self.assertEqual(groups["actual"]["providers"]["opencode::opencode"]["costUSD"], 0.42)
+
+    def test_removed_source_drops_its_contributions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / "sessions.sqlite3"
+            kept = _source(root, "one.jsonl", "one")
+            removed = _source(root, "two.jsonl", "two")
+            index = _index_class()(cache)
+            index.reconcile(
+                [kept, removed],
+                self._cost_parser(
+                    [
+                        {
+                            "provider": "cline",
+                            "source": "cline",
+                            "costUSD": 1.0,
+                            "costStatus": "exact",
+                            "costProvenance": "estimated",
+                        }
+                    ]
+                ),
+            )
+            index.reconcile([kept], self._cost_parser([]))
+            groups = index.spend_groups()
+
+        self.assertEqual(groups["estimated"]["totalUSD"], 1.0)
+
+    def test_spend_groups_returns_none_when_the_cache_is_stale(self):
+        storage = importlib.import_module("aiusage.session_index_storage")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / "sessions.sqlite3"
+            source = _source(root, "one.jsonl", "one")
+            index = _index_class()(cache)
+            index.reconcile(
+                [source],
+                self._cost_parser(
+                    [
+                        {
+                            "provider": "cline",
+                            "source": "cline",
+                            "costUSD": 1.0,
+                            "costStatus": "exact",
+                            "costProvenance": "estimated",
+                        }
+                    ]
+                ),
+            )
+            with mock.patch.object(storage, "_schema_version", lambda: 123456):
+                groups = index.spend_groups()
+
+        self.assertIsNone(groups)
 
 
 class SchemaVersionInvalidationTest(unittest.TestCase):

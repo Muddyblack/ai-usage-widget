@@ -51,7 +51,6 @@ ColumnLayout {
         if (client)
             client.dispose();
     }
-
     Timer {
         interval: 1000
         repeat: true

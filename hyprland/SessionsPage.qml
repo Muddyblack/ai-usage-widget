@@ -14,6 +14,10 @@ ColumnLayout {
     readonly property bool loading: shell.sessionsLoading === true
     readonly property string errorText: shell.sessionsError || ""
     readonly property string notice: shell.sessionsNotice || ""
+    readonly property string cacheStatus: shell.sessionsCacheStatus || "unknown"
+    readonly property var cacheAgeSeconds: shell.sessionsCacheAgeSeconds === undefined ? null : shell.sessionsCacheAgeSeconds
+    readonly property string refreshStatus: shell.sessionsRefreshStatus || "not-run"
+    readonly property int removedSourceCount: shell.sessionsRemovedSourceCount || 0
     property string filterText: ""
     readonly property string searchQuery: (filterText || "").trim()
     readonly property int sessionsTotal: shell.sessionsTotal || 0
@@ -420,6 +424,28 @@ ColumnLayout {
                 }
             }
         }
+    }
+
+    Text {
+        visible: page.cacheStatus === "no-cache" || page.cacheStatus === "stale" || page.cacheStatus === "empty" || page.refreshStatus === "incomplete" || page.refreshStatus === "failed" || page.removedSourceCount > 0
+        Layout.fillWidth: true
+        text: {
+            if ((page.refreshStatus === "incomplete" || page.refreshStatus === "failed") && page.cacheStatus === "no-cache")
+                return shell.i18n("Refresh failed; no cached sessions are available.");
+            if (page.refreshStatus === "incomplete" || page.refreshStatus === "failed")
+                return shell.i18n("Refresh incomplete; showing cached sessions.");
+            if (page.cacheStatus === "no-cache")
+                return shell.i18n("No cached session data yet.");
+            if (page.removedSourceCount > 0)
+                return shell.i18np("%1 session source was removed.", "%1 session sources were removed.", page.removedSourceCount);
+            if (page.cacheAgeSeconds !== null)
+                return shell.i18np("Cached session data · %1 min old", "Cached session data · %1 min old", Math.floor(page.cacheAgeSeconds / 60));
+            return shell.i18n("Session cache status unavailable.");
+        }
+        wrapMode: Text.WordWrap
+        opacity: 0.65
+        color: "#f8fafc"
+        font.pixelSize: 10
     }
 
     Text {

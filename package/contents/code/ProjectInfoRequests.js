@@ -117,3 +117,6 @@ function create(project, makeRequest, now, publish) {
     return {tick: tick, refresh: refresh, pause: pause,
         dispose: function () { disposed = true; pause(); }};
 }
+
+if (typeof module !== "undefined" && module.exports)
+    module.exports = {create: create};

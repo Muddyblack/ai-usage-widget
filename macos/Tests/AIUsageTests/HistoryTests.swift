@@ -114,4 +114,68 @@ final class HistoryTests: XCTestCase {
         XCTAssertEqual(rows[0]["t"] as? Double, 1000)
         XCTAssertEqual(rows[0]["s"] as? Double, 50)
     }
+
+    // ── The debounce and the immediate chart ─────────────────────────────
+
+    @MainActor
+    func testRecordShowsOnTheChartBeforeAnySave() {
+        // The whole point of the debounce: the chart is current the moment a
+        // poll lands, and only the write waits for the window.
+        let store = HistoryStore()
+        var provider = Provider()
+        provider.historyValues = ["s": 50]
+        store.record([provider], at: Date(timeIntervalSince1970: 1))
+        XCTAssertEqual(store.points.count, 1)
+        XCTAssertEqual(store.points[0].values["s"], 50)
+    }
+
+    @MainActor
+    func testRecordWithNoValuesAddsNothing() {
+        let store = HistoryStore()
+        store.record([Provider()], at: Date(timeIntervalSince1970: 1))
+        XCTAssertTrue(store.points.isEmpty)
+    }
+
+    @MainActor
+    func testFlushSynchronouslyWithNothingPendingDoesNothing() {
+        // Nothing to write, so nothing is offered to the backend — the guard
+        // returns before any subprocess is started.
+        let store = HistoryStore()
+        store.flushSynchronously()
+        XCTAssertTrue(store.points.isEmpty)
+    }
+
+    // ── union ────────────────────────────────────────────────────────────
+
+    func testUnionMergesPointsSharingATimestamp() {
+        // Two half-filled points recorded a millisecond apart must not cost
+        // each other their series: the keys fold into one complete point.
+        let base = [HistoryPoint(t: 1000, values: ["w": 60])]
+        let overlay = [HistoryPoint(t: 1000, values: ["s": 10])]
+        let out = HistoryStore.union(base, overlay)
+        XCTAssertEqual(out.count, 1)
+        XCTAssertEqual(out[0].values["w"], 60)
+        XCTAssertEqual(out[0].values["s"], 10)
+    }
+
+    func testUnionLetsTheOverlayWinAKey() {
+        let base = [HistoryPoint(t: 1000, values: ["w": 60])]
+        let overlay = [HistoryPoint(t: 1000, values: ["w": 70])]
+        let out = HistoryStore.union(base, overlay)
+        XCTAssertEqual(out[0].values["w"], 70)
+    }
+
+    func testUnionKeepsPointsOnlyOneSideRecorded() {
+        let base = [HistoryPoint(t: 1000, values: ["w": 60])]
+        let overlay = [HistoryPoint(t: 2000, values: ["s": 10])]
+        let out = HistoryStore.union(base, overlay)
+        XCTAssertEqual(out.map(\.t), [1000, 2000])
+    }
+
+    func testUnionTrimsToTheCap() {
+        let base = (0..<20).map { HistoryPoint(t: Double($0), values: ["s": 1]) }
+        let out = HistoryStore.union(base, [], limit: 10)
+        XCTAssertEqual(out.count, 10)
+        XCTAssertEqual(out.first?.t, 10, "the oldest points are dropped")
+    }
 }

@@ -39,6 +39,35 @@ class FrontendBehaviorTest(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_panel_and_stale_fixture_matrix_covers_requested_boundaries(self):
+        cases = scenarios()
+        threshold_cases = {case["name"]: case for case in cases if case["name"].startswith("panel-threshold-")}
+        self.assertEqual(
+            sorted(int(name.rsplit("-", 1)[1]) for name in threshold_cases),
+            [0, 69, 70, 89, 90, 100],
+        )
+        for value, case in ((int(name.rsplit("-", 1)[1]), case) for name, case in threshold_cases.items()):
+            self.assertEqual(case["expected"]["rowValues"], [value])
+            self.assertEqual(case["expected"]["panelText"], [f"{value}%"])
+
+        stale_path = Path(REPO) / "tests/behavior/stale-state.json"
+        stale = json.loads(stale_path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            {case["name"] for case in stale},
+            {
+                "valid-live",
+                "transient-empty",
+                "timeout-error",
+                "stale-good-age",
+                "expired-no-cache",
+                "changed-account-identity",
+                "late-request-generation",
+            },
+        )
+        for case in stale[:-1]:
+            self.assertEqual(set(case["expected"]), {"accountId", "pct", "available", "stale", "error"})
+        self.assertEqual(stale[-1]["expected"], {"accepted": False, "lastGoodPct": 69})
+
 
 def check_qml():
     from PySide6.QtCore import QObject, QUrl

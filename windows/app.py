@@ -87,6 +87,14 @@ def collect_sessions_json(query: str = "", limit: int | None = 60, offset: int =
             _restore_environ(saved)
 
 
+def collect_sessions_cache_json(query: str = "", limit: int | None = 60, offset: int = 0, source_ids=None) -> str:
+    if source_ids is None:
+        result = collect_sessions(query, limit=limit, offset=offset)
+    else:
+        result = collect_sessions(query, limit=limit, offset=offset, source_ids=source_ids)
+    return json.dumps(result, separators=(",", ":"), ensure_ascii=False)
+
+
 def refresh_sessions_json(query: str = "", limit: int | None = 60, offset: int = 0, source_ids=None) -> str:
     with _env_lock:
         saved = dict(os.environ)
@@ -122,11 +130,14 @@ def collect_snapshot():
 
 
 def refresh_pricing_json():
-    with _env_lock:
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            _refresh_pricing()
-        return output.getvalue().strip()
+    # pricing.load_catalog() reads its own cache and does not touch os.environ,
+    # so it needs neither the process-wide environment lock nor a save/restore
+    # round trip. Holding the lock here needlessly serialized pricing behind
+    # every provider collection.
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output):
+        _refresh_pricing()
+    return output.getvalue().strip()
 
 
 def _restore_environ(saved):
@@ -361,6 +372,9 @@ class Backend(QObject):
     pricingRefreshFinished = Signal(str)
     pricingRefreshFailed = Signal(str)
     pricingBusyChanged = Signal()
+    # A completed rate-table query, published on the GUI thread. The query text
+    # is carried by the QML side's own request generation.
+    ratesReady = Signal(str)
     # Workers only emit these private signals. Public QML signals and property
     # notifications are published by slots on this object's GUI thread.
     _refreshCompleted = Signal(str, str)
@@ -368,6 +382,7 @@ class Backend(QObject):
     _openSessionCompleted = Signal(str)
     _historyCompleted = Signal(str, str)
     _pricingCompleted = Signal(str, str)
+    _ratesCompleted = Signal(str, int)
 
     def __init__(self, first_run=False):
         super().__init__()
@@ -376,6 +391,7 @@ class Backend(QObject):
         self._pricing_busy = False
         self._sessions_request_id = 0
         self._sessions_future = None
+        self._rates_request_id = 0
         self._autostart = autostart_enabled()
         self._first_run = first_run
         self._tray_labels = {}
@@ -384,6 +400,7 @@ class Backend(QObject):
         self._openSessionCompleted.connect(self.openSessionFinished, Qt.QueuedConnection)
         self._historyCompleted.connect(self._finish_history, Qt.QueuedConnection)
         self._pricingCompleted.connect(self._finish_pricing, Qt.QueuedConnection)
+        self._ratesCompleted.connect(self._finish_rates, Qt.QueuedConnection)
 
     # ── Data ──
     def _get_busy(self):
@@ -452,6 +469,8 @@ class Backend(QObject):
 
     @Slot(str, int, int, result=str)
     def queryRatesJson(self, query="", limit=40, offset=0):
+        # Synchronous fallback used by tests and non-GUI callers; QML uses the
+        # queued path below so the catalog parse never runs on the GUI thread.
         try:
             from aiusage import pricing
 
@@ -459,6 +478,29 @@ class Backend(QObject):
             return json.dumps(rows, separators=(",", ":"), ensure_ascii=False)
         except Exception:
             return ""
+
+    @Slot(str, int, int, int)
+    def requestRates(self, query="", limit=40, offset=0, request_id=0):
+        if request_id <= self._rates_request_id:
+            return
+        self._rates_request_id = request_id
+        self._pool.submit(self._query_rates, query, limit, offset, request_id)
+
+    def _query_rates(self, query, limit, offset, request_id):
+        try:
+            from aiusage import pricing
+
+            rows = pricing.catalog_rows(query, limit=limit, offset=offset)
+            payload = json.dumps(rows, separators=(",", ":"), ensure_ascii=False)
+        except Exception:
+            payload = ""
+        self._ratesCompleted.emit(payload, request_id)
+
+    @Slot(str, int)
+    def _finish_rates(self, payload, request_id):
+        if request_id != self._rates_request_id:
+            return
+        self.ratesReady.emit(payload)
 
     @Slot()
     @Slot(str)
@@ -500,11 +542,27 @@ class Backend(QObject):
 
     def _refresh_sessions(self, query, request_id, offset, refresh=False, source_ids=None):
         try:
-            helper = refresh_sessions_json if refresh else collect_sessions_json
-            if source_ids is None:
-                result = helper(query, limit=60, offset=offset)
+            if refresh:
+                if source_ids is None:
+                    refresh_future = self._pool.submit(refresh_sessions_json, query, limit=60, offset=offset)
+                else:
+                    refresh_future = self._pool.submit(refresh_sessions_json, query, source_ids=source_ids, limit=60, offset=offset)
+                while not refresh_future.done():
+                    if source_ids is None:
+                        result = collect_sessions_cache_json(query, limit=60, offset=offset)
+                    else:
+                        result = collect_sessions_cache_json(query, source_ids=source_ids, limit=60, offset=offset)
+                    self._sessionsCompleted.emit(result, "", query, request_id)
+                    try:
+                        refresh_future.result(timeout=0.35)
+                    except TimeoutError:
+                        continue
+                result = refresh_future.result()
             else:
-                result = helper(query, source_ids=source_ids, limit=60, offset=offset)
+                if source_ids is None:
+                    result = collect_sessions_json(query, limit=60, offset=offset)
+                else:
+                    result = collect_sessions_json(query, source_ids=source_ids, limit=60, offset=offset)
         except Exception as exc:
             self._sessionsCompleted.emit("", str(exc), query, request_id)
         else:
@@ -535,6 +593,11 @@ class Backend(QObject):
     def history(self, op, payload):
         """Run one history-io command; the answer arrives as historyFinished."""
         self._pool.submit(lambda: self._historyCompleted.emit(op, historyio.run(op, payload)))
+
+    @Slot(str, str, result=str)
+    def flushHistory(self, op, payload):
+        """Run one history-io command synchronously, for a controlled exit."""
+        return historyio.run(op, payload)
 
     @Slot(str, str)
     def _finish_history(self, op, result):

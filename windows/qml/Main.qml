@@ -4,7 +4,9 @@ import "../../hyprland"
 import "../../hyprland/ProviderRegistry.js" as ProviderRegistry
 import "../../package/contents/code/Format.js" as Format
 import "../../package/contents/code/FeatureTabs.js" as FeatureTabs
+import "../../package/contents/code/RefreshCoalescer.js" as RefreshCoalescer
 import "../../package/contents/code/SessionSources.js" as SessionSources
+import "../../package/contents/code/SessionRefreshPolicy.js" as SessionRefreshPolicy
 import "../../package/contents/code/UsageHistory.js" as UsageHistory
 import "../../package/contents/code/I18n.js" as I18n
 
@@ -146,6 +148,10 @@ Window {
     property var localSpend: ({})
     property var sessions: []
     property bool sessionsLoading: false
+    property string sessionsCacheStatus: "unknown"
+    property var sessionsCacheAgeSeconds: null
+    property string sessionsRefreshStatus: "not-run"
+    property int sessionsRemovedSourceCount: 0
     property string sessionsError: ""
     property string sessionsNotice: ""
     readonly property bool pricingLoading: backend.pricingBusy
@@ -160,15 +166,23 @@ Window {
     property string sessionsSourceResetSignature: ""
     property var sessionsActiveSourceIds: []
     property string sessionsActiveSourceSignature: ""
+    property bool sessionsActiveRefresh: false
+    property double sessionsLastReconcile: 0
     property int sessionsRequestId: 0
     readonly property int sessionsLimit: 60
     property int sessionsTotal: 0
+    property bool sessionsTotalExact: false
     property bool sessionsHasMore: false
     property int sessionsOffset: 0
     property int sessionsActiveOffset: 0
     property bool sessionsActiveAppend: false
     property string activeId: ""
     readonly property bool sessionsViewVisible: root.visible && !root.showSettings && root.activeId === "sessions"
+    onSessionsViewVisibleChanged: {
+        if (sessionsViewVisible && !sessionsLoading)
+            querySessions(sessionsQuery, 0, false, sessionsSourceIds);
+    }
+    property double previousSessionClockMs: Date.now()
     // The last real provider selected (never a feature tab id) — what the
     // panel pill shows while a feature tab (Overview/Spend/Sessions) is
     // active, since those have no percentage of their own to display.
@@ -360,6 +374,25 @@ Window {
         backend.refresh();
     }
 
+    // Coalesce the usage refresh a successful pricing refresh triggers: at most
+    // one, deferred while a usage request is already in flight.
+    property bool usageRefreshPending: false
+
+    function requestUsageRefreshAfterPricing() {
+        var action = RefreshCoalescer.nextAction(true, root.loading, root.usageRefreshPending);
+        if (action === "refresh-now")
+            root.refresh();
+        else if (action === "mark-pending")
+            root.usageRefreshPending = true;
+    }
+
+    onLoadingChanged: {
+        if (!root.loading && root.usageRefreshPending) {
+            root.usageRefreshPending = false;
+            root.refresh();
+        }
+    }
+
     function normalizeSessionSources(raw) {
         return SessionSources.normalizeDescriptors(raw);
     }
@@ -375,25 +408,20 @@ Window {
             return;
         root.sessionsSourceIds = normalized;
         root.sessionsSourceSignature = signature;
-        root.sessionsOffset = 0;
-        root.sessionsTotal = 0;
-        root.sessionsHasMore = false;
     }
 
     function sessionSourceSelectionHasStaleIds(available) {
         return SessionSources.hasStaleIds(root.sessionsSourceIds, available);
     }
 
-    function requestSessions(query, reconcile, sourceIds) {
+    function requestSessions(query, reconcile, sourceIds, offset) {
         if (sourceIds !== undefined)
             root.setSessionsSourceIds(sourceIds);
         var normalizedQuery = (query || "").trim();
         root.sessionsQuery = normalizedQuery;
-        root.sessionsOffset = 0;
-        root.sessionsTotal = 0;
-        root.sessionsHasMore = false;
-        root.sessionsActiveOffset = 0;
+        root.sessionsActiveOffset = offset === undefined ? 0 : offset;
         root.sessionsActiveAppend = false;
+        root.sessionsActiveRefresh = reconcile === true;
         root.sessionsActiveSourceIds = root.sessionsSourceIds.slice(0);
         root.sessionsActiveSourceSignature = root.sessionsSourceSignature;
         root.sessionsRequestId += 1;
@@ -406,9 +434,9 @@ Window {
             else
                 backend.refreshSessionsAndQuery(normalizedQuery, root.sessionsRequestId, 0);
         } else if (root.sessionsActiveSourceIds.length > 0) {
-            backend.refreshSessions(normalizedQuery, root.sessionsRequestId, 0, root.sessionsActiveSourceIds);
+            backend.refreshSessions(normalizedQuery, root.sessionsRequestId, root.sessionsActiveOffset, root.sessionsActiveSourceIds);
         } else {
-            backend.refreshSessions(normalizedQuery, root.sessionsRequestId, 0);
+            backend.refreshSessions(normalizedQuery, root.sessionsRequestId, root.sessionsActiveOffset);
         }
     }
 
@@ -418,7 +446,7 @@ Window {
 
     function querySessions(query, offset, append, sourceIds) {
         if (append !== true) {
-            root.requestSessions(query, false, sourceIds);
+            root.requestSessions(query, false, sourceIds, offset);
             return;
         }
         if (sourceIds !== undefined)
@@ -426,6 +454,7 @@ Window {
         root.sessionsQuery = (query || "").trim();
         root.sessionsActiveOffset = offset === undefined ? 0 : offset;
         root.sessionsActiveAppend = true;
+        root.sessionsActiveRefresh = false;
         root.sessionsActiveSourceIds = root.sessionsSourceIds.slice(0);
         root.sessionsActiveSourceSignature = root.sessionsSourceSignature;
         root.sessionsRequestId += 1;
@@ -493,12 +522,22 @@ Window {
         backend.refreshPricing();
     }
 
+    property int ratesRequestId: 0
+    property var ratesCallback: null
+
     function queryRates(filter, limit, offset, callback) {
-        var jsonStr = backend.queryRatesJson((filter || "").trim(), limit || 40, offset || 0);
-        if (typeof callback === "function") {
-            var payload = FeatureTabs.parseRateTable(jsonStr);
-            callback(payload);
-        }
+        // The catalog parse runs in a worker, not on the GUI thread; the result
+        // is published back with a generation so a superseded query is dropped.
+        root.ratesRequestId += 1;
+        root.ratesCallback = typeof callback === "function" ? callback : null;
+        backend.requestRates((filter || "").trim(), limit || 40, offset || 0, root.ratesRequestId);
+    }
+
+    function deliverRates(text) {
+        var callback = root.ratesCallback;
+        root.ratesCallback = null;
+        if (typeof callback === "function")
+            callback(FeatureTabs.parseRateTable(text));
     }
 
     // Rows with an empty openKey (Muse) render no button at all.
@@ -525,8 +564,16 @@ Window {
         triggeredOnStart: true
         onTriggered: {
             root.refresh();
-            if (root.sessionsViewVisible && !root.sessionsLoading)
-                root.reconcileSessions(root.sessionsQuery);
+        }
+    }
+
+    Timer {
+        id: sessionsReconcileTimer
+        interval: SessionRefreshPolicy.refreshDelayMs(root.sessionsCacheAgeSeconds, root.sessionsRefreshStatus)
+        running: root.sessionsViewVisible
+        onTriggered: {
+            if (!root.sessionsLoading)
+                root.reconcileSessions(root.sessionsQuery, root.sessionsSourceIds);
         }
     }
 
@@ -534,7 +581,13 @@ Window {
         interval: 30000
         running: true
         repeat: true
-        onTriggered: root.nowTick = new Date().getTime()
+        onTriggered: {
+            var now = Date.now();
+            if (root.sessionsViewVisible && SessionRefreshPolicy.resumed(root.previousSessionClockMs, now) && !root.sessionsLoading)
+                root.reconcileSessions(root.sessionsQuery, root.sessionsSourceIds);
+            root.previousSessionClockMs = now;
+            root.nowTick = now;
+        }
     }
 
     // ── History ──────────────────────────────────────────────────────────────
@@ -558,7 +611,18 @@ Window {
         root.saveHistory();
     }
 
+    // Persistence is coalesced into one historyio run per window while the
+    // chart stays current from the in-memory store. saveHistory() arms the
+    // window; the timer fires once and sendHistory() ships whatever is queued.
+    // A controlled exit flushes instead of waiting for the window.
+    readonly property int historyDebounceMs: 300000
+
     function saveHistory() {
+        if (UsageHistory.arm(root.historyStore, new Date().getTime(), root.historyDebounceMs))
+            historyDebounceTimer.restart();
+    }
+
+    function sendHistory() {
         if (root.historySaving)
             return;
         var batch = UsageHistory.take(root.historyStore);
@@ -567,6 +631,23 @@ Window {
         root.historySaving = true;
         historySaveTimeout.restart();
         backend.history(batch.op, JSON.stringify(batch.points));
+    }
+
+    function flushHistory() {
+        historyDebounceTimer.stop();
+        var batch = UsageHistory.takeForExit(root.historyStore);
+        if (!batch)
+            return;
+        // Synchronous: the tray app is going away, so the write has to land
+        // before the process exits rather than ride the thread pool.
+        backend.flushHistory(batch.op, JSON.stringify(batch.points));
+    }
+
+    Timer {
+        id: historyDebounceTimer
+
+        interval: root.historyDebounceMs
+        onTriggered: root.sendHistory()
     }
 
     function finishHistorySave(result) {
@@ -609,6 +690,10 @@ Window {
     Connections {
         target: backend
 
+        function onRatesReady(text) {
+            root.deliverRates(text);
+        }
+
         function onSnapshotReady(text) {
             root.applySnapshot(text);
         }
@@ -621,7 +706,13 @@ Window {
                 var data = JSON.parse((text || "").trim());
                 if (data.error) {
                     root.sessionsError = data.error;
-                    root.sessions = data.sessions || [];
+                    root.sessionsRefreshStatus = "failed";
+                    sessionsReconcileTimer.restart();
+                } else if (data.cacheStatus === "failed") {
+                    root.sessionsError = root.i18n("Could not load cached sessions.");
+                    root.sessionsCacheStatus = "failed";
+                    root.sessionsRefreshStatus = "failed";
+                    sessionsReconcileTimer.restart();
                 } else {
                     var page = data.sessions || [];
                     var responseSources = root.normalizeSessionSources(data.sources);
@@ -640,18 +731,31 @@ Window {
                         root.sessionsTotal = 0;
                         root.sessionsHasMore = false;
                         root.sessionsLoading = true;
-                        root.requestSessions(root.sessionsQuery, false, []);
+                        root.requestSessions(root.sessionsQuery, false, [], 0);
                         return;
                     }
                     root.sessionsSourceResetSignature = "";
                     root.sessionsTotal = Number(data.total) || 0;
+                    root.sessionsTotalExact = data.totalExact === true;
                     root.sessionsOffset = Number(data.offset) || root.sessionsActiveOffset;
                     root.sessionsHasMore = data.hasMore === true;
                     root.sessions = root.sessionsActiveAppend ? root.sessions.concat(page) : page;
                     root.sessionsError = "";
+                    root.sessionsCacheStatus = data.cacheStatus || "unknown";
+                    root.sessionsCacheAgeSeconds = data.cacheAgeSeconds === undefined ? null : data.cacheAgeSeconds;
+                    root.sessionsRefreshStatus = data.refreshStatus || "not-run";
+                    root.sessionsRemovedSourceCount = Number(data.removedSourceCount) || 0;
+                    sessionsReconcileTimer.restart();
+                    if (root.sessionsActiveRefresh) {
+                        root.sessionsLastReconcile = Date.now();
+                    } else if (root.sessionsViewVisible && SessionRefreshPolicy.cacheExpired(root.sessionsCacheAgeSeconds)) {
+                        root.reconcileSessions(root.sessionsQuery, root.sessionsSourceIds);
+                    }
                 }
             } catch (e) {
                 root.sessionsError = root.i18n("Could not load sessions.");
+                root.sessionsRefreshStatus = "failed";
+                sessionsReconcileTimer.restart();
             }
         }
 
@@ -674,7 +778,7 @@ Window {
                 root.pricingStatus = data.status || (data.ok === true ? "refreshed" : "no-cache");
                 root.pricingError = data.error || "";
                 if (data.ok === true)
-                    root.refresh();
+                    root.requestUsageRefreshAfterPricing();
             } catch (e) {
                 root.pricingStatus = "no-cache";
                 root.pricingError = root.i18n("Could not refresh pricing.");
@@ -959,4 +1063,6 @@ Window {
             }
         }
     }
+
+    Component.onDestruction: root.flushHistory()
 }
