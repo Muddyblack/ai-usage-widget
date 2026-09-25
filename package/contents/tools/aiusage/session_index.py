@@ -485,8 +485,7 @@ class SessionIndex:
                     fingerprint = source_fingerprint(source.source_id, source.mtime_ns, source.size)
                     stored_metadata = stored.get(key)
                     unchanged = (
-                        stored_metadata is not None
-                        and source_fingerprint(source.source_id, *stored_metadata).fingerprint == fingerprint.fingerprint
+                        stored_metadata is not None and source_fingerprint(source.source_id, *stored_metadata).fingerprint == fingerprint.fingerprint
                     )
                     if not force and unchanged and cached_rows.get(key, 0) > 0:
                         if key not in stored_orders or stored_orders[key] != source_order:
