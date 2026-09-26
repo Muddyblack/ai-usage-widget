@@ -5,12 +5,12 @@ bar, and a popover under it with the quota windows, their reset countdowns and
 the usage history.
 
 <p align="center">
-  <img src="../readme/macos/popover-expanded-light.png" alt="macOS usage history and activity statistics in light mode" width="340" valign="top"/>
-  <img src="../readme/macos/popover-expanded-dark.png" alt="macOS usage history and activity statistics in dark mode" width="340" valign="top"/>
+  <img src="readme/macos/popover-expanded-light.png" alt="macOS usage history and activity statistics in light mode" width="340" valign="top"/>
+  <img src="readme/macos/popover-expanded-dark.png" alt="macOS usage history and activity statistics in dark mode" width="340" valign="top"/>
 </p>
 <p align="center">
-  <img src="../readme/macos/settings-light.png" alt="macOS settings in light mode" width="420" valign="top"/>
-  <img src="../readme/macos/settings-dark.png" alt="macOS settings in dark mode" width="420" valign="top"/>
+  <img src="readme/macos/settings-light.png" alt="macOS settings in light mode" width="420" valign="top"/>
+  <img src="readme/macos/settings-dark.png" alt="macOS settings in dark mode" width="420" valign="top"/>
 </p>
 
 Screenshots use demo data.

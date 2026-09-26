@@ -30,19 +30,19 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across 17 provider s
 
 | Claude | Antigravity |
 | :---: | :---: |
-| <img src="./readme/claude_pill.svg?v=12" alt="Claude panel pill" width="160"> | <img src="./readme/agy_pill.svg?v=12" alt="Antigravity panel pill" width="165"> |
+| <img src="./docs/readme/claude_pill.svg?v=12" alt="Claude panel pill" width="160"> | <img src="./docs/readme/agy_pill.svg?v=12" alt="Antigravity panel pill" width="165"> |
 
 ### Popup
 
 | Claude | Antigravity |
 | :---: | :---: |
-| <img src="./readme/claude_usage.svg?v=12" alt="Claude usage" width="340"> | <img src="./readme/antigravity_usage.svg?v=12" alt="Antigravity usage" width="340"> |
+| <img src="./docs/readme/claude_usage.svg?v=12" alt="Claude usage" width="340"> | <img src="./docs/readme/antigravity_usage.svg?v=12" alt="Antigravity usage" width="340"> |
 | **OpenAI** | **Usage history** |
-| <img src="./readme/openai_usage.svg?v=12" alt="OpenAI usage" width="340"> | <img src="./readme/usage_chart.svg?v=12" alt="Usage history chart" width="340"> |
+| <img src="./docs/readme/openai_usage.svg?v=12" alt="OpenAI usage" width="340"> | <img src="./docs/readme/usage_chart.svg?v=12" alt="Usage history chart" width="340"> |
 | **Overview** | **Sessions** |
-| <img src="./readme/overview_tab.svg?v=12" alt="Provider overview" width="340"> | <img src="./readme/sessions_tab.svg?v=12" alt="Recent sessions" width="340"> |
+| <img src="./docs/readme/overview_tab.svg?v=12" alt="Provider overview" width="340"> | <img src="./docs/readme/sessions_tab.svg?v=12" alt="Recent sessions" width="340"> |
 | **Usage & Spend** | **Settings** |
-| <img src="./readme/spend_tab.svg?v=12" alt="Usage and spend" width="340"> | <img src="./readme/settings.svg?v=12" alt="Provider settings" width="340"> |
+| <img src="./docs/readme/spend_tab.svg?v=12" alt="Usage and spend" width="340"> | <img src="./docs/readme/settings.svg?v=12" alt="Provider settings" width="340"> |
 
 ---
 
@@ -122,8 +122,8 @@ Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on ma
 ## macOS — native Swift menu bar app
 
 <p align="center">
-  <img src="./readme/macos/popover-expanded-light.png" alt="macOS usage, history and activity statistics in light mode" width="340" valign="top"/>
-  <img src="./readme/macos/popover-expanded-dark.png" alt="macOS usage, history and activity statistics in dark mode" width="340" valign="top"/>
+  <img src="./docs/readme/macos/popover-expanded-light.png" alt="macOS usage, history and activity statistics in light mode" width="340" valign="top"/>
+  <img src="./docs/readme/macos/popover-expanded-dark.png" alt="macOS usage, history and activity statistics in dark mode" width="340" valign="top"/>
 </p>
 
 Captured with demo data. See the [macOS guide](docs/macos.md) for usage history,

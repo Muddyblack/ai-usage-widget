@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Rasterizes the readme SVGs to PNGs and JPGs for the OpenDesktop / KDE Store gallery.
 #
-#   readme/export_opendesktop.sh
+#   docs/readme/export_opendesktop.sh
 #
 # Each image keeps its SVG's basename and is rendered at 2x its native size
 # (viewBox-driven, via --export-dpi) so adding or resizing an SVG needs no

@@ -30,7 +30,7 @@ Only if you work on that part:
   Setup on Windows. See [`docs/windows.md`](docs/windows.md).
 - **Hyprland / Quickshell** — Quickshell, plus CMake and Qt 6 for the tray helper;
   `nix run .#hyprland` brings them. See [`docs/hyprland.md`](docs/hyprland.md).
-- **README artwork** — Perl for `readme/generate.pl`; `make opendesktop` needs
+- **README artwork** — Perl for `docs/readme/generate.pl`; `make opendesktop` needs
   Inkscape.
 
 ## Linux development shell
