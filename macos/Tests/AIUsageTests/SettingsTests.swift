@@ -68,6 +68,18 @@ final class SettingsTests: XCTestCase {
         XCTAssertEqual(toggles["grok"] as? Bool, true)
     }
 
+    func testDetectionSyncsTogglesWithInstalledTools() {
+        write(#"{"providerDefaultsApplied":true,"providers":{"claude":false,"cursor":true,"openai":true,"openrouter":true},"keys":{"openai":"sk-test"}}"#)
+        let settings = SettingsStore(url: url)
+
+        let change = settings.applyDetected(["claude"])
+
+        XCTAssertEqual(change.added, ["claude"])
+        XCTAssertEqual(change.removed, ["cursor"], "an uninstalled tool is switched off")
+        XCTAssertTrue(settings.providerEnabled("openai"), "an API key keeps the provider usable")
+        XCTAssertTrue(settings.providerEnabled("openrouter"), "manual-only providers are never touched")
+    }
+
     func testAnEmptyKeyIsRemovedRatherThanStoredBlank() throws {
         let settings = SettingsStore(url: url)
         settings.setKey("openai", "sk-test")

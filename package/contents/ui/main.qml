@@ -9,7 +9,6 @@ import org.kde.plasma.plasmoid
 import "../code/FeatureTabs.js" as FeatureTabs
 import "../code/Format.js" as Format
 import "../code/PanelRotation.js" as PanelRotation
-import "../code/RefreshCoalescer.js" as RefreshCoalescer
 import "../code/RequestGeneration.js" as RequestGeneration
 import "../code/Shell.js" as Shell
 import "../code/UsageHistory.js" as UsageHistory
@@ -764,10 +763,6 @@ PlasmoidItem {
     // Poll interval is user-configurable (seconds); default 300s. Clamp to a sane floor.
     property int pollIntervalSec: Plasmoid.configuration.pollIntervalSec || 300
     property bool pricingLoading: false
-    // Coalescing state: a successful pricing refresh triggers at most one usage
-    // refresh, deferred while one is already in flight.
-    property bool usageInFlight: false
-    property bool usageRefreshPending: false
     property string pricingStatus: ""
     property string pricingError: ""
     property bool providerDefaultsReady: false
@@ -955,9 +950,6 @@ PlasmoidItem {
     // install. It also bounds the startup seed, which is built from it and travels
     // a command line.
     readonly property int historyConfigLimit: 500
-    // Plasma rewrites the whole applet config on each change, so bound the
-    // last-good envelope too and keep oversized snapshots out of the config.
-    readonly property int snapshotConfigLimit: 100000
 
     function flushHistoryConfig() {
         if (!root.historyConfigDirty)
@@ -986,22 +978,11 @@ PlasmoidItem {
         root.saveHistory();
     }
 
-    // Persistence is coalesced into one history-io run per window while the
-    // chart stays current from the in-memory store. saveHistory() arms the
-    // window; the timer fires once and sendHistory() ships whatever is queued.
-    // A controlled hide/exit flushes instead of waiting for the window.
-    readonly property int historyDebounceMs: 300000
-
-    function saveHistory() {
-        if (UsageHistory.arm(root.historyStore, new Date().getTime(), root.historyDebounceMs))
-            historyDebounceTimer.restart();
-    }
-
     // Ship the next batch to ~/.local/share/ai-usage-widget/usage-history-latest.json,
     // shared with the Quickshell frontend. history-io unions it in and hands the
     // merged series back, so this is also how the other frontend's points arrive.
     // take() decides whether there is anything to send, and what.
-    function sendHistory() {
+    function saveHistory() {
         var batch = UsageHistory.take(root.historyStore);
         if (!batch)
             return;
@@ -1012,24 +993,6 @@ PlasmoidItem {
         root.historySaveCmd = root.pythonEnv() + "WIDGET_HISTORY_JSON=\"$(printf %s '" + root.base64(JSON.stringify(batch.points)) + "' | base64 -d)\" " + root.scriptPath("history-io") + " " + batch.op;
         historyIOSource.disconnectSource(root.historySaveCmd);
         historyIOSource.connectSource(root.historySaveCmd);
-    }
-
-    function flushHistory() {
-        historyDebounceTimer.stop();
-        var batch = UsageHistory.takeForExit(root.historyStore);
-        if (!batch)
-            return;
-        root.historySaveCmd = root.pythonEnv() + "WIDGET_HISTORY_JSON=\"$(printf %s '" + root.base64(JSON.stringify(batch.points)) + "' | base64 -d)\" " + root.scriptPath("history-io") + " " + batch.op;
-        historyIOSource.disconnectSource(root.historySaveCmd);
-        historyIOSource.connectSource(root.historySaveCmd);
-    }
-
-    Timer {
-        id: historyDebounceTimer
-
-        interval: root.historyDebounceMs
-        repeat: false
-        onTriggered: root.sendHistory()
     }
 
     function finishHistorySave(merged) {
@@ -1611,7 +1574,7 @@ PlasmoidItem {
     }
 
     // Settings → Providers → "Detect installed providers": re-runs the
-    // stat-only detection and switches on what it finds (never off).
+    // stat-only detection and syncs the toggles with what is installed.
     function redetectProviders() {
         if (root.providerDetectBusy)
             return;
@@ -1622,6 +1585,22 @@ PlasmoidItem {
         providerRedetectSource.connectSource(cmd);
     }
 
+    // Mirrors AUTO_DETECT_PROVIDERS in aiusage/detect.py: the providers
+    // detection can speak for. Every other provider is only switched by hand.
+    readonly property var autoDetectProviders: ["claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode"]
+    // A configured API key keeps a provider usable without its local tool, so
+    // detection never switches such a provider off.
+    readonly property var providerKeySettings: ({
+            "claude": "claudeAdminApiKey",
+            "openai": "openaiApiKey",
+            "mistral": "mistralApiKey",
+            "grok": "grokApiKey",
+            "muse": "museApiKey"
+        })
+
+    // Detection reports what is installed right now, so it syncs both ways: a
+    // detected provider is switched on, and an auto-detectable provider whose
+    // program is gone is switched off (issue #60) unless it has an API key.
     function applyProviderRedetect(result) {
         root.providerDetectBusy = false;
         if (!result || result.ok !== true || !Array.isArray(result.data)) {
@@ -1629,15 +1608,31 @@ PlasmoidItem {
             return;
         }
         var added = [];
+        var removed = [];
         for (var i = 0; i < root.providers.length; i++) {
             var p = root.providers[i];
-            if (result.data.indexOf(p.id) !== -1 && !Plasmoid.configuration[p.id + "Enabled"]) {
-                Plasmoid.configuration[p.id + "Enabled"] = true;
-                added.push(p.label || p.id);
+            var key = p.id + "Enabled";
+            var on = Plasmoid.configuration[key] === true;
+            if (result.data.indexOf(p.id) !== -1) {
+                if (!on) {
+                    Plasmoid.configuration[key] = true;
+                    added.push(p.label || p.id);
+                }
+            } else if (on && root.autoDetectProviders.indexOf(p.id) !== -1) {
+                var keySetting = root.providerKeySettings[p.id];
+                if (keySetting && String(Plasmoid.configuration[keySetting] || "").trim() !== "")
+                    continue;
+                Plasmoid.configuration[key] = false;
+                removed.push(p.label || p.id);
             }
         }
-        root.providerDetectStatus = added.length ? i18n("Enabled: %1", added.join(", ")) : i18n("No new providers found.");
+        var parts = [];
         if (added.length)
+            parts.push(i18n("Enabled: %1", added.join(", ")));
+        if (removed.length)
+            parts.push(i18n("Disabled (not installed): %1", removed.join(", ")));
+        root.providerDetectStatus = parts.length ? parts.join(" · ") : i18n("No changes: enabled providers match what is installed.");
+        if (added.length || removed.length)
             root.refresh();
     }
 
@@ -1663,7 +1658,7 @@ PlasmoidItem {
             quota = 300;
 
         env += "WIDGET_COPILOT_QUOTA=" + root.shellQuote(quota) + " ";
-        return env + root.scriptPath("get-ai-usage") + " --provider " + root.shellQuote(ids.join(","));
+        return env + root.scriptPath("get-ai-usage") + " --save-snapshot --provider " + root.shellQuote(ids.join(","));
     }
 
     // The newest usage request generation. The executable DataSource cannot
@@ -1672,7 +1667,38 @@ PlasmoidItem {
     // trailing shell comment, invisible to the backend but preserved in `src`.
     property int usageGeneration: 0
 
+    // The last good envelope lives in the backend's private cache file (it
+    // carries account labels, and Plasma rewrites the whole applet config on
+    // every change). Every instance writes its answers there, so a widget that
+    // just started, on any screen, shows the last known values, marked stale.
+    function loadLastSnapshot() {
+        var cmd = root.pythonEnv() + root.scriptPath("get-ai-usage") + " --last-snapshot";
+        lastSnapshotSource.disconnectSource(cmd);
+        lastSnapshotSource.connectSource(cmd);
+    }
+
+    Plasma5Support.DataSource {
+        id: lastSnapshotSource
+
+        engine: "executable"
+        connectedSources: []
+        onNewData: function (src, data) {
+            disconnectSource(src);
+            var text = (data["stdout"] || "").trim();
+            if (text !== "" && text !== "{}")
+                root.applySnapshot(text, true);
+        }
+    }
+
+    // Set once a live answer has been applied; a replayed last snapshot that
+    // arrives later must not paint older data over it.
+    property bool liveSnapshotSeen: false
+
     function applySnapshot(text, replayed) {
+        if (replayed === true && root.liveSnapshotSeen)
+            return;
+        if (replayed !== true)
+            root.liveSnapshotSeen = true;
         var snapshot;
         try {
             snapshot = JSON.parse(text);
@@ -1724,8 +1750,6 @@ PlasmoidItem {
             } else {
                 root.stale = false;
                 root.lastUpdate = Qt.formatTime(new Date(), "hh:mm");
-                if (text.length <= root.snapshotConfigLimit && RequestGeneration.shouldPersist(text, Plasmoid.configuration.lastSnapshot))
-                    Plasmoid.configuration.lastSnapshot = text;
             }
             offlineRetryTimer.stop();
             return;
@@ -2206,28 +2230,8 @@ PlasmoidItem {
         var cmd = root.backendCommand(ids);
         root.usageGeneration = RequestGeneration.nextGeneration(root.usageGeneration);
         cmd += " #gen=" + root.usageGeneration;
-        root.usageInFlight = true;
         usageSource.disconnectSource(cmd);
         usageSource.connectSource(cmd);
-    }
-
-    // One successful pricing refresh triggers at most one usage refresh. If a
-    // usage request is already running, remember that one is owed and fire it
-    // when the running request settles, instead of cancelling and re-running.
-    function requestUsageRefreshAfterPricing() {
-        var action = RefreshCoalescer.nextAction(true, root.usageInFlight, root.usageRefreshPending);
-        if (action === "refresh-now")
-            root.refresh();
-        else if (action === "mark-pending")
-            root.usageRefreshPending = true;
-    }
-
-    function settleUsageRefresh() {
-        root.usageInFlight = false;
-        if (root.usageRefreshPending) {
-            root.usageRefreshPending = false;
-            root.refresh();
-        }
     }
 
     function refreshPricing() {
@@ -2470,6 +2474,8 @@ PlasmoidItem {
     // With one pin, open the popup on that service. With multiple pins, leave the
     // current popup tab alone so the pin list only controls the panel contents.
     onExpandedChanged: {
+        if (root.expanded)
+            root.syncSharedSettings();
         if (root.expanded && root.pinnedTabs.length === 1) {
             var idx = root.enabledTabs.indexOf(root.pinnedTabs[0]);
             if (idx >= 0 && idx !== root.activeTab) {
@@ -2479,18 +2485,133 @@ PlasmoidItem {
             }
         }
     }
+    // ── Settings shared by every widget instance (issue #60) ────────────────
+    // Plasma keeps one config group per widget, so a second panel or screen
+    // used to start from scratch. Every setting except the ones below lives in
+    // one shared file (the backend's --shared-settings); each instance merges
+    // its own changes in and adopts everyone else's when its popup opens and on
+    // every poll. The pill (pins, rotation), the view state and the per-widget
+    // history fallback stay local, so each panel can still show and pin its own.
+    readonly property var perWidgetSettings: ["lastTab", "pinnedTab", "panelRotationIntervalSec", "chartWindow", "chartGranularity", "antigravityChartFilter", "costHistoryMetric", "usageHistory", "weeklyUsageHistory", "backgroundHints"]
+    property bool sharedSettingsReady: false
+    property bool applyingSharedSettings: false
+    property var pendingSharedPatch: ({})
+
+    function isSharedSetting(key) {
+        if (!key || root.perWidgetSettings.indexOf(key) !== -1)
+            return false;
+        // KConfigPropertyMap also exposes every entry's default as "<key>Default".
+        if (/Default$/.test(key) && Plasmoid.configuration[key.slice(0, -7)] !== undefined)
+            return false;
+        return Plasmoid.configuration[key] !== undefined;
+    }
+
+    function sharedSettingsSnapshot() {
+        var out = {};
+        var keys = Plasmoid.configuration.keys();
+        for (var i = 0; i < keys.length; i++) {
+            if (root.isSharedSetting(keys[i]))
+                out[keys[i]] = Plasmoid.configuration[keys[i]];
+        }
+        return out;
+    }
+
+    // Sends whatever changed locally (possibly nothing, which is a plain read)
+    // and adopts the merged result.
+    function syncSharedSettings() {
+        var patch = root.pendingSharedPatch;
+        root.pendingSharedPatch = {};
+        sharedSettingsTimer.stop();
+        var cmd = root.pythonEnv() + root.envAssign("AI_USAGE_WIDGET_ID", Plasmoid.metaData ? Plasmoid.metaData.pluginId : "") + root.envAssign("WIDGET_SHARED_PATCH", JSON.stringify(patch)) + root.scriptPath("get-ai-usage") + " --shared-settings";
+        sharedSettingsSource.disconnectSource(cmd);
+        sharedSettingsSource.connectSource(cmd);
+    }
+
+    function applySharedSettings(settings) {
+        var changed = false;
+        root.applyingSharedSettings = true;
+        for (var key in settings) {
+            if (!root.isSharedSetting(key) || root.pendingSharedPatch.hasOwnProperty(key))
+                continue;
+            if (JSON.stringify(Plasmoid.configuration[key]) === JSON.stringify(settings[key]))
+                continue;
+            Plasmoid.configuration[key] = settings[key];
+            changed = true;
+        }
+        root.applyingSharedSettings = false;
+        return changed;
+    }
+
+    function finishSharedSettings(result) {
+        var first = !root.sharedSettingsReady;
+        root.sharedSettingsReady = true;
+        var settings = result && result.ok === true && result.data && typeof result.data === "object" ? result.data : null;
+        var changed = false;
+        if (settings !== null && Object.keys(settings).length === 0) {
+            // First instance ever: seed the shared file from this widget.
+            root.pendingSharedPatch = root.sharedSettingsSnapshot();
+            root.syncSharedSettings();
+        } else if (settings !== null) {
+            changed = root.applySharedSettings(settings);
+        }
+        if (first)
+            root.initializeProviderDefaults();
+        else if (changed)
+            root.refresh();
+    }
+
+    Connections {
+        target: Plasmoid.configuration
+
+        function onValueChanged(key, value) {
+            if (root.applyingSharedSettings || !root.sharedSettingsReady || !root.isSharedSetting(key))
+                return;
+            var patch = root.pendingSharedPatch;
+            patch[key] = value;
+            root.pendingSharedPatch = patch;
+            sharedSettingsTimer.restart();
+        }
+    }
+
+    // Typing an API key changes the setting once per keystroke; one write per
+    // pause is enough.
+    Timer {
+        id: sharedSettingsTimer
+
+        interval: 1000
+        repeat: false
+        onTriggered: root.syncSharedSettings()
+    }
+
+    Plasma5Support.DataSource {
+        id: sharedSettingsSource
+
+        engine: "executable"
+        connectedSources: []
+        onNewData: function (src, data) {
+            disconnectSource(src);
+            var result = null;
+            try {
+                result = JSON.parse((data["stdout"] || "").trim());
+            } catch (e) {}
+            root.finishSharedSettings(result);
+        }
+    }
+
     Component.onDestruction: {
-        root.flushHistory();
         root.flushHistoryConfig();
+        if (Object.keys(root.pendingSharedPatch).length > 0)
+            root.syncSharedSettings();
     }
     Component.onCompleted: {
-        var cachedSnapshot = String(Plasmoid.configuration.lastSnapshot || "").trim();
-        if (cachedSnapshot !== "")
-            root.applySnapshot(cachedSnapshot, true);
+        root.loadLastSnapshot();
         root.loadUsageHistory();
         root.normalizePanelRotation();
         root.restoreTab();
-        root.initializeProviderDefaults();
+        // Adopt the shared settings before provider defaults are decided, so a
+        // widget added next to a configured one starts with its providers
+        // instead of running first-run detection again.
+        root.syncSharedSettings();
     }
 
     Plasma5Support.DataSource {
@@ -2611,12 +2732,10 @@ PlasmoidItem {
         onNewData: function (src, data) {
             disconnectSource(src);
             // Drop a response from a superseded refresh: only the newest
-            // generation may reach applySnapshot, and only it settles the
-            // in-flight flag (the newer request is still running).
+            // generation may reach applySnapshot.
             if (!RequestGeneration.isCurrent(RequestGeneration.generationOf(src), root.usageGeneration))
                 return;
             root.applySnapshot((data["stdout"] || "").trim());
-            root.settleUsageRefresh();
         }
     }
 
@@ -2671,7 +2790,7 @@ PlasmoidItem {
                 root.pricingStatus = result.status || (result.ok === true ? "refreshed" : "no-cache");
                 root.pricingError = result.error || "";
                 if (result.ok === true)
-                    root.requestUsageRefreshAfterPricing();
+                    root.refresh();
             } catch (e) {
                 root.pricingStatus = "no-cache";
                 root.pricingError = i18n("Could not refresh pricing.");
@@ -2684,7 +2803,11 @@ PlasmoidItem {
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: root.refresh()
+        onTriggered: {
+            if (root.sharedSettingsReady)
+                root.syncSharedSettings();
+            root.refresh();
+        }
     }
 
     Timer {

@@ -33,12 +33,18 @@ msgid "Detection failed."
 msgstr "La détection a échoué."
 
 #: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
-msgid "No new providers found."
-msgstr "Aucun nouveau fournisseur trouvé."
+msgid "No changes: enabled providers match what is installed."
+msgstr ""
+"Aucun changement : les fournisseurs activés correspondent à ce qui est "
+"installé."
 
 #: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
 msgid "Enabled: %1"
 msgstr "Activés : %1"
+
+#: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
+msgid "Disabled (not installed): %1"
+msgstr "Désactivés (non installés) : %1"
 
 #: hyprland/AiUsageShell.qml package/contents/ui/main.qml windows/qml/Main.qml
 msgid "Could not refresh pricing."
@@ -70,6 +76,67 @@ msgstr "Chargement"
 #: hyprland/AiUsageShell.qml windows/qml/Main.qml
 msgid "No data"
 msgstr "Aucune donnée"
+
+#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
+msgid "Usage trend"
+msgstr "Tendance d'utilisation"
+
+#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
+msgid "Daily usage"
+msgstr "Utilisation quotidienne"
+
+#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
+#: package/contents/ui/main.qml
+msgid "7D"
+msgstr "7 J"
+
+#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
+#: package/contents/ui/main.qml
+msgid "30D"
+msgstr "30 J"
+
+#: hyprland/OpenCodeUsageChart.qml hyprland/SpendTimelineChart.qml
+#: package/contents/ui/OpenCodeUsageChart.qml
+msgid "All"
+msgstr "Tout"
+
+#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
+msgid "Show OpenCode usage for %1"
+msgstr "Afficher l'utilisation d'OpenCode pour %1"
+
+#: hyprland/OpenCodeUsageChart.qml package/contents/ui/ClaudeTab.qml
+#: package/contents/ui/ClineTab.qml package/contents/ui/CursorTab.qml
+#: package/contents/ui/MuseTab.qml package/contents/ui/OpenCodeUsageChart.qml
+#: package/contents/ui/StatsSparkline.qml
+msgid "tokens"
+msgstr "jetons"
+
+#: hyprland/OpenCodeUsageChart.qml package/contents/ui/CopilotTab.qml
+#: package/contents/ui/OpenCodeUsageChart.qml
+msgid "sessions"
+msgstr "sessions"
+
+#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
+#: package/contents/ui/main.qml
+msgid "Last 7 days"
+msgstr "7 derniers jours"
+
+#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
+#: package/contents/ui/main.qml
+msgid "Last 30 days"
+msgstr "30 derniers jours"
+
+#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
+msgid "All time"
+msgstr "Tout l'historique"
+
+#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
+msgid "No daily usage in this range"
+msgstr "Aucune utilisation quotidienne dans cette plage"
+
+#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
+msgid "Daily OpenCode token usage"
+msgstr "Utilisation quotidienne des jetons OpenCode"
 
 #: hyprland/OverviewPage.qml package/contents/ui/OverviewTab.qml
 msgid "Enable a provider in Settings to see it here."
@@ -809,10 +876,6 @@ msgstr "30j"
 msgid "90d"
 msgstr "90j"
 
-#: hyprland/SpendTimelineChart.qml package/contents/ui/OpenCodeUsageChart.qml
-msgid "All"
-msgstr "Tout"
-
 #: hyprland/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
 msgid "Limited history (%1 days recorded) — dashed line, not a smoothed trend."
 msgstr ""
@@ -1455,13 +1518,6 @@ msgstr "Coût : %1"
 msgid "Total input+output tokens across all models (all time)"
 msgstr "Total des jetons entrée+sortie pour tous les modèles (toute période)"
 
-#: package/contents/ui/ClaudeTab.qml package/contents/ui/ClineTab.qml
-#: package/contents/ui/CursorTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenCodeUsageChart.qml
-#: package/contents/ui/StatsSparkline.qml
-msgid "tokens"
-msgstr "jetons"
-
 #: package/contents/ui/ClaudeTab.qml
 msgid "Input: %1"
 msgstr "Entrée : %1"
@@ -1581,11 +1637,6 @@ msgstr "Réinitialisation"
 #: package/contents/ui/CopilotTab.qml
 msgid "next month"
 msgstr "le mois prochain"
-
-#: package/contents/ui/CopilotTab.qml
-#: package/contents/ui/OpenCodeUsageChart.qml
-msgid "sessions"
-msgstr "sessions"
 
 #: package/contents/ui/CopilotTab.qml
 msgid "messages"
@@ -2265,46 +2316,6 @@ msgstr ""
 #: package/contents/ui/OpenCodeTab.qml
 msgid "top model"
 msgstr "meilleur modèle"
-
-#: package/contents/ui/OpenCodeUsageChart.qml
-msgid "Usage trend"
-msgstr "Tendance d'utilisation"
-
-#: package/contents/ui/OpenCodeUsageChart.qml
-msgid "Daily usage"
-msgstr "Utilisation quotidienne"
-
-#: package/contents/ui/OpenCodeUsageChart.qml package/contents/ui/main.qml
-msgid "7D"
-msgstr "7 J"
-
-#: package/contents/ui/OpenCodeUsageChart.qml package/contents/ui/main.qml
-msgid "30D"
-msgstr "30 J"
-
-#: package/contents/ui/OpenCodeUsageChart.qml
-msgid "Show OpenCode usage for %1"
-msgstr "Afficher l'utilisation d'OpenCode pour %1"
-
-#: package/contents/ui/OpenCodeUsageChart.qml package/contents/ui/main.qml
-msgid "Last 7 days"
-msgstr "7 derniers jours"
-
-#: package/contents/ui/OpenCodeUsageChart.qml package/contents/ui/main.qml
-msgid "Last 30 days"
-msgstr "30 derniers jours"
-
-#: package/contents/ui/OpenCodeUsageChart.qml
-msgid "All time"
-msgstr "Tout l'historique"
-
-#: package/contents/ui/OpenCodeUsageChart.qml
-msgid "No daily usage in this range"
-msgstr "Aucune utilisation quotidienne dans cette plage"
-
-#: package/contents/ui/OpenCodeUsageChart.qml
-msgid "Daily OpenCode token usage"
-msgstr "Utilisation quotidienne des jetons OpenCode"
 
 #: package/contents/ui/OpenRouterTab.qml
 msgid "OpenRouter support is in BETA and currently untested."

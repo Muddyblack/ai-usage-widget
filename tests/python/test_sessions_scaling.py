@@ -1,9 +1,8 @@
-"""Session-index invalidation and scaling safety (task 28).
+"""Session-index invalidation and scaling safety.
 
-The plan asks for a conservative evaluation: the warm path is already keyed by
-a code-derived schema fingerprint, so this suite locks in that every
-invalidation input rebuilds safely and that queries keep exact totals, privacy,
-and source OR semantics at scale.
+The warm path is keyed by a code-derived schema fingerprint; this suite locks
+in that every invalidation input rebuilds safely and that queries keep exact
+totals, privacy, and source OR semantics at scale.
 """
 
 import importlib

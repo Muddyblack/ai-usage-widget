@@ -89,20 +89,16 @@ def crashed(id_, now, exc):
     return provider_error(id_, label, accent, now, message, {"status": status_summary(None, id_)})
 
 
-def build(selected, now=None, timing=None):
+def build(selected, now=None):
     """Fetch every id in `selected` concurrently and return a full envelope."""
     if now is None:
         now = time.time()
 
     def fetch_one(id_):
-        started = time.perf_counter()
         try:
             return normalize(collect(id_, now))
         except Exception as exc:  # noqa: BLE001  # noqa: BROAD_EXCEPT_OK
             return crashed(id_, now, exc)
-        finally:
-            if timing is not None:
-                timing.record(id_, time.perf_counter() - started)
 
     if len(selected) == 1:
         # Avoid starting a worker for the common single-provider case. Apart

@@ -82,24 +82,14 @@ class GrokDiscoveryTest(IsolatedHomeTest):
         self.assertTrue(entries and targets)
         self.assertEqual(stats["sessionCount"], 1)
 
-    def test_changed_identity_cannot_reuse_discovery(self):
-        _write_summary(self.root, "%2Fw", "sess-a")
-        directory = os.path.join(self.root, "sessions")
-        calls, patched = self._counting_walk()
-        with patched:
-            grok.discover_sessions(directory, identity="team-a")
-            grok.discover_sessions(directory, identity="team-a")
-            grok.discover_sessions(directory, identity="team-b")
-        self.assertEqual(len(calls), 2)
-
     def test_discovery_cache_expires_after_ttl(self):
         _write_summary(self.root, "%2Fw", "sess-a")
         directory = os.path.join(self.root, "sessions")
         calls, patched = self._counting_walk()
         with patched:
-            grok.discover_sessions(directory, identity="x", now=1000.0)
-            grok.discover_sessions(directory, identity="x", now=1010.0)
-            grok.discover_sessions(directory, identity="x", now=1031.0)
+            grok.discover_sessions(directory, now=1000.0)
+            grok.discover_sessions(directory, now=1010.0)
+            grok.discover_sessions(directory, now=1031.0)
         self.assertEqual(len(calls), 2)
 
     def test_changed_signal_content_is_read_fresh(self):
@@ -153,27 +143,11 @@ class GrokDiscoveryTest(IsolatedHomeTest):
         self.assertEqual(len(entries), 2)
 
 
-class GrokAccountIdentityTest(IsolatedHomeTest):
+class GrokBillingTest(IsolatedHomeTest):
     def setUp(self):
         super().setUp()
         grok.reset_discovery_cache()
         self.addCleanup(grok.reset_discovery_cache)
-
-    def test_identity_changes_with_the_token_or_team(self):
-        self.write(
-            ".grok/auth.json",
-            {
-                "one": {"key": "tok-a", "team_id": "team-a", "user_id": "user-a", "create_time": "1"},
-            },
-        )
-        first = grok.account_identity()
-        self.write(
-            ".grok/auth.json",
-            {
-                "one": {"key": "tok-b", "team_id": "team-b", "user_id": "user-b", "create_time": "2"},
-            },
-        )
-        self.assertNotEqual(first, grok.account_identity())
 
     def test_remote_billing_error_semantics_are_unchanged(self):
         with mock.patch("aiusage.providers.grok.fetch_json", return_value=HttpResult(401, "")):

@@ -1,11 +1,9 @@
-"""Windows idle SIGINT wake policy — static invariants without PySide6 (task 30).
+"""Windows idle SIGINT wake policy — static invariants without PySide6.
 
-The plan gates any change to the 250 ms wake timer on a measured idle
-CPU/battery benefit on Windows. That measurement is not possible here (this is
-a Linux host and PySide6 is not installed), so the outcome is a documented
-no-change decision. These tests lock the *invariants* a future change must not
-break: Ctrl+C still quits the app, the wake timer is a no-op tick, and the
-headless path returns before the GUI loop is entered.
+The 250 ms wake timer only exists so Ctrl+C reaches Python while Qt's loop
+runs. These tests lock the invariants a future change must not break: Ctrl+C
+still quits the app, the wake timer is a no-op tick, and the headless path
+returns before the GUI loop is entered.
 """
 
 import ast

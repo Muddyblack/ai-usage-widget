@@ -6,14 +6,17 @@ child is always reaped.
 Replies are read on a helper thread rather than with `selectors`: Windows can
 only select() on sockets, never on a pipe, and a thread works the same on both.
 
-Successful replies are cached under the same identity scope as the last-good
-snapshot (SHA-256 of the access token plus normalized CODEX_HOME) for a short
-TTL, so a repeated refresh inside the TTL does not launch the app-server again.
-The cached reply is returned with `_codexSource`/`_codexAge` metadata that the
-collector pops before the payload reaches the frontend.
+Successful replies are cached for a short TTL, keyed by SHA-256 of the access
+token plus the normalized CODEX_HOME, so a refresh inside the TTL (another
+widget instance, a pricing-triggered refresh) does not launch the app-server
+again. The collector stores a successful HTTP-fallback reply here too. Only the
+limit fields are written, never the token or the path. Replies carry
+`_codexSource`/`_codexAge` metadata that the collector pops before normalizing.
+A failed refresh is not papered over with older data here: the frontends
+already keep their last good values on screen and mark them stale.
 """
 
-import hmac
+import hashlib
 import json
 import math
 import os
@@ -25,7 +28,9 @@ import threading
 import time
 
 from .. import config, paths
-from .codex_last_good import _FIELDS, TTL_SECONDS, _has_limits, identity_key
+
+TTL_SECONDS = 120
+_FIELDS = ("rateLimits", "rate_limit", "rateLimitsByLimitId", "additional_rate_limits", "_codexNoLimits")
 
 
 def _pump(stream, lines):
@@ -185,6 +190,29 @@ def _live_codex_rate_limits():
     return result
 
 
+def identity_key(token, home):
+    """Opaque cache key for the access token and normalized Codex home."""
+    normalized_home = os.path.normcase(os.path.realpath(os.path.abspath(os.path.expanduser(home))))
+    return hashlib.sha256((token + "\0" + normalized_home).encode("utf-8")).hexdigest()
+
+
+def _has_limits(data):
+    """A well-formed limit payload, including an explicit empty result."""
+    if not isinstance(data, dict):
+        return False
+    if data.get("_codexNoLimits") is True:
+        return True
+    if "rateLimits" in data:
+        return isinstance(data["rateLimits"], dict)
+    if "rate_limit" in data:
+        return isinstance(data["rate_limit"], dict)
+    if "rateLimitsByLimitId" in data:
+        return isinstance(data["rateLimitsByLimitId"], dict)
+    if "additional_rate_limits" in data:
+        return isinstance(data["additional_rate_limits"], list)
+    return False
+
+
 def _cache_path(key):
     return os.path.join(config.cache_dir(), f"codex-rate-limits-{key}.json")
 
@@ -196,16 +224,13 @@ def _read_cache(key):
             payload = json.load(stream)
     except (OSError, ValueError):
         return None
-    if not isinstance(payload, dict) or payload.get("version") != 1:
-        return None
-    stored_identity = payload.get("identity")
-    if not isinstance(stored_identity, str) or not hmac.compare_digest(stored_identity, key):
+    if not isinstance(payload, dict) or payload.get("version") != 1 or payload.get("identity") != key:
         return None
     saved_at = payload.get("savedAt")
     data = payload.get("data")
     if isinstance(saved_at, bool) or not isinstance(saved_at, (int, float)) or not math.isfinite(saved_at):
         return None
-    if not isinstance(data, dict) or not _has_limits(data):
+    if not _has_limits(data):
         return None
     return {"savedAt": float(saved_at), "data": {field: data[field] for field in _FIELDS if field in data}}
 
@@ -235,15 +260,19 @@ def _write_cache(key, saved_at, data):
         pass
 
 
+def remember(token, home, data, now=None):
+    """Cache a successful reply obtained another way (the HTTP fallback)."""
+    if token and _has_limits(data):
+        _write_cache(identity_key(token, home), time.time() if now is None else now, data)
+
+
 def get_codex_rate_limits(token="", home="", now=None):
     """Rate limits with a short positive TTL cache.
 
-    A successful app-server reply is cached under the same identity scope as
-    the last-good snapshot. A fresh cache hit returns the cached data without
-    launching the app-server; the reply carries `_codexSource` ("cached") and
-    `_codexAge` metadata that the collector pops. A live reply is "live" with
-    age 0; a failed attempt is "unavailable" with no age. Without a token there
-    is no identity to scope the cache to, so every call is live.
+    A fresh cache hit returns the cached data without launching the app-server
+    and is tagged `_codexSource: "cached"` with its `_codexAge`. A live reply is
+    "live" with age 0; a failed attempt is "unavailable" with no age. Without a
+    token there is no identity to scope the cache to, so every call is live.
     """
     checked_at = time.time() if now is None else now
     key = identity_key(token, home) if token else None
@@ -255,7 +284,8 @@ def get_codex_rate_limits(token="", home="", now=None):
                 return {**cached["data"], "_codexSource": "cached", "_codexAge": int(age)}
 
     result = _live_codex_rate_limits()
-    if key is not None and _has_limits(result):
+    if not _has_limits(result):
+        return {**result, "_codexSource": "unavailable", "_codexAge": None}
+    if key is not None:
         _write_cache(key, checked_at, result)
-        return {**result, "_codexSource": "live", "_codexAge": 0}
-    return {**result, "_codexSource": "unavailable", "_codexAge": None}
+    return {**result, "_codexSource": "live", "_codexAge": 0}

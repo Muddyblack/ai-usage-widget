@@ -19,16 +19,8 @@ function nextAction(pricingOk, usageInFlight, usagePending) {
     return "refresh-now";
 }
 
-// Pricing status is independent of usage state: a pricing-only update must
-// never blank the usage view. Exposed so a frontend can assert it does not
-// clear usage on a pricing transition.
-function blanksUsage(_previousStatus, _nextStatus) {
-    return false;
-}
-
 if (typeof module !== "undefined" && module.exports) {
     module.exports = {
-        nextAction: nextAction,
-        blanksUsage: blanksUsage
+        nextAction: nextAction
     };
 }

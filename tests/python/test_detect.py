@@ -2,7 +2,7 @@ import builtins
 import contextlib
 import io
 import json
-import shutil
+import os
 import socket
 import sqlite3
 import subprocess
@@ -15,30 +15,71 @@ from aiusage import config, detect
 
 
 class ProviderDetectionTest(IsolatedHomeTest):
-    def test_detection_uses_local_markers_in_canonical_order(self):
-        self.write(".claude/.credentials.json", "not-json-secret")
-        self.write(".codex/auth.json", "not-json-secret")
-        self.write(".cursor/auth.json", "not-json-secret")
-        self.write(".cursor/chats/project/session/meta.json", "not-json-secret")
-        self.write(".cline/data/sessions/session/session.json", "not-json-secret")
-        self.write(".config/openrouter/api-key", "openrouter-secret")
-        self.write(".config/deepseek/api-key", "deepseek-secret")
+    def setUp(self):
+        super().setUp()
+        # Only the throwaway home counts: the developer's own installs and the
+        # system directories must not leak into these results.
+        self.bin = self.home / "path-bin"
+        self.bin.mkdir()
+        for patch in (
+            mock.patch.dict("os.environ", {"PATH": str(self.bin), "XDG_DATA_DIRS": "", "USER": ""}),
+            mock.patch.object(detect, "_SYSTEM_BIN_DIRS", ()),
+            mock.patch.object(detect, "_SYSTEM_DATA_DIRS", ()),
+            mock.patch.object(detect, "_SYSTEM_APP_DIRS", ()),
+            mock.patch.object(detect.paths, "IS_MACOS", False),
+            mock.patch.object(detect.paths, "IS_WINDOWS", False),
+        ):
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def install(self, relative):
+        path = self.home / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("#!/bin/sh\n", encoding="utf-8")
+        path.chmod(0o755)
+
+    @unittest.skipIf(os.name == "nt", "POSIX executable bits")
+    def test_installed_programs_are_detected_in_canonical_order(self):
+        self.install("path-bin/codex")
+        self.install(".local/bin/claude")
+        self.install(".npm-global/bin/cline")
+        self.install(".nvm/versions/node/v22.1.0/bin/opencode")
+        self.install(".local/share/applications/cursor.desktop")
 
         with (
-            mock.patch.object(shutil, "which", return_value=""),
             mock.patch.object(subprocess, "run", side_effect=AssertionError("detection ran a subprocess")),
             mock.patch.object(sqlite3, "connect", side_effect=AssertionError("detection opened SQLite")),
         ):
-            self.assertEqual(detect.detect_providers(), ["claude", "openai", "cursor", "cline"])
+            self.assertEqual(detect.detect_providers(), ["claude", "openai", "cursor", "cline", "opencode"])
 
+    def test_leftover_logs_and_credentials_are_not_evidence(self):
+        # What an uninstalled tool leaves behind (issue #60).
+        self.write(".claude/.credentials.json", "not-json-secret")
+        self.write(".claude/projects/p/session.jsonl", "{}")
+        self.write(".codex/auth.json", "not-json-secret")
+        self.write(".codex/sessions/2026/rollout.jsonl", "{}")
+        self.write(".vibe/logs/session/meta.json", "{}")
+        self.write(".grok/sessions/w/s/summary.json", "{}")
+        self.write(".cline/data/sessions/session/session.json", "{}")
+        self.write(".local/share/opencode/opencode.db", "")
+        self.write(".cursor/chats/project/session/meta.json", "{}")
+        self.assertEqual(detect.detect_providers(), [])
+
+    @unittest.skipIf(os.name == "nt", "POSIX executable bits")
+    def test_a_non_executable_file_is_not_an_install(self):
+        path = self.bin / "codex"
+        path.write_text("", encoding="utf-8")
+        path.chmod(0o644)
+        self.assertEqual(detect.detect_providers(), [])
+
+    @unittest.skipIf(os.name == "nt", "POSIX executable bits")
     def test_detection_never_reads_files_or_uses_network(self):
-        self.write(".claude/.credentials.json", "secret")
+        self.install("path-bin/claude")
         with (
             mock.patch.object(builtins, "open", side_effect=AssertionError("detection read file contents")),
             mock.patch.object(socket, "create_connection", side_effect=AssertionError("detection used network")),
             mock.patch.object(subprocess, "run", side_effect=AssertionError("detection ran a subprocess")),
             mock.patch.object(sqlite3, "connect", side_effect=AssertionError("detection opened SQLite")),
-            mock.patch.object(shutil, "which", return_value=""),
         ):
             self.assertEqual(detect.detect_providers(), ["claude"])
 

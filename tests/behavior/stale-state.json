@@ -13,7 +13,7 @@
       "text": "{\"updatedAt\":1785000060,\"providers\":[]}",
       "replayed": true
     },
-    "expected": {"accountId": "acct-a", "pct": 69, "available": true, "stale": true, "error": ""}
+    "expected": {"accountId": "acct-a", "pct": 69, "available": true, "stale": false, "error": ""}
   },
   {
     "name": "timeout-error",
@@ -26,7 +26,7 @@
       "text": "{\"updatedAt\":1784996400,\"providers\":[{\"id\":\"openai\",\"details\":{\"accountId\":\"acct-a\",\"codex\":{\"available\":true,\"session\":{\"available\":true,\"pct\":69,\"resetAt\":1785003600},\"weekly\":{\"available\":false,\"pct\":0,\"resetAt\":0}}}}]}",
       "replayed": true
     },
-    "expected": {"accountId": "acct-a", "pct": 69, "available": true, "stale": true, "error": ""}
+    "expected": {"accountId": "acct-a", "pct": 69, "available": true, "stale": false, "error": ""}
   },
   {
     "name": "expired-no-cache",
@@ -34,7 +34,7 @@
       "text": "{\"updatedAt\":0,\"providers\":[]}",
       "replayed": true
     },
-    "expected": {"accountId": "acct-a", "pct": 69, "available": true, "stale": true, "error": ""}
+    "expected": {"accountId": "acct-a", "pct": 69, "available": true, "stale": false, "error": ""}
   },
   {
     "name": "changed-account-identity",

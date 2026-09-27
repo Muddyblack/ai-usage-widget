@@ -87,14 +87,6 @@ def collect_sessions_json(query: str = "", limit: int | None = 60, offset: int =
             _restore_environ(saved)
 
 
-def collect_sessions_cache_json(query: str = "", limit: int | None = 60, offset: int = 0, source_ids=None) -> str:
-    if source_ids is None:
-        result = collect_sessions(query, limit=limit, offset=offset)
-    else:
-        result = collect_sessions(query, limit=limit, offset=offset, source_ids=source_ids)
-    return json.dumps(result, separators=(",", ":"), ensure_ascii=False)
-
-
 def refresh_sessions_json(query: str = "", limit: int | None = 60, offset: int = 0, source_ids=None) -> str:
     with _env_lock:
         saved = dict(os.environ)
@@ -542,27 +534,14 @@ class Backend(QObject):
 
     def _refresh_sessions(self, query, request_id, offset, refresh=False, source_ids=None):
         try:
-            if refresh:
-                if source_ids is None:
-                    refresh_future = self._pool.submit(refresh_sessions_json, query, limit=60, offset=offset)
-                else:
-                    refresh_future = self._pool.submit(refresh_sessions_json, query, source_ids=source_ids, limit=60, offset=offset)
-                while not refresh_future.done():
-                    if source_ids is None:
-                        result = collect_sessions_cache_json(query, limit=60, offset=offset)
-                    else:
-                        result = collect_sessions_cache_json(query, source_ids=source_ids, limit=60, offset=offset)
-                    self._sessionsCompleted.emit(result, "", query, request_id)
-                    try:
-                        refresh_future.result(timeout=0.35)
-                    except TimeoutError:
-                        continue
-                result = refresh_future.result()
+            # The QML side shows the cached page first and asks for the scan
+            # separately, so a refresh is one blocking call on this worker; it
+            # must never wait on another task of the same (bounded) pool.
+            helper = refresh_sessions_json if refresh else collect_sessions_json
+            if source_ids is None:
+                result = helper(query, limit=60, offset=offset)
             else:
-                if source_ids is None:
-                    result = collect_sessions_json(query, limit=60, offset=offset)
-                else:
-                    result = collect_sessions_json(query, source_ids=source_ids, limit=60, offset=offset)
+                result = helper(query, source_ids=source_ids, limit=60, offset=offset)
         except Exception as exc:
             self._sessionsCompleted.emit("", str(exc), query, request_id)
         else:

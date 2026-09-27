@@ -151,7 +151,7 @@ class CodexStatsTest(unittest.TestCase):
 
 
 class CodexStatsCacheTest(unittest.TestCase):
-    """Task-14: home-aware fingerprint cache for Codex local statistics."""
+    """Home-aware fingerprint cache for Codex local statistics."""
 
     def setUp(self):
         self.tmp = tempfile.mkdtemp()

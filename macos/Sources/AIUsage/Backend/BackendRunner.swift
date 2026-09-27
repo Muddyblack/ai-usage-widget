@@ -34,6 +34,10 @@ enum Backend {
     /// provider fetches are bounded well below this, so reaching it means the
     /// child is wedged, not merely slow; a menu bar app must not wait forever.
     static let childTimeout: TimeInterval = 60
+    /// A full session reconcile parses every local store; the first one on a
+    /// large history can take minutes, and each finished source is kept, so it
+    /// gets a longer bound than a usage fetch instead of being killed each time.
+    static let sessionRefreshTimeout: TimeInterval = 600
 
     /// The frozen binary, the checkout's launcher, or nil.
     ///
@@ -102,7 +106,7 @@ enum Backend {
     ) throws -> LocalSessions {
         var arguments = ["--sessions", "--refresh", "--query", query]
         appendSessionArguments(to: &arguments, sourceIds: sourceIds, limit: limit, offset: offset)
-        return try decodeSessions(arguments: arguments)
+        return try decodeSessions(arguments: arguments, timeout: sessionRefreshTimeout)
     }
 
     private static func appendSessionArguments(
@@ -128,8 +132,10 @@ enum Backend {
         }
     }
 
-    private static func decodeSessions(arguments: [String]) throws -> LocalSessions {
-        let data = try run(arguments: arguments)
+    private static func decodeSessions(
+        arguments: [String], timeout: TimeInterval = childTimeout
+    ) throws -> LocalSessions {
+        let data = try run(arguments: arguments, timeout: timeout)
         do {
             return try JSONDecoder().decode(LocalSessions.self, from: data)
         } catch {
@@ -138,6 +144,17 @@ enum Backend {
     }
 
     static let refreshPricingArguments = ["--refresh-pricing"]
+
+    /// Providers whose tools are installed right now (`--detect-providers`),
+    /// in the backend's canonical order.
+    static func detectProviders() throws -> [String] {
+        let data = try run(arguments: ["--detect-providers"])
+        do {
+            return try JSONDecoder().decode(DetectedProviders.self, from: data).data
+        } catch {
+            throw Failure.badJSON(error.localizedDescription)
+        }
+    }
 
     static func refreshPricing() throws -> PricingRefreshResult {
         try refreshPricing(using: nil)
@@ -205,7 +222,7 @@ enum Backend {
 
     private static func run(
         tool overrideTool: URL? = nil, arguments: [String], environment: [String: String] = [:],
-        ignoreStatus: Bool = false
+        ignoreStatus: Bool = false, timeout: TimeInterval = childTimeout
     ) throws -> Data {
         guard let tool = overrideTool ?? executable else { throw Failure.notFound }
 
@@ -230,12 +247,12 @@ enum Backend {
         process.terminationHandler = { _ in exited.signal() }
 
         try process.run()
-        return try collect(process, out: out, err: err, exited: exited, ignoreStatus: ignoreStatus)
+        return try collect(process, out: out, err: err, exited: exited, ignoreStatus: ignoreStatus, timeout: timeout)
     }
 
     private static func collect(
         _ process: Process, out: Pipe, err: Pipe, exited: DispatchSemaphore,
-        ignoreStatus: Bool = false
+        ignoreStatus: Bool = false, timeout: TimeInterval = childTimeout
     ) throws -> Data {
         // Both pipes are drained while the child runs. Waiting first and
         // reading after deadlocks as soon as a provider list outgrows the
@@ -255,7 +272,7 @@ enum Backend {
             group.leave()
         }
 
-        if exited.wait(timeout: .now() + childTimeout) == .timedOut {
+        if exited.wait(timeout: .now() + timeout) == .timedOut {
             // Give the child SIGTERM, then SIGKILL if it ignores that. Either
             // way close its pipes so the readers unblock and nothing leaks.
             process.terminate()
@@ -276,6 +293,11 @@ enum Backend {
         }
         return stdout
     }
+}
+
+struct DetectedProviders: Decodable, Sendable {
+    var ok: Bool
+    var data: [String]
 }
 
 struct PricingRefreshResult: Decodable, Equatable, Sendable {

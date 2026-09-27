@@ -15,10 +15,8 @@ import _support  # noqa: F401  (sys.path)
 from _support import IsolatedHomeTest
 from aiusage import collect
 from aiusage.http import HttpResult
-from aiusage.providers import codex_last_good
-from aiusage.providers.codex_last_good import TTL_SECONDS, identity_key
-from aiusage.providers.codex_rate_limits import get_codex_rate_limits
-from aiusage.providers.openai_credentials import codex_home
+from aiusage.providers import codex_rate_limits
+from aiusage.providers.codex_rate_limits import TTL_SECONDS, get_codex_rate_limits, identity_key
 
 FAKE_SERVER = r"""
 import json, os, sys, queue, threading
@@ -291,37 +289,37 @@ class CodexCollectFallbackTest(IsolatedHomeTest):
         ):
             raw = collect.collect_openai(1_800_000_000)
         self.assertEqual(raw["inputs"]["codex"]["rateLimits"]["primary"]["usedPercent"], 7)
-        self.assertEqual(raw["inputs"]["codexSource"], "live")
-        self.assertEqual(raw["inputs"]["codexAgeSeconds"], 0)
         self.assertEqual(raw["inputs"]["codexError"], "")
+        self.assertNotIn("codexSource", raw["inputs"])
         fetch.assert_called_once()
 
-    def test_fallback_failure_keeps_error_and_stale_provenance(self):
-        codex_last_good.snapshot({"rateLimits": {"primary": {"usedPercent": 42}}}, "token-a", codex_home(), time.time())
+    def test_fallback_success_is_cached_for_the_next_refresh(self):
+        with mock.patch.object(collect, "fetch_json", return_value=HttpResult(200, '{"rateLimits": {"primary": {"usedPercent": 7}}}')):
+            with mock.patch.object(codex_rate_limits, "_live_codex_rate_limits", return_value={}):
+                collect.collect_openai(1_800_000_000)
+        with mock.patch.object(codex_rate_limits, "_live_codex_rate_limits") as live, mock.patch.object(collect, "fetch_json") as fetch:
+            raw = collect.collect_openai(1_800_000_000)
+        live.assert_not_called()
+        fetch.assert_not_called()
+        self.assertEqual(raw["inputs"]["codex"]["rateLimits"]["primary"]["usedPercent"], 7)
+
+    def test_fallback_failure_keeps_error_and_serves_no_stale_limits(self):
         with (
             mock.patch.object(collect, "get_codex_rate_limits", return_value={"_codexSource": "unavailable", "_codexAge": None}),
             mock.patch.object(collect, "fetch_json", return_value=HttpResult(401, "unauthorized")),
         ):
             raw = collect.collect_openai(1_800_000_000)
-        self.assertEqual(raw["inputs"]["codex"]["rateLimits"]["primary"]["usedPercent"], 42)
-        self.assertEqual(raw["inputs"]["codexSource"], "stale")
-        self.assertIsInstance(raw["inputs"]["codexAgeSeconds"], int)
+        self.assertEqual(raw["inputs"]["codex"], {})
         self.assertNotEqual(raw["inputs"]["codexError"], "")
 
-    def test_cached_app_server_result_keeps_cached_provenance(self):
+    def test_explicit_no_limits_skips_the_http_fallback(self):
         with (
-            mock.patch.object(
-                collect,
-                "get_codex_rate_limits",
-                return_value={"_codexSource": "cached", "_codexAge": 40, "rateLimits": {"primary": {"usedPercent": 42}}},
-            ),
-            mock.patch.object(collect, "codex_snapshot") as snapshot,
+            mock.patch.object(collect, "get_codex_rate_limits", return_value={"_codexSource": "live", "_codexAge": 0, "_codexNoLimits": True}),
+            mock.patch.object(collect, "fetch_json") as fetch,
         ):
             raw = collect.collect_openai(1_800_000_000)
-        self.assertEqual(raw["inputs"]["codexSource"], "cached")
-        self.assertEqual(raw["inputs"]["codexAgeSeconds"], 40)
-        self.assertEqual(raw["inputs"]["codexError"], "")
-        snapshot.assert_not_called()
+        fetch.assert_not_called()
+        self.assertEqual(raw["inputs"]["codex"], {})
 
 
 if __name__ == "__main__":

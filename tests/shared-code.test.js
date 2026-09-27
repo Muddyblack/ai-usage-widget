@@ -1066,15 +1066,6 @@ test("extracts a tagged generation and treats an untagged response as current", 
     assert.equal(RequestGeneration.isCurrent(RequestGeneration.generationOf("plain cmd"), 0), true);
 });
 
-test("persists a snapshot only when its text actually changed", () => {
-    const stored = '{"schemaVersion":1,"providers":[]}';
-    assert.equal(RequestGeneration.shouldPersist(stored, stored), false);
-    assert.equal(RequestGeneration.shouldPersist(stored + " ", stored), true);
-    assert.equal(RequestGeneration.shouldPersist('{"schemaVersion":1,"providers":[{}]}', stored), true);
-    assert.equal(RequestGeneration.shouldPersist("", ""), false);
-    assert.equal(RequestGeneration.shouldPersist("x", null), true);
-});
-
 test("the generation tag is a shell no-op and survives into the source string", () => {
     // The tag rides as a trailing shell comment: the backend never sees it,
     // but Plasma keeps the whole command as `src`, so generationOf can read it.
@@ -1102,11 +1093,6 @@ test("a pricing refresh during an in-flight usage request coalesces to one", () 
     assert.equal(RefreshCoalescer.nextAction(true, true, true), "none");
     // When the request settles, the pending refresh fires once.
     assert.equal(RefreshCoalescer.nextAction(true, false, true), "refresh-now");
-});
-
-test("a pricing-only status change never blanks usage", () => {
-    assert.equal(RefreshCoalescer.blanksUsage("refreshed", "no-cache"), false);
-    assert.equal(RefreshCoalescer.blanksUsage("", "stale-good"), false);
 });
 
 test("Project Info network work is deferred until the visible pane ticks its client", () => {
@@ -1239,9 +1225,11 @@ test("Hyprland and Plasma share one refresh/session policy instead of duplicatin
     assert.match(hyprland, /SessionRefreshPolicy\.refreshDelayMs/);
     assert.match(plasmaSessions, /SessionRefreshPolicy\.RECONCILE_INTERVAL_MS/);
     assert.match(hyprland, /SessionRefreshPolicy\.cacheExpired/);
-    // Both coalesce the pricing-triggered usage refresh through the shared rule.
-    assert.match(plasmaShell, /RefreshCoalescer\.nextAction/);
+    // Hyprland coalesces the pricing-triggered usage refresh through the shared
+    // rule. Plasma's executable engine gives no reliable "running" signal, so
+    // it refreshes and lets the request generation drop the superseded answer.
     assert.match(hyprland, /RefreshCoalescer\.nextAction/);
+    assert.match(plasmaShell, /RequestGeneration\.isCurrent/);
     // Neither reimplements the interval as a literal.
     assert.doesNotMatch(hyprland, /600000/);
 });

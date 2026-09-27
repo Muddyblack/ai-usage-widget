@@ -266,11 +266,20 @@ ColumnLayout {
         }
     }
 
+    // The executable engine never reports a command that hangs; without this
+    // one stuck scan would block every later refresh of the tab.
     Timer {
-        interval: 500
-        repeat: true
-        running: sessionsTab.foregroundSessionsVisible && sessionsTab.backgroundRefreshRunning && !sessionsTab.loading
-        onTriggered: sessionsTab.queryOnly(sessionsTab.sessionsOffset, true)
+        id: backgroundRefreshWatchdog
+        interval: 300000
+        repeat: false
+        onTriggered: {
+            if (!sessionsTab.backgroundRefreshRunning)
+                return;
+            backgroundRefreshSource.disconnectSource(sessionsTab.backgroundRefreshCommand);
+            sessionsTab.backgroundRefreshCommand = "";
+            sessionsTab.backgroundRefreshRunning = false;
+            sessionsTab.refreshStatus = "failed";
+        }
     }
 
     Timer {
@@ -856,7 +865,7 @@ ColumnLayout {
         return Kirigami.Theme.textColor;
     }
 
-    function requestSessions(offset, refreshMode, quiet) {
+    function requestSessions(offset, refreshMode) {
         requestSerial += 1;
         requestedQuery = searchQuery;
         requestedSourceSignature = sourceSignature(selectedSourceIds);
@@ -865,8 +874,7 @@ ColumnLayout {
         activeRequestSerial = requestSerial;
         activeOffset = offset;
         activeRefresh = refreshMode === true;
-        if (quiet !== true)
-            loading = true;
+        loading = true;
         errorText = "";
         notice = "";
         var mode = activeRefresh ? "--refresh" : "--query-only";
@@ -890,11 +898,13 @@ ColumnLayout {
         backgroundRefreshCommand = cmd;
         backgroundRefreshSource.disconnectSource(cmd);
         backgroundRefreshSource.connectSource(cmd);
+        backgroundRefreshWatchdog.restart();
+        // Show the cached page now; the finished scan re-queries once.
         queryOnly(sessionsOffset);
     }
 
-    function queryOnly(offset, quiet) {
-        requestSessions(offset === undefined ? 0 : offset, false, quiet);
+    function queryOnly(offset) {
+        requestSessions(offset === undefined ? 0 : offset, false);
     }
 
     Plasma5Support.DataSource {
@@ -948,10 +958,17 @@ ColumnLayout {
                 sessionsTab.sessions = page;
                 sessionsTab.cacheStatus = payload.cacheStatus || "unknown";
                 sessionsTab.cacheAgeSeconds = payload.cacheAgeSeconds === undefined ? null : payload.cacheAgeSeconds;
-                sessionsTab.refreshStatus = payload.refreshStatus || "not-run";
-                sessionsTab.removedSourceCount = Number(payload.removedSourceCount) || 0;
+                // A cache-only query never ran a refresh ("not-run"); keep the
+                // status of the last background scan instead of erasing it.
+                if (payload.refreshStatus && payload.refreshStatus !== "not-run")
+                    sessionsTab.refreshStatus = payload.refreshStatus;
+                if (payload.removedSourceCount !== undefined && sessionsTab.activeRefresh)
+                    sessionsTab.removedSourceCount = Number(payload.removedSourceCount) || 0;
                 sessionsReconcileTimer.restart();
-                if (!sessionsTab.activeRefresh && SessionRefreshPolicy.cacheExpired(sessionsTab.cacheAgeSeconds))
+                // An expired cache starts one scan, but a scan that just failed
+                // waits for the reconcile timer instead of retrying in a loop.
+                var lastScanFailed = sessionsTab.refreshStatus === "failed" || sessionsTab.refreshStatus === "incomplete";
+                if (!sessionsTab.activeRefresh && !lastScanFailed && SessionRefreshPolicy.cacheExpired(sessionsTab.cacheAgeSeconds))
                     sessionsTab.refresh();
             } catch (e) {
                 sessionsTab.errorText = i18n("Could not parse sessions.");
@@ -967,6 +984,7 @@ ColumnLayout {
             backgroundRefreshSource.disconnectSource(sourceName);
             if (sourceName !== sessionsTab.backgroundRefreshCommand)
                 return;
+            backgroundRefreshWatchdog.stop();
             sessionsTab.backgroundRefreshRunning = false;
             var stdout = data && data.stdout ? data.stdout : "";
             var exitCode = data ? Number(data["exit code"]) : 1;
@@ -978,6 +996,7 @@ ColumnLayout {
             try {
                 var payload = JSON.parse(stdout);
                 sessionsTab.refreshStatus = payload.refreshStatus || sessionsTab.refreshStatus;
+                sessionsTab.removedSourceCount = Number(payload.removedSourceCount) || 0;
             } catch (e) {
                 sessionsTab.refreshStatus = "failed";
             }

@@ -51,6 +51,16 @@ struct SettingsView: View {
     private var providersTab: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    Button(model.providerDetectBusy ? i18n("Detecting…") : i18n("Detect installed providers")) {
+                        model.redetectProviders()
+                    }
+                    .disabled(model.providerDetectBusy)
+                    Text(model.providerDetectStatus)
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
+                Divider()
                 ForEach(SettingsStore.allProviders, id: \.self) { id in
                     providerRow(id)
                     Divider()

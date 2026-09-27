@@ -37,7 +37,7 @@ from . import billing, billing_mode, pricing
 from .contract import epoch_of, num
 from .providers import antigravity_sessions, cursor_sessions, mistral_sessions, opencode
 from .providers.cline import get_cline_session_records
-from .providers.grok import account_identity, discover_sessions, grok_home
+from .providers.grok import discover_sessions, grok_home
 from .providers.muse import sessions_root as muse_sessions_root
 from .providers.openai_credentials import codex_home
 from .session_cache import SessionCache
@@ -647,7 +647,7 @@ def _grok_summary_entries(sessions_dir, *, include_all=False):
     reader still runs for anyone on one, and simply finds nothing here.
     """
     found = []
-    for record in discover_sessions(sessions_dir, identity=account_identity()):
+    for record in discover_sessions(sessions_dir):
         if not record.summary_path:
             continue
         try:
@@ -706,7 +706,7 @@ def _grok_entries(*, include_all=False):
         out = _grok_summary_entries(sessions_dir, include_all=include_all)
     except OSError:
         out = []
-    for record in discover_sessions(sessions_dir, identity=account_identity()):
+    for record in discover_sessions(sessions_dir):
         if not record.signals_path:
             continue
         try:
@@ -1215,7 +1215,7 @@ def _grok_targets():
     if not os.path.isdir(sessions_dir):
         return []
     out = []
-    for record in discover_sessions(sessions_dir, identity=account_identity()):
+    for record in discover_sessions(sessions_dir):
         # summary.json is the current layout, signals.json the older one.
         if not record.marker:
             continue

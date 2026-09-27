@@ -1,6 +1,6 @@
 """Every adapter owns its timeout, and a timeout never fabricates zero data.
 
-The plan's timeout/last-good contract: each frontend retains its last good
+The timeout/last-good contract: each frontend retains its last good
 summary/panel/menu-bar values, marks stale/error, rejects a late result, gives
 an owned child a bounded grace and terminates it, and keeps a history batch
 retryable. This suite pins the values and the wiring without a desktop session.
@@ -53,8 +53,6 @@ class AdapterTimeoutOwnershipTest(unittest.TestCase):
         # so both pipes are read while the child runs rather than after wait.
         runner = _read(MACOS / "Backend" / "BackendRunner.swift")
         self.assertIn("readDataToEndOfFile", runner)
-        # The grace/termination for a hung child is task 26's scope; it is not
-        # present here today, so this test only pins what the adapter does own.
         self.assertIn("waitUntilExit", runner)
 
     def test_http_defaults_are_bounded_and_below_the_watchdog(self):
@@ -76,12 +74,12 @@ class LastGoodBackendTest(unittest.TestCase):
         self.assertIn("_merge_tables(snapshot[", loader)
         self.assertIn('cached.get("providers", {})', loader)
 
-    def test_codex_last_good_is_time_bounded(self):
-        from aiusage.providers import codex_last_good
+    def test_codex_rate_limit_cache_is_time_bounded(self):
+        from aiusage.providers import codex_rate_limits
 
-        self.assertIsInstance(codex_last_good.TTL_SECONDS, int)
-        self.assertGreater(codex_last_good.TTL_SECONDS, 0)
-        self.assertLessEqual(codex_last_good.TTL_SECONDS, 300)
+        self.assertIsInstance(codex_rate_limits.TTL_SECONDS, int)
+        self.assertGreater(codex_rate_limits.TTL_SECONDS, 0)
+        self.assertLessEqual(codex_rate_limits.TTL_SECONDS, 300)
 
 
 if __name__ == "__main__":

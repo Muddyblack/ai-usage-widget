@@ -490,7 +490,7 @@ Window {
     }
 
     // Settings → Providers → "Detect installed providers": re-runs the
-    // stat-only detection and switches on what it finds (never off).
+    // stat-only detection and syncs the toggles with what is installed.
     function applyProviderDetection(result) {
         root.providerDetectBusy = false;
         if (!result || result.ok !== true || !Array.isArray(result.data)) {
@@ -498,13 +498,18 @@ Window {
             return;
         }
         var applied = ProviderRegistry.applyDetected(root.settings, result.data);
-        if (applied.added.length === 0) {
-            root.providerDetectStatus = root.i18n("No new providers found.");
+        if (applied.added.length === 0 && applied.removed.length === 0) {
+            root.providerDetectStatus = root.i18n("No changes: enabled providers match what is installed.");
             return;
         }
         root.settings = applied.settings;
         root.saveSettings();
-        root.providerDetectStatus = root.i18n("Enabled: %1", ProviderRegistry.labels(applied.added));
+        var parts = [];
+        if (applied.added.length)
+            parts.push(root.i18n("Enabled: %1", ProviderRegistry.labels(applied.added)));
+        if (applied.removed.length)
+            parts.push(root.i18n("Disabled (not installed): %1", ProviderRegistry.labels(applied.removed)));
+        root.providerDetectStatus = parts.join(" · ");
         root.refresh();
     }
 
@@ -743,12 +748,19 @@ Window {
                     root.sessionsError = "";
                     root.sessionsCacheStatus = data.cacheStatus || "unknown";
                     root.sessionsCacheAgeSeconds = data.cacheAgeSeconds === undefined ? null : data.cacheAgeSeconds;
-                    root.sessionsRefreshStatus = data.refreshStatus || "not-run";
-                    root.sessionsRemovedSourceCount = Number(data.removedSourceCount) || 0;
+                    // A cache-only query never ran a refresh ("not-run"); keep the
+                    // status of the last scan instead of erasing it.
+                    if (data.refreshStatus && data.refreshStatus !== "not-run")
+                        root.sessionsRefreshStatus = data.refreshStatus;
+                    if (root.sessionsActiveRefresh)
+                        root.sessionsRemovedSourceCount = Number(data.removedSourceCount) || 0;
                     sessionsReconcileTimer.restart();
+                    // A scan that just failed waits for the reconcile timer
+                    // instead of being retried after every cache query.
+                    var lastScanFailed = root.sessionsRefreshStatus === "failed" || root.sessionsRefreshStatus === "incomplete";
                     if (root.sessionsActiveRefresh) {
                         root.sessionsLastReconcile = Date.now();
-                    } else if (root.sessionsViewVisible && SessionRefreshPolicy.cacheExpired(root.sessionsCacheAgeSeconds)) {
+                    } else if (root.sessionsViewVisible && !lastScanFailed && SessionRefreshPolicy.cacheExpired(root.sessionsCacheAgeSeconds)) {
                         root.reconcileSessions(root.sessionsQuery, root.sessionsSourceIds);
                     }
                 }

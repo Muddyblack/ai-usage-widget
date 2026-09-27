@@ -414,26 +414,30 @@ class OpenCodeUsageReaderTest(unittest.TestCase):
         self.assertEqual(records[0].usage, ())
         self.assertEqual(records[1].usage[0].output_tokens, 50)
 
-    def test_usage_enrichment_has_no_total_session_read_budget(self):
+    def _three_session_database(self, root):
         messages = [
             _assistant_message(tokens={"output": 50}),
             _assistant_message("message-2", session_id="session-2", tokens={"output": 50}),
             _assistant_message("message-3", session_id="session-3", tokens={"output": 50}),
         ]
+        path = _create_database(root, messages=messages)
+        connection = sqlite3.connect(path)
+        try:
+            with connection:
+                connection.executemany(
+                    "INSERT INTO session VALUES (?, ?, ?, ?, ?)",
+                    [
+                        ("session-2", "Synthetic session 2", "/synthetic/project", 1, 1_000),
+                        ("session-3", "Synthetic session 3", "/synthetic/project", 1, 500),
+                    ],
+                )
+        finally:
+            connection.close()
+        return path
+
+    def test_usage_enrichment_reads_every_session_within_its_budget(self):
         with tempfile.TemporaryDirectory() as root:
-            path = _create_database(root, messages=messages)
-            connection = sqlite3.connect(path)
-            try:
-                with connection:
-                    connection.executemany(
-                        "INSERT INTO session VALUES (?, ?, ?, ?, ?)",
-                        [
-                            ("session-2", "Synthetic session 2", "/synthetic/project", 1, 1_000),
-                            ("session-3", "Synthetic session 3", "/synthetic/project", 1, 500),
-                        ],
-                    )
-            finally:
-                connection.close()
+            path = self._three_session_database(root)
             with (
                 mock.patch.object(opencode, "_read_usage", return_value=()) as read_usage,
                 mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True),
@@ -442,6 +446,20 @@ class OpenCodeUsageReaderTest(unittest.TestCase):
 
         self.assertEqual([record.session_id for record in records], ["session-1", "session-2", "session-3"])
         self.assertEqual(read_usage.call_count, 3)
+
+    def test_sessions_past_the_enrichment_budget_are_kept_without_usage(self):
+        with tempfile.TemporaryDirectory() as root:
+            path = self._three_session_database(root)
+            with (
+                mock.patch.object(opencode, "_ENRICH_TIMEOUT_SECONDS", -1),
+                mock.patch.object(opencode, "_read_usage", return_value=()) as read_usage,
+                mock.patch.dict(os.environ, {"OPENCODE_DB": path}, clear=True),
+            ):
+                records = opencode.read_recent_sessions()
+
+        self.assertEqual([record.session_id for record in records], ["session-1", "session-2", "session-3"])
+        self.assertTrue(all(record.usage == () for record in records))
+        self.assertEqual(read_usage.call_count, 0)
 
     def test_connection_is_read_only_and_query_only(self):
         with tempfile.TemporaryDirectory() as root:

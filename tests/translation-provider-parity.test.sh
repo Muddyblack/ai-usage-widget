@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Task 29: the translation build is incremental, and the shell launcher's
-# provider list has not drifted from the canonical Python list.
+# The translation build is incremental, and the shell launcher's provider list
+# has not drifted from the canonical Python list.
 #
 # The two checks are deliberately separate: the build check proves an
 # unchanged .po skips compilation (the reason `make view`/`pack` got slower
@@ -13,9 +13,6 @@ set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/.." && pwd)"
 sh_dir="$repo/package/contents/tools/sh"
-build="$repo/translate/build.sh"
-mo_dir="$repo/package/contents/locale/fr/LC_MESSAGES"
-mo="$mo_dir/plasma_applet_org.muddyblack.aiUsageWidget.mo"
 
 # ── provider list parity ──────────────────────────────────────────────
 # The shell list must equal config.ALL_PROVIDERS exactly (order included),
@@ -34,15 +31,25 @@ fi
 if ! command -v msgfmt >/dev/null 2>&1; then
     printf 'translation-provider-parity: msgfmt missing (gettext); build check skipped\n' >&2
 else
+    # Build in a throwaway copy: the check deletes and touches files, which
+    # must never happen to the working tree.
+    tmp="$(mktemp -d)"
+    trap 'rm -rf -- "$tmp"' EXIT
+    mkdir -p "$tmp/translate" "$tmp/package"
+    cp "$repo/translate/build.sh" "$repo/translate/fr.po" "$tmp/translate/"
+    cp "$repo/package/metadata.json" "$tmp/package/"
+    build="$tmp/translate/build.sh"
+    mo="$tmp/package/contents/locale/fr/LC_MESSAGES/plasma_applet_org.muddyblack.aiUsageWidget.mo"
+    mtime() { python3 -c 'import os, sys; print(os.stat(sys.argv[1]).st_mtime_ns)' "$1"; }
+
     # A clean build compiles.
-    rm -f "$mo"
     "$build" >/dev/null
     [ -e "$mo" ] || { printf 'translation-provider-parity: clean build produced no .mo\n' >&2; exit 1; }
 
     # A repeated build with an unchanged .po skips (no output, mtime held).
-    before="$(stat -c %Y "$mo")"
+    before="$(mtime "$mo")"
     out="$("$build")"
-    after="$(stat -c %Y "$mo")"
+    after="$(mtime "$mo")"
     if [ -n "$out" ]; then
         printf 'translation-provider-parity: unchanged build recompiled: %s\n' "$out" >&2
         exit 1
@@ -60,7 +67,8 @@ else
     esac
 
     # A newer .po triggers exactly its own rebuild.
-    touch "$repo/translate/fr.po"
+    sleep 1
+    touch "$tmp/translate/fr.po"
     out="$("$build")"
     case "$out" in
         *"[i18n] fr"*) ;;

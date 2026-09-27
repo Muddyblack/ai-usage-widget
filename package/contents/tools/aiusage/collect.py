@@ -16,8 +16,8 @@ from .pricing import get_pricing
 from .providers.antigravity import get_antigravity_usage
 from .providers.claude_credentials import get_claude_credentials
 from .providers.cline import get_cline_sessions
-from .providers.codex_last_good import snapshot as codex_snapshot
 from .providers.codex_rate_limits import get_codex_rate_limits
+from .providers.codex_rate_limits import remember as remember_codex_rate_limits
 from .providers.codex_stats import get_codex_stats
 from .providers.copilot import get_copilot_usage
 from .providers.copilot_stats import get_copilot_stats
@@ -157,15 +157,15 @@ def collect_openai(now):
 
     codex = None
     codex_error = ""
-    codex_source = "live"
-    codex_age = 0
     fixture = os.environ.get("CODEX_USAGE_RESPONSE_FILE")
     if fixture:
         codex = read_json_file(fixture)
     else:
         codex = get_codex_rate_limits(token, codex_home())
-        codex_source = codex.pop("_codexSource", "live")
-        codex_age = codex.pop("_codexAge", 0)
+        codex.pop("_codexSource", None)
+        codex.pop("_codexAge", None)
+        # The app-server can answer "no limits on this plan" explicitly; that
+        # is an answer, not a failure, so it must not trigger the HTTP fallback.
         no_limits = codex.pop("_codexNoLimits", False)
         if not (codex.get("rateLimits") or codex.get("rate_limit") or no_limits) and token:
             headers = {"Authorization": f"Bearer {token}", "User-Agent": "codex-cli"}
@@ -174,16 +174,9 @@ def collect_openai(now):
             result = fetch_json("https://chatgpt.com/backend-api/codex/usage", headers=headers, timeout=12)
             if result.status == 200:
                 codex = as_json(result.body) or {}
-                no_limits = isinstance(codex, dict) and not codex
-                codex_source = "live"
-                codex_age = 0
+                remember_codex_rate_limits(token, codex_home(), codex if codex else {"_codexNoLimits": True})
             else:
                 codex_error = http_error_text(result.status)
-        if token:
-            if no_limits:
-                codex = {"_codexNoLimits": True}
-            if codex_source != "cached":
-                codex, codex_source, codex_age = codex_snapshot(codex or {}, token, codex_home())
 
     org = None
     if api_key:
@@ -208,8 +201,6 @@ def collect_openai(now):
             "credentials": creds or {},
             "codex": codex or {},
             "codexError": codex_error,
-            "codexSource": codex_source,
-            "codexAgeSeconds": codex_age,
             "orgUsage": org,
             "pricing": get_pricing("openai") if isinstance(org, dict) and org.get("data") else {},
             "stats": stats or {},

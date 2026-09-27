@@ -12,16 +12,16 @@ presentation only; see docs/provider-contract.md for the schema.
 """
 
 import json
+import os
 import sys
 
-from . import config, detect, envelope, pricing
+from . import config, detect, envelope, pricing, widget_state
 from .contract import finalize
 from .normalize import normalize
 from .session_index import SOURCE_REGISTRY
-from .timing import ProviderTimingCollector, emit_diagnostics, timing_enabled
 
 USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize | --sessions | --refresh-pricing | --pricing-table |
---detect-providers | --initialize-provider-defaults]
+--detect-providers | --initialize-provider-defaults | --last-snapshot | --shared-settings]
 
   --all                 fetch every provider enabled in the shared settings file
   --provider <ids>      fetch the named providers regardless of the toggles
@@ -33,6 +33,10 @@ USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize 
   --detect-providers    report locally evidenced providers without fetching data
   --initialize-provider-defaults
                         apply shared provider defaults once and print settings
+  --save-snapshot       with --all/--provider: keep the envelope as the last good one
+  --last-snapshot       print the last good envelope ({} when there is none)
+  --shared-settings     merge the JSON object in $WIDGET_SHARED_PATCH into the
+                        settings shared by all Plasma widget instances, print them
   --query-only          query the shared session index without refreshing
   --refresh             refresh all session providers before querying
   --query <text>        search all local session records by safe display fields
@@ -92,6 +96,7 @@ def main(argv):
     offset = None
     query_only = False
     refresh = False
+    save_snapshot = False
     source_ids = None
 
     i = 0
@@ -118,6 +123,12 @@ def main(argv):
             mode = "detect-providers"
         elif arg == "--initialize-provider-defaults":
             mode = "initialize-provider-defaults"
+        elif arg == "--last-snapshot":
+            mode = "last-snapshot"
+        elif arg == "--shared-settings":
+            mode = "shared-settings"
+        elif arg == "--save-snapshot":
+            save_snapshot = True
         elif arg == "--query-only":
             query_only = True
         elif arg == "--refresh":
@@ -249,6 +260,19 @@ def main(argv):
         _emit({"ok": True, "data": detect.detect_providers()})
         return 0
 
+    if mode == "last-snapshot":
+        sys.stdout.write(json.dumps(widget_state.last_snapshot(), separators=(",", ":"), ensure_ascii=False) + "\n")
+        return 0
+
+    if mode == "shared-settings":
+        try:
+            patch = json.loads(os.environ.get("WIDGET_SHARED_PATCH") or "{}")
+        except ValueError:
+            sys.stderr.write("get-ai-usage: $WIDGET_SHARED_PATCH is not a JSON object\n")
+            return 2
+        _emit({"ok": True, "data": widget_state.merge_shared_settings(patch)})
+        return 0
+
     if mode == "initialize-provider-defaults":
         _emit({"ok": True, "data": config.initialize_provider_defaults()})
         return 0
@@ -288,10 +312,10 @@ def main(argv):
     else:
         selected = envelope.enabled(cfg)
 
-    timings = ProviderTimingCollector() if timing_enabled() else None
-    _emit(envelope.build(selected, timing=timings))
-    if timings is not None:
-        emit_diagnostics(timings.records(), sys.stderr)
+    result = envelope.build(selected)
+    _emit(result)
+    if save_snapshot:
+        widget_state.save_snapshot(finalize(result))
     return 0
 
 

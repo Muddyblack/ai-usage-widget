@@ -768,7 +768,7 @@ ShellRoot {
         root.sessionsFollowupRefresh = refreshMode === true;
     }
 
-    function startSessionsRequest(offset, append, refreshMode, quiet) {
+    function startSessionsRequest(offset, append, refreshMode) {
         root.sessionsActiveQuery = root.sessionsQuery;
         root.sessionsActiveSourceIds = root.sessionsSourceIds.slice(0);
         root.sessionsActiveSourceSignature = root.sessionsSourceSignature;
@@ -779,8 +779,7 @@ ShellRoot {
         root.sessionsFollowup = false;
         root.sessionsResponseDone = false;
         root.sessionsProcessExited = false;
-        if (quiet !== true)
-            root.sessionsLoading = true;
+        root.sessionsLoading = true;
         root.sessionsError = "";
         root.sessionsNotice = "";
         sessionsProcess.exec({
@@ -789,7 +788,7 @@ ShellRoot {
     }
 
     // Settings → Providers → "Detect installed providers": re-runs the
-    // stat-only detection and switches on what it finds (never off).
+    // stat-only detection and syncs the toggles with what is installed.
     function applyProviderDetection(result) {
         root.providerDetectBusy = false;
         if (!result || result.ok !== true || !Array.isArray(result.data)) {
@@ -797,13 +796,18 @@ ShellRoot {
             return;
         }
         var applied = ProviderRegistry.applyDetected(root.settings, result.data);
-        if (applied.added.length === 0) {
-            root.providerDetectStatus = root.i18n("No new providers found.");
+        if (applied.added.length === 0 && applied.removed.length === 0) {
+            root.providerDetectStatus = root.i18n("No changes: enabled providers match what is installed.");
             return;
         }
         root.settings = applied.settings;
         root.saveSettings();
-        root.providerDetectStatus = root.i18n("Enabled: %1", ProviderRegistry.labels(applied.added));
+        var parts = [];
+        if (applied.added.length)
+            parts.push(root.i18n("Enabled: %1", ProviderRegistry.labels(applied.added)));
+        if (applied.removed.length)
+            parts.push(root.i18n("Disabled (not installed): %1", ProviderRegistry.labels(applied.removed)));
+        root.providerDetectStatus = parts.join(" · ");
         root.refresh();
     }
 
@@ -944,7 +948,7 @@ ShellRoot {
         root.refreshSessions(query, undefined, false, sourceIds);
     }
 
-    function querySessions(query, offset, append, sourceIds, quiet) {
+    function querySessions(query, offset, append, sourceIds) {
         if (sourceIds !== undefined)
             root.setSessionsSourceIds(sourceIds);
         root.setSessionsQuery(query);
@@ -952,7 +956,7 @@ ShellRoot {
             root.queueSessionsRequest(offset === undefined ? 0 : offset, append === true, false);
             return;
         }
-        root.startSessionsRequest(offset === undefined ? 0 : offset, append === true, false, quiet);
+        root.startSessionsRequest(offset === undefined ? 0 : offset, append === true, false);
     }
 
     function handleSessionsOutput(text) {
@@ -1000,13 +1004,20 @@ ShellRoot {
             root.sessions = root.sessionsActiveAppend ? root.sessions.concat(page) : page;
             root.sessionsCacheStatus = data.cacheStatus || "unknown";
             root.sessionsCacheAgeSeconds = data.cacheAgeSeconds === undefined ? null : data.cacheAgeSeconds;
-            root.sessionsRefreshStatus = data.refreshStatus || "not-run";
-            root.sessionsRemovedSourceCount = Number(data.removedSourceCount) || 0;
+            // A cache-only query never ran a refresh ("not-run"); keep the
+            // status of the last background scan instead of erasing it.
+            if (data.refreshStatus && data.refreshStatus !== "not-run")
+                root.sessionsRefreshStatus = data.refreshStatus;
+            if (root.sessionsActiveRefresh)
+                root.sessionsRemovedSourceCount = Number(data.removedSourceCount) || 0;
             root.sessionsError = "";
             sessionsReconcileTimer.restart();
+            // An expired cache starts one scan, but a scan that just failed
+            // waits for the reconcile timer instead of retrying in a loop.
+            var lastScanFailed = root.sessionsRefreshStatus === "failed" || root.sessionsRefreshStatus === "incomplete";
             if (root.sessionsActiveRefresh)
                 root.sessionsLastReconcile = Date.now();
-            else if (root.sessionsViewVisible && SessionRefreshPolicy.cacheExpired(root.sessionsCacheAgeSeconds))
+            else if (root.sessionsViewVisible && !lastScanFailed && SessionRefreshPolicy.cacheExpired(root.sessionsCacheAgeSeconds))
                 root.reconcileSessions(root.sessionsQuery, root.sessionsSourceIds);
         } catch (e) {
             root.sessionsError = root.i18n("Could not load sessions.");
@@ -1040,6 +1051,7 @@ ShellRoot {
                 try {
                     var data = JSON.parse((this.text || "").trim());
                     root.sessionsBackgroundRefreshStatus = data.refreshStatus || "refreshed";
+                    root.sessionsRemovedSourceCount = Number(data.removedSourceCount) || 0;
                 } catch (e) {
                     root.sessionsBackgroundRefreshStatus = "failed";
                 }
@@ -1158,13 +1170,6 @@ ShellRoot {
             if (!root.sessionsLoading)
                 root.reconcileSessions(root.sessionsQuery, root.sessionsSourceIds);
         }
-    }
-
-    Timer {
-        interval: 500
-        repeat: true
-        running: root.sessionsViewVisible && root.sessionsRefreshRunning && !root.sessionsLoading && !sessionsProcess.running
-        onTriggered: root.querySessions(root.sessionsQuery, root.sessionsOffset, false, root.sessionsSourceIds, true)
     }
 
     Timer {

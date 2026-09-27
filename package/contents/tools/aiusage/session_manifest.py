@@ -14,29 +14,11 @@ from .providers.muse import sessions_root as muse_sessions_root
 from .providers.openai_credentials import codex_home
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class SessionManifest:
     source_id: str
     mtime_ns: int
     size: int
-
-
-@dataclass(frozen=True, slots=True)
-class SourceFingerprint:
-    """Opaque freshness metadata for one normalized local source record."""
-
-    source_id: str
-    mtime_ns: int
-    size: int
-    fingerprint: str
-
-
-def source_fingerprint(source_id: str, mtime_ns: int, size: int) -> SourceFingerprint:
-    """Build opaque, deterministic freshness metadata for one source record."""
-    normalized_id = os.path.realpath(os.path.abspath(os.path.expanduser(source_id)))
-    opaque_id = hashlib.sha256(os.fsencode(normalized_id)).hexdigest()
-    encoded = json.dumps((opaque_id, mtime_ns, size), separators=(",", ":")).encode("utf-8")
-    return SourceFingerprint(opaque_id, mtime_ns, size, hashlib.sha256(encoded).hexdigest())
 
 
 def _stat_record(path: str, kind: str) -> tuple[str, str, int, int, int]:

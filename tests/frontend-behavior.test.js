@@ -95,7 +95,6 @@ function replaySnapshotState(cases) {
         errorMsg: "",
         stale: false,
         lastUpdate: "",
-        snapshotConfigLimit: 100000,
         openaiAccountId: "",
         dateFromEpoch: seconds => seconds > 0 ? seconds : null,
         ensureAvailableChartWindow: () => {},
@@ -115,7 +114,7 @@ function replaySnapshotState(cases) {
         backoffTimer: root.backoffTimer,
         i18n: root.i18n,
         Qt: { formatTime: () => "12:00" },
-        Plasmoid: { configuration: { lastSnapshot: "" } }
+        Plasmoid: { configuration: {} }
     };
     vm.runInNewContext(`${functions}
         root.applySnapshot = applySnapshot;
@@ -231,17 +230,31 @@ test("provider registries require an explicit true toggle once defaults are appl
     assert.equal(ProviderRegistry.enabled(Object.assign({ providers: { claude: true } }, applied), "claude"), true);
 });
 
-test("re-detection only switches providers on and reports what changed", () => {
+test("re-detection switches detected providers on and reports what changed", () => {
     const settings = { providerDefaultsApplied: true, providers: { claude: true, cursor: false }, keys: { x: "k" } };
     const applied = ProviderRegistry.applyDetected(settings, ["claude", "cursor", "opencode"]);
     assert.deepEqual(Array.from(applied.added), ["cursor", "opencode"]);
+    assert.deepEqual(Array.from(applied.removed), []);
     assert.equal(applied.settings.providers.cursor, true);
     assert.equal(applied.settings.providers.opencode, true);
     assert.equal(applied.settings.keys.x, "k");
     assert.equal(settings.providers.cursor, false, "input settings are not mutated");
-    const none = ProviderRegistry.applyDetected(applied.settings, ["claude"]);
-    assert.equal(none.added.length, 0);
+    const none = ProviderRegistry.applyDetected(applied.settings, ["claude", "cursor", "opencode"]);
+    assert.equal(none.added.length + none.removed.length, 0);
     assert.equal(ProviderRegistry.labels(["claude", "opencode"]), "Claude, OpenCode");
+});
+
+test("re-detection switches off uninstalled tools but keeps keyed and manual providers", () => {
+    const settings = {
+        providerDefaultsApplied: true,
+        providers: { claude: true, cursor: true, openai: true, openrouter: true },
+        keys: { openai: "sk-proj-test" }
+    };
+    const applied = ProviderRegistry.applyDetected(settings, ["claude"]);
+    assert.deepEqual(Array.from(applied.removed), ["cursor"]);
+    assert.equal(applied.settings.providers.cursor, false);
+    assert.equal(applied.settings.providers.openai, true, "an API key keeps the provider usable");
+    assert.equal(applied.settings.providers.openrouter, true, "manual-only providers are never touched");
 });
 
 test("provider registries keep legacy defaults until defaults are applied", () => {
@@ -475,6 +488,15 @@ test("panel fallback is independent of popup lifetime", () => {
     assert.equal(root.panelTab(), "", "no provider means no panel value");
 });
 
+test("a replayed last snapshot at startup shows its values marked stale", () => {
+    const live = staleStateFixtures.find(scenario => scenario.name === "valid-live");
+    const root = replaySnapshotState([{ response: { text: live.response.text, replayed: true } }]);
+    assert.equal(root.codexSessionPct, 69);
+    assert.equal(root.stale, true);
+});
+
+// A replay only paints a widget that has no live answer yet: once one arrived,
+// a replay that resolves late must leave the live state (and its freshness) alone.
 test("last-good panel data survives empty, timeout, stale, and cache identity transitions", () => {
     const live = staleStateFixtures.find(scenario => scenario.name === "valid-live");
     assert.ok(live);
@@ -702,13 +724,7 @@ test("OpenCode usage chart range selects matching daily data and period summary"
     const file = "package/contents/ui/OpenCodeUsageChart.qml";
     const source = qmlSource(file);
     const tabSource = qmlSource("package/contents/ui/OpenCodeTab.qml");
-    const functions = ["seriesForRange", "periodForRange"]
-        .map(name => qmlFunctionBlock(file, name))
-        .join("\n");
-    const tab = { rangeLabel: () => "Last 7 days" };
-    vm.runInNewContext(`${functions}
-        tab.seriesForRange = seriesForRange;
-        tab.periodForRange = periodForRange;`, { tab });
+    const tab = require("../package/contents/code/OpenCodeUsage.js");
 
     const now = new Date(2026, 8, 22, 12).getTime();
     const series = [
@@ -762,6 +778,21 @@ test("OpenCode usage chart range selects matching daily data and period summary"
     assert.match(source, /stats\.dailySeries && stats\.dailySeries\.length \? stats\.dailySeries : stats\.dailyTokens/);
     assert.match(source, /SpendTimelineChart \{/);
     assert.ok(tabSource.indexOf("OpenCodeUsageChart") > tabSource.indexOf("Secondary stats grid"));
+});
+
+test("Hyprland and Windows show the same OpenCode daily chart on the Usage tab", () => {
+    const chart = qmlSource("hyprland/OpenCodeUsageChart.qml");
+    const plasma = qmlSource("package/contents/ui/OpenCodeUsageChart.qml");
+    const popup = qmlSource("hyprland/PopupContent.qml");
+    for (const source of [chart, plasma]) {
+        assert.match(source, /OpenCodeUsage\.seriesForRange\(selectedRange/);
+        assert.match(source, /OpenCodeUsage\.periodForRange\(selectedRange/);
+        assert.match(source, /stats\.dailySeries && stats\.dailySeries\.length \? stats\.dailySeries : stats\.dailyTokens/);
+    }
+    assert.match(chart, /showWindowPills: false/);
+    assert.match(popup, /OpenCodeUsageChart \{\s*visible: shell\.activeId === "opencode"[^\n]*stats \|\| \{\}\)\.available === true/);
+    // Inside the Usage column, not the Stats sub-tab.
+    assert.ok(popup.indexOf("OpenCodeUsageChart") < popup.indexOf("StatsSection {"));
 });
 
 test("OpenCode has a panel slot gated by its provider selection", () => {
@@ -1395,4 +1426,66 @@ test("parseRateTable normalizes payloads and rejects unusable output", () => {
     assert.equal(bare.rows.length, 0);
     assert.equal(bare.total, 0);
     assert.equal(bare.error, "");
+});
+
+function sharedSettingsHarness(config) {
+    const functions = ["isSharedSetting", "sharedSettingsSnapshot", "applySharedSettings", "finishSharedSettings"]
+        .map(name => qmlFunctionBlock("package/contents/ui/main.qml", name))
+        .join("\n");
+    const configuration = Object.assign({}, config);
+    Object.defineProperty(configuration, "keys", { value: () => Object.keys(configuration).filter(key => key !== "keys") });
+    const calls = { sync: 0, initialize: 0, refresh: 0 };
+    const root = {
+        perWidgetSettings: ["lastTab", "pinnedTab", "panelRotationIntervalSec", "chartWindow", "chartGranularity", "antigravityChartFilter", "costHistoryMetric", "usageHistory", "weeklyUsageHistory", "backgroundHints"],
+        sharedSettingsReady: false,
+        applyingSharedSettings: false,
+        pendingSharedPatch: {},
+        syncSharedSettings: () => { calls.sync += 1; },
+        initializeProviderDefaults: () => { calls.initialize += 1; },
+        refresh: () => { calls.refresh += 1; }
+    };
+    vm.runInNewContext(`${functions}
+        root.isSharedSetting = isSharedSetting;
+        root.sharedSettingsSnapshot = sharedSettingsSnapshot;
+        root.applySharedSettings = applySharedSettings;
+        root.finishSharedSettings = finishSharedSettings;`, { root, Plasmoid: { configuration } });
+    return { root, configuration, calls };
+}
+
+test("Plasma shares settings between instances but keeps the pill per widget", () => {
+    const { root, configuration, calls } = sharedSettingsHarness({
+        claudeEnabled: false, claudeEnabledDefault: true, grokApiKey: "", pinnedTab: "openai", lastTab: "openai", providerDefaultsApplied: false
+    });
+    root.finishSharedSettings({ ok: true, data: {
+        claudeEnabled: true, grokApiKey: "k", pinnedTab: "claude", lastTab: "claude", providerDefaultsApplied: true, unknownKey: 1
+    } });
+    assert.equal(configuration.claudeEnabled, true);
+    assert.equal(configuration.grokApiKey, "k");
+    assert.equal(configuration.providerDefaultsApplied, true, "an adopted latch skips first-run detection");
+    assert.equal(configuration.pinnedTab, "openai", "pins stay per widget");
+    assert.equal(configuration.lastTab, "openai");
+    assert.equal(configuration.unknownKey, undefined, "keys this widget does not declare are ignored");
+    assert.equal(root.isSharedSetting("claudeEnabledDefault"), false, "KConfig default mirrors are not settings");
+    assert.equal(calls.initialize, 1, "provider defaults are decided after the first sync");
+    assert.equal(root.applyingSharedSettings, false);
+});
+
+test("Plasma shared settings: a local pending change wins, and the first instance seeds the file", () => {
+    const later = sharedSettingsHarness({ claudeEnabled: true, openaiEnabled: false, pinnedTab: "" });
+    later.root.sharedSettingsReady = true;
+    later.root.pendingSharedPatch = { claudeEnabled: true };
+    later.root.finishSharedSettings({ ok: true, data: { claudeEnabled: false, openaiEnabled: true } });
+    assert.equal(later.configuration.claudeEnabled, true, "a change not yet sent is not overwritten");
+    assert.equal(later.configuration.openaiEnabled, true);
+    assert.equal(later.calls.refresh, 1, "adopted changes refresh the widget");
+    assert.equal(later.calls.initialize, 0);
+
+    const first = sharedSettingsHarness({ claudeEnabled: true, pinnedTab: "claude" });
+    first.root.finishSharedSettings({ ok: true, data: {} });
+    assert.deepEqual(JSON.parse(JSON.stringify(first.root.pendingSharedPatch)), { claudeEnabled: true });
+    assert.equal(first.calls.sync, 1);
+
+    const offline = sharedSettingsHarness({ claudeEnabled: true });
+    offline.root.finishSharedSettings(null);
+    assert.equal(offline.calls.initialize, 1, "a failed read still lets the widget start");
 });

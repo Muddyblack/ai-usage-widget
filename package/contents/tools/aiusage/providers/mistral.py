@@ -15,7 +15,6 @@ import tempfile
 
 from .. import paths
 from ..http import as_json, fetch_json, resolve_key
-from ..session_manifest import source_fingerprint
 
 _CACHE_VERSION = 1
 
@@ -53,8 +52,8 @@ def _cache_key(session_dir):
 def _shared_fingerprint(files):
     """One opaque digest over every ``meta.json`` file.
 
-    Each record is the task-10 ``SourceFingerprint`` triple (opaque source id,
-    mtime_ns, size), so the shared digest changes when a log is added, removed,
+    Each record is (path, mtime_ns, size) — only the digest reaches disk — so
+    the shared digest changes when a log is added, removed,
     renamed, or rewritten — and stays stable when nothing changed. Raises
     ``OSError`` if a listed log disappears mid-walk; the caller then treats the
     store as changed and rescans.
@@ -62,8 +61,7 @@ def _shared_fingerprint(files):
     records = []
     for path in files:
         stat = os.stat(path)
-        fp = source_fingerprint(path, stat.st_mtime_ns, stat.st_size)
-        records.append((fp.source_id, fp.mtime_ns, fp.size))
+        records.append((path, stat.st_mtime_ns, stat.st_size))
     records.sort()
     encoded = json.dumps(records, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()

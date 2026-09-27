@@ -40,6 +40,8 @@ final class AppModel: ObservableObject {
     /// on the next attempt or the next refresh.
     @Published private(set) var sessionsNotice = ""
     @Published private(set) var pricingLoading = false
+    @Published private(set) var providerDetectBusy = false
+    @Published private(set) var providerDetectStatus = ""
     @Published private(set) var pricingStatus = ""
     @Published private(set) var pricingError = ""
     @Published private(set) var pricingFetchedAt: Date?
@@ -69,7 +71,6 @@ final class AppModel: ObservableObject {
     private var sessionsDebounceTask: Task<Void, Never>?
     private var sessionsFetchTask: Task<Void, Never>?
     private var sessionsRefreshTask: Task<Void, Never>?
-    private var sessionsPollTask: Task<Void, Never>?
     private var sessionsLastReconcile = Date.distantPast
     private nonisolated static let sessionsReconcileInterval: TimeInterval = 600
 
@@ -196,7 +197,7 @@ final class AppModel: ObservableObject {
         refreshSessions(query: sessionsQuery, offset: nextOffset, appending: true, refresh: false)
     }
 
-    private func refreshSessions(query: String, offset: Int, appending: Bool, refresh: Bool, quiet: Bool = false) {
+    private func refreshSessions(query: String, offset: Int, appending: Bool, refresh: Bool) {
         sessionsFetchTask?.cancel()
         sessionsRequestID += 1
         let requestID = sessionsRequestID
@@ -204,48 +205,38 @@ final class AppModel: ObservableObject {
         let requestSignature = makeSessionsRequestSignature(for: query, sourceIDs: requestedSourceIDs)
         sessionsRequestSignature = requestSignature
         sessionsQuery = query
-        if !quiet {
-            sessionsLoading = true
-            sessionsError = ""
-            sessionsNotice = ""
-        }
+        sessionsLoading = true
+        sessionsError = ""
+        sessionsNotice = ""
         let requestedOffset = offset
         let requestedLimit: Int? = 60
         if refresh, sessionsRefreshTask == nil {
             sessionsRefreshTask = Task.detached(priority: .userInitiated) { [weak self] in
                 var refreshError: String?
+                var refreshed: LocalSessions?
                 do {
-                    _ = try Backend.refreshSessions(
+                    refreshed = try Backend.refreshSessions(
                         query, limit: requestedLimit, offset: requestedOffset, sourceIds: requestedSourceIDs
                     )
                 } catch {
                     refreshError = error.localizedDescription
                 }
                 let completedRefreshError = refreshError
+                let completedRefresh = refreshed
                 guard let self else { return }
-                await MainActor.run { [self, completedRefreshError] in
+                await MainActor.run { [self, completedRefreshError, completedRefresh] in
                     self.sessionsRefreshTask = nil
-                    self.sessionsPollTask?.cancel()
+                    // The scan's own outcome; the cache query below reports
+                    // "not-run" and must not erase it.
+                    if let completedRefresh {
+                        self.sessionsRefreshStatus = completedRefresh.refreshStatus
+                        self.sessionsRemovedSourceCount = completedRefresh.removedSourceCount
+                    }
                     self.refreshSessions(query: self.sessionsQuery, offset: 0, appending: false, refresh: false)
                     if let completedRefreshError {
                         self.sessionsError = completedRefreshError
                         self.sessionsRefreshStatus = "failed"
                     }
-                }
-            }
-            sessionsPollTask?.cancel()
-            sessionsPollTask = Task { @MainActor [weak self] in
-                guard let self else { return }
-                while self.sessionsRefreshTask != nil {
-                    do {
-                        try await Task.sleep(for: .milliseconds(500))
-                    } catch {
-                        return
-                    }
-                    guard !Task.isCancelled, self.sessionsRefreshTask != nil else { return }
-                    self.refreshSessions(
-                        query: self.sessionsQuery, offset: self.sessionsOffset,
-                        appending: false, refresh: false, quiet: true)
                 }
             }
         }
@@ -294,8 +285,9 @@ final class AppModel: ObservableObject {
                         ? Date(timeIntervalSince1970: result.updatedAt) : Date()
                     self.sessionsCacheStatus = result.cacheStatus
                     self.sessionsCacheAgeSeconds = result.cacheAgeSeconds
-                    self.sessionsRefreshStatus = result.refreshStatus
-                    self.sessionsRemovedSourceCount = result.removedSourceCount
+                    if result.refreshStatus != "not-run" {
+                        self.sessionsRefreshStatus = result.refreshStatus
+                    }
                     self.sessionsLoading = false
                     self.sessionsFetchTask = nil
                     if refresh {
@@ -304,7 +296,11 @@ final class AppModel: ObservableObject {
                         if let age = result.cacheAgeSeconds {
                             self.sessionsLastReconcile = Date().addingTimeInterval(-TimeInterval(age))
                         }
-                        if self.sessionsRefreshTask == nil,
+                        // A scan that just failed waits for the reconcile timer
+                        // instead of being retried after every cache query.
+                        let lastScanFailed = self.sessionsRefreshStatus == "failed"
+                            || self.sessionsRefreshStatus == "incomplete"
+                        if self.sessionsRefreshTask == nil, !lastScanFailed,
                            Self.sessionsCacheExpired(ageSeconds: result.cacheAgeSeconds),
                            self.popoverVisible, self.featureView == .sessions {
                             self.refreshSessions(query: query, refresh: true)
@@ -374,6 +370,46 @@ final class AppModel: ObservableObject {
                 }
             }
         }
+    }
+
+    /// Settings → Providers → "Detect installed providers": syncs the toggles
+    /// with the tools installed right now.
+    func redetectProviders() {
+        guard !providerDetectBusy else { return }
+        providerDetectBusy = true
+        providerDetectStatus = ""
+        Task.detached(priority: .userInitiated) {
+            do {
+                let detected = try Backend.detectProviders()
+                await MainActor.run { self.applyProviderDetection(detected) }
+            } catch {
+                await MainActor.run { self.applyProviderDetectionFailure() }
+            }
+        }
+    }
+
+    func applyProviderDetection(_ detected: [String]) {
+        providerDetectBusy = false
+        var added: [String] = []
+        var removed: [String] = []
+        changeSettings { settings in
+            let change = settings.applyDetected(detected)
+            added = change.added
+            removed = change.removed
+        }
+        let label = { (id: String) in self.envelope.provider(id: id)?.label ?? id.capitalized }
+        var parts: [String] = []
+        if !added.isEmpty { parts.append(i18n("Enabled: %1", added.map(label).joined(separator: ", "))) }
+        if !removed.isEmpty { parts.append(i18n("Disabled (not installed): %1", removed.map(label).joined(separator: ", "))) }
+        providerDetectStatus = parts.isEmpty
+            ? i18n("No changes: enabled providers match what is installed.")
+            : parts.joined(separator: " · ")
+        if !parts.isEmpty { refresh() }
+    }
+
+    private func applyProviderDetectionFailure() {
+        providerDetectBusy = false
+        providerDetectStatus = i18n("Detection failed.")
     }
 
     func refreshPricing() {

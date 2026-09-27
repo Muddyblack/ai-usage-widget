@@ -52,7 +52,7 @@ def grok_home():
     return os.path.expanduser(os.environ.get("GROK_HOME") or "~/.grok")
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class GrokSession:
     """One discovered session directory and the markers it carries.
 
@@ -76,7 +76,7 @@ class GrokSession:
 
 
 _DISCOVERY_TTL_SECONDS = 30.0
-_DISCOVERY_CACHE: dict[tuple[str, str], tuple[float, list[GrokSession]]] = {}
+_DISCOVERY_CACHE: dict[str, tuple[float, list[GrokSession]]] = {}
 
 
 def _discovery_ttl():
@@ -138,20 +138,18 @@ def _walk_sessions(sessions_dir):
     return records
 
 
-def discover_sessions(sessions_dir=None, *, identity="", now=None):
-    """Return the store's sessions from one walk, memoized per identity.
+def discover_sessions(sessions_dir=None, *, now=None):
+    """Return the store's sessions from one walk, memoized per directory.
 
-    The memo is scoped by the canonical sessions directory and the account
-    ``identity`` (token/team) so a changed account can never reuse another
-    account's discovery, and it expires after ``GROK_DISCOVERY_TTL_SECONDS``
-    (default 30) so a changed store is re-read promptly. Within the window all
-    four local views share the one walk.
+    The memo lives only as long as this process and expires after
+    ``GROK_DISCOVERY_TTL_SECONDS`` (default 30), so the four local views of one
+    collection share a single walk without ever serving a stale store later.
     """
     sessions_dir = sessions_dir or os.path.join(grok_home(), "sessions")
     if not os.path.isdir(sessions_dir):
         return []
     now = time.time() if now is None else now
-    key = (os.path.normcase(os.path.realpath(os.path.abspath(sessions_dir))), identity)
+    key = os.path.normcase(os.path.realpath(os.path.abspath(sessions_dir)))
     cached = _DISCOVERY_CACHE.get(key)
     if cached is not None and 0 <= (now - cached[0]) < _discovery_ttl():
         return cached[1]
@@ -162,12 +160,6 @@ def discover_sessions(sessions_dir=None, *, identity="", now=None):
 
 def reset_discovery_cache():
     _DISCOVERY_CACHE.clear()
-
-
-def account_identity():
-    """Opaque token/team identity for the discovery cache scope."""
-    auth = _read_grok_auth(os.path.join(grok_home(), "auth.json"))
-    return f"{auth.get('team_id', '')}\0{auth.get('user_id', '')}"
 
 
 def _resolve_api_key():
@@ -212,7 +204,7 @@ def _grok_local_stats():
     sessions_dir = os.path.join(grok_home(), "sessions")
     if not os.path.isdir(sessions_dir):
         return default
-    records = discover_sessions(sessions_dir, identity=account_identity())
+    records = discover_sessions(sessions_dir)
     paths = [record.signals_path for record in records if record.signals_path][:200]
 
     docs = []

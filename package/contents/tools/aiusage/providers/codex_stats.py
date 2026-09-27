@@ -18,7 +18,6 @@ import tempfile
 
 from .. import paths
 from ..contract import _parse_utc
-from ..session_manifest import source_fingerprint
 from .openai_credentials import codex_home
 
 _DATE_RE = re.compile(r".*/(\d{4})/(\d{2})/(\d{2})/[^/]*$")
@@ -91,8 +90,8 @@ def _cache_key(sessions, config_file):
 def _shared_fingerprint(files, config_file):
     """One opaque digest over every rollout file plus the config file.
 
-    Each record is the task-10 ``SourceFingerprint`` triple (opaque source id,
-    mtime_ns, size), so the shared digest changes when a rollout is added,
+    Each record is (path, mtime_ns, size) — only the digest reaches disk — so
+    the shared digest changes when a rollout is added,
     removed, renamed, or rewritten — and stays stable when nothing changed.
     Raises ``OSError`` if a listed rollout disappears mid-walk; the caller then
     treats the store as changed and rescans.
@@ -100,12 +99,10 @@ def _shared_fingerprint(files, config_file):
     records = []
     for path in files:
         stat = os.stat(path)
-        fp = source_fingerprint(path, stat.st_mtime_ns, stat.st_size)
-        records.append((fp.source_id, fp.mtime_ns, fp.size))
+        records.append((path, stat.st_mtime_ns, stat.st_size))
     try:
         stat = os.stat(config_file)
-        fp = source_fingerprint(config_file, stat.st_mtime_ns, stat.st_size)
-        records.append((fp.source_id, fp.mtime_ns, fp.size))
+        records.append((config_file, stat.st_mtime_ns, stat.st_size))
     except OSError:
         pass
     records.sort()

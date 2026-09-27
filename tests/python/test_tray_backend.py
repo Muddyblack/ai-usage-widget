@@ -145,36 +145,27 @@ class RateQueryOffThreadTest(unittest.TestCase):
 
 
 class SessionRefreshResponseTest(unittest.TestCase):
-    def test_cached_page_is_emitted_before_background_refresh_finishes(self):
-        class RefreshFuture:
-            is_done = False
-
-            def done(self):
-                return self.is_done
-
-            def result(self, timeout=None):
-                self.is_done = True
-                return '{"sessions":[{"title":"refreshed"}]}'
-
+    def test_refresh_runs_on_its_own_worker_without_waiting_on_the_pool(self):
+        # A worker that submits to its own bounded pool and waits deadlocks once
+        # every worker does the same.
         responses = RequestGenerationSignal()
-        cache_reads = []
-        refresh_future = RefreshFuture()
+        calls = []
         backend_type = load_backend_method(
             "_refresh_sessions",
             {
-                "collect_sessions_cache_json": lambda *args, **kwargs: cache_reads.append((args, kwargs)) or '{"sessions":[{"title":"cached"}]}',
-                "refresh_sessions_json": lambda *args, **kwargs: '{"sessions":[{"title":"unused"}]}',
+                "refresh_sessions_json": lambda *args, **kwargs: calls.append("refresh") or '{"sessions":[{"title":"refreshed"}]}',
+                "collect_sessions_json": lambda *args, **kwargs: calls.append("cache") or '{"sessions":[{"title":"cached"}]}',
             },
         )
         backend = object.__new__(backend_type)
         backend._pool = mock.Mock()
-        backend._pool.submit.return_value = refresh_future
+        backend._pool.submit.side_effect = AssertionError("the refresh waited on its own pool")
         backend._sessionsCompleted = responses
 
         backend._refresh_sessions("", 4, 0, True, None)
 
-        self.assertEqual(len(cache_reads), 1)
-        self.assertEqual([json.loads(event[0])["sessions"][0]["title"] for event in responses.events], ["cached", "refreshed"])
+        self.assertEqual(calls, ["refresh"])
+        self.assertEqual([json.loads(event[0])["sessions"][0]["title"] for event in responses.events], ["refreshed"])
 
 
 if HAS_PYSIDE:

@@ -16,6 +16,8 @@ ColumnLayout {
     property color tokenColor: "#7dd3fc"
     property color textColor: "#f8fafc"
     property int windowDays: 0
+    // A host with its own range selector (the OpenCode chart) hides these.
+    property bool showWindowPills: true
 
     signal windowDaysSelected(int days)
 
@@ -184,7 +186,7 @@ ColumnLayout {
         }
 
         Repeater {
-            model: [
+            model: chart.showWindowPills ? [
                 {
                     label: shell.i18n("30d"),
                     days: 30
@@ -197,7 +199,7 @@ ColumnLayout {
                     label: shell.i18n("All"),
                     days: 0
                 }
-            ]
+            ] : []
             Rectangle {
                 required property var modelData
                 implicitWidth: pillLabel.implicitWidth + 14
