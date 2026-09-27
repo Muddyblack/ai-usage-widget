@@ -87,9 +87,14 @@ refresh or `--all`. `SettingsStore.swift` mirrors the backend provider list and
 opt-in classification, but detection remains a backend policy rather than a
 Swift-only feature.
 
-Detection is stat-only. It checks local file and directory evidence without
-reading credentials, opening SQLite, starting commands, or making network
-requests. Evidence does not establish authentication or quota usability. See
+Detection looks for installed tools only — a CLI in `PATH`, Homebrew,
+`~/.local/bin`, npm/nvm and similar folders (a Finder-launched app gets a short
+`PATH`, so these are searched explicitly), or an app bundle such as
+`Cursor.app` in `/Applications` or `~/Applications`. Leftover logs and
+credential files do not count. Settings → Providers → **Detect installed
+providers** re-syncs later: newly installed tools are switched on, uninstalled
+ones off unless they have an API key. It is stat-only: no credentials are read,
+no SQLite opened, no command started, no network used. See
 [`provider-detection.md`](provider-detection.md) for the allowlist, migration
 rules, and provider addition checklist.
 

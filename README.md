@@ -113,7 +113,7 @@ For the full contract and provider details, see
 [docs/provider-contract.md](docs/provider-contract.md) and
 [docs/providers.md](docs/providers.md).
 
-Session search is handled by the backend with `get-ai-usage --sessions --query <text>`. Empty, whitespace-only, and non-empty searches all return 60-session pages with exact totals and offer **Load more** when additional sessions exist. In the desktop sessions views, refresh shows the current cached page immediately while providers are scanned in the background; each completed provider is published to the cache and appears on the next short cache poll, without waiting for slower providers. The Sessions view offers a cache-backed source filter beside the search field. It uses `--source <id[,id...]>` or `--source=<id[,id...]>`; omitting it means All, and multiple sources are combined with OR semantics. The filter is view-local, resets pagination when changed, and is preserved by refresh and **Load more**. All appears only when more than one cached source is available.
+Session search is handled by the backend with `get-ai-usage --sessions --query <text>`. Empty, whitespace-only, and non-empty searches all return 60-session pages with exact totals and offer **Load more** when additional sessions exist. In the desktop sessions views, refresh shows the current cached page immediately while providers are scanned in the background, then shows the updated page once the scan finishes. The Sessions view offers a cache-backed source filter beside the search field. It uses `--source <id[,id...]>` or `--source=<id[,id...]>`; omitting it means All, and multiple sources are combined with OR semantics. The filter is view-local, resets pagination when changed, and is preserved by refresh and **Load more**. All appears only when more than one cached source is available.
 
 The backend returns the additive `sources` descriptor list with verified IDs and labels, in canonical order: Cline (`cline`), Muse (`muse`), Codex (`openai`), Grok (`grok`), Claude Code (`claude`), OpenCode (`opencode`), and Antigravity (`antigravity`). Only sources with cached parsed rows appear. Query-only searches read that cache and do not scan local stores. Non-empty searches check all underlying session records using only `provider`, `title`, `sessionName`, `state`, and `detail`; `fullTitle`, opaque resume keys, IDs, paths, and transcripts are not searchable or exposed. Claude titles are clipped opening-prompt previews; raw prompt text never leaves the backend. See the [provider contract](docs/provider-contract.md#session-search) for response, refresh, incomplete-cache, privacy, and cross-platform details.
 
@@ -155,10 +155,13 @@ settings, menu bar styles, and build instructions.
 What each provider needs signed in, and what it reads, is in
 **[docs/providers.md](docs/providers.md)**.
 
-Provider startup is zero based. The explicit one-shot initializer can enable
-approved providers with local evidence, while seven providers remain manual-only.
-Detection is stat-only and does not prove authentication or usability. The
-complete policy, platform paths, and future-provider checklist are in
+Provider startup is zero based. On first start the widget enables the providers
+whose tools are installed (a CLI or desktop app — old logs don't count), while
+seven providers remain manual-only. Settings → Providers → **Detect installed
+providers** re-syncs later: it turns on newly installed tools and turns off
+uninstalled ones unless you gave them an API key. Several Plasma widgets (other
+panels or screens) share their settings; each keeps its own pins. The complete
+policy, platform paths, and future-provider checklist are in
 [docs/provider-detection.md](docs/provider-detection.md).
 
 ---

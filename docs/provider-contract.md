@@ -46,8 +46,11 @@ get-ai-usage --normalize < envelope.json  # replay a raw envelope, no network
 get-ai-usage --list                       # known provider ids
 get-ai-usage --sessions --query <text>    # search local sessions through the backend
 get-ai-usage --sessions --source <ids>      # filter cached sessions by source
-get-ai-usage --detect-providers             # report local evidence, no collection
+get-ai-usage --detect-providers             # report installed tools, no collection
 get-ai-usage --initialize-provider-defaults # apply and return persisted settings
+get-ai-usage --save-snapshot --provider claude  # fetch, and keep it as the last good envelope
+get-ai-usage --last-snapshot                # the last good envelope, {} when none
+WIDGET_SHARED_PATCH='{"claudeEnabled":true}' get-ai-usage --shared-settings  # Plasma: merge + print shared settings
 ```
 
 The terminal frontend renders that same model, either fetching it itself or
@@ -85,10 +88,13 @@ The two CLI modes have stable, separate contracts:
 {"ok":true,"data":["claude","cursor"]}
 ```
 
-`--detect-providers` returns a data list in canonical provider order. It does not
-read file contents, open SQLite databases, invoke subprocesses, contact a
-network, or return credentials. Its result is local evidence, not proof that a
-provider account is authenticated or that a quota request will succeed.
+`--detect-providers` returns a data list in canonical provider order. It reports
+the providers whose program is installed right now (a CLI on the search path or
+a desktop application); leftover logs, session folders and credential files are
+not evidence, because they survive an uninstall. It does not read file
+contents, open SQLite databases, invoke subprocesses, contact a network, or
+return credentials. Its result is not proof that a provider account is
+authenticated or that a quota request will succeed.
 
 ```json
 {"ok":true,"data":{"providers":{"claude":true},"providerDefaultsApplied":true}}
@@ -104,7 +110,16 @@ older shared JSON files. A failed atomic write leaves the existing file intact.
 The shared JSON policy applies to Hyprland, Windows, and macOS. Plasma has a
 separate KConfig store in `Plasmoid.configuration.<id>Enabled`, with its own
 per-provider defaults and user choices. Plasma must not be described as reading
-the shared JSON toggles for its provider tabs. The backend's `--all` mode still
+the shared JSON toggles for its provider tabs. Plasma instances do share their
+settings with each other through `--shared-settings`
+(`$XDG_CONFIG_HOME/ai-usage-widget/plasma-shared-settings-<widget id>.json`,
+mode 0600, one file per installed widget id): a
+patch names only the keys it changes, so two widgets editing different settings
+never undo each other. Pins, panel rotation, the open tab, chart view state and
+the per-widget history fallback are not shared. `--last-snapshot` reads
+`last-snapshot.json` in the cache directory, merged per provider from every
+`--save-snapshot` fetch and replayed (marked stale) by a widget that has just
+started. The backend's `--all` mode still
 uses shared JSON, regardless of which frontend is displaying it. See
 [`provider-detection.md`](provider-detection.md) for the complete policy and
 the maintainer checklist.
