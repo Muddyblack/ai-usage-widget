@@ -1,5 +1,7 @@
+import os
 import sqlite3
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -68,6 +70,27 @@ class SessionCacheFreshnessTest(unittest.TestCase):
         self.assertEqual(result["cacheStatus"], "stale")
         self.assertEqual(result["cacheAgeSeconds"], 601)
         self.assertEqual([row["title"] for row in result["sessions"]], ["cached"])
+
+    def test_unchanged_successful_refresh_restarts_the_cache_age(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with (
+                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch.object(session_cache, "build_manifests", return_value=[SessionManifest("claude", 1, 1)]),
+                mock.patch.object(sessions, "collect_source", return_value=[_row("cached", "claude", 1)]),
+                mock.patch.object(sessions, "_collect_all_sessions", return_value=([_row("cached", "claude", 1)], True)),
+            ):
+                sessions.refresh_sessions()
+                old = time.time() - 700
+                for suffix in ("", "-wal", "-shm"):
+                    if os.path.exists(f"{directory}/sessions.sqlite3{suffix}"):
+                        os.utime(f"{directory}/sessions.sqlite3{suffix}", (old, old))
+                self.assertGreaterEqual(sessions.collect_sessions()["cacheAgeSeconds"], 700)
+                # Nothing changed, so SQLite writes nothing; the age must still restart.
+                result = sessions.refresh_sessions()
+
+        self.assertEqual(result["refreshStatus"], "refreshed")
+        self.assertEqual(result["cacheStatus"], "ready")
+        self.assertLess(result["cacheAgeSeconds"], 60)
 
     def test_failed_first_refresh_is_not_a_successful_empty_result(self):
         with tempfile.TemporaryDirectory() as directory:

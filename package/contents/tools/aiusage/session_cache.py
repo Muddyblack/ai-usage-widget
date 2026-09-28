@@ -142,6 +142,8 @@ class SessionCache:
             self.refresh_status = "failed"
             return self._direct(collect)
         self._had_cache = self._cache_path.exists()
+        if not failed:
+            self._mark_fresh()
         after = self.query(limit=1)
         self.removed_sources = len({source["id"] for source in before["sources"]} - {source["id"] for source in after["sources"]})
         self.refresh_status = "incomplete" if failed else "removed-source" if self.removed_sources else "refreshed"
@@ -169,6 +171,7 @@ class SessionCache:
                 return redact_rows(scanned)
             return self._direct(collect)
         self._had_cache = self._cache_path.exists()
+        self._mark_fresh()
         self.refresh_status = "refreshed"
         return None
 
@@ -176,6 +179,15 @@ class SessionCache:
         """The index is unusable, so querying it would show an empty tab."""
         rows, _complete = collect()
         return redact_rows(rows)
+
+    def _mark_fresh(self) -> None:
+        """Restart the cache age after a complete scan. A scan that found
+        nothing changed writes nothing to SQLite, so the file mtime alone would
+        keep reporting the old age and every client would rescan right away."""
+        try:
+            os.utime(self._cache_path)
+        except OSError:
+            pass
 
     def _cache_age(self) -> int:
         mtimes: list[float] = []

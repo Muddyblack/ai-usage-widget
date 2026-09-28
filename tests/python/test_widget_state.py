@@ -4,6 +4,8 @@ import io
 import json
 import os
 import stat
+import threading
+import time
 import unittest
 from contextlib import redirect_stdout
 from unittest import mock
@@ -47,6 +49,23 @@ class LastSnapshotTest(IsolatedHomeTest):
         stored = widget_state.last_snapshot()
         self.assertEqual(stored["updatedAt"], 3)
         self.assertEqual({p["id"]: p for p in stored["providers"]}, {"claude": GOOD["providers"][0], "openai": {"id": "openai", "plan": "plus"}})
+
+    def test_concurrent_saves_keep_both_providers(self):
+        read = widget_state._read_object
+
+        def slow_read(path):
+            data = read(path)
+            time.sleep(0.2)  # widen the read-merge-write window
+            return data
+
+        envelopes = [{"providers": [{"id": "claude"}]}, {"providers": [{"id": "openai"}]}]
+        with mock.patch.object(widget_state, "_read_object", side_effect=slow_read):
+            threads = [threading.Thread(target=widget_state.save_snapshot, args=(env,)) for env in envelopes]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+        self.assertEqual(sorted(p["id"] for p in widget_state.last_snapshot()["providers"]), ["claude", "openai"])
 
     def test_save_snapshot_flag_writes_what_was_printed(self):
         with mock.patch.object(envelope, "build", return_value=GOOD):

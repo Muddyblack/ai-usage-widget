@@ -2496,6 +2496,11 @@ PlasmoidItem {
     property bool sharedSettingsReady: false
     property bool applyingSharedSettings: false
     property var pendingSharedPatch: ({})
+    property string sharedSettingsInFlight: ""
+    property double sharedSettingsSentAt: 0
+    property var sharedSettingsSentPatch: ({})
+    property bool sharedSettingsQueued: false
+    property int sharedSettingsSeq: 0
 
     function isSharedSetting(key) {
         if (!key || root.perWidgetSettings.indexOf(key) !== -1)
@@ -2517,14 +2522,42 @@ PlasmoidItem {
     }
 
     // Sends whatever changed locally (possibly nothing, which is a plain read)
-    // and adopts the merged result.
-    function syncSharedSettings() {
+    // and adopts the merged result. While a request is out the next one waits
+    // for its reply; `force` (widget teardown) sends regardless.
+    function syncSharedSettings(force) {
+        sharedSettingsTimer.stop();
+        if (root.sharedSettingsInFlight !== "" && !force) {
+            if (Date.now() - root.sharedSettingsSentAt < 15000) {
+                root.sharedSettingsQueued = true;
+                return;
+            }
+            // The reply never came; resend its patch under any newer edits.
+            var lost = root.sharedSettingsSentPatch;
+            for (var key in root.pendingSharedPatch)
+                lost[key] = root.pendingSharedPatch[key];
+            root.pendingSharedPatch = lost;
+        }
         var patch = root.pendingSharedPatch;
         root.pendingSharedPatch = {};
-        sharedSettingsTimer.stop();
-        var cmd = root.pythonEnv() + root.envAssign("AI_USAGE_WIDGET_ID", Plasmoid.metaData ? Plasmoid.metaData.pluginId : "") + root.envAssign("WIDGET_SHARED_PATCH", JSON.stringify(patch)) + root.scriptPath("get-ai-usage") + " --shared-settings";
-        sharedSettingsSource.disconnectSource(cmd);
+        root.sharedSettingsQueued = false;
+        root.sharedSettingsSeq += 1;
+        // The sequence number keeps every request a distinct source, so a late
+        // reply to an abandoned request is recognized and dropped.
+        var cmd = root.pythonEnv() + root.envAssign("AI_USAGE_WIDGET_ID", Plasmoid.metaData ? Plasmoid.metaData.pluginId : "") + root.envAssign("WIDGET_SHARED_SEQ", String(root.sharedSettingsSeq)) + root.envAssign("WIDGET_SHARED_PATCH", JSON.stringify(patch)) + root.scriptPath("get-ai-usage") + " --shared-settings";
+        root.sharedSettingsInFlight = cmd;
+        root.sharedSettingsSentAt = Date.now();
+        root.sharedSettingsSentPatch = patch;
         sharedSettingsSource.connectSource(cmd);
+    }
+
+    function sharedSettingsReplied(src, result) {
+        if (src !== root.sharedSettingsInFlight)
+            return;
+        root.sharedSettingsInFlight = "";
+        root.sharedSettingsSentPatch = {};
+        root.finishSharedSettings(result);
+        if (root.sharedSettingsQueued && root.sharedSettingsInFlight === "")
+            root.syncSharedSettings();
     }
 
     function applySharedSettings(settings) {
@@ -2594,14 +2627,14 @@ PlasmoidItem {
             try {
                 result = JSON.parse((data["stdout"] || "").trim());
             } catch (e) {}
-            root.finishSharedSettings(result);
+            root.sharedSettingsReplied(src, result);
         }
     }
 
     Component.onDestruction: {
         root.flushHistoryConfig();
         if (Object.keys(root.pendingSharedPatch).length > 0)
-            root.syncSharedSettings();
+            root.syncSharedSettings(true);
     }
     Component.onCompleted: {
         root.loadLastSnapshot();

@@ -17,6 +17,7 @@ import json
 import os
 import re
 import tempfile
+from contextlib import contextmanager
 
 from . import config, paths
 from .historyio import _acquire, _unlock
@@ -61,6 +62,23 @@ def _write_private(path, payload):
         return False
 
 
+@contextmanager
+def _locked(path):
+    """Hold ``path``.lock around a read-merge-write: two widgets saving at the
+    same moment would otherwise each drop the other's change."""
+    try:
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    except OSError:
+        pass
+    lock = _acquire(path + ".lock", 2.0)
+    try:
+        yield
+    finally:
+        if lock is not None:
+            _unlock(lock)
+            lock.close()
+
+
 def _read_object(path):
     try:
         with open(path, encoding="utf-8") as stream:
@@ -84,13 +102,15 @@ def save_snapshot(envelope):
     good = [p for p in providers if isinstance(p, dict) and isinstance(p.get("id"), str) and not p.get("error")]
     if not good:
         return False
-    stored = _read_object(snapshot_path()) or {}
-    by_id = {p["id"]: p for p in stored.get("providers") or [] if isinstance(p, dict) and isinstance(p.get("id"), str)}
-    for provider in good:
-        by_id[provider["id"]] = provider
-    merged = dict(envelope)
-    merged["providers"] = list(by_id.values())
-    return _write_private(snapshot_path(), merged)
+    path = snapshot_path()
+    with _locked(path):
+        stored = _read_object(path) or {}
+        by_id = {p["id"]: p for p in stored.get("providers") or [] if isinstance(p, dict) and isinstance(p.get("id"), str)}
+        for provider in good:
+            by_id[provider["id"]] = provider
+        merged = dict(envelope)
+        merged["providers"] = list(by_id.values())
+        return _write_private(path, merged)
 
 
 def last_snapshot():
@@ -108,14 +128,7 @@ def merge_shared_settings(patch):
     path = shared_settings_path()
     if not isinstance(patch, dict) or not patch:
         return _read_object(path) or {}
-    # Read-merge-write under a lock: two widgets saving at the same moment
-    # would otherwise each drop the other's change.
-    try:
-        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    except OSError:
-        pass
-    lock = _acquire(path + ".lock", 2.0)
-    try:
+    with _locked(path):
         current = _read_object(path) or {}
         merged = dict(current)
         for key, value in patch.items():
@@ -128,7 +141,3 @@ def merge_shared_settings(patch):
         if merged != current and not os.path.islink(path):
             _write_private(path, merged)
         return merged
-    finally:
-        if lock is not None:
-            _unlock(lock)
-            lock.close()

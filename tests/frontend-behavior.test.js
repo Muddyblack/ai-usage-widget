@@ -1452,6 +1452,60 @@ function sharedSettingsHarness(config) {
     return { root, configuration, calls };
 }
 
+test("Plasma shared settings: an older reply never undoes a newer choice", () => {
+    const functions = ["syncSharedSettings", "sharedSettingsReplied"]
+        .map(name => qmlFunctionBlock("package/contents/ui/main.qml", name))
+        .join("\n");
+    const sent = [];
+    const finished = [];
+    const root = {
+        pendingSharedPatch: {},
+        sharedSettingsInFlight: "",
+        sharedSettingsSentAt: 0,
+        sharedSettingsSentPatch: {},
+        sharedSettingsQueued: false,
+        sharedSettingsSeq: 0,
+        pythonEnv: () => "",
+        envAssign: (name, value) => `${name}=${value} `,
+        scriptPath: name => name,
+        finishSharedSettings: result => finished.push(result)
+    };
+    const context = {
+        root,
+        Date,
+        Plasmoid: { metaData: { pluginId: "w" } },
+        sharedSettingsTimer: { stop() {} },
+        sharedSettingsSource: { connectSource: cmd => sent.push(cmd) }
+    };
+    vm.runInNewContext(`${functions}
+        root.syncSharedSettings = syncSharedSettings;
+        root.sharedSettingsReplied = sharedSettingsReplied;`, context);
+
+    root.syncSharedSettings(); // a plain poll read
+    root.pendingSharedPatch = { claudeEnabled: true };
+    root.syncSharedSettings(); // the user enables Claude meanwhile
+    assert.equal(sent.length, 1, "the write waits for the read in flight");
+    assert.equal(root.pendingSharedPatch.claudeEnabled, true, "the waiting change stays pending, so replies cannot overwrite it");
+    root.sharedSettingsReplied(sent[0], { ok: true, data: { claudeEnabled: false } });
+    assert.equal(sent.length, 2, "the queued write goes out after the reply");
+    assert.match(sent[1], /"claudeEnabled":true/);
+    root.sharedSettingsReplied(sent[0], { ok: true, data: { claudeEnabled: false } });
+    assert.equal(finished.length, 1, "a duplicate or late reply is ignored");
+    root.sharedSettingsReplied(sent[1], { ok: true, data: { claudeEnabled: true } });
+    assert.equal(finished.length, 2);
+    assert.equal(root.sharedSettingsInFlight, "");
+
+    // A reply that never comes does not block syncing, and its patch is resent.
+    root.pendingSharedPatch = { openaiEnabled: false };
+    root.syncSharedSettings();
+    root.sharedSettingsSentAt -= 20000;
+    root.pendingSharedPatch = { grokApiKey: "k" };
+    root.syncSharedSettings();
+    assert.equal(sent.length, 4);
+    assert.match(sent[3], /"openaiEnabled":false/);
+    assert.match(sent[3], /"grokApiKey":"k"/);
+});
+
 test("Plasma shares settings between instances but keeps the pill per widget", () => {
     const { root, configuration, calls } = sharedSettingsHarness({
         claudeEnabled: false, claudeEnabledDefault: true, grokApiKey: "", pinnedTab: "openai", lastTab: "openai", providerDefaultsApplied: false
