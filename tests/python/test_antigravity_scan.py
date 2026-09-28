@@ -2,6 +2,7 @@
 line and its port from the listening sockets — through /proc on Linux and
 psutil everywhere else. A stand-in process plays the server."""
 
+import datetime
 import json
 import os
 import subprocess
@@ -160,6 +161,22 @@ class AntigravityCacheTest(unittest.TestCase):
         self.assertEqual(result["email"], "changed@example.com")
         self.assertEqual(result["models"], cached["models"])
         self.assertEqual(discovered, ["aiu", "antigravity-usage"])
+
+    def test_fresh_cache_survives_different_clock_precision(self):
+        now = 1_790_078_400.123456
+        coarse_now = datetime.datetime.fromtimestamp(now - 0.01, datetime.timezone.utc)
+        with (
+            mock.patch.object(antigravity.datetime, "datetime", wraps=datetime.datetime) as datetime_clock,
+            mock.patch("time.time", return_value=now),
+            mock.patch.object(antigravity, "_account_email", return_value=None),
+        ):
+            # On Windows, datetime.now() can lag time.time() in precision.
+            datetime_clock.now.return_value = coarse_now
+            self._write_cache(self._usage(), now)
+            self.assertEqual(antigravity._read_cache(120), self._usage())
+            antigravity._write_cache(self._usage())
+            with open(os.path.join(self.cache_dir.name, "antigravity.json"), encoding="utf-8") as stream:
+                self.assertEqual(json.load(stream)["fetchedAt"], now)
 
     def test_malformed_and_future_cache_fall_through_to_agy(self):
         for fetched_at, contents in ((time.time(), "{"), (time.time() + 1, None)):

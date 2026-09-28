@@ -17,6 +17,7 @@ import os
 import shutil
 import ssl
 import subprocess
+import time
 import urllib.error
 import urllib.request
 
@@ -52,7 +53,9 @@ def _read_cache(ttl):
     if usage.get("method") != "cli":
         return None
     try:
-        age = datetime.datetime.now(datetime.timezone.utc).timestamp() - float(cached.get("fetchedAt") or 0)
+        # Use the same clock for cache reads and writes; datetime.now() can
+        # have different precision on Windows and make fresh entries look future-dated.
+        age = time.time() - float(cached.get("fetchedAt") or 0)
     except (TypeError, ValueError):
         return None
     if not 0 <= age < ttl:
@@ -73,7 +76,7 @@ def _write_cache(usage):
         os.makedirs(_config.cache_dir(), exist_ok=True)
         with open(_cache_path(), "w", encoding="utf-8") as stream:
             json.dump(
-                {"fetchedAt": datetime.datetime.now(datetime.timezone.utc).timestamp(), "usage": safe_usage},
+                {"fetchedAt": time.time(), "usage": safe_usage},
                 stream,
             )
     except (OSError, ValueError):
