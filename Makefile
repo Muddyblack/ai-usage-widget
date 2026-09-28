@@ -35,6 +35,8 @@ test: ## run the provider backend contract tests
 	@$(MAKE) --no-print-directory test-py
 	@./tests/python-interp.test.sh
 	@./tests/history-io.test.sh
+	@./tests/test_install_script.sh
+	@./tests/translation-provider-parity.test.sh
 	@if command -v node >/dev/null 2>&1; then node --test tests/*.test.js; \
 	  else echo "skipping tests/shared-code.test.js (node not found)"; fi
 
@@ -69,8 +71,8 @@ lint-py: ## lint + format-check the Python backend, frontends and helpers (dev o
 	  echo "ruff not found — install it or run 'nix develop'"; exit 1; \
 	fi
 
-opendesktop: ## rasterize the readme SVGs to PNGs and JPGs in readme/opendesktop (needs `inkscape`)
-	@readme/export_opendesktop.sh
+opendesktop: ## rasterize the readme SVGs to PNGs and JPGs in docs/readme/opendesktop (needs `inkscape`)
+	@docs/readme/export_opendesktop.sh
 
 
 pack: ## build .plasmoid archive

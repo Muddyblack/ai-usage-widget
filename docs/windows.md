@@ -155,9 +155,13 @@ providers with approved local evidence, then sets `providerDefaultsApplied` so
 the operation does not repeat. Refresh and `--all` never initialize settings.
 The Windows app must not be described as using Plasma's KConfig defaults.
 
-Detection is stat-only and reports local evidence, not authentication or
-usability. It does not read credential contents, use the network, open SQLite,
-run a command, or return secrets. See
+Detection looks for installed tools only — a CLI in `PATH`, `%APPDATA%\npm`,
+`%USERPROFILE%\.local\bin`, WinGet links or Scoop shims, or an app under
+`%LOCALAPPDATA%\Programs\<App>` (Cursor, Kiro, Antigravity). Leftover logs and
+credential files do not count. Settings → Providers → **Detect installed
+providers** re-syncs later: newly installed tools are switched on, uninstalled
+ones off unless they have an API key. It is stat-only and reports installation,
+not authentication or usability. See
 [`provider-detection.md`](provider-detection.md) for the current allowlist and
 the shared provider-addition checklist.
 

@@ -2,7 +2,7 @@
 #
 # Draws the README artwork for AI Usage Widget.
 #
-#   perl readme/generate.pl
+#   perl docs/readme/generate.pl
 #
 # High-fidelity, crisp SVG illustrations of the live KDE Plasma widget UI,
 # faithfully matching the current QML codebase and real widget appearance.

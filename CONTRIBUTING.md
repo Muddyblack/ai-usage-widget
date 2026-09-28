@@ -14,7 +14,7 @@ Nix, install:
 | Tool | Needed for |
 |---|---|
 | Plasma SDK (`kpackagetool6`, `plasmoidviewer`) | `./test_install.sh`, `make view` |
-| gettext (`msgfmt`, `xgettext`, `msgmerge`) | compiling translations in `./test_install.sh`, `make view`, `make pack`; `make translations` |
+| gettext (`msgfmt`, `xgettext`, `msgmerge`, `msgattrib`) | compiling translations in `./test_install.sh`, `make view`, `make pack`; `make translations` |
 | `zip` | `make pack` |
 | Python 3.8+ | the backend and every test suite |
 | `jq`, `flock`, `timeout` | `make test` (the shell contract tests) |
@@ -30,8 +30,17 @@ Only if you work on that part:
   Setup on Windows. See [`docs/windows.md`](docs/windows.md).
 - **Hyprland / Quickshell** — Quickshell, plus CMake and Qt 6 for the tray helper;
   `nix run .#hyprland` brings them. See [`docs/hyprland.md`](docs/hyprland.md).
-- **README artwork** — Perl for `readme/generate.pl`; `make opendesktop` needs
+- **README artwork** — Perl for `docs/readme/generate.pl`; `make opendesktop` needs
   Inkscape.
+
+## Development shell
+
+`nix develop` (or `direnv allow` once, through the tracked `.envrc`) gives the
+full toolchain; run `direnv reload` after changing `flake.nix`. Profilers and
+debuggers (`perf`, Hotspot, Heaptrack, Valgrind, GDB, strace, pyinstrument,
+memory-profiler) are in a separate shell, `nix develop .#profiling`, so the
+default one — which CI enters — stays small. For SQLite timings, use a tmpfs
+`TMPDIR` such as `/dev/shm`: on a real disk fsync noise outweighs most changes.
 
 ## Development install
 

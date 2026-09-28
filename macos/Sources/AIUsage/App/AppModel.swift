@@ -7,6 +7,7 @@ import SwiftUI
 final class AppModel: ObservableObject {
     @Published private(set) var envelope = Envelope()
     @Published private(set) var isLoading = false
+    private var usageRefreshPending = false
     /// A failure of the backend itself — not a provider's own error, which
     /// travels inside the envelope and is shown on that provider's card.
     @Published private(set) var backendError = ""
@@ -29,12 +30,18 @@ final class AppModel: ObservableObject {
     @Published private(set) var sessionsLimit = 60
     @Published private(set) var sessionsHasMore = false
     @Published private(set) var sessionsTotalExact = false
+    @Published private(set) var sessionsCacheStatus = "unknown"
+    @Published private(set) var sessionsCacheAgeSeconds: Int?
+    @Published private(set) var sessionsRefreshStatus = "not-run"
+    @Published private(set) var sessionsRemovedSourceCount = 0
     @Published private(set) var sessionSources: [SessionSource] = []
     @Published private(set) var selectedSessionSourceIDs: Set<String> = []
     /// The last `--open-session` result, shown as a status line and cleared
     /// on the next attempt or the next refresh.
     @Published private(set) var sessionsNotice = ""
     @Published private(set) var pricingLoading = false
+    @Published private(set) var providerDetectBusy = false
+    @Published private(set) var providerDetectStatus = ""
     @Published private(set) var pricingStatus = ""
     @Published private(set) var pricingError = ""
     @Published private(set) var pricingFetchedAt: Date?
@@ -54,6 +61,7 @@ final class AppModel: ObservableObject {
     let history = HistoryStore()
 
     private var timer: Timer?
+    private var sessionsTimer: Timer?
     private var wakeObserver: NSObjectProtocol?
     private let snapshotOperation: () throws -> Envelope
     private let pricingRefreshOperation: () throws -> PricingRefreshResult
@@ -62,6 +70,9 @@ final class AppModel: ObservableObject {
     private var sessionsRequestSignature = ""
     private var sessionsDebounceTask: Task<Void, Never>?
     private var sessionsFetchTask: Task<Void, Never>?
+    private var sessionsRefreshTask: Task<Void, Never>?
+    private var sessionsLastReconcile = Date.distantPast
+    private nonisolated static let sessionsReconcileInterval: TimeInterval = 600
 
     init(
         settings: SettingsStore = SettingsStore(),
@@ -88,7 +99,7 @@ final class AppModel: ObservableObject {
     func setPopoverVisible(_ visible: Bool) {
         popoverVisible = visible
         if visible, featureView == .sessions {
-            refreshSessions(query: sessionsQuery, refresh: true)
+            refreshSessions(query: sessionsQuery, refresh: false)
         }
     }
 
@@ -113,7 +124,7 @@ final class AppModel: ObservableObject {
 
     func showFeature(_ view: FeatureView?) {
         featureView = view
-        if view == .sessions { refreshSessions(query: sessionsQuery, refresh: true) }
+        if view == .sessions { refreshSessions(query: sessionsQuery, refresh: false) }
     }
 
     /// Resume one listed session in the user's terminal; the result becomes
@@ -156,9 +167,27 @@ final class AppModel: ObservableObject {
 
     func refreshSessions(query: String = "", refresh: Bool = true) {
         let normalizedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if refresh, sessionsRefreshTask != nil {
+            refreshSessions(query: normalizedQuery, offset: 0, appending: false, refresh: false)
+            return
+        }
         let requestSignature = makeSessionsRequestSignature(for: normalizedQuery)
-        guard !(sessionsLoading && sessionsRequestSignature == requestSignature) else { return }
+        guard !Self.shouldDeduplicateSessionRequest(
+            isLoading: sessionsLoading,
+            sameSignature: sessionsRequestSignature == requestSignature,
+            forced: refresh
+        ) else { return }
         refreshSessions(query: normalizedQuery, offset: 0, appending: false, refresh: refresh)
+    }
+
+    nonisolated static func shouldDeduplicateSessionRequest(
+        isLoading: Bool, sameSignature: Bool, forced: Bool
+    ) -> Bool {
+        isLoading && sameSignature && !forced
+    }
+
+    nonisolated static func isCurrentSessionRequest(_ requestID: Int, currentRequestID: Int) -> Bool {
+        requestID == currentRequestID
     }
 
     func loadMoreSessions() {
@@ -176,36 +205,59 @@ final class AppModel: ObservableObject {
         let requestSignature = makeSessionsRequestSignature(for: query, sourceIDs: requestedSourceIDs)
         sessionsRequestSignature = requestSignature
         sessionsQuery = query
-        if !appending {
-            sessionsTotal = 0
-            sessionsOffset = 0
-            sessionsLimit = 60
-            sessionsHasMore = false
-            sessionsTotalExact = false
-        }
         sessionsLoading = true
         sessionsError = ""
         sessionsNotice = ""
         let requestedOffset = offset
         let requestedLimit: Int? = 60
+        if refresh, sessionsRefreshTask == nil {
+            sessionsRefreshTask = Task.detached(priority: .userInitiated) { [weak self] in
+                var refreshError: String?
+                var refreshed: LocalSessions?
+                do {
+                    refreshed = try Backend.refreshSessions(
+                        query, limit: requestedLimit, offset: requestedOffset, sourceIds: requestedSourceIDs
+                    )
+                } catch {
+                    refreshError = error.localizedDescription
+                }
+                let completedRefreshError = refreshError
+                let completedRefresh = refreshed
+                guard let self else { return }
+                await MainActor.run { [self, completedRefreshError, completedRefresh] in
+                    self.sessionsRefreshTask = nil
+                    // The scan's own outcome; the cache query below reports
+                    // "not-run" and must not erase it.
+                    if let completedRefresh {
+                        self.sessionsRefreshStatus = completedRefresh.refreshStatus
+                        self.sessionsRemovedSourceCount = completedRefresh.removedSourceCount
+                    }
+                    self.refreshSessions(query: self.sessionsQuery, offset: 0, appending: false, refresh: false)
+                    if let completedRefreshError {
+                        self.sessionsError = completedRefreshError
+                        self.sessionsRefreshStatus = "failed"
+                    }
+                }
+            }
+        }
         sessionsFetchTask = Task.detached(priority: .userInitiated) { [weak self] in
             do {
-                let result: LocalSessions
-                if refresh {
-                    result = try Backend.refreshSessions(
-                        query, limit: requestedLimit, offset: requestedOffset, sourceIds: requestedSourceIDs
-                    )
-                } else {
-                    result = try Backend.sessions(
-                        query, limit: requestedLimit, offset: requestedOffset, sourceIds: requestedSourceIDs
-                    )
-                }
+                let result = try Backend.sessions(
+                    query, limit: requestedLimit, offset: requestedOffset, sourceIds: requestedSourceIDs
+                )
                 guard !Task.isCancelled else { return }
                 guard let self else { return }
                 await MainActor.run { [self] in
                     guard !Task.isCancelled,
-                          self.sessionsRequestID == requestID,
+                          Self.isCurrentSessionRequest(requestID, currentRequestID: self.sessionsRequestID),
                           self.sessionsRequestSignature == requestSignature else { return }
+                    guard result.cacheStatus != "failed" else {
+                        self.sessionsError = i18n("Could not load cached sessions.")
+                        self.sessionsRefreshStatus = "failed"
+                        self.sessionsLoading = false
+                        self.sessionsFetchTask = nil
+                        return
+                    }
                     self.sessionSources = result.sources
                     let sourceSelection = Self.reconciledSessionSourceIDs(
                         requested: requestedSourceIDs, available: result.sources)
@@ -231,17 +283,39 @@ final class AppModel: ObservableObject {
                     self.sessionsTotalExact = result.totalExact
                     self.sessionsUpdated = result.updatedAt > 0
                         ? Date(timeIntervalSince1970: result.updatedAt) : Date()
+                    self.sessionsCacheStatus = result.cacheStatus
+                    self.sessionsCacheAgeSeconds = result.cacheAgeSeconds
+                    if result.refreshStatus != "not-run" {
+                        self.sessionsRefreshStatus = result.refreshStatus
+                    }
                     self.sessionsLoading = false
                     self.sessionsFetchTask = nil
+                    if refresh {
+                        self.sessionsLastReconcile = Date()
+                    } else {
+                        if let age = result.cacheAgeSeconds {
+                            self.sessionsLastReconcile = Date().addingTimeInterval(-TimeInterval(age))
+                        }
+                        // A scan that just failed waits for the reconcile timer
+                        // instead of being retried after every cache query.
+                        let lastScanFailed = self.sessionsRefreshStatus == "failed"
+                            || self.sessionsRefreshStatus == "incomplete"
+                        if self.sessionsRefreshTask == nil, !lastScanFailed,
+                           Self.sessionsCacheExpired(ageSeconds: result.cacheAgeSeconds),
+                           self.popoverVisible, self.featureView == .sessions {
+                            self.refreshSessions(query: query, refresh: true)
+                        }
+                    }
                 }
             } catch {
                 guard !Task.isCancelled else { return }
                 guard let self else { return }
                 await MainActor.run { [self] in
                     guard !Task.isCancelled,
-                          self.sessionsRequestID == requestID,
+                          Self.isCurrentSessionRequest(requestID, currentRequestID: self.sessionsRequestID),
                           self.sessionsRequestSignature == requestSignature else { return }
                     self.sessionsError = error.localizedDescription
+                    self.sessionsRefreshStatus = "failed"
                     self.sessionsLoading = false
                     self.sessionsFetchTask = nil
                 }
@@ -298,6 +372,46 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Settings → Providers → "Detect installed providers": syncs the toggles
+    /// with the tools installed right now.
+    func redetectProviders() {
+        guard !providerDetectBusy else { return }
+        providerDetectBusy = true
+        providerDetectStatus = ""
+        Task.detached(priority: .userInitiated) {
+            do {
+                let detected = try Backend.detectProviders()
+                await MainActor.run { self.applyProviderDetection(detected) }
+            } catch {
+                await MainActor.run { self.applyProviderDetectionFailure() }
+            }
+        }
+    }
+
+    func applyProviderDetection(_ detected: [String]) {
+        providerDetectBusy = false
+        var added: [String] = []
+        var removed: [String] = []
+        changeSettings { settings in
+            let change = settings.applyDetected(detected)
+            added = change.added
+            removed = change.removed
+        }
+        let label = { (id: String) in self.envelope.provider(id: id)?.label ?? id.capitalized }
+        var parts: [String] = []
+        if !added.isEmpty { parts.append(i18n("Enabled: %1", added.map(label).joined(separator: ", "))) }
+        if !removed.isEmpty { parts.append(i18n("Disabled (not installed): %1", removed.map(label).joined(separator: ", "))) }
+        providerDetectStatus = parts.isEmpty
+            ? i18n("No changes: enabled providers match what is installed.")
+            : parts.joined(separator: " · ")
+        if !parts.isEmpty { refresh() }
+    }
+
+    private func applyProviderDetectionFailure() {
+        providerDetectBusy = false
+        providerDetectStatus = i18n("Detection failed.")
+    }
+
     func refreshPricing() {
         guard !pricingLoading else { return }
         pricingLoading = true
@@ -317,7 +431,24 @@ final class AppModel: ObservableObject {
         pricingStatus = result.status.isEmpty ? (result.ok ? "refreshed" : "no-cache") : result.status
         pricingError = result.error
         pricingFetchedAt = result.fetchedAt > 0 ? Date(timeIntervalSince1970: result.fetchedAt) : nil
-        if result.ok { refresh() }
+        // A successful pricing refresh changes derived cost values, so it owes
+        // exactly one usage refresh — but if one is already running, remember
+        // it and fire when that settles instead of cancelling and re-running.
+        if result.ok { requestUsageRefreshAfterPricing() }
+    }
+
+    func requestUsageRefreshAfterPricing() {
+        if isLoading {
+            usageRefreshPending = true
+        } else {
+            refresh()
+        }
+    }
+
+    private func settlePendingUsageRefresh() {
+        guard usageRefreshPending else { return }
+        usageRefreshPending = false
+        refresh()
     }
 
     func applyPricingFailure(_ error: Error) {
@@ -331,6 +462,7 @@ final class AppModel: ObservableObject {
         self.envelope = envelope
         backendError = ""
         isLoading = false
+        settlePendingUsageRefresh()
         lastUpdated = envelope.updatedAt > 0 ? Date(timeIntervalSince1970: envelope.updatedAt) : Date()
         // The remembered provider is gone — switched off, or renamed by a
         // backend update. Fall back rather than showing an empty popover.
@@ -359,7 +491,8 @@ final class AppModel: ObservableObject {
                 self.refresh()
                 // Provider usage stays on its normal app-wide timer; local
                 // session stores are reconciled only while Sessions is shown.
-                if self.popoverVisible, self.featureView == .sessions {
+                if self.popoverVisible, self.featureView == .sessions,
+                   Self.sessionsReconciliationDue(last: self.sessionsLastReconcile, now: Date()) {
                     self.refreshSessions(query: self.sessionsQuery, refresh: true)
                 }
             }
@@ -370,6 +503,18 @@ final class AppModel: ObservableObject {
         timer.tolerance = interval * 0.2
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
+        sessionsTimer?.invalidate()
+        let sessionsTimer = Timer(timeInterval: Self.sessionsReconcileInterval, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in
+                guard self.popoverVisible, self.featureView == .sessions,
+                      Self.sessionsReconciliationDue(last: self.sessionsLastReconcile, now: Date()) else { return }
+                self.refreshSessions(query: self.sessionsQuery, refresh: true)
+            }
+        }
+        sessionsTimer.tolerance = 60
+        RunLoop.main.add(sessionsTimer, forMode: .common)
+        self.sessionsTimer = sessionsTimer
     }
 
     private func watchForWake() {
@@ -380,8 +525,22 @@ final class AppModel: ObservableObject {
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
         ) { [weak self] _ in
             guard let self else { return }
-            Task { @MainActor in self.refresh() }
+            Task { @MainActor in
+                self.refresh()
+                if self.popoverVisible, self.featureView == .sessions {
+                    self.refreshSessions(query: self.sessionsQuery, refresh: true)
+                }
+            }
         }
+    }
+
+    nonisolated static func sessionsCacheExpired(ageSeconds: Int?) -> Bool {
+        guard let ageSeconds else { return true }
+        return ageSeconds >= Int(sessionsReconcileInterval)
+    }
+
+    nonisolated static func sessionsReconciliationDue(last: Date, now: Date) -> Bool {
+        now.timeIntervalSince(last) >= sessionsReconcileInterval
     }
 
     /// Feed one envelope in without going near the network — the diagnostic

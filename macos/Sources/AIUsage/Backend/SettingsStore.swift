@@ -90,6 +90,40 @@ final class SettingsStore: ObservableObject {
     /// when applying the defaults failed). Mirrors config.py:OPT_IN_PROVIDERS.
     static let optInProviders: Set<String> = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "ollama", "selfhosted"]
 
+    /// Mirrors AUTO_DETECT_PROVIDERS in aiusage/detect.py: the providers
+    /// detection can speak for. Every other provider is only switched by hand.
+    static let autoDetectProviders: Set<String> = [
+        "claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode",
+    ]
+
+    /// The settings key of the API key that keeps a provider usable without
+    /// its local tool, so detection never switches such a provider off.
+    static let detectionKeepingKeys: [String: String] = [
+        "claude": "claudeAdmin", "openai": "openai", "mistral": "mistral", "grok": "grok", "muse": "muse",
+    ]
+
+    /// Syncs the toggles with what `--detect-providers` found installed: a
+    /// detected provider is switched on, an auto-detectable one whose tool is
+    /// gone is switched off unless it has an API key (issue #60).
+    func applyDetected(_ detected: [String]) -> (added: [String], removed: [String]) {
+        var added: [String] = []
+        var removed: [String] = []
+        for id in Self.allProviders {
+            let enabled = providerEnabled(id)
+            if detected.contains(id) {
+                if !enabled {
+                    setProvider(id, enabled: true)
+                    added.append(id)
+                }
+            } else if enabled, Self.autoDetectProviders.contains(id) {
+                if let name = Self.detectionKeepingKeys[id], !key(name).isEmpty { continue }
+                setProvider(id, enabled: false)
+                removed.append(id)
+            }
+        }
+        return (added, removed)
+    }
+
     func providerEnabled(_ id: String) -> Bool {
         let toggles = raw["providers"] as? [String: Any] ?? [:]
         if let value = toggles[id] as? Bool { return value }

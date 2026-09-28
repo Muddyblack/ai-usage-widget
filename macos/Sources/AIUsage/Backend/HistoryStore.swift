@@ -37,9 +37,25 @@ final class HistoryStore: ObservableObject {
     /// Samples taken but not yet merged in. A save whose lock could not be
     /// taken is not an error to shrug off — the merge is a read-modify-write,
     /// so going ahead without the lock would drop the other frontend's points.
-    /// The batch is kept and offered again on the next poll.
+    /// The batch is kept and offered again on the next window.
     private var pending: [HistoryPoint] = []
     private var saving = false
+
+    /// The persistence debounce window, in milliseconds. Samples update the
+    /// chart immediately but reach the disk at most once per window, so a poll
+    /// that runs every few minutes does not pay for a save every time. Matches
+    /// the 5-minute default poll and the other frontends' `historyDebounceMs`.
+    private let debounceMs = 300_000
+
+    /// The one save scheduled to close the current window, or nil when none is
+    /// open. The guard that keeps the debounce leading-edge: a new sample arms
+    /// it only when nothing is already scheduled, so a fast poll coalesces into
+    /// one save per window instead of sliding it forever.
+    private var debounceWork: DispatchWorkItem?
+
+    /// The chart's ceiling, matching `UsageHistory.DEFAULT_LIMIT` — the shared
+    /// file is capped to the same length, so the two frontends agree.
+    static let limit = 10_000
 
     /// Read the stored series without leaving the caller's turn — for the
     /// diagnostic modes, which have no run loop to come back to.
@@ -55,18 +71,40 @@ final class HistoryStore: ObservableObject {
         }
     }
 
-    /// Take one sample of everything the providers reported this poll.
+    /// Take one sample of everything the providers reported this poll. The
+    /// chart shows it now; only the write waits for the debounce window.
     func record(_ providers: [Provider], at date: Date = Date()) {
         var values: [String: Double] = [:]
         for provider in providers {
             for (key, value) in provider.historyValues { values[key] = value }
         }
         guard !values.isEmpty else { return }
-        pending.append(HistoryPoint(t: date.timeIntervalSince1970 * 1000, values: values))
-        flush()
+        let point = HistoryPoint(t: date.timeIntervalSince1970 * 1000, values: values)
+        pending.append(point)
+        points.append(point)
+        points.sort { $0.t < $1.t }
+        if points.count > Self.limit { points.removeFirst(points.count - Self.limit) }
+        armDebounce()
+    }
+
+    /// Schedule the one save that closes the current window. Leading-edge: a
+    /// window is armed only when none is open, so samples keep arriving without
+    /// pushing the save out forever.
+    private func armDebounce() {
+        guard debounceWork == nil, !saving, !pending.isEmpty else { return }
+        let work = DispatchWorkItem { [weak self] in
+            Task { @MainActor in
+                self?.debounceWork = nil
+                self?.flush()
+            }
+        }
+        debounceWork = work
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + .milliseconds(debounceMs), execute: work)
     }
 
     private func flush() {
+        debounceWork?.cancel()
+        debounceWork = nil
         guard !saving, !pending.isEmpty else { return }
         saving = true
         let batch = pending
@@ -79,12 +117,36 @@ final class HistoryStore: ObservableObject {
                 self.saving = false
                 if ok {
                     // Kept only on success: on failure the same batch is
-                    // offered again with the next poll's sample.
-                    self.pending.removeFirst(min(batch.count, self.pending.count))
-                    if !merged.isEmpty { self.points = merged }
+                    // offered again with the next window's save.
+                    self.removePending(batch)
+                    if !merged.isEmpty { self.points = Self.union(self.points, merged) }
                 }
+                // Whether the save landed or not, the next window is armed so
+                // a failed batch is offered again — and a successful one is
+                // followed by whatever arrived while it was in flight.
+                self.armDebounce()
             }
         }
+    }
+
+    /// Write everything still unsaved, synchronously, for the moment the app is
+    /// going away and no run loop will come back to finish a deferred save.
+    func flushSynchronously() {
+        debounceWork?.cancel()
+        debounceWork = nil
+        guard !pending.isEmpty else { return }
+        let batch = pending
+        let response = Self.call("autosave", payload: Self.encode(batch))
+        if Self.succeeded(response) {
+            removePending(batch)
+            let merged = Self.parse(response)
+            if !merged.isEmpty { points = Self.union(points, merged) }
+        }
+    }
+
+    private func removePending(_ batch: [HistoryPoint]) {
+        guard pending.starts(with: batch) else { return }
+        pending.removeFirst(batch.count)
     }
 
     // ── Chart series ─────────────────────────────────────────────────────
@@ -208,6 +270,39 @@ final class HistoryStore: ObservableObject {
             return HistoryPoint(t: t, values: values)
         }
         .sorted { $0.t < $1.t }
+    }
+
+    /// Combine two series that were recorded independently — the shared file
+    /// on disk against whatever this frontend already holds. Points sharing a
+    /// timestamp are combined key by key, with `overlay` winning, so a point
+    /// holding only `w` and one holding only `cp` end up as one complete
+    /// point. Points the other side never recorded are kept as they are.
+    ///
+    /// Returns a new array, ascending by `t` and trimmed to the cap. A port of
+    /// `UsageHistory.union`, which the two QML frontends share; the same
+    /// history must merge the same way everywhere.
+    nonisolated static func union(_ base: [HistoryPoint], _ overlay: [HistoryPoint], limit: Int = 10_000) -> [HistoryPoint] {
+        var byTime: [Double: HistoryPoint] = [:]
+
+        // Both sides fold the same way: a repeated timestamp contributes its
+        // keys to the point already there rather than replacing it, so two
+        // half-filled points recorded a millisecond apart never cost each
+        // other their series.
+        func absorb(_ points: [HistoryPoint]) {
+            for point in points {
+                guard point.t.isFinite else { continue }
+                var merged = byTime[point.t] ?? HistoryPoint(t: point.t, values: [:])
+                for (key, value) in point.values { merged.values[key] = value }
+                byTime[point.t] = merged
+            }
+        }
+
+        absorb(base)
+        absorb(overlay)
+
+        var out = byTime.values.sorted { $0.t < $1.t }
+        if out.count > limit { out.removeFirst(out.count - limit) }
+        return out
     }
 
     nonisolated private static func number(_ raw: Any?) -> Double? {

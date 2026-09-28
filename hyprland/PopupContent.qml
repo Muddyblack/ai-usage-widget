@@ -506,6 +506,15 @@ ColumnLayout {
             opacity: 0.8
             wrapMode: Text.WordWrap
         }
+
+        // OpenCode Zen reports no plan windows, so its Usage tab gets the
+        // daily token chart instead of the quota history (as on Plasma).
+        OpenCodeUsageChart {
+            visible: shell.activeId === "opencode" && shell.activeProvider() !== null && ((shell.activeProvider().details || {}).stats || {}).available === true
+            shell: content.shell
+            stats: shell.activeProvider() ? ((shell.activeProvider().details || {}).stats || ({})) : ({})
+            accent: shell.activeAccent
+        }
     }
 
     // ── Stats section ───────────────────────────────────────────

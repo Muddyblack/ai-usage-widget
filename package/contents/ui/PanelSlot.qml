@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
+import "../code/PanelColor.js" as PanelColor
 
 // Compact panel readout: icon + optional spark-line + animated % / cost text.
 RowLayout {
@@ -21,9 +22,7 @@ RowLayout {
     readonly property bool tinted: slot.iconTint.a > 0
     // Optional mini-trend series ({t,v}) drawn as a spark-line behind the readout
     property var spark: []
-    // usage-level thresholds (kept local so this component is self-contained)
-    readonly property color dangerColor: "#ff4d4d"
-    readonly property color warningColor: "#ffa64d"
+    // usage-level thresholds live in ../code/PanelColor.js
     // Animated value that eases toward `pct` so the readout rolls up/down
     property real displayPct: 0
 
@@ -106,7 +105,7 @@ RowLayout {
         text: slot.showCost ? slot.costText : Math.round(slot.displayPct) + "%"
         font.pixelSize: 12
         font.bold: true
-        color: slot.showCost ? slot.iconColor : (slot.pct >= 90 ? slot.dangerColor : slot.pct >= 70 ? slot.warningColor : Kirigami.Theme.textColor)
+        color: slot.showCost ? slot.iconColor : PanelColor.colorFor(slot.pct, Kirigami.Theme.textColor)
         Layout.alignment: Qt.AlignVCenter
     }
 

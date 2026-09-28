@@ -163,6 +163,8 @@ def save(path, incoming, limit=None, keep_existing=False):
     stored = normalize(_read(path) or [], limit)
     fresh = normalize(incoming, limit)
     merged = union(fresh, stored, limit) if keep_existing else union(stored, fresh, limit)
+    if merged == stored:
+        return merged
 
     directory = os.path.dirname(path) or "."
     os.makedirs(directory, exist_ok=True)

@@ -298,3 +298,20 @@ remain unchanged.
 Each refresh records the usage values that a provider actually reports into a rolling history of up to 10,000 samples — only when a value moves, plus one sighting an hour, so a flat stretch costs two points rather than one per refresh — used by the chart, spark-lines, burn-rate ETA, and period comparison. Rolling plan windows (Claude, Codex) empty at a known instant, so when the machine was asleep across one the chart replays the drop where it actually happened instead of sloping from the last pre-sleep sample to the first one after wake-up. Most series are percentages; Mistral stores its raw vibe CLI spend and DeepSeek stores its raw balance so their charts retain meaningful units. Existing session and weekly history fields are retained even while a window is unavailable, so five-hour charts can return without migration if providers restore that limit.
 
 History lives in `~/.local/share/ai-usage-widget/usage-history-latest.json`, shared by both frontends, so it survives a full uninstall/reinstall; the widget's Plasma config keeps only a recent tail of it as a first-run fallback, because Plasma rewrites every widget's config whole on each change. You can also manually **Export** (copies the shared file to a timestamped snapshot) and **Import** from the settings panel. If a saved file is unreadable or in an unrecognized format, it's discarded and history starts fresh rather than erroring out.
+
+## Local caches
+
+Everything below is local, never holds a credential or a transcript, and can be
+deleted at any time — it is rebuilt on the next refresh. `~/.cache/ai-usage-widget/`
+(`AI_USAGE_CACHE_DIR` overrides) holds the pricing catalog (7 days), the Codex
+rate-limit reply (120 s, keyed by a hash of the token and `CODEX_HOME`, so
+several widgets do not each launch `codex app-server`), the Antigravity usage
+(90 s), the session index `sessions.sqlite3`, and `last-snapshot.json`, the last
+good envelope a freshly started Plasma widget shows (marked stale) until its
+first fetch. `~/.cache/kde-ai-usage/` holds the Codex and Mistral Vibe local
+statistics, recomputed only when a log is added, removed or changed. Grok's
+session discovery is cached in memory for one collection only.
+
+Plasma widget instances share their settings through
+`~/.config/ai-usage-widget/plasma-shared-settings-<widget id>.json` (mode 0600); pins, panel
+rotation and view state stay per widget.

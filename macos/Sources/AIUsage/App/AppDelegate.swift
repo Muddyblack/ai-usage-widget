@@ -64,6 +64,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        // The debounce window may still be open; write what is unsaved while
+        // there is still a run loop to do it in.
+        model?.history.flushSynchronously()
+    }
+
     private func runDiagnostics() {
         let session = ScreenshotSession(
             directory: mode.screenshotDirectory,

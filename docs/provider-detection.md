@@ -18,22 +18,41 @@ enable or disable providers manually at any time. Detection does not prove that
 an account is authenticated, that a token is valid, that a service is usable, or
 that a quota endpoint will answer.
 
+Detection means *installed right now*. Logs, session folders, databases and
+credential files are not evidence: they outlive an uninstall, and treating them
+as evidence kept a removed tool "detected" forever (issue #60).
+
+Settings → Providers → **Detect installed providers** re-runs detection on
+demand and syncs both ways: a detected provider that is off is switched on, and
+an auto-detectable provider whose program is gone is switched off, unless an API
+key is configured for it (the key keeps it usable without the local tool).
+Manual-only providers are never touched.
+
 ## Approved automatic detection
 
 The backend constant `AUTO_DETECT_PROVIDERS` is the complete allowlist:
 
-| ID | Local evidence used by the probe |
+| ID | Installed program the probe looks for |
 |---|---|
-| `claude` | `CLAUDE_CONFIG_DIR` or `~/.claude/.credentials.json`, or a non-empty `projects` directory |
-| `antigravity` | `ANTIGRAVITY_HOME`, `GEMINI_HOME`, or `~/.gemini`, with account or brain files present |
-| `openai` | `CODEX_HOME` or `~/.codex/auth.json`, or files under `sessions` |
-| `kiro` | `KIRO_CLI_DB`, platform data-home `kiro-cli/data.sqlite3`, `KIRO_IDE_DB`, or Kiro IDE `state.vscdb` |
-| `mistral` | `VIBE_HOME` or `~/.vibe/logs/session` contains files |
-| `grok` | `GROK_HOME` or `~/.grok/auth.json`, or files under `sessions` |
-| `muse` | `MUSE_AUTH_PATH`, `MUSE_SESSIONS_DIR`, or a platform data-home Muse sessions directory has entries |
-| `cursor` | `CURSOR_AUTH_PATH`, Cursor auth files, `CURSOR_CHATS_DIR`, or Cursor IDE `state.vscdb` |
-| `cline` | `CLINE_SESSIONS_DIR` or `~/.cline/data/sessions` has entries |
-| `opencode` | `OPENCODE_DB`, an `opencode` executable, or OpenCode data/database files |
+| `claude` | `claude` executable |
+| `antigravity` | `agy` or `antigravity` executable, or the Antigravity desktop app |
+| `openai` | `codex` executable, or the Codex desktop app |
+| `kiro` | `kiro-cli` or `kiro` executable, or the Kiro desktop app |
+| `mistral` | `vibe` executable |
+| `grok` | `grok` executable |
+| `muse` | `muse` executable |
+| `cursor` | `cursor-agent` or `cursor` executable, or the Cursor desktop app |
+| `cline` | `cline` executable |
+| `opencode` | `opencode` executable |
+
+Executables are looked up on `PATH` and in the directories user-level
+installers use but a desktop session's `PATH` often lacks (`~/.local/bin`,
+`~/.npm-global/bin`, `~/.bun/bin`, `~/.nix-profile/bin`,
+`/etc/profiles/per-user/$USER/bin`, `~/.claude/local`, `~/.opencode/bin`, …).
+Desktop apps are a `.desktop` entry in the XDG application directories
+(including Flatpak exports) on Linux, a `.app` bundle in `/Applications` or
+`~/Applications` on macOS, and `%LOCALAPPDATA%\Programs\<App>\<App>.exe` on
+Windows.
 
 The returned list uses the order in `config.ALL_PROVIDERS`, not filesystem or
 probe completion order. Do not add an ID to this table unless it is also added
@@ -52,22 +71,21 @@ detection for them unless this policy and the backend allowlist change together.
 
 ## Detection constraints
 
-Detection is metadata-only and stat-only. It may test whether a named file or
-directory exists and whether a directory has entries or files. It must not read
-file contents, parse credentials, open SQLite, invoke a command, inspect a
-process, make a socket or HTTP request, or copy a token into any result.
+Detection is metadata-only and stat-only. It may test whether a named program
+or application entry exists and is executable. It must not read file contents,
+parse credentials, open SQLite, invoke a command, inspect a process, make a
+socket or HTTP request, or copy a token into any result.
 
 The result is provider IDs only. It contains no paths, account names, token
-values, credentials, API responses, or usability claims. A credential file's
-existence is local evidence, not authentication. An installed binary is weak
-evidence and is allowed only where the current probe explicitly uses it, as for
-OpenCode.
+values, credentials, API responses, or usability claims. A credential file
+is not evidence at all, since it survives an uninstall; an installed
+program is the evidence, and it still says nothing about authentication.
 
 ## Settings and platform behavior
 
 | System | Provider toggle store | Detection/default behavior |
 |---|---|---|
-| KDE Plasma | Plasma KConfig, `Plasmoid.configuration.<id>Enabled`, declared in `package/contents/config/main.xml` | Per-widget booleans. Plasma provider tabs do not read shared JSON toggles. Any Plasma integration must call the explicit initializer or apply equivalent one-shot behavior to its KConfig store. |
+| KDE Plasma | Plasma KConfig, `Plasmoid.configuration.<id>Enabled`, declared in `package/contents/config/main.xml`, mirrored between widget instances through `plasma-shared-settings-<widget id>.json` | Every widget instance shares its settings (providers, keys, appearance); pins, panel rotation and view state stay per widget. A widget added next to a configured one adopts its settings instead of running first-run detection. Plasma provider tabs do not read the Hyprland shared JSON toggles. |
 | Hyprland | Shared JSON at `$XDG_CONFIG_HOME/ai-usage-widget/hyprland-settings.json`, or `AI_USAGE_CONFIG` | Backend `--all` reads this file. First-run initialization must be explicit and latched. |
 | Windows | The same shared JSON under `%APPDATA%\\ai-usage-widget\\hyprland-settings.json` | The Windows app uses the shared backend and settings format. It must not silently rerun detection during refresh. |
 | macOS | The same shared JSON under `~/.config/ai-usage-widget/hyprland-settings.json`, unless overridden | `SettingsStore.swift` mirrors the backend provider list and shared JSON settings. The native app does not make provider detection a Swift-only feature. |

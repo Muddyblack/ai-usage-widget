@@ -17,7 +17,9 @@ from ..contract import finite_number
 
 _MAX_ROWS = 60
 _QUERY_TIMEOUT_SECONDS = 2.0
-_READ_TIMEOUT_SECONDS = 30.0
+# Bounds the per-session usage enrichment as a whole. Sessions past it are
+# still listed, just without usage, so a huge database never hides sessions.
+_ENRICH_TIMEOUT_SECONDS = 30.0
 _REQUIRED_COLUMNS = {"id", "title", "directory", "time_created", "time_updated"}
 _MESSAGE_COLUMNS = {"id", "session_id", "data"}
 _V2_MESSAGE_COLUMNS = {"id", "session_id", "type", "seq", "data"}
@@ -25,7 +27,7 @@ _PART_COLUMNS = {"id", "message_id", "data"}
 SQLiteValue = str | int | float | None
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class OpenCodeSession:
     session_id: str
     title: str
@@ -314,24 +316,15 @@ def _read_database(database_path: str, *, include_all: bool = False) -> list[Ope
         with _connect_readonly(database_path) as connection:
             if not _schema_is_supported(connection):
                 return []
-            overall_deadline = time.monotonic() + _READ_TIMEOUT_SECONDS
-
-            def interrupt_query() -> int:
-                return int(time.monotonic() >= overall_deadline)
-
-            connection.set_progress_handler(interrupt_query, 1000)
-            try:
-                query = "SELECT id, title, directory, time_created, time_updated FROM session ORDER BY time_updated DESC"
-                if include_all:
-                    rows = connection.execute(query).fetchall()
-                else:
-                    rows = connection.execute(query + " LIMIT ?", (_MAX_ROWS,)).fetchall()
-            finally:
-                connection.set_progress_handler(None, 0)
+            query = "SELECT id, title, directory, time_created, time_updated FROM session ORDER BY time_updated DESC"
+            if include_all:
+                rows = connection.execute(query).fetchall()
+            else:
+                rows = connection.execute(query + " LIMIT ?", (_MAX_ROWS,)).fetchall()
             usage_by_session = {}
-            for index, row in enumerate(rows):
-                if time.monotonic() >= overall_deadline:
-                    rows = rows[:index]
+            enrich_deadline = time.monotonic() + _ENRICH_TIMEOUT_SECONDS
+            for row in rows:
+                if time.monotonic() >= enrich_deadline:
                     break
                 session_id = _text(row[0])
                 if session_id:

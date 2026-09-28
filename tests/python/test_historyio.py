@@ -40,6 +40,32 @@ class HistoryIoTest(unittest.TestCase):
         out = self.run_cmd("seed", '[{"t":1,"w":11},{"t":5,"s":1}]')
         self.assertEqual(out, '{"ok":true,"data":[{"t":1,"w":40},{"t":2,"za":60},{"t":3,"cp":7},{"t":5,"s":1}]}')
 
+    def test_save_returns_and_persists_the_normalized_merged_history(self):
+        self.run_cmd("autosave", '[{"t":"2","v":60},{"t":1,"w":40}]')
+
+        out = self.run_cmd("autosave", '[{"t":2,"cp":7}]')
+
+        self.assertEqual(
+            json.loads(out)["data"],
+            [{"t": 1, "w": 40}, {"t": 2, "w": 60, "cp": 7}],
+        )
+        self.assertEqual(
+            json.loads(self.on_disk()),
+            [{"t": 1, "w": 40}, {"t": 2, "w": 60, "cp": 7}],
+        )
+
+    def test_identical_save_preserves_file_identity_and_mtime(self):
+        payload = '[{"t":1,"w":40},{"t":2,"cp":7}]'
+        self.run_cmd("autosave", payload)
+        before = os.stat(self.latest)
+
+        out = self.run_cmd("autosave", payload)
+
+        after = os.stat(self.latest)
+        self.assertEqual(json.loads(out)["data"], json.loads(self.on_disk()))
+        self.assertEqual((after.st_ino, after.st_mtime_ns), (before.st_ino, before.st_mtime_ns))
+        self.assertEqual(glob.glob(os.path.join(self.dir, ".usage-history.tmp.*")), [])
+
     def test_empty_payload_never_touches_the_file(self):
         self.run_cmd("autosave", '[{"t":1,"w":1}]')
         before = self.on_disk()

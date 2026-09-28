@@ -1,10 +1,11 @@
 """A plan-covered session is priced, but the figure is not money owed."""
 
+import tempfile
 import unittest
 from unittest import mock
 
-from _support import REPO  # noqa: F401  (ensures TOOLS is on sys.path)
-from aiusage import billing_mode, envelope
+from _support import REPO, seed_session_index  # noqa: F401  (ensures TOOLS is on sys.path)
+from aiusage import billing_mode, config, envelope
 
 
 class BillingModeTest(unittest.TestCase):
@@ -68,8 +69,10 @@ class LocalSpendSplitTest(unittest.TestCase):
         }
 
     def _spend(self, rows):
-        with mock.patch("aiusage.sessions.all_session_rows", return_value=rows):
-            return envelope._local_spend()
+        with tempfile.TemporaryDirectory() as directory:
+            seed_session_index(directory, rows)
+            with mock.patch.object(config, "cache_dir", return_value=directory):
+                return envelope._local_spend()
 
     def test_plan_usage_never_lands_in_the_metered_total(self):
         spend = self._spend(

@@ -250,9 +250,16 @@ def _write_cache(path, snapshot):
 
 
 def _snapshot(path):
-    disk = _read_cache(path)
-    memory = _CURRENT_SNAPSHOTS.get(path, {})
-    return memory if memory.get("checkedAt", 0) >= disk.get("checkedAt", 0) else disk
+    with _PROCESS_LOCK:
+        identity = (_cache_file_identity(path), _catalog_memory_identity(path))
+        cached = _CATALOG_CACHE.get(path)
+        if cached is not None and cached[0] == identity:
+            return cached[1]
+        disk = _read_cache(path)
+        memory = _CURRENT_SNAPSHOTS.get(path, {})
+        snapshot = memory if memory.get("checkedAt", 0) >= disk.get("checkedAt", 0) else disk
+        _CATALOG_CACHE[path] = (identity, snapshot)
+        return snapshot
 
 
 def _cache_file_identity(path):
@@ -384,14 +391,7 @@ def load_catalog(*, force=False, models=None):
 
 def cached_catalog():
     path = os.path.join(config.cache_dir(), CACHE_FILENAME)
-    with _PROCESS_LOCK:
-        identity = (_cache_file_identity(path), _catalog_memory_identity(path))
-        cached = _CATALOG_CACHE.get(path)
-        if cached is not None and cached[0] == identity:
-            return cached[1]
-        catalog = _snapshot(path).get("providers", {})
-        _CATALOG_CACHE[path] = (identity, catalog)
-        return catalog
+    return _snapshot(path).get("providers", {})
 
 
 def get_pricing(provider, models=None):

@@ -156,7 +156,7 @@
 
       devShells = forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};
-        in {
+        in rec {
           default = pkgs.mkShell {
             name = "ai-usage-widget-dev";
             packages = with pkgs; [
@@ -166,6 +166,7 @@
               kdePackages.libplasma
               kdePackages.plasma5support
               kdePackages.plasma-sdk
+              # gettext provides gettext, msgfmt, xgettext, msgmerge, msgcat, and msgattrib.
               gettext
               pre-commit
               zip
@@ -175,6 +176,10 @@
               nodejs
             ];
             shellHook = ''
+              # KPackage discovers Plasma package structures through Qt plugins.
+              # Prefer the plugin built with this shell's pinned KDE stack over
+              # incompatible system plugins inherited through QT_PLUGIN_PATH.
+              export QT_PLUGIN_PATH="${pkgs.kdePackages.libplasma}/lib/qt-6/plugins''${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
               # qmllint does not discover KDE's QML modules from the Qt import
               # path automatically. Keep this in the development shell so the
               # same imports work for CI, pre-commit, and local editor checks.
@@ -183,6 +188,23 @@
               echo "ai-usage-widget dev shell ready"
               echo "  make help        — list targets (view, install, pack, tag)"
             '';
+          };
+
+          # Profilers and debuggers for performance work (`nix develop .#profiling`).
+          # Kept out of the default shell, which CI enters on every lint run.
+          profiling = pkgs.mkShell {
+            name = "ai-usage-widget-profiling";
+            inputsFrom = [ default ];
+            packages = with pkgs; [
+              (python3.withPackages (ps: [ ps.pyinstrument ps.memory-profiler ]))
+              perf
+              hotspot
+              heaptrack
+              valgrind
+              gdb
+              strace
+            ];
+            inherit (default) shellHook;
           };
 
           # The Windows tray app (windows/) runs on Linux too, which is how it is

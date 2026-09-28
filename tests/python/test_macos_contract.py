@@ -307,6 +307,37 @@ class SwiftContractTest(unittest.TestCase):
         self.assertIsNotNone(match, "SessionsView does not gate load-more on hasMore")
         self.assertRegex(match.group(1), r"model\.loadMoreSessions\(\)")
 
+    def test_a_wedged_backend_child_is_terminated_after_the_child_timeout(self):
+        """A menu bar app must not wait forever on a stuck backend.
+
+        The runner bounds the wait with a semaphore signalled by the child's
+        termination handler, then terminates (SIGTERM, then SIGKILL) and throws
+        a typed timeout instead of hanging or fabricating empty data."""
+        runner = os.path.join(REPO, "macos", "Sources", "AIUsage", "Backend", "BackendRunner.swift")
+        with open(runner, encoding="utf-8") as fh:
+            swift = fh.read()
+        self.assertIn("childTimeout", swift)
+        self.assertIn("terminationHandler", swift)
+        self.assertIn("exited.wait(timeout:", swift)
+        self.assertIn("process.terminate()", swift)
+        self.assertIn("SIGKILL", swift)
+        self.assertIn("case timedOut", swift)
+        self.assertNotIn("process.waitUntilExit()", swift, "an unbounded wait can hang on a wedged child")
+        # The child timeout bounds the wait, and the backend's own fetches are
+        # shorter, so a timeout means wedged, not slow.
+        match = re.search(r"static let childTimeout: TimeInterval = (\d+)", swift)
+        self.assertIsNotNone(match)
+        self.assertGreaterEqual(int(match.group(1)), 30)
+
+    def test_the_usage_timer_and_the_session_reconcile_cadence_are_separate(self):
+        """Sessions are reconciled on their own cadence, not on every usage poll."""
+        self.assertIn("sessionsReconcileInterval", self.app_model)
+        self.assertIn("sessionsTimer", self.app_model)
+        self.assertRegex(
+            self.app_model,
+            r"popoverVisible.*featureView == \.sessions",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

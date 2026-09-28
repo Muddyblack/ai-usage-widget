@@ -17,6 +17,7 @@ from .providers.antigravity import get_antigravity_usage
 from .providers.claude_credentials import get_claude_credentials
 from .providers.cline import get_cline_sessions
 from .providers.codex_rate_limits import get_codex_rate_limits
+from .providers.codex_rate_limits import remember as remember_codex_rate_limits
 from .providers.codex_stats import get_codex_stats
 from .providers.copilot import get_copilot_usage
 from .providers.copilot_stats import get_copilot_stats
@@ -30,7 +31,7 @@ from .providers.moonshot import get_moonshot_balance
 from .providers.muse import get_muse_usage
 from .providers.muse_quota import get_muse_quota
 from .providers.ollama import get_ollama_usage
-from .providers.openai_credentials import get_openai_credentials
+from .providers.openai_credentials import codex_home, get_openai_credentials
 from .providers.opencode import usage_snapshot as get_opencode_usage
 from .providers.opencode_account import account_mode, get_go_usage
 from .providers.openrouter import get_openrouter_usage
@@ -160,14 +161,20 @@ def collect_openai(now):
     if fixture:
         codex = read_json_file(fixture)
     else:
-        codex = get_codex_rate_limits()
-        if not (codex.get("rateLimits") or codex.get("rate_limit")) and token:
+        codex = get_codex_rate_limits(token, codex_home())
+        codex.pop("_codexSource", None)
+        codex.pop("_codexAge", None)
+        # The app-server can answer "no limits on this plan" explicitly; that
+        # is an answer, not a failure, so it must not trigger the HTTP fallback.
+        no_limits = codex.pop("_codexNoLimits", False)
+        if not (codex.get("rateLimits") or codex.get("rate_limit") or no_limits) and token:
             headers = {"Authorization": f"Bearer {token}", "User-Agent": "codex-cli"}
             if account:
                 headers["chatgpt-account-id"] = account
             result = fetch_json("https://chatgpt.com/backend-api/codex/usage", headers=headers, timeout=12)
             if result.status == 200:
                 codex = as_json(result.body) or {}
+                remember_codex_rate_limits(token, codex_home(), codex if codex else {"_codexNoLimits": True})
             else:
                 codex_error = http_error_text(result.status)
 

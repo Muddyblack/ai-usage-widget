@@ -787,9 +787,14 @@ struct LocalSessions: Decodable {
     var limit: Int?
     var hasMore: Bool
     var totalExact: Bool
+    var cacheStatus: String
+    var cacheAgeSeconds: Int?
+    var refreshStatus: String
+    var removedSourceCount: Int
 
     enum CodingKeys: String, CodingKey {
         case updatedAt, sessions, sources, total, offset, limit, hasMore, totalExact
+        case cacheStatus, cacheAgeSeconds, refreshStatus, removedSourceCount
     }
 
     init(from decoder: Decoder) throws {
@@ -803,6 +808,10 @@ struct LocalSessions: Decodable {
         limit = try? c.decode(Int.self, forKey: .limit)
         hasMore = (try? c.decode(Bool.self, forKey: .hasMore)) ?? false
         totalExact = (try? c.decode(Bool.self, forKey: .totalExact)) ?? false
+        cacheStatus = (try? c.decode(String.self, forKey: .cacheStatus)) ?? "unknown"
+        cacheAgeSeconds = try? c.decode(Int.self, forKey: .cacheAgeSeconds)
+        refreshStatus = (try? c.decode(String.self, forKey: .refreshStatus)) ?? "not-run"
+        removedSourceCount = (try? c.decode(Int.self, forKey: .removedSourceCount)) ?? 0
     }
 }
 

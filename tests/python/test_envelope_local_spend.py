@@ -1,9 +1,11 @@
 import math
+import tempfile
 import unittest
 from unittest import mock
 
 import _support  # noqa: F401 — puts the backend package on sys.path
-from aiusage import envelope
+from _support import seed_session_index
+from aiusage import config, envelope
 
 
 def _metered(local_spend):
@@ -19,12 +21,14 @@ class LocalSpendEnvelopeTest(unittest.TestCase):
             "ok": True,
             "details": {"stats": {"totalCostUSD": 99.0}},
         }
-        with (
-            mock.patch.object(envelope, "collect", return_value={}),
-            mock.patch.object(envelope, "normalize", return_value=provider),
-            mock.patch("aiusage.sessions.all_session_rows", return_value=sessions),
-        ):
-            return envelope.build(["claude"], now=1_700_000_000)
+        with tempfile.TemporaryDirectory() as directory:
+            seed_session_index(directory, sessions)
+            with (
+                mock.patch.object(envelope, "collect", return_value={}),
+                mock.patch.object(envelope, "normalize", return_value=provider),
+                mock.patch.object(config, "cache_dir", return_value=directory),
+            ):
+                return envelope.build(["claude"], now=1_700_000_000)
 
     def test_no_sessions_is_unavailable_and_omits_empty_totals(self):
         result = self.build([])
@@ -411,12 +415,14 @@ class LocalSpendEnvelopeTest(unittest.TestCase):
 
     def test_collection_failure_does_not_fail_envelope(self):
         provider = {"id": "claude", "ok": True}
-        with (
-            mock.patch.object(envelope, "collect", return_value={}),
-            mock.patch.object(envelope, "normalize", return_value=provider),
-            mock.patch("aiusage.sessions.all_session_rows", side_effect=RuntimeError("broken store")),
-        ):
-            result = envelope.build(["claude"], now=1_700_000_000)
+        with tempfile.TemporaryDirectory() as directory:
+            with (
+                mock.patch.object(envelope, "collect", return_value={}),
+                mock.patch.object(envelope, "normalize", return_value=provider),
+                mock.patch.object(config, "cache_dir", return_value=directory),
+                mock.patch("aiusage.sessions.all_session_rows", side_effect=RuntimeError("broken store")),
+            ):
+                result = envelope.build(["claude"], now=1_700_000_000)
 
         self.assertEqual(
             _metered(result["localSpend"]),
@@ -455,16 +461,42 @@ class LocalSpendPagingTest(unittest.TestCase):
             }
             for _ in range(100)
         ]
-        with mock.patch("aiusage.sessions.all_session_rows", return_value=rows):
-            spend = envelope._local_spend()
+        with tempfile.TemporaryDirectory() as directory:
+            seed_session_index(directory, rows)
+            with mock.patch.object(config, "cache_dir", return_value=directory):
+                spend = envelope._local_spend()
 
         self.assertEqual(spend["estimated"]["totalUSD"], 100.0)
 
     def test_reads_the_index_unpaged(self):
-        with mock.patch("aiusage.sessions.all_session_rows", return_value=[]) as unpaged:
-            with mock.patch("aiusage.sessions.collect_sessions", side_effect=AssertionError("local spend read a page")):
+        with tempfile.TemporaryDirectory() as directory:
+            seed_session_index(directory, [])
+            with (
+                mock.patch.object(config, "cache_dir", return_value=directory),
+                mock.patch("aiusage.sessions.all_session_rows", side_effect=AssertionError("local spend read a page")) as unpaged,
+            ):
                 envelope._local_spend()
 
+        unpaged.assert_not_called()
+
+    def test_falls_back_to_full_rows_when_the_cache_is_absent(self):
+        rows = [
+            {
+                "provider": "cline",
+                "source": "cline",
+                "costUSD": 1.0,
+                "costStatus": "exact",
+                "costProvenance": "estimated",
+            }
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            with (
+                mock.patch.object(config, "cache_dir", return_value=directory),
+                mock.patch("aiusage.sessions.all_session_rows", return_value=rows) as unpaged,
+            ):
+                spend = envelope._local_spend()
+
+        self.assertEqual(spend["estimated"]["totalUSD"], 1.0)
         unpaged.assert_called_once_with()
 
 
@@ -491,8 +523,10 @@ class LocalSpendDailyTest(unittest.TestCase):
         # Two sessions on one day, one on the next.
         day_one = 1_789_046_340
         rows = self._rows(day_one, day_one + 600, day_one + 86_400)
-        with mock.patch("aiusage.sessions.all_session_rows", return_value=rows):
-            spend = envelope._local_spend()
+        with tempfile.TemporaryDirectory() as directory:
+            seed_session_index(directory, rows)
+            with mock.patch.object(config, "cache_dir", return_value=directory):
+                spend = envelope._local_spend()
 
         entry = spend["estimated"]["providers"]["cline::cline"]
         daily = entry["dailyUSD"]
@@ -511,8 +545,10 @@ class LocalSpendDailyTest(unittest.TestCase):
                 "costProvenance": "estimated",
             }
         ]
-        with mock.patch("aiusage.sessions.all_session_rows", return_value=rows):
-            spend = envelope._local_spend()
+        with tempfile.TemporaryDirectory() as directory:
+            seed_session_index(directory, rows)
+            with mock.patch.object(config, "cache_dir", return_value=directory):
+                spend = envelope._local_spend()
 
         entry = spend["estimated"]["providers"]["cline::cline"]
         self.assertEqual(entry["costUSD"], 2.0)
@@ -530,8 +566,10 @@ class LocalSpendDailyTest(unittest.TestCase):
                 "lastActivityAt": 1_789_046_340,
             }
         ]
-        with mock.patch("aiusage.sessions.all_session_rows", return_value=rows):
-            spend = envelope._local_spend()
+        with tempfile.TemporaryDirectory() as directory:
+            seed_session_index(directory, rows)
+            with mock.patch.object(config, "cache_dir", return_value=directory):
+                spend = envelope._local_spend()
 
         entry = spend["subscription"]["providers"]["claude::claude"]
         self.assertEqual([point["usd"] for point in entry["dailyUSD"]], [12.0])

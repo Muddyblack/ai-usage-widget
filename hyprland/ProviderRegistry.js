@@ -132,23 +132,42 @@ function enabled(settings, id) {
     return toggles[id] === true;
 }
 
-// Re-run of detection from the settings page: switch on every detected
-// provider that is currently off. It never switches anything off, so a
-// provider the user disabled by hand only comes back if it is detected.
-// Returns the new settings and the ids that were switched on.
+// Mirrors AUTO_DETECT_PROVIDERS in aiusage/detect.py: the providers detection
+// can speak for. Every other provider is only ever switched by hand.
+var AUTO_DETECT = ["claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode"];
+
+// Re-run of detection from the settings page. Detection reports what is
+// installed right now, so it syncs both ways: a detected provider that is off
+// is switched on, and an auto-detectable provider whose program is gone is
+// switched off (issue #60), unless an API key is configured for it, because
+// that key keeps it usable without the local tool. Returns the new settings
+// and the ids that were switched on and off.
 function applyDetected(settings, detected) {
     var next = JSON.parse(JSON.stringify(settings || {}));
     next.providers = next.providers || {};
+    var keys = next.keys || {};
+    var found = detected || [];
     var added = [];
-    (detected || []).forEach(function (id) {
+    var removed = [];
+    found.forEach(function (id) {
         if (!enabled(next, id)) {
             next.providers[id] = true;
             added.push(id);
         }
     });
+    providers.forEach(function (provider) {
+        var id = provider.id;
+        if (AUTO_DETECT.indexOf(id) === -1 || found.indexOf(id) !== -1 || !enabled(next, id))
+            return;
+        if (provider.keySetting && String(keys[provider.keySetting] || "") !== "")
+            return;
+        next.providers[id] = false;
+        removed.push(id);
+    });
     return {
         settings: next,
-        added: added
+        added: added,
+        removed: removed
     };
 }
 

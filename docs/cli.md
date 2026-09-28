@@ -74,7 +74,8 @@ win over the file if you would rather not store them:
 
 The initializer returns `{"ok":true,"data":{...settings...}}` and persists
 `providerDefaultsApplied: true`. It does not run implicitly for `--all`.
-Detection enables only the approved providers with local evidence. See
+Detection enables only the approved providers whose tool is installed (old
+logs and credential files do not count). See
 [`provider-detection.md`](provider-detection.md) for the allowlist, privacy
 limits, migration behavior, and platform differences.
 

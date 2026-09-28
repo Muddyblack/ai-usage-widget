@@ -14,7 +14,7 @@ from .providers.muse import sessions_root as muse_sessions_root
 from .providers.openai_credentials import codex_home
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class SessionManifest:
     source_id: str
     mtime_ns: int
@@ -41,12 +41,21 @@ def _directory_records(root: str, excluded: set[str] | None = None) -> list[tupl
 
 
 def _matching_files(root: str, predicate, *, excluded: set[str] | None = None) -> list[tuple[str, str, int, int, int]]:
-    records = _directory_records(root, excluded)
+    directories_by_parent: dict[str, list[tuple[str, str, int, int, int]]] = {}
+    files: list[tuple[str, str, int, int, int]] = []
     for dirpath, dirnames, filenames in os.walk(root):
         if excluded:
             dirnames[:] = [name for name in dirnames if name not in excluded]
-        records.extend(_stat_record(os.path.join(dirpath, name), "file") for name in sorted(filenames) if predicate(name))
-    return records
+        directories_by_parent[dirpath] = [_stat_record(os.path.join(dirpath, name), "directory") for name in sorted(dirnames)]
+        files.extend(_stat_record(os.path.join(dirpath, name), "file") for name in sorted(filenames) if predicate(name))
+    directories = [_stat_record(root, "directory")]
+    pending = [root]
+    while pending:
+        parent = pending.pop()
+        children = directories_by_parent.get(parent, [])
+        directories.extend(children)
+        pending.extend(record[1] for record in reversed(children))
+    return directories + files
 
 
 def _cline_records(root: str) -> list[tuple[str, str, int, int, int]]:
@@ -115,9 +124,20 @@ def _antigravity_records(root: str) -> list[tuple[str, str, int, int, int]]:
         (os.path.join(root, "antigravity-cli", "brain"), lambda path: path.endswith(os.path.join(".system_generated", "logs", "transcript.jsonl"))),
         (os.path.join(root, "antigravity", "brain"), lambda path: path.endswith(".md")),
     ):
-        records.extend(_directory_records(tree))
-        for dirpath, _dirnames, filenames in os.walk(tree):
-            records.extend(_stat_record(os.path.join(dirpath, name), "file") for name in sorted(filenames) if predicate(os.path.join(dirpath, name)))
+        directories_by_parent: dict[str, list[tuple[str, str, int, int, int]]] = {}
+        files: list[tuple[str, str, int, int, int]] = []
+        for dirpath, dirnames, filenames in os.walk(tree):
+            directories_by_parent[dirpath] = [_stat_record(os.path.join(dirpath, name), "directory") for name in sorted(dirnames)]
+            files.extend(_stat_record(os.path.join(dirpath, name), "file") for name in sorted(filenames) if predicate(os.path.join(dirpath, name)))
+        directories = [_stat_record(tree, "directory")]
+        pending = [tree]
+        while pending:
+            parent = pending.pop()
+            children = directories_by_parent.get(parent, [])
+            directories.extend(children)
+            pending.extend(record[1] for record in reversed(children))
+        records.extend(directories)
+        records.extend(files)
     return records
 
 
