@@ -1,8 +1,10 @@
 [h1]AI Usage Monitor[/h1]
 
-[b]Claude, Codex, ChatGPT, GitHub Copilot, Gemini/Antigravity, Cursor, ZAI, qwen, kimik & more AI quotas — live in your KDE Plasma 6 panel.[/b]
+[b]Claude, Codex, ChatGPT, GitHub Copilot, Gemini/Antigravity, Cursor, OpenCode, Ollama & more — AI usage, quotas and costs live in your KDE Plasma 6 panel.[/b]
 
 Track Claude Code 5-hour and weekly limits, OpenAI Codex plan limits, Copilot premium requests, Cursor usage, and API balances for OpenRouter, DeepSeek, Kimi/Moonshot, Mistral, Grok/xAI, Z.AI, Kiro and Muse. One widget instead of an AI usage tab for each service.
+
+Now also tracks OpenCode usage and sessions with Zen/Go modes, Ollama Cloud limits, and local Ollama, vLLM and llama.cpp servers.
 
 I got tired of opening a different website or CLI tool every time I wanted to check how much quota I had left. So I built this: a little panel widget that puts every AI service I use right where I can see it — no tabs, no terminal, just a glance.
 
@@ -27,6 +29,9 @@ Switch between tabs in the popup for each service:
 [*] [b]Kimi[/b] — Kimi Code plan windows from the kimi CLI login, and/or the Moonshot API balance
 [*] [b]Muse[/b] — Local Muse Code session stats with an offline spend estimate; plan windows behind an opt-in switch (Meta reports them only on a billed call, so it is off by default)
 [*] [b]Cursor[/b] [i](free plan tested)[/i] — Included usage, Auto/API split and on-demand spend, via the cursor-agent or Cursor IDE login
+[*] [b]OpenCode[/b] — Local token usage, costs and sessions in Zen mode; account usage windows in Go mode
+[*] [b]Ollama Cloud[/b] [i](experimental)[/i] — Cloud usage windows, including weekly limits in the panel
+[*] [b]Local Models[/b] — Monitor Ollama, vLLM and llama.cpp servers, with automatic endpoint discovery and runtime or GPU metrics where available
 [/list]
 
 [b]Why I like using it[/b]
@@ -36,11 +41,14 @@ Switch between tabs in the popup for each service:
 [*] [b]Usage chart[/b] — a smooth, glowing trend graph with 5H / 24H / 7D toggle and hover-scrub (24H shows the whole day's session burn as a sawtooth)
 [*] [b]Period comparison[/b] — [i]"+12% vs last week"[/i] at the same point in the cycle
 [*] [b]Overview[/b] — see every enabled provider at a glance
-[*] [b]Usage & Spend[/b] — totals the API spend figures each provider already reports
-[*] [b]Sessions[/b] — recent local Claude Code, Codex, Grok CLI, Cline and Muse activity, with redacted titles and recency only, no paths or transcripts. Resume supported sessions in your terminal (Muse has no resume command)
+[*] [b]Usage & Spend[/b] — Provider-reported spend and local token-based cost estimates, with daily cost and token charts, expandable histories and 1-day / 7-day / 30-day / all-history timeframes. Labels distinguish actual costs, estimates, subscription-covered usage and free models
+[*] [b]Sessions[/b] — Recent local Claude Code, Codex, Grok CLI, Cline, OpenCode, Antigravity and Muse activity, with search, pagination and source filters. Cached results remain visible during background refresh. View local title previews and resume supported sessions in your terminal (Muse has no resume command). Previews may contain sensitive text
+[*] [b]Model pricing[/b] — Search cached model rates and refresh the pricing catalog from settings
+[*] [b]Provider detection[/b] — Automatically detects installed providers on fresh installs, with a manual detection button in settings
 [*] [b]Theme-aware[/b] — follows your Plasma accent by default, or flip on per-service brand colors
-[*] [b]Glassmorphism popup[/b] — translucent, blurred, and honestly just nice to look at
-[*] [b]Pin a service[/b] — open straight to your most-used tab
+[*] [b]Glassmorphism popup[/b] — translucent, blurred, and honestly just nice to look at, with configurable popup decorations
+[*] [b]Pin services[/b] — Keep your chosen providers visible in the panel, with optional automatic rotation between them
+[*] [b]Project info[/b] — View version and release information, project statistics and useful links
 [/list]
 
 Enable the optional Overview, Usage & Spend and Sessions tabs in Settings → Views.
@@ -49,13 +57,17 @@ Enable the optional Overview, Usage & Spend and Sessions tabs in Settings → Vi
 
 Compact percentage readouts right in the taskbar — color-coded (amber at 70%, red at 90%) with an inline spark-line trend. Pill or compact mode, your call.
 
+Optional panel rotation shows pinned providers one at a time in pin order. Choose an interval from 30 seconds to 10 minutes in Appearance; rotation is off by default.
+
 ---
 
 [b]Setup[/b]
 
-Reads your credentials from local config files — nothing leaves your machine except the calls to each provider's own usage API. Refresh interval is configurable (1–30 min, default 5).
+Reads supported credentials from local config files and existing CLI logins. Provider usage checks contact the relevant services; pricing and project information features also fetch online data. Refresh interval is configurable (1–30 min, default 5).
 
 Credential notes: Z.AI uses the widget setting, [icode]$ZAI_TOKEN[/icode], or [icode]~/.config/zai/token[/icode]. GitHub Copilot needs no token on a machine already signed in: the Copilot plugin login ([icode]apps.json[/icode]), the Copilot CLI login, or [icode]gh auth token[/icode] is picked up automatically, and the widget setting or [icode]$GITHUB_TOKEN[/icode] still wins when set. A fine-grained token with Plan: read permission additionally unlocks GitHub's documented billing endpoint. The current user endpoint covers personally billed plans, not organization/enterprise-billed usage. DeepSeek uses the widget setting, [icode]$DEEPSEEK_API_KEY[/icode], or [icode]~/.config/deepseek/api-key[/icode]. Kiro, Kimi Code and Cursor need no key: they reuse the kiro-cli, kimi and cursor-agent logins.
+
+OpenCode reads local session data and reuses its saved Zen/Go credentials; Zen activity reflects this device, while Go mode fetches account usage. Ollama Cloud uses a key from widget settings, [icode]$OLLAMA_API_KEY[/icode], or an existing OpenCode Ollama Cloud login. Local Models can auto-discover default Ollama, vLLM and llama.cpp endpoints, or use server URLs configured in settings.
 
 [b]Requires Plasma 6.0+.[/b]
 
