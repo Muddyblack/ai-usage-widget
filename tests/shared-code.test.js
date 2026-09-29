@@ -1097,7 +1097,7 @@ test("a pricing refresh during an in-flight usage request coalesces to one", () 
 
 test("Project Info network work is deferred until the visible pane ticks its client", () => {
     const source = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/ProjectInfoPane.qml"), "utf8");
-    assert.match(source, /if \(visible && onlineEnabled\)\s*client\.tick\(\)/);
+    assert.match(source, /if \(foregroundVisible && onlineEnabled\)\s*client\.tick\(\)/);
     assert.match(source, /if \(client\)\s*client\.dispose\(\)/);
 
     const requests = [];

@@ -109,6 +109,11 @@ Recorded API bodies use `*-response.json` in `tests/fixtures/`; tests create
 synthetic configs, credentials and session logs in temporary directories.
 `tests/shared-code.test.js` covers the JavaScript both QML frontends share.
 
+`nix develop --command make test-qml` runs the Qt tests in `tests/qml/`
+without opening desktop windows or contacting providers. They check that
+repeated Plasma commands release their DataSources and that popup animations
+and the Info timer stop when their window is hidden.
+
 `tests/python/` holds the portable suites — plain `unittest`, no shell — that
 CI also runs on Windows: platform paths, the shared history file and its lock,
 the Codex app-server client against a fake `codex.cmd`, finding Antigravity

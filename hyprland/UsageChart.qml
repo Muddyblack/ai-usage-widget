@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Layouts
 import "../package/contents/code/UsageHistory.js" as UsageHistory
 
@@ -487,7 +488,8 @@ Rectangle {
             return slope !== null && slope > 2;
         }
         SequentialAnimation on pulse {
-            running: chartCanvas.climbingFast && chartCanvas.visible
+            objectName: "usagePulse"
+            running: chartCanvas.climbingFast && chartCanvas.visible && chartCanvas.Window.window !== null && chartCanvas.Window.window.visible
             loops: Animation.Infinite
             NumberAnimation {
                 from: 0

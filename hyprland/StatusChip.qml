@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Layouts
 
 // Service-status chip for the popup header: the Quickshell twin of the Plasma
@@ -74,7 +75,8 @@ Rectangle {
             color: chip.statusColor
 
             SequentialAnimation on opacity {
-                running: chip.visible && !chip.linkOnly && chip.indicator !== "none"
+                objectName: "statusPulse"
+                running: chip.visible && chip.Window.window !== null && chip.Window.window.visible && !chip.linkOnly && chip.indicator !== "none"
                 loops: Animation.Infinite
                 NumberAnimation {
                     to: 0.35

@@ -3,7 +3,6 @@ import QtQuick.Layouts
 import QtQuick.Controls as QQC2
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
-import org.kde.plasma.plasma5support as Plasma5Support
 import "../code/FeatureTabs.js" as FeatureTabs
 import "../code/Shell.js" as Shell
 import "../code/SessionSources.js" as SessionSources
@@ -907,10 +906,8 @@ ColumnLayout {
         requestSessions(offset === undefined ? 0 : offset, false);
     }
 
-    Plasma5Support.DataSource {
+    CommandSource {
         id: sessionsSource
-        engine: "executable"
-        connectedSources: []
         onNewData: function (sourceName, data) {
             sessionsSource.disconnectSource(sourceName);
             var current = sourceName === sessionsTab.activeCommand && sessionsTab.activeRequestSerial === sessionsTab.requestSerial && sessionsTab.activeQuery === sessionsTab.requestedQuery;
@@ -976,10 +973,8 @@ ColumnLayout {
         }
     }
 
-    Plasma5Support.DataSource {
+    CommandSource {
         id: backgroundRefreshSource
-        engine: "executable"
-        connectedSources: []
         onNewData: function (sourceName, data) {
             backgroundRefreshSource.disconnectSource(sourceName);
             if (sourceName !== sessionsTab.backgroundRefreshCommand)
@@ -1014,10 +1009,8 @@ ColumnLayout {
         openSessionSource.connectSource(cmd);
     }
 
-    Plasma5Support.DataSource {
+    CommandSource {
         id: openSessionSource
-        engine: "executable"
-        connectedSources: []
         onNewData: function (sourceName, data) {
             openSessionSource.disconnectSource(sourceName);
             var stdout = (data && data.stdout) ? data.stdout : "";

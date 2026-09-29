@@ -4,7 +4,6 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
-import org.kde.plasma.plasma5support as Plasma5Support
 import org.kde.plasma.plasmoid
 import "../code/FeatureTabs.js" as FeatureTabs
 import "../code/Format.js" as Format
@@ -1677,11 +1676,9 @@ PlasmoidItem {
         lastSnapshotSource.connectSource(cmd);
     }
 
-    Plasma5Support.DataSource {
+    CommandSource {
         id: lastSnapshotSource
 
-        engine: "executable"
-        connectedSources: []
         onNewData: function (src, data) {
             disconnectSource(src);
             var text = (data["stdout"] || "").trim();
@@ -2616,11 +2613,9 @@ PlasmoidItem {
         onTriggered: root.syncSharedSettings()
     }
 
-    Plasma5Support.DataSource {
+    CommandSource {
         id: sharedSettingsSource
 
-        engine: "executable"
-        connectedSources: []
         onNewData: function (src, data) {
             disconnectSource(src);
             var result = null;
@@ -2647,22 +2642,18 @@ PlasmoidItem {
         root.syncSharedSettings();
     }
 
-    Plasma5Support.DataSource {
+    CommandSource {
         id: exportSaveSource
 
-        engine: "executable"
-        connectedSources: []
         onNewData: function (src, data) {
             disconnectSource(src);
         }
     }
     // ── History export / import ─────────────────────────────────────────────────
 
-    Plasma5Support.DataSource {
+    CommandSource {
         id: historyIOSource
 
-        engine: "executable"
-        connectedSources: []
         onNewData: function (src, data) {
             disconnectSource(src);
             // The operation is encoded as the last word of the command.
@@ -2757,11 +2748,9 @@ PlasmoidItem {
     // ── Provider data ────────────────────────────────────────────────────────
     // One source for every provider: the shared backend already returns the
     // active tab's and every pinned service's data in a single document.
-    Plasma5Support.DataSource {
+    CommandSource {
         id: usageSource
 
-        engine: "executable"
-        connectedSources: []
         onNewData: function (src, data) {
             disconnectSource(src);
             // Drop a response from a superseded refresh: only the newest
@@ -2772,11 +2761,9 @@ PlasmoidItem {
         }
     }
 
-    Plasma5Support.DataSource {
+    CommandSource {
         id: providerDefaultsSource
 
-        engine: "executable"
-        connectedSources: []
         onNewData: function (src, data) {
             disconnectSource(src);
             // Latch only on a real answer: a missing python3 or a broken
@@ -2794,11 +2781,9 @@ PlasmoidItem {
         }
     }
 
-    Plasma5Support.DataSource {
+    CommandSource {
         id: providerRedetectSource
 
-        engine: "executable"
-        connectedSources: []
         onNewData: function (src, data) {
             disconnectSource(src);
             var result = null;
@@ -2809,11 +2794,9 @@ PlasmoidItem {
         }
     }
 
-    Plasma5Support.DataSource {
+    CommandSource {
         id: pricingSource
 
-        engine: "executable"
-        connectedSources: []
         onNewData: function (src, data) {
             disconnectSource(src);
             root.pricingLoading = false;

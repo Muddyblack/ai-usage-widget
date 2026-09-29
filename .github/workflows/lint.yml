@@ -32,6 +32,8 @@ jobs:
               - 'package/contents/**/*.qml'
               - 'package/contents/**/*.js'
               - 'package/metadata.json'
+              - 'tests/qml/**'
+              - 'Makefile'
               - 'translate/**'
               # Their shell.i18n(…) strings are extracted into translate/*.po too.
               - 'hyprland/**'
@@ -69,6 +71,9 @@ jobs:
 
       - name: qmllint
         run: nix develop --command bash -c 'find package/contents -name "*.qml" -print0 | xargs -0 qmllint -E --unresolved-type info'
+
+      - name: QML resource lifecycle tests
+        run: nix develop --command make test-qml
 
       - name: qmlformat check
         run: nix develop --command bash -c 'find package/contents -name "*.qml" | xargs qmlformat --dry-run 2>&1 | grep -q "would reformat" && echo "Files need formatting, run qmlformat -i" && exit 1 || true'

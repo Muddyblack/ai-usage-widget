@@ -3,7 +3,6 @@ import QtQuick.Layouts
 import QtQuick.Controls as QQC2
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
-import org.kde.plasma.plasma5support as Plasma5Support
 import "../code/FeatureTabs.js" as FeatureTabs
 import "../code/Shell.js" as Shell
 
@@ -80,10 +79,8 @@ ColumnLayout {
 
     onRateFilterChanged: rateSearchTimer.restart()
 
-    Plasma5Support.DataSource {
+    CommandSource {
         id: rateSource
-        engine: "executable"
-        connectedSources: []
         onNewData: function (src, data) {
             disconnectSource(src);
             if (src !== spendTab.rateCommand)

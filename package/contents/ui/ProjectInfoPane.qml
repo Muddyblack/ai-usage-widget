@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Layouts
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
@@ -18,6 +19,7 @@ ColumnLayout {
     property string releaseCheckState: "Not checked"
     readonly property string versionStatus: latestVersion ? Project.releaseStatus(currentVersion, latestVersion) : releaseCheckState
     readonly property bool onlineEnabled: true
+    readonly property bool foregroundVisible: visible && Window.window !== null && Window.window.visible
     readonly property color accent: rootItem ? rootItem.activeAccent : Kirigami.Theme.highlightColor
 
     spacing: 12
@@ -30,9 +32,9 @@ ColumnLayout {
         canRefresh = state.canRefresh;
     }
 
-    onVisibleChanged: {
+    onForegroundVisibleChanged: {
         if (client) {
-            if (visible && onlineEnabled)
+            if (foregroundVisible && onlineEnabled)
                 client.tick();
             else
                 client.pause();
@@ -44,7 +46,7 @@ ColumnLayout {
         }, function () {
             return Date.now();
         }, applyNetworkState);
-        if (visible && onlineEnabled)
+        if (foregroundVisible && onlineEnabled)
             client.tick();
     }
     Component.onDestruction: {
@@ -54,7 +56,7 @@ ColumnLayout {
     Timer {
         interval: 1000
         repeat: true
-        running: info.visible && info.onlineEnabled && info.client !== null
+        running: info.foregroundVisible && info.onlineEnabled && info.client !== null
         onTriggered: info.client.tick()
     }
 

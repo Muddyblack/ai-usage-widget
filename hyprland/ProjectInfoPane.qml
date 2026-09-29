@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Layouts
 import "../package/contents/code/ProjectInfo.js" as Project
 import "../package/contents/code/ProjectInfoRequests.js" as InfoRequests
@@ -16,6 +17,7 @@ Column {
     property string releaseCheckState: "Not checked"
     readonly property string versionStatus: latestVersion ? Project.releaseStatus(currentVersion, latestVersion) : releaseCheckState
     readonly property bool onlineEnabled: true
+    readonly property bool foregroundVisible: visible && Window.window !== null && Window.window.visible
     readonly property color accent: shell && shell.activeAccent ? shell.activeAccent : "#38bdf8"
 
     spacing: 14
@@ -28,9 +30,9 @@ Column {
         canRefresh = state.canRefresh;
     }
 
-    onVisibleChanged: {
+    onForegroundVisibleChanged: {
         if (client) {
-            if (visible && onlineEnabled)
+            if (foregroundVisible && onlineEnabled)
                 client.tick();
             else
                 client.pause();
@@ -42,7 +44,7 @@ Column {
         }, function () {
             return Date.now();
         }, applyNetworkState);
-        if (visible && onlineEnabled)
+        if (foregroundVisible && onlineEnabled)
             client.tick();
     }
     Component.onDestruction: {
@@ -53,7 +55,7 @@ Column {
     Timer {
         interval: 1000
         repeat: true
-        running: info.visible && info.onlineEnabled && info.client !== null
+        running: info.foregroundVisible && info.onlineEnabled && info.client !== null
         onTriggered: info.client.tick()
     }
 

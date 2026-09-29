@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls as QQC2
 import org.kde.plasma.components as PlasmaComponents
@@ -101,7 +102,8 @@ Rectangle {
             visible: !statusChip.linkOnly
 
             SequentialAnimation on opacity {
-                running: !statusChip.linkOnly && statusChip.indicator !== "none" && statusChip.indicator !== ""
+                objectName: "statusPulse"
+                running: statusChip.visible && statusChip.Window.window !== null && statusChip.Window.window.visible && !statusChip.linkOnly && statusChip.indicator !== "none" && statusChip.indicator !== ""
                 loops: Animation.Infinite
                 NumberAnimation {
                     to: 0.35
