@@ -165,6 +165,7 @@
               kdePackages.kpackage
               kdePackages.libplasma
               kdePackages.plasma5support
+              kdePackages.ksvg
               kdePackages.plasma-sdk
               # gettext provides gettext, msgfmt, xgettext, msgmerge, msgcat, and msgattrib.
               gettext
@@ -179,11 +180,13 @@
               # KPackage discovers Plasma package structures through Qt plugins.
               # Prefer the plugin built with this shell's pinned KDE stack over
               # incompatible system plugins inherited through QT_PLUGIN_PATH.
-              export QT_PLUGIN_PATH="${pkgs.kdePackages.libplasma}/lib/qt-6/plugins''${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
+              # plasma5support also supplies the executable data engine that
+              # the QML command tests run real shell commands through.
+              export QT_PLUGIN_PATH="${pkgs.kdePackages.libplasma}/lib/qt-6/plugins:${pkgs.kdePackages.plasma5support}/lib/qt-6/plugins''${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
               # qmllint does not discover KDE's QML modules from the Qt import
               # path automatically. Keep this in the development shell so the
               # same imports work for CI, pre-commit, and local editor checks.
-              export QML_IMPORT_PATH="${pkgs.kdePackages.kirigami.unwrapped}/lib/qt-6/qml:${pkgs.kdePackages.libplasma}/lib/qt-6/qml:${pkgs.kdePackages.plasma5support}/lib/qt-6/qml:${pkgs.qt6.qtdeclarative}/lib/qt-6/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
+              export QML_IMPORT_PATH="${pkgs.kdePackages.kirigami.unwrapped}/lib/qt-6/qml:${pkgs.kdePackages.libplasma}/lib/qt-6/qml:${pkgs.kdePackages.plasma5support}/lib/qt-6/qml:${pkgs.kdePackages.ksvg}/lib/qt-6/qml:${pkgs.qt6.qtdeclarative}/lib/qt-6/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
               pre-commit install -f --install-hooks
               echo "ai-usage-widget dev shell ready"
               echo "  make help        — list targets (view, install, pack, tag)"
