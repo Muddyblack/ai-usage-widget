@@ -8,7 +8,7 @@ import os
 from dataclasses import dataclass
 
 from . import paths
-from .providers import cursor_sessions, mistral_sessions, opencode  # noqa: F401
+from .providers import cursor_sessions, mimo, mistral_sessions, opencode  # noqa: F401
 from .providers.grok import grok_home
 from .providers.muse import sessions_root as muse_sessions_root
 from .providers.openai_credentials import codex_home
@@ -118,6 +118,15 @@ def _opencode_records() -> list[tuple[str, str, int, int, int]]:
     return records
 
 
+def _mimo_records():
+    # Parser revision invalidates totals previously attributed to imported history.
+    records = [("parser", "mimo-native-messages-v2", 1, 0, 0)]
+    records += [_stat_record(os.path.join(base, "mimocode"), "directory") for base in paths.data_home_dirs()]
+    for path in mimo.discover_database_paths():
+        records.extend(_stat_record(path + suffix, "file") for suffix in ("", "-wal"))
+    return records
+
+
 def _antigravity_records(root: str) -> list[tuple[str, str, int, int, int]]:
     records: list[tuple[str, str, int, int, int]] = []
     for tree, predicate in (
@@ -182,6 +191,7 @@ def build_manifests() -> list[SessionManifest]:
         ),
         ("claude", _claude_records(claude_root)),
         ("opencode", _opencode_records()),
+        ("mimo", _mimo_records()),
         ("antigravity", _antigravity_records(antigravity_root)),
         (
             "mistral",

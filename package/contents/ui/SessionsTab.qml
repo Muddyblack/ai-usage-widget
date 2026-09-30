@@ -120,6 +120,8 @@ ColumnLayout {
         var dir = Qt.resolvedUrl("../icons/");
         if (id === "codex")
             return dir + "codex.svg";
+        if (id === "mimo")
+            return dir + "mimo.svg";
         if (id === "opencode")
             return dir + "opencode-color.svg";
         var icon = rootItem.tabIcon ? rootItem.tabIcon(id) : "";
@@ -166,6 +168,7 @@ ColumnLayout {
             "muse": "#0064e0",
             "grok": "#ef4444",
             "opencode": "#B7B1B1",
+            "mimo": "#E8E8E8",
             "cursor": "#e6e6e6",
             "copilot": "#8b5cf6",
             "kimi": "#1e3a8a",

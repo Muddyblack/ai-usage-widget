@@ -126,6 +126,8 @@ ColumnLayout {
         var iconDir = shell.iconDir || (Qt.resolvedUrl("../package/contents/icons/").toString());
         if (id === "codex")
             return iconDir + "codex.svg";
+        if (id === "mimo")
+            return iconDir + "mimo.svg";
         if (id === "opencode")
             return iconDir + "opencode-color.svg";
         var p = shell.providerById ? shell.providerById(id) : null;
@@ -170,6 +172,7 @@ ColumnLayout {
             "muse": "#0064e0",
             "grok": "#ef4444",
             "opencode": "#B7B1B1",
+            "mimo": "#E8E8E8",
             "cursor": "#e6e6e6",
             "copilot": "#8b5cf6",
             "kimi": "#1e3a8a",

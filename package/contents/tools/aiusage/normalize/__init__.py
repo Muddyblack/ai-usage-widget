@@ -7,6 +7,7 @@ from .cursor import normalize_cursor
 from .deepseek import normalize_deepseek
 from .grok import normalize_grok
 from .kiro import normalize_kiro
+from .mimo import normalize_mimo
 from .mistral import normalize_mistral
 from .moonshot import normalize_moonshot
 from .muse import normalize_muse
@@ -35,6 +36,7 @@ _DISPATCH = {
     "cursor": normalize_cursor,
     "cline": normalize_cline,
     "opencode": normalize_opencode,
+    "mimo": normalize_mimo,
 }
 
 

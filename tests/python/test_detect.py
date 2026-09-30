@@ -75,13 +75,14 @@ class ProviderDetectionTest(IsolatedHomeTest):
     @unittest.skipIf(os.name == "nt", "POSIX executable bits")
     def test_detection_never_reads_files_or_uses_network(self):
         self.install("path-bin/claude")
+        self.install("path-bin/mimo")
         with (
             mock.patch.object(builtins, "open", side_effect=AssertionError("detection read file contents")),
             mock.patch.object(socket, "create_connection", side_effect=AssertionError("detection used network")),
             mock.patch.object(subprocess, "run", side_effect=AssertionError("detection ran a subprocess")),
             mock.patch.object(sqlite3, "connect", side_effect=AssertionError("detection opened SQLite")),
         ):
-            self.assertEqual(detect.detect_providers(), ["claude"])
+            self.assertEqual(detect.detect_providers(), ["claude", "mimo"])
 
 
 class ProviderDefaultsTest(IsolatedHomeTest):

@@ -790,7 +790,7 @@ test("Hyprland and Windows show the same OpenCode daily chart on the Usage tab",
         assert.match(source, /stats\.dailySeries && stats\.dailySeries\.length \? stats\.dailySeries : stats\.dailyTokens/);
     }
     assert.match(chart, /showWindowPills: false/);
-    assert.match(popup, /OpenCodeUsageChart \{\s*visible: shell\.activeId === "opencode"[^\n]*stats \|\| \{\}\)\.available === true/);
+    assert.match(popup, /OpenCodeUsageChart \{\s*visible: \(shell\.activeId === "opencode" \|\| shell\.activeId === "mimo"\)[^\n]*stats \|\| \{\}\)\.available === true/);
     // Inside the Usage column, not the Stats sub-tab.
     assert.ok(popup.indexOf("OpenCodeUsageChart") < popup.indexOf("StatsSection {"));
 });
@@ -1542,4 +1542,18 @@ test("Plasma shared settings: a local pending change wins, and the first instanc
     const offline = sharedSettingsHarness({ claudeEnabled: true });
     offline.root.finishSharedSettings(null);
     assert.equal(offline.calls.initialize, 1, "a failed read still lets the widget start");
+});
+
+test("MiMo spend is labeled separately and counted once when its provider card is present", () => {
+    const ledger = { actual: { costStatus: "exact", totalUSD: 0.75, providers: {
+        "mimo::mimo": { costUSD: 0.25, costStatus: "exact", source: "mimo" },
+        "openai::opencode": { costUSD: 0.50, costStatus: "exact", source: "opencode" }
+    } } };
+    const rows = FeatureTabs.localSpendRows(ledger);
+    const mimo = rows.find(row => row.label === "MiMo Code");
+    assert.equal(mimo.cost, 0.25);
+    assert.match(mimo.note, /via MiMo Code/);
+    const remaining = FeatureTabs.localSpendRows(ledger, [{ id: "mimo" }]);
+    assert.equal(remaining.length, 1);
+    assert.equal(remaining[0].label, "OpenAI");
 });

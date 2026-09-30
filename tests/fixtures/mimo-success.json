@@ -1,0 +1,25 @@
+{
+  "id": "mimo",
+  "now": 1700000000,
+  "inputs": {
+    "usage": {
+      "sessions": [
+        {
+          "id": "example",
+          "directory": "/example",
+          "lastActivity": 1700000000,
+          "usage": [
+            {
+              "provider": "mimo",
+              "model": "mimo-v2.5",
+              "input": 100,
+              "output": 20,
+              "costUSD": null,
+              "costStatus": "unavailable"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

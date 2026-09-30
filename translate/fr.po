@@ -951,6 +951,10 @@ msgstr ""
 "Aucune session Cline pour le moment.\n"
 "Lancez le CLI Cline : ses journaux de session dans ~/.cline apparaîtront ici."
 
+#: hyprland/StatsSection.qml package/contents/ui/OpenCodeTab.qml
+msgid "No local MiMo Code usage yet. Account quota is unavailable."
+msgstr "Aucune utilisation locale de MiMo Code pour le moment. Le quota du compte n'est pas disponible."
+
 #: hyprland/StatsSection.qml
 msgid ""
 "No OpenCode sessions yet.\n"
@@ -2288,16 +2292,16 @@ msgid "OpenCode Go usage unavailable"
 msgstr "Utilisation d'OpenCode Go indisponible"
 
 #: package/contents/ui/OpenCodeTab.qml
-msgid "OpenCode"
-msgstr "OpenCode"
-
-#: package/contents/ui/OpenCodeTab.qml
 msgid "%1 · account"
 msgstr "%1 · compte"
 
 #: package/contents/ui/OpenCodeTab.qml
 msgid "%1 · device-local · no account quota"
 msgstr "%1 · local à l'appareil · aucun quota de compte"
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid "Local MiMo Code activity"
+msgstr "Activité MiMo Code locale"
 
 #: package/contents/ui/OpenCodeTab.qml
 msgid "Local OpenCode activity"
@@ -3302,6 +3306,10 @@ msgid "Cline Stats"
 msgstr "Statistiques Cline"
 
 #: package/contents/ui/main.qml
+msgid "MiMo Code Usage"
+msgstr "Utilisation MiMo Code"
+
+#: package/contents/ui/main.qml
 msgid "OpenCode Usage"
 msgstr "Utilisation OpenCode"
 
@@ -3424,6 +3432,10 @@ msgstr "Google"
 #: macos/Sources/AIUsage/Backend/Contract.swift
 msgid "ZenMux"
 msgstr "ZenMux"
+
+#: macos/Sources/AIUsage/Backend/Contract.swift
+msgid "OpenCode"
+msgstr "OpenCode"
 
 #: macos/Sources/AIUsage/Backend/Contract.swift
 msgid "Claude Code"

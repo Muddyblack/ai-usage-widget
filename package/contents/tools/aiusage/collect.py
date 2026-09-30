@@ -26,6 +26,7 @@ from .providers.deepseek import get_deepseek_balance
 from .providers.grok import get_grok_usage
 from .providers.kimi_code import get_kimi_code_usage
 from .providers.kiro import get_kiro_usage
+from .providers.mimo import usage_snapshot as get_mimo_usage
 from .providers.mistral import get_mistral_usage
 from .providers.moonshot import get_moonshot_balance
 from .providers.muse import get_muse_usage
@@ -266,6 +267,7 @@ _SIMPLE = {
     "deepseek": get_deepseek_balance,
     "cursor": get_cursor_usage,
     "cline": get_cline_sessions,
+    "mimo": get_mimo_usage,
 }
 
 

@@ -255,6 +255,7 @@ labels:
 | `grok` | Grok |
 | `claude` | Claude Code |
 | `opencode` | OpenCode |
+| `mimo` | MiMo Code |
 | `antigravity` | Antigravity |
 
 The command line accepts `--source <id[,id...]>` and
@@ -729,3 +730,11 @@ Adding a field is backwards compatible. Removing or repurposing one is not:
 bump `SCHEMA_VERSION` in `package/contents/tools/aiusage/contract.py`, update
 this document, and update every frontend in the same change — except that
 the macOS app needs no change for a new provider, only for a new *field*.
+
+### MiMo Code local activity
+
+The `mimo` provider reports local SQLite activity through `details.stats` and
+non-metered period rows. `details.accountMode` is `local`; `historyValues` and
+`chartWindows` are empty because no account quota endpoint is used. Session
+rows carry `source: "mimo"` and an opaque resume key for `mimo --session <id>`.
+Missing or unreadable databases produce an unavailable provider envelope.
