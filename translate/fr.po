@@ -953,7 +953,9 @@ msgstr ""
 
 #: hyprland/StatsSection.qml package/contents/ui/OpenCodeTab.qml
 msgid "No local MiMo Code usage yet. Account quota is unavailable."
-msgstr "Aucune utilisation locale de MiMo Code pour le moment. Le quota du compte n'est pas disponible."
+msgstr ""
+"Aucune utilisation locale de MiMo Code pour le moment. Le quota du compte "
+"n'est pas disponible."
 
 #: hyprland/StatsSection.qml
 msgid ""

@@ -24,10 +24,7 @@ def discover_database_paths():
         return []
     return list(
         dict.fromkeys(
-            str(path)
-            for base in paths.data_home_dirs()
-            for path in sorted((Path(base) / "mimocode").glob("mimocode*.db"))
-            if path.is_file()
+            str(path) for base in paths.data_home_dirs() for path in sorted((Path(base) / "mimocode").glob("mimocode*.db")) if path.is_file()
         )
     )
 
