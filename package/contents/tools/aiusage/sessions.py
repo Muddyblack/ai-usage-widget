@@ -35,7 +35,7 @@ from collections.abc import Sequence
 
 from . import billing, billing_mode, pricing
 from .contract import epoch_of, num
-from .providers import antigravity_sessions, cursor_sessions, mistral_sessions, opencode
+from .providers import antigravity_sessions, cursor_sessions, mimo, mistral_sessions, opencode
 from .providers.cline import get_cline_session_records
 from .providers.grok import discover_sessions, grok_home
 from .providers.muse import sessions_root as muse_sessions_root
@@ -824,6 +824,49 @@ def _opencode_targets():
     ]
 
 
+def _mimo_entries(*, include_all=False):
+    out = []
+    for record in _opencode_records(mimo.read_recent_sessions, include_all=include_all):
+        title = _clip_title(record.title) or _basename(record.directory) or "MiMo Code"
+        upstream = {bucket.provider for bucket in record.usage}
+        provider = next(iter(upstream)) if len(upstream) == 1 else "mimo"
+        entry = _with_usage_cost(
+            _entry(
+                provider,
+                title,
+                record.last_activity,
+                session_name="via MiMo Code",
+                detail=_basename(record.directory),
+                session_id=_opencode_identity(record),
+                source="mimo",
+            ),
+            "mimo",
+            record.usage,
+        )
+        if entry is None:
+            continue
+        if len(upstream) == 1:
+            entry["billingProvider"] = provider
+        else:
+            provider_costs = _provider_costs(record.usage)
+            if provider_costs:
+                entry["providerCosts"] = provider_costs
+        out.append(entry)
+    return out
+
+
+def _mimo_targets():
+    return [
+        {
+            "provider": "mimo",
+            "id": record.session_id,
+            "keyId": _opencode_identity(record),
+            "cwd": record.directory,
+        }
+        for record in _opencode_records(mimo.read_session_targets, include_all=True)
+    ]
+
+
 def _antigravity_entries(*, include_all=False):
     out = []
     for record in antigravity_sessions.read_recent_sessions(include_all=include_all):
@@ -1018,6 +1061,7 @@ _RESUME_SPECS = {
     "claude": {"bin": "claude", "cmd": ["--resume", "{id}"]},
     "openai": {"bin": "codex", "cmd": ["resume", "{id}"]},
     "opencode": {"bin": "opencode", "cmd": ["--session", "{id}"]},
+    "mimo": {"bin": "mimo", "cmd": ["--session", "{id}"]},
     "antigravity": {"bin": "agy", "cmd": ["--conversation", "{id}"]},
     "grok": {"bin": "grok", "cmd": ["--resume", "{id}"]},
     "cline": {"bin": "cline", "cmd": ["--id", "{id}"]},
@@ -1056,6 +1100,7 @@ SESSION_COLLECTORS = {
     "grok": "_grok_entries",
     "claude": "_claude_entries",
     "opencode": "_opencode_entries",
+    "mimo": "_mimo_entries",
     "antigravity": "_antigravity_entries",
     "mistral": "_mistral_entries",
     "cursor": "_cursor_entries",
@@ -1176,6 +1221,7 @@ def collect_open_targets():
         _claude_targets,
         _cline_targets,
         _opencode_targets,
+        _mimo_targets,
         _antigravity_targets,
     ):
         try:

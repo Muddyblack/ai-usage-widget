@@ -34,6 +34,7 @@ _CRASH_LABELS = {
     "cursor": ("Cursor", "#e6e6e6"),
     "cline": ("Cline", "#e6e6e6"),
     "opencode": ("OpenCode", "#38bdf8"),
+    "mimo": ("MiMo Code", "#E8E8E8"),
 }
 
 

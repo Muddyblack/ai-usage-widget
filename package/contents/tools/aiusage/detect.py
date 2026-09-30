@@ -26,6 +26,7 @@ AUTO_DETECT_PROVIDERS = (
     "cursor",
     "cline",
     "opencode",
+    "mimo",
 )
 
 # Command names each provider's tools install. A desktop application (see
@@ -41,6 +42,7 @@ _EXECUTABLES = {
     "cursor": ("cursor-agent", "cursor"),
     "cline": ("cline",),
     "opencode": ("opencode",),
+    "mimo": ("mimo",),
 }
 
 # Desktop application names: the .desktop id on Linux, the bundle name on

@@ -673,6 +673,12 @@ PlasmoidItem {
             icon: "cline.svg"
         },
         {
+            id: "mimo",
+            label: "MiMo Code",
+            color: "#E8E8E8",
+            icon: "mimo.svg"
+        },
+        {
             id: "opencode",
             label: "OpenCode",
             color: "#B7B1B1",
@@ -1543,7 +1549,7 @@ PlasmoidItem {
     readonly property var legacyDefaultOnProviders: ["claude", "antigravity", "openai", "kiro", "grok"]
 
     function applyDetectedProviders(detected) {
-        var ids = ["claude", "antigravity", "openai", "kiro", "mistral", "openrouter", "ollama", "selfhosted", "grok", "zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode"];
+        var ids = ["claude", "antigravity", "openai", "kiro", "mistral", "openrouter", "ollama", "selfhosted", "grok", "zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo"];
         for (var i = 0; i < ids.length; i++) {
             var id = ids[i];
             var key = id + "Enabled";
@@ -1586,7 +1592,7 @@ PlasmoidItem {
 
     // Mirrors AUTO_DETECT_PROVIDERS in aiusage/detect.py: the providers
     // detection can speak for. Every other provider is only switched by hand.
-    readonly property var autoDetectProviders: ["claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode"]
+    readonly property var autoDetectProviders: ["claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode", "mimo"]
     // A configured API key keeps a provider usable without its local tool, so
     // detection never switches such a provider off.
     readonly property var providerKeySettings: ({
@@ -3235,6 +3241,26 @@ PlasmoidItem {
             }
 
             PanelSlot {
+                property var mimoStats: {
+                    var provider = root.rawProviderById("mimo");
+                    return provider && provider.details ? (provider.details.stats || ({})) : ({});
+                }
+                pct: 0
+                iconColor: "#E8E8E8"
+                iconSource: Qt.resolvedUrl("../icons/mimo.svg")
+                iconText: "Mi"
+                stale: root.stale && root.panelShows("mimo")
+                visible: root.panelShows("mimo") && !root.showSettings
+                showCost: true
+                costText: mimoStats.totalTokens > 0 ? root.formatTokens(mimoStats.totalTokens) : "—"
+                tooltipText: {
+                    var sessions = Math.round(mimoStats.totalSessions || 0);
+                    var tokens = root.formatTokens(mimoStats.totalTokens || 0);
+                    return "MiMo Code\n" + i18n("%1 tokens", tokens) + " · " + i18np("%1 session", "%1 sessions", sessions);
+                }
+            }
+
+            PanelSlot {
                 pct: root.museCurrentAvailable ? root.museCurrentPct : 0
                 iconColor: root.museBlue
                 iconSource: Qt.resolvedUrl("../icons/muse-color.svg")
@@ -3511,6 +3537,9 @@ PlasmoidItem {
 
                             if (tab === "cline")
                                 return i18n("Cline Stats");
+
+                            if (tab === "mimo")
+                                return i18n("MiMo Code Usage");
 
                             if (tab === "opencode")
                                 return i18n("OpenCode Usage");
@@ -3877,6 +3906,14 @@ PlasmoidItem {
 
             OpenCodeTab {
                 rootItem: root
+            }
+
+            OpenCodeTab {
+                rootItem: root
+                providerId: "mimo"
+                providerLabel: "MiMo Code"
+                providerIcon: "mimo.svg"
+                accent: "#E8E8E8"
             }
 
             UsageChart {

@@ -274,9 +274,34 @@ ORDER BY MIN(p.id)
 """
 
 
+def _native_message_filter(connection, alias, import_tables):
+    """Exclude imported messages, retaining native continuations of imported sessions.
+
+    Legacy imports without tracked message IDs are excluded as a whole: their
+    origin cannot safely be distinguished. Names come only from our reader.
+    """
+    predicates = []
+    for table in import_tables:
+        columns = _table_columns(connection, table)
+        if not columns:
+            continue
+        if "message_ids" in columns:
+            imported = (
+                "CASE WHEN json_valid(i.message_ids) THEN "
+                f"(COALESCE(json_array_length(i.message_ids), 0) = 0 OR {alias}.id IN "
+                "(SELECT value FROM json_each(i.message_ids))) ELSE 1 END"
+            )
+        else:
+            imported = "1"
+        predicates.append(f"NOT EXISTS (SELECT 1 FROM {table} i WHERE i.session_id = {alias}.session_id AND ({imported}))")
+    return " AND ".join(predicates) or "1"
+
+
 def _read_usage(
     connection: sqlite3.Connection,
     session_id: str,
+    *,
+    import_tables=(),
 ) -> tuple[billing.UsageBucket, ...]:
     v1_message, v2_message, v1_part = _usage_schema(connection)
     if not (v1_message or v2_message):
@@ -284,6 +309,10 @@ def _read_usage(
     deadline = time.monotonic() + _QUERY_TIMEOUT_SECONDS
 
     def query(sql: str) -> tuple[bool, list]:
+        if import_tables:
+            alias = "session_message" if "FROM session_message" in sql else "m"
+            predicate = _native_message_filter(connection, alias, import_tables)
+            sql = sql.replace("\nGROUP BY", f" AND ({predicate})\nGROUP BY")
         if time.monotonic() >= deadline:
             return False, []
         try:
@@ -311,12 +340,25 @@ def _read_usage(
     return message_buckets + part_buckets
 
 
-def _read_database(database_path: str, *, include_all: bool = False) -> list[OpenCodeSession]:
+def _read_database(database_path: str, *, include_all: bool = False, import_tables=()) -> list[OpenCodeSession]:
     try:
         with _connect_readonly(database_path) as connection:
             if not _schema_is_supported(connection):
                 return []
-            query = "SELECT id, title, directory, time_created, time_updated FROM session ORDER BY time_updated DESC"
+            query = "SELECT id, title, directory, time_created, time_updated FROM session"
+            if import_tables:
+                known_tables = [table for table in import_tables if _table_columns(connection, table)]
+                if known_tables:
+                    imported = " OR ".join(f"EXISTS (SELECT 1 FROM {table} i WHERE i.session_id = session.id)" for table in known_tables)
+                    native = []
+                    for table in ("message", "session_message"):
+                        if not _table_columns(connection, table):
+                            continue
+                        predicate = _native_message_filter(connection, "m", import_tables)
+                        role = "m.type = 'assistant'" if table == "session_message" else "json_extract(m.data, '$.role') = 'assistant'"
+                        native.append(f"EXISTS (SELECT 1 FROM {table} m WHERE m.session_id = session.id AND {role} AND ({predicate}))")
+                    query += f" WHERE NOT ({imported}) OR ({' OR '.join(native) or '0'})"
+            query += " ORDER BY time_updated DESC"
             if include_all:
                 rows = connection.execute(query).fetchall()
             else:
@@ -328,7 +370,9 @@ def _read_database(database_path: str, *, include_all: bool = False) -> list[Ope
                     break
                 session_id = _text(row[0])
                 if session_id:
-                    usage_by_session[session_id] = _read_usage(connection, session_id)
+                    usage_by_session[session_id] = (
+                        _read_usage(connection, session_id, import_tables=import_tables) if import_tables else _read_usage(connection, session_id)
+                    )
     except (OSError, sqlite3.Error, ValueError):
         return []
 
@@ -363,7 +407,7 @@ def read_session_targets(*, include_all: bool = True) -> list[OpenCodeSession]:
     return read_recent_sessions(include_all=include_all)
 
 
-def usage_snapshot() -> dict:
+def usage_snapshot(*, records=None) -> dict:
     """Return the complete local usage ledger in a JSON-shaped structure.
 
     OpenCode stores the provider-reported cost beside token counts.  When a
@@ -381,7 +425,7 @@ def usage_snapshot() -> dict:
         catalog = {}
 
     sessions = []
-    for record in read_recent_sessions(include_all=True):
+    for record in read_recent_sessions(include_all=True) if records is None else records:
         buckets = []
         for bucket in record.usage:
             priced = billing.aggregate_session_usage([bucket], catalog)

@@ -9,11 +9,14 @@ import org.kde.kirigami as Kirigami
 ColumnLayout {
     id: tab
     property Item rootItem
+    property string providerId: "opencode"
+    property string providerLabel: "OpenCode"
+    property string providerIcon: "opencode-color.svg"
 
     function providerFromRawProviders(providers) {
         var list = providers || [];
         for (var i = 0; i < list.length; i++) {
-            if (list[i] && list[i].id === "opencode")
+            if (list[i] && list[i].id === tab.providerId)
                 return list[i];
         }
         return {};
@@ -24,10 +27,10 @@ ColumnLayout {
     readonly property var stats: details.stats || ({})
     readonly property bool available: stats.available === true
     readonly property bool goMode: details.accountMode === "go"
-    readonly property string accountModeLabel: goMode ? i18n("OpenCode Go") : i18n("OpenCode Zen")
+    readonly property string accountModeLabel: providerId === "mimo" ? providerLabel : (goMode ? i18n("OpenCode Go") : i18n("OpenCode Zen"))
     // Official OpenCode brand color (from opencode.ai logo — light pixel blocks)
-    readonly property color accent: "#B7B1B1"
-    visible: rootItem.enabledTabs[rootItem.activeTab] === "opencode" && !rootItem.showSettings
+    property color accent: "#B7B1B1"
+    visible: rootItem.enabledTabs[rootItem.activeTab] === tab.providerId && !rootItem.showSettings
     Layout.fillWidth: true
     spacing: 8
 
@@ -37,7 +40,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.topMargin: 8
         horizontalAlignment: Text.AlignHCenter
-        text: i18n("No OpenCode sessions yet.\nZen activity is device-local and does not report account quota. Run a local session to see usage from its SQLite database.")
+        text: tab.providerId === "mimo" ? i18n("No local MiMo Code usage yet. Account quota is unavailable.") : i18n("No OpenCode sessions yet.\nZen activity is device-local and does not report account quota. Run a local session to see usage from its SQLite database.")
         font.pixelSize: 11
         opacity: 0.9
         color: Kirigami.Theme.textColor
@@ -62,7 +65,7 @@ ColumnLayout {
         spacing: 8
 
         Image {
-            source: Qt.resolvedUrl("../icons/opencode-color.svg")
+            source: Qt.resolvedUrl("../icons/" + tab.providerIcon)
             sourceSize.width: 20
             sourceSize.height: 20
             Layout.preferredWidth: 20
@@ -72,7 +75,7 @@ ColumnLayout {
         }
 
         PlasmaComponents.Label {
-            text: i18n("OpenCode")
+            text: tab.providerLabel
             font.bold: true
             font.pixelSize: 13
             color: tab.accent
@@ -91,7 +94,7 @@ ColumnLayout {
 
         StatusChip {
             Layout.alignment: Qt.AlignVCenter
-            status: rootItem.providerStatus.opencode || ({})
+            status: rootItem.providerStatus[tab.providerId] || ({})
         }
     }
 
@@ -122,7 +125,7 @@ ColumnLayout {
     PlasmaComponents.Label {
         visible: tab.goMode && tab.available
         Layout.fillWidth: true
-        text: i18n("Local OpenCode activity")
+        text: tab.providerId === "mimo" ? i18n("Local MiMo Code activity") : i18n("Local OpenCode activity")
         font.pixelSize: 10
         font.bold: true
         opacity: 0.65

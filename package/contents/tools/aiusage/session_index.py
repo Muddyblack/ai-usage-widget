@@ -33,6 +33,7 @@ SOURCE_REGISTRY: Final = (
     ("grok", "Grok"),
     ("claude", "Claude Code"),
     ("opencode", "OpenCode"),
+    ("mimo", "MiMo Code"),
     ("antigravity", "Antigravity"),
     ("mistral", "Mistral"),
     ("cursor", "Cursor"),
@@ -242,7 +243,7 @@ def _local_contribution(provider, cost, status, provenance, source, billing_prov
         return None
     if cost is None:
         return None
-    rollup_provider = billing_provider if source == "opencode" and isinstance(billing_provider, str) and billing_provider else provider
+    rollup_provider = billing_provider if source in ("opencode", "mimo") and isinstance(billing_provider, str) and billing_provider else provider
     rollup_source = source.strip().lower() if isinstance(source, str) and source.strip() else ""
     rollup = f"{rollup_provider}::{rollup_source}" if rollup_source else rollup_provider
     return rollup, cost, status

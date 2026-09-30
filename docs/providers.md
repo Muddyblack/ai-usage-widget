@@ -67,7 +67,7 @@ provider (for example `ollama-cloud::opencode`).
 
 ## Defaults and setup per provider
 
-There are 17 provider IDs in the backend. New shared settings are zero based.
+There are 18 provider IDs in the backend. New shared settings are zero based.
 The one-shot initializer can enable only the 10 providers in the backend's
 `AUTO_DETECT_PROVIDERS` allowlist when local evidence exists. The other 7 are
 manual-only and need an explicit choice, key, or endpoint. Detection does not
@@ -315,3 +315,23 @@ session discovery is cached in memory for one collection only.
 Plasma widget instances share their settings through
 `~/.config/ai-usage-widget/plasma-shared-settings-<widget id>.json` (mode 0600); pins, panel
 rotation and view state stay per widget.
+
+## MiMo Code
+
+The `mimo` provider reads MiMo Code's OpenCode-compatible SQLite database at
+`$XDG_DATA_HOME/mimocode/mimocode.db`, normally under `~/.local/share`.
+Platform data roots come from `paths.py`; `MIMO_DB` can override the database
+with an absolute path or a filename under a data root's `mimocode` directory.
+The reader uses read-only SQLite connections and never launches the CLI to
+collect usage. It shares OpenCode's assistant-message and step-finish parsing,
+including duplicate prevention, but keeps MiMo sessions and costs under their
+own source. Messages recorded in MiMo’s `external_import` or legacy
+`claude_import` tables are excluded. Imported-only conversations are hidden;
+native continuations count only newly generated messages. Legacy imports
+without message IDs are excluded entirely because their origin is ambiguous.
+The UI reports tokens, models, activity periods, and cost where
+recorded or priced by an exact catalog match. Subscription limits and remaining
+quota are unavailable. Session reopening uses `mimo --session <id>`.
+
+Validated against the installed MiMo Code 0.1.15 schema and synthetic fixtures;
+live paid requests and subscription quota were not tested.

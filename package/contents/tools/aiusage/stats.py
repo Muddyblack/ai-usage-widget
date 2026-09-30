@@ -463,7 +463,7 @@ def copilot_stats(s, now):
 _OPENCODE_BILLED = ("opencode", "opencode-go")
 
 
-def opencode_stats(s, now):
+def opencode_stats(s, now, *, billed_providers=_OPENCODE_BILLED):
     """Build one stable stats shape from OpenCode's local SQLite ledger."""
     if not isinstance(s, dict):
         return {"available": False}
@@ -471,7 +471,11 @@ def opencode_stats(s, now):
     sessions = [row for row in sessions if row.get("id") or row.get("usage")]
     filtered_sessions = []
     for session in sessions:
-        usage = [row for row in (session.get("usage") or []) if isinstance(row, dict) and row.get("provider") in _OPENCODE_BILLED]
+        usage = [
+            row
+            for row in (session.get("usage") or [])
+            if isinstance(row, dict) and (billed_providers is None or row.get("provider") in billed_providers)
+        ]
         if usage:
             filtered_session = dict(session)
             filtered_session["usage"] = usage

@@ -98,34 +98,42 @@ def _go_chart_windows(parsed):
     return out
 
 
-def _normalize_zen(now, stats):
+def _normalize_zen(now, stats, *, provider_id="opencode", label="OpenCode", accent=ACCENT, mode="zen"):
     if not stats.get("available"):
         return provider_error(
-            "opencode",
-            "OpenCode",
-            ACCENT,
+            provider_id,
+            label,
+            accent,
             now,
-            "OpenCode: no local sessions yet",
-            {"stats": stats, "source": "local SQLite", "accountMode": "zen"},
+            f"{label}: no local sessions yet",
+            {"stats": stats, "source": "local SQLite", "accountMode": mode},
         )
     periods = stats.get("periods") or []
     recent = next((period for period in periods if period.get("key") == "7d"), periods[-1] if periods else {})
-    r = provider_base("opencode", "OpenCode", ACCENT, now)
-    r["summary"] = {"pct": 0, "text": compact_tokens(recent.get("tokens")), "detail": "last 7 days · local Zen activity", "hasChart": False}
+    r = provider_base(provider_id, label, accent, now)
+    r["summary"] = {
+        "pct": 0,
+        "text": compact_tokens(recent.get("tokens")),
+        "detail": {
+            "zen": "last 7 days · local Zen activity",
+            "local": "last 7 days · local activity",
+        }.get(mode, "last 7 days · local activity"),
+        "hasChart": False,
+    }
     r["quotaWindows"] = [flat_window(period.get("key"), period.get("label"), 0, 0, _period_text(period), False) for period in periods]
     r["slots"] = [
         {
             "pct": 0,
-            "color": ACCENT,
+            "color": accent,
             "text": compact_tokens(recent.get("tokens")),
-            "tooltip": "OpenCode local usage\n" + "\n".join(f"{p.get('label')}: {_period_text(p)}" for p in periods),
+            "tooltip": f"{label} local usage\n" + "\n".join(f"{p.get('label')}: {_period_text(p)}" for p in periods),
         }
     ]
     r["details"] = {
         "stats": stats,
         "periods": periods,
         "source": "local SQLite",
-        "accountMode": "zen",
+        "accountMode": mode,
         "costStatus": stats.get("costStatus", "unavailable"),
         "costProvenance": "local ledger and exact model catalog where available",
     }

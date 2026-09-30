@@ -92,6 +92,7 @@ function localSourceLabel(source) {
     var key = localSourceKey(source);
     var labels = {
         opencode: "OpenCode",
+        mimo: "MiMo Code",
         claude: "Claude Code",
         "claude-code": "Claude Code",
         openai: "Codex",
@@ -145,14 +146,15 @@ function providerAccent(provider) {
         muse: "#0064e0",
         cursor: "#e6e6e6",
         cline: "#e6e6e6",
-        opencode: "#B7B1B1"
+        opencode: "#B7B1B1",
+        mimo: "#E8E8E8"
     };
     var key = localSourceKey(provider);
     return colors[key] || "#34d399";
 }
 
 function localSpendNote(provenance, costStatus, source) {
-    var prefix = source === "opencode" ? "via OpenCode" : "local CLI logs";
+    var prefix = source === "mimo" ? "via MiMo Code" : source === "opencode" ? "via OpenCode" : "local CLI logs";
     var notes = {
         "legacy:exact": prefix + " · exact",
         "legacy:partial": prefix + " · partial",
@@ -169,7 +171,7 @@ function localSpendNote(provenance, costStatus, source) {
 // Plan-covered work: the figure is what the API would have charged, not money
 // owed, so its note has to say so rather than read like a bill.
 function planSpendNote(costStatus, source) {
-    var prefix = source === "opencode" ? "via OpenCode" : "covered by plan";
+    var prefix = source === "mimo" ? "via MiMo Code" : source === "opencode" ? "via OpenCode" : "covered by plan";
     return prefix + " · would cost on API" + (costStatus === "partial" ? " · partial" : "");
 }
 
@@ -334,6 +336,7 @@ function localSpendRows(localSpend, providerRows, rawProviders) {
     }
     var rows = [];
     var hasOpenCodeProvider = false;
+    var hasMimoProvider = (providerRows || []).some(function (row) { return row.id === "mimo"; });
     for (var providerIndex = 0; providerIndex < (providerRows || []).length; providerIndex++) {
         if ((providerRows[providerIndex] || {}).id === "opencode") {
             hasOpenCodeProvider = true;
@@ -370,11 +373,11 @@ function localSpendRows(localSpend, providerRows, rawProviders) {
         // Mistral's provider card and its Vibe session totals read the same
         // ~/.vibe/meta.json costs. Keep the session rows available for the
         // Sessions tab, but show that total once in Usage & Spend.
-        if (providerKey === "mistral" && source !== "opencode")
+        if (providerKey === "mistral" && source !== "opencode" && source !== "mimo")
             continue;
         // OpenCode's aggregate card already includes the upstream provider
         // buckets from its local ledger. Do not count those rows a second time.
-        if (hasOpenCodeProvider && source === "opencode")
+        if ((hasOpenCodeProvider && source === "opencode") || (hasMimoProvider && source === "mimo"))
             continue;
         var hasActual = actualUSD > 0;
         var hasEstimated = estimatedUSD > 0;
@@ -383,7 +386,7 @@ function localSpendRows(localSpend, providerRows, rawProviders) {
                 (estimated && estimated.status === "partial") ? "partial" : "exact";
         rows.push({
             id: "local-" + (source ? source + "-" : "") + providerKey,
-            label: source === "opencode" ? upstreamProviderLabel(providerKey) : localSourceLabel(providerKey),
+            label: (source === "opencode" || source === "mimo") ? upstreamProviderLabel(providerKey) : localSourceLabel(providerKey),
             cost: actualUSD + estimatedUSD,
             currency: "USD",
             note: localSpendNote(provenance, costStatus, source),
@@ -429,7 +432,7 @@ function localSpendRows(localSpend, providerRows, rawProviders) {
                 (planActual && planActual.status === "partial") ? "partial" : "exact";
         rows.push({
             id: "plan-" + (planSource ? planSource + "-" : "") + planProviderKey,
-            label: planSource === "opencode" ? upstreamProviderLabel(planProviderKey) : localSourceLabel(planProviderKey),
+            label: (planSource === "opencode" || planSource === "mimo") ? upstreamProviderLabel(planProviderKey) : localSourceLabel(planProviderKey),
             cost: planCost,
             currency: "USD",
             note: planSpendNote(planStatus, planSource),
@@ -523,7 +526,7 @@ function spendProviderRows(providers, localSpend) {
         } else if (id === "cursor") {
             cost = (d.stats && d.stats.totalCostUSD) || d.onDemandUsed || d.onDemandSpendUSD || d.onDemand || 0;
             note = (d.stats && d.stats.totalCostUSD) ? "billing cycle" : "on-demand";
-        } else if (id === "opencode") {
+        } else if (id === "opencode" || id === "mimo") {
             cost = (d.stats && d.stats.totalCostUSD) || d.totalCostUSD || 0;
             note = "local sessions";
         }

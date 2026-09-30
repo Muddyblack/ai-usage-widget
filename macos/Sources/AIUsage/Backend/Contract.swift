@@ -245,7 +245,7 @@ struct SpendRow: Identifiable {
     }
 
     private static func localSourceLabel(_ source: String, upstream: String? = nil) -> String {
-        if source == "opencode", let upstream {
+        if (source == "opencode" || source == "mimo"), let upstream {
             switch localSourceKey(upstream) {
             case "anthropic": return i18n("Anthropic")
             case "openai": return i18n("OpenAI")
@@ -261,6 +261,7 @@ struct SpendRow: Identifiable {
         }
         switch localSourceKey(source) {
         case "opencode": return i18n("OpenCode")
+        case "mimo": return "MiMo Code"
         case "claude", "claude-code", "claude_code": return i18n("Claude Code")
         case "openai", "codex": return i18n("Codex")
         case "cline": return i18n("Cline")
@@ -277,7 +278,7 @@ struct SpendRow: Identifiable {
     }
 
     private static func localSpendNote(_ provenance: String, costStatus: String, source: String = "") -> String {
-        let prefix = source == "opencode" ? i18n("via OpenCode") : i18n("local CLI logs")
+        let prefix = source == "mimo" ? "via MiMo Code" : source == "opencode" ? i18n("via OpenCode") : i18n("local CLI logs")
         switch "\(provenance):\(costStatus)" {
         case "legacy:exact": return "\(prefix) · exact"
         case "legacy:partial": return "\(prefix) · partial"
@@ -292,7 +293,7 @@ struct SpendRow: Identifiable {
     }
 
     private static func planSpendNote(_ costStatus: String, source: String = "") -> String {
-        let prefix = source == "opencode" ? i18n("via OpenCode") : i18n("covered by plan")
+        let prefix = source == "mimo" ? "via MiMo Code" : source == "opencode" ? i18n("via OpenCode") : i18n("covered by plan")
         let wouldCost = i18n("would cost on API")
         let partial = i18n("partial")
         return "\(prefix) · \(wouldCost)" + (costStatus == "partial" ? " · \(partial)" : "")
@@ -545,7 +546,7 @@ enum SpendRows {
                 cost = details.double(paths: [["onDemandUsed"], ["onDemandSpendUSD"], ["onDemand"]])
                 note = i18n("on-demand")
                 currency = "USD"
-            case "opencode":
+            case "opencode", "mimo":
                 cost = details.double(paths: [["stats", "totalCostUSD"], ["totalCostUSD"]])
                 note = i18n("local sessions")
                 currency = "USD"
@@ -565,7 +566,7 @@ enum SpendRows {
         if let legacy = localSpend.legacy {
             appendLocal(legacy, label: i18n("Local sessions"), provenance: nil, to: &out)
         } else {
-            appendLocalProviders(actual: localSpend.actual, estimated: localSpend.estimated, suppressOpenCode: providers.contains(where: { $0.id == "opencode" }), to: &out)
+            appendLocalProviders(actual: localSpend.actual, estimated: localSpend.estimated, suppressOpenCode: providers.contains(where: { $0.id == "opencode" }), suppressMimo: providers.contains(where: { $0.id == "mimo" }), to: &out)
             appendPlanProviders(subscription: localSpend.subscription, subscriptionActual: localSpend.subscriptionActual, to: &out)
         }
         return out.sorted { $0.cost > $1.cost }
@@ -633,6 +634,7 @@ enum SpendRows {
         actual: LocalSpendTotal,
         estimated: LocalSpendTotal,
         suppressOpenCode: Bool,
+        suppressMimo: Bool,
         to rows: inout [SpendRow]) {
         let sources = Set(actual.providers.keys.compactMap(localSourceKey))
             .union(estimated.providers.keys.compactMap(localSourceKey))
@@ -650,6 +652,7 @@ enum SpendRows {
             let providerKey = identityParts.first ?? source
             let localSource = sourceMetadata.isEmpty ? providerKey : sourceMetadata
             if suppressOpenCode && localSource == "opencode" { continue }
+            if suppressMimo && localSource == "mimo" { continue }
             let provenance = actualUSD > 0 && estimatedUSD > 0
                 ? "mixed" : actualUSD > 0 ? "actual" : "estimated"
             let costStatus = actualEntry?.status == "partial" || estimatedEntry?.status == "partial"
@@ -661,7 +664,7 @@ enum SpendRows {
                 estimatedUSD: estimatedUSD,
                 provenance: provenance,
                 costStatus: costStatus,
-                billingProvider: localSource == "opencode" && viaSource != nil ? providerKey : nil,
+                billingProvider: (localSource == "opencode" || localSource == "mimo") && viaSource != nil ? providerKey : nil,
                 identity: source,
                 viaSource: viaSource,
                 dailyCost: mergeDaily(actualEntry?.daily ?? [], estimatedEntry?.daily ?? []),
@@ -699,7 +702,7 @@ enum SpendRows {
                 estimatedUSD: estimatedUSD,
                 provenance: "estimated",
                 costStatus: costStatus,
-                billingProvider: localSource == "opencode" && viaSource != nil ? providerKey : nil,
+                billingProvider: (localSource == "opencode" || localSource == "mimo") && viaSource != nil ? providerKey : nil,
                 identity: source,
                 viaSource: viaSource,
                 billing: "subscription",
