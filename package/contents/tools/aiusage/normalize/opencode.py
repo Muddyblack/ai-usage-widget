@@ -11,17 +11,16 @@ import math
 
 from ..contract import (
     chart_window,
-    compact_tokens,
     epoch_of,
     flat_window,
     jround,
-    money,
     pct_clamp,
     provider_base,
     provider_error,
     resetting,
 )
 from ..stats import opencode_stats
+from .local_activity import normalize_local_activity
 
 ACCENT = "#B7B1B1"
 
@@ -34,15 +33,6 @@ _GO_WINDOWS = (
     ("weekly", "opencode_go_weekly_pct", "Weekly (7d)", 604800000),
     ("monthly", "opencode_go_monthly_pct", "Monthly", 2592000000),
 )
-
-
-def _period_text(period):
-    text = f"{compact_tokens(period.get('tokens'))} tokens · {period.get('sessions', 0)} session"
-    if period.get("sessions") != 1:
-        text += "s"
-    if period.get("cost", 0) > 0:
-        text += f" · {money(period.get('cost'), 'USD')}"
-    return text
 
 
 def _parse_go_window(window):
@@ -96,48 +86,6 @@ def _go_chart_windows(parsed):
         out.append(resetting(chart_window("opencode_go_30d", key, "30D", 2592000000, "30d"), period, {"resetAt": reset_at}))
 
     return out
-
-
-def _normalize_zen(now, stats, *, provider_id="opencode", label="OpenCode", accent=ACCENT, mode="zen"):
-    if not stats.get("available"):
-        return provider_error(
-            provider_id,
-            label,
-            accent,
-            now,
-            f"{label}: no local sessions yet",
-            {"stats": stats, "source": "local SQLite", "accountMode": mode},
-        )
-    periods = stats.get("periods") or []
-    recent = next((period for period in periods if period.get("key") == "7d"), periods[-1] if periods else {})
-    r = provider_base(provider_id, label, accent, now)
-    r["summary"] = {
-        "pct": 0,
-        "text": compact_tokens(recent.get("tokens")),
-        "detail": {
-            "zen": "last 7 days · local Zen activity",
-            "local": "last 7 days · local activity",
-        }.get(mode, "last 7 days · local activity"),
-        "hasChart": False,
-    }
-    r["quotaWindows"] = [flat_window(period.get("key"), period.get("label"), 0, 0, _period_text(period), False) for period in periods]
-    r["slots"] = [
-        {
-            "pct": 0,
-            "color": accent,
-            "text": compact_tokens(recent.get("tokens")),
-            "tooltip": f"{label} local usage\n" + "\n".join(f"{p.get('label')}: {_period_text(p)}" for p in periods),
-        }
-    ]
-    r["details"] = {
-        "stats": stats,
-        "periods": periods,
-        "source": "local SQLite",
-        "accountMode": mode,
-        "costStatus": stats.get("costStatus", "unavailable"),
-        "costProvenance": "local ledger and exact model catalog where available",
-    }
-    return r
 
 
 def _normalize_go(now, stats, account):
@@ -228,4 +176,4 @@ def normalize_opencode(raw):
     mode = account.get("mode") or "zen"
     if mode == "go":
         return _normalize_go(now, stats, account)
-    return _normalize_zen(now, stats)
+    return normalize_local_activity(now, stats)

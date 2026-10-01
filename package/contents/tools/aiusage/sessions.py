@@ -35,7 +35,7 @@ from collections.abc import Sequence
 
 from . import billing, billing_mode, pricing
 from .contract import epoch_of, num
-from .providers import antigravity_sessions, cursor_sessions, mimo, mistral_sessions, opencode
+from .providers import antigravity_sessions, cursor_sessions, junie, mimo, mistral_sessions, opencode
 from .providers.cline import get_cline_session_records
 from .providers.grok import discover_sessions, grok_home
 from .providers.muse import sessions_root as muse_sessions_root
@@ -855,6 +855,29 @@ def _mimo_entries(*, include_all=False):
     return out
 
 
+def _junie_entries(*, include_all=False):
+    rows = []
+    for record in junie.read_sessions():
+        entry = _entry(
+            "junie",
+            _clip_title(record["title"]) or "Junie",
+            record["lastActivity"],
+            state=_state(record["lastActivity"], ended=record["state"] in ("FAILED", "COMPLETED", "CANCELLED")),
+            detail=_basename(record["directory"].replace("\\", "/")),
+            session_id=record["id"],
+        )
+        if entry is not None:
+            if record["usage"]:
+                entry["tokens"] = sum(sum(bucket.get(key, 0) for key in junie.TOKEN_FIELDS.values()) for bucket in record["usage"])
+                entry["sessionName"] = ", ".join(sorted({bucket["model"] for bucket in record["usage"]}))
+            rows.append(entry)
+    return rows if include_all else rows[:_MAX_SESSIONS]
+
+
+def _junie_targets():
+    return [{"provider": "junie", "id": row["id"], "cwd": row["directory"]} for row in junie.read_sessions()]
+
+
 def _mimo_targets():
     return [
         {
@@ -1062,6 +1085,7 @@ _RESUME_SPECS = {
     "openai": {"bin": "codex", "cmd": ["resume", "{id}"]},
     "opencode": {"bin": "opencode", "cmd": ["--session", "{id}"]},
     "mimo": {"bin": "mimo", "cmd": ["--session", "{id}"]},
+    "junie": {"bin": "junie", "cmd": ["--session-id", "{id}"]},
     "antigravity": {"bin": "agy", "cmd": ["--conversation", "{id}"]},
     "grok": {"bin": "grok", "cmd": ["--resume", "{id}"]},
     "cline": {"bin": "cline", "cmd": ["--id", "{id}"]},
@@ -1104,6 +1128,7 @@ SESSION_COLLECTORS = {
     "antigravity": "_antigravity_entries",
     "mistral": "_mistral_entries",
     "cursor": "_cursor_entries",
+    "junie": "_junie_entries",
 }
 
 
@@ -1222,6 +1247,7 @@ def collect_open_targets():
         _cline_targets,
         _opencode_targets,
         _mimo_targets,
+        _junie_targets,
         _antigravity_targets,
     ):
         try:

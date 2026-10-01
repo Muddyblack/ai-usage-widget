@@ -547,6 +547,17 @@ test("shared frontend behavior", async t => {
     for (const scenario of cases) {
         await t.test(scenario.name + ": Plasma quota state and shared history", () => {
             const provider = scenario.envelope.providers[0];
+            if (provider.id === "junie") {
+                const tab = { providerId: "junie" };
+                const sandbox = { tab, providers: scenario.envelope.providers };
+                vm.runInNewContext(qmlFunction("package/contents/ui/OpenCodeTab.qml", "providerFromRawProviders")
+                    + "\nresult = providerFromRawProviders(providers);", sandbox);
+                assert.equal(sandbox.result.id, "junie");
+                assert.deepEqual(sandbox.result.slots.map(slot => slot.text), scenario.expected.panelText);
+                assert.equal(sandbox.result.details.untested, true);
+                assert.deepEqual(UsageHistory.collect([provider]), scenario.expected.history);
+                return;
+            }
             const root = { dateFromEpoch: x => x, ensureAvailableChartWindow() {} };
             vm.runInNewContext(plasma + "\napplyOpenAi(details);", { root, details: provider.details || {} });
             assert.equal(root.codexSessionAvailable, scenario.expected.rowKeys.includes("codex_session"));
@@ -703,7 +714,7 @@ test("OpenCode tab separates Zen activity from Go account quotas", () => {
     for (const key of ["opencode_go_rolling_pct", "opencode_go_weekly_pct", "opencode_go_monthly_pct"])
         assert.ok(normalizer.includes(`"${key}"`), `Go quota/history contract includes ${key}`);
     assert.match(normalizer, /r\["historyValues"\]/);
-    assert.match(source, /Local OpenCode activity/);
+    assert.match(source, /i18n\("Local %1 activity", tab\.providerLabel\)/);
     assert.match(source, /OpenCodeUsageChart/);
     assert.ok(source.indexOf("OpenCodeUsageChart") > source.indexOf("Secondary stats grid"));
 });
@@ -788,14 +799,18 @@ test("Hyprland and Windows show the same OpenCode daily chart on the Usage tab",
         assert.match(source, /stats\.dailySeries && stats\.dailySeries\.length \? stats\.dailySeries : stats\.dailyTokens/);
     }
     assert.match(chart, /showWindowPills: false/);
-    assert.match(popup, /OpenCodeUsageChart \{\s*visible: \(shell\.activeId === "opencode" \|\| shell\.activeId === "mimo"\)[^\n]*stats \|\| \{\}\)\.available === true/);
+    assert.match(popup, /OpenCodeUsageChart \{\s*visible: \(shell\.activeId === "opencode" \|\| shell\.activeId === "mimo" \|\| shell\.activeId === "junie"\)[^\n]*stats \|\| \{\}\)\.available === true/);
     // Inside the Usage column, not the Stats sub-tab.
     assert.ok(popup.indexOf("OpenCodeUsageChart") < popup.indexOf("StatsSection {"));
 });
 
-test("OpenCode has a panel slot gated by its provider selection", () => {
+test("local activity providers share a panel slot gated by provider selection", () => {
     const main = qmlSource("package/contents/ui/main.qml");
-    assert.match(main, /PanelSlot\s*\{[\s\S]*?property var openCodeStats[\s\S]*?visible:\s*root\.panelShows\("opencode"\)\s*&&/);
+    const slot = qmlSource("package/contents/ui/LocalActivityPanelSlot.qml");
+    for (const provider of ["opencode", "mimo", "junie"])
+        assert.ok(main.includes(`providerId: "${provider}"`));
+    assert.match(slot, /visible: rootItem\.panelShows\(providerId\) && !rootItem\.showSettings/);
+    assert.match(slot, /rawProviderById\(providerId\)/);
 });
 
 test("local spend rows keep legacy flat totals and reject unavailable groups", () => {

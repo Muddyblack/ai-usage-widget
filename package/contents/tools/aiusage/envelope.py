@@ -35,6 +35,7 @@ _CRASH_LABELS = {
     "cline": ("Cline", "#e6e6e6"),
     "opencode": ("OpenCode", "#38bdf8"),
     "mimo": ("MiMo Code", "#E8E8E8"),
+    "junie": ("Junie", "#48e054"),
 }
 
 

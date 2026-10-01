@@ -24,6 +24,7 @@ from .providers.copilot_stats import get_copilot_stats
 from .providers.cursor import get_cursor_usage
 from .providers.deepseek import get_deepseek_balance
 from .providers.grok import get_grok_usage
+from .providers.junie import usage_snapshot as get_junie_usage
 from .providers.kimi_code import get_kimi_code_usage
 from .providers.kiro import get_kiro_usage
 from .providers.mimo import usage_snapshot as get_mimo_usage
@@ -268,6 +269,7 @@ _SIMPLE = {
     "cursor": get_cursor_usage,
     "cline": get_cline_sessions,
     "mimo": get_mimo_usage,
+    "junie": get_junie_usage,
 }
 
 

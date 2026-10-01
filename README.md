@@ -21,7 +21,7 @@
   <img src="https://img.shields.io/badge/Started-May_2026-9c27b0?style=for-the-badge" alt="Project started May 2026" />
 </p>
 
-A KDE Plasma 6 panel widget for tracking AI API quota usage across 18 provider services. Monitor subscription windows, account balances, local activity, and per-model usage through the shared backend, with animated segmented bars, live countdown timers, and account status.
+A KDE Plasma 6 panel widget for tracking AI API quota usage across 19 provider services. Monitor subscription windows, account balances, local activity, and per-model usage through the shared backend, with animated segmented bars, live countdown timers, and account status.
 
 
 ## Screenshots
@@ -48,7 +48,7 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across 18 provider s
 
 ## Features
 
-- **Multi-service support** — 18 providers in one popup, each on its own tab
+- **Multi-service support** — 19 providers in one popup, each on its own tab
 - **Panel view** — Compact percentage readouts in the taskbar, color-coded by usage level, with an inline spark-line trend
 - **Popup view** — Segmented bars showing exact fill level with reset times and live countdowns that show "resetting..." when a window flips
 - **Usage chart** — Smooth, glowing area chart of historical usage with availability-aware 5H / 24H / 7D choices and hover-scrub
@@ -63,7 +63,7 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across 18 provider s
 - **Optional Plasma panel rotation** — Choose Off, 30 seconds, 1 minute, 2 minutes, 5 minutes, or 10 minutes in Appearance to show pinned providers one at a time in pin order; disabled by default
 - **History export / import** — Save and restore usage history as JSON; history is mirrored to disk so it survives reinstalls
 - **Robust refresh** — Poll interval from 1 to 30 minutes, respects `retry-after` headers, dims and shows the error inline when a fetch fails
-- **Optional Overview / Usage & Spend / Sessions tabs**, turn on in Settings → Views. Overview shows every enabled provider at a glance, Usage & Spend shows provider-reported spend and non-navigable local source rows, and Sessions lists recent local Claude Code / Codex / Grok CLI / Cline / OpenCode / MiMo Code / Antigravity / Muse activity, local title previews and recency; previews may contain sensitive text, with a ⧉ button to resume a session in your terminal (`get-ai-usage --sessions` / `--open-session <key>`; not available for Muse, which ships no resume command)
+- **Optional Overview / Usage & Spend / Sessions tabs**, turn on in Settings → Views. Overview shows every enabled provider at a glance, Usage & Spend shows provider-reported spend and non-navigable local source rows, and Sessions lists recent local Claude Code / Codex / Grok CLI / Cline / OpenCode / MiMo Code / Junie / Antigravity / Muse activity, local title previews and recency; previews may contain sensitive text, with a ⧉ button to resume a session in your terminal (`get-ai-usage --sessions` / `--open-session <key>`; not available for Muse, which ships no resume command)
 
 ## Session costs and Usage & Spend
 
@@ -115,7 +115,7 @@ For the full contract and provider details, see
 
 Session search is handled by the backend with `get-ai-usage --sessions --query <text>`. Empty, whitespace-only, and non-empty searches all return 60-session pages with exact totals and offer **Load more** when additional sessions exist. In the desktop sessions views, refresh shows the current cached page immediately while providers are scanned in the background, then shows the updated page once the scan finishes. The Sessions view offers a cache-backed source filter beside the search field. It uses `--source <id[,id...]>` or `--source=<id[,id...]>`; omitting it means All, and multiple sources are combined with OR semantics. The filter is view-local, resets pagination when changed, and is preserved by refresh and **Load more**. All appears only when more than one cached source is available.
 
-The backend returns the additive `sources` descriptor list with verified IDs and labels, in canonical order: Cline (`cline`), Muse (`muse`), Codex (`openai`), Grok (`grok`), Claude Code (`claude`), OpenCode (`opencode`), MiMo Code (`mimo`), and Antigravity (`antigravity`). Only sources with cached parsed rows appear. Query-only searches read that cache and do not scan local stores. Non-empty searches check all underlying session records using only `provider`, `title`, `sessionName`, `state`, and `detail`; `fullTitle`, opaque resume keys, IDs, paths, and transcripts are not searchable or exposed. Claude titles are clipped opening-prompt previews; raw prompt text never leaves the backend. See the [provider contract](docs/provider-contract.md#session-search) for response, refresh, incomplete-cache, privacy, and cross-platform details.
+The backend returns the additive `sources` descriptor list with verified IDs and labels, in canonical order: Cline (`cline`), Muse (`muse`), Codex (`openai`), Grok (`grok`), Claude Code (`claude`), OpenCode (`opencode`), MiMo Code (`mimo`), Antigravity (`antigravity`), Mistral (`mistral`), Cursor (`cursor`), and Junie (`junie`). Only sources with cached parsed rows appear. Query-only searches read that cache and do not scan local stores. Non-empty searches check all underlying session records using only `provider`, `title`, `sessionName`, `state`, and `detail`; `fullTitle`, opaque resume keys, IDs, paths, and transcripts are not searchable or exposed. Claude titles are clipped opening-prompt previews; raw prompt text never leaves the backend. See the [provider contract](docs/provider-contract.md#session-search) for response, refresh, incomplete-cache, privacy, and cross-platform details.
 
 Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on macOS](docs/macos.md) and [in a terminal](docs/cli.md) — every frontend shares one backend.
 
@@ -151,6 +151,7 @@ settings, menu bar styles, and build instructions.
 | Muse | Local session stats: tokens, offline spend estimate, sessions, tool calls, workspaces, streaks. Plan windows available behind an opt-in switch | Supported (the plan quota costs tokens to read — off by default) |
 | Cursor | Included usage for the billing cycle, the Auto/API split, on-demand spend, and plan name | Free login/stats tested; free agent quota unavailable; paid plans unverified |
 | Cline | Tokens, sessions and spend for today / 7 / 30 days, plus all-time stats per model and workspace, from the CLI's own session logs | Supported (local stats; account balance not yet shown) |
+| Junie | Local CLI tokens, cache counts, model activity, and resumable sessions | Untested; account quota and billed spend unavailable |
 | MiMo Code | Local tokens, model breakdowns, session history and recorded or estimated costs | Local database verified; live subscription quota unavailable |
 
 What each provider needs signed in, and what it reads, is in
@@ -176,6 +177,17 @@ The reader uses `$XDG_DATA_HOME/mimocode/mimocode*.db` (normally
 `~/.local/share/mimocode/mimocode.db`); `MIMO_DB` overrides the database path.
 It reads SQLite without starting the CLI or requiring an active subscription.
 Subscription limits and remaining account quota are not available.
+
+### Junie (untested)
+
+Enable **Junie** to show local CLI token activity and resumable sessions.
+Linux, macOS and Windows read the same `~/.junie/sessions` format
+(`JUNIE_HOME` overrides the home). Account quota and billed spend are unavailable.
+The widget does not need your API key or run paid requests.
+
+For Google BYOK, export `JUNIE_GOOGLE_API_KEY` and run `junie --provider google`,
+then select a model with `/model`. JetBrains account authorization is optional
+for BYOK. See [setup and verification details](docs/providers.md#junie-cli-untested).
 
 ## Requirements
 

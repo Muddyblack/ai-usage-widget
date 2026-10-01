@@ -45,6 +45,7 @@ The backend constant `AUTO_DETECT_PROVIDERS` is the complete allowlist:
 | `cline` | `cline` executable |
 | `opencode` | `opencode` executable |
 | `mimo` | `mimo` executable |
+| `junie` | `junie` executable |
 
 Executables are looked up on `PATH` and in the directories user-level
 installers use but a desktop session's `PATH` often lacks (`~/.local/bin`,
@@ -135,5 +136,5 @@ only its collector works.
     is introduced.
 
 Finally, run the full test suite and review the provider count in every document.
-The current backend has 18 IDs in `ALL_PROVIDERS` and 11 IDs in
+The current backend has 19 IDs in `ALL_PROVIDERS` and 12 IDs in
 `AUTO_DETECT_PROVIDERS`.

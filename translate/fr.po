@@ -951,7 +951,13 @@ msgstr ""
 "Aucune session Cline pour le moment.\n"
 "Lancez le CLI Cline : ses journaux de session dans ~/.cline apparaîtront ici."
 
-#: hyprland/StatsSection.qml package/contents/ui/OpenCodeTab.qml
+#: hyprland/StatsSection.qml
+msgid "No local Junie token usage yet. Run a CLI session to see activity."
+msgstr ""
+"Aucune utilisation locale de jetons Junie pour le moment. Lancez une session "
+"CLI pour voir l’activité."
+
+#: hyprland/StatsSection.qml
 msgid "No local MiMo Code usage yet. Account quota is unavailable."
 msgstr ""
 "Aucune utilisation locale de MiMo Code pour le moment. Le quota du compte "
@@ -1958,6 +1964,10 @@ msgstr ""
 "d'utilisation. Une connexion kiro-cli expire environ une heure après la "
 "dernière exécution du CLI — démarrez kiro-cli pour la renouveler."
 
+#: package/contents/ui/LocalActivityPanelSlot.qml
+msgid "Untested integration"
+msgstr "Intégration non testée"
+
 #: package/contents/ui/MistralTab.qml
 msgid "%1m ago"
 msgstr "il y a %1 min"
@@ -2277,6 +2287,26 @@ msgstr "OpenCode Zen"
 
 #: package/contents/ui/OpenCodeTab.qml
 msgid ""
+"Untested integration. Local CLI tokens only; account quota and billed spend "
+"are unavailable."
+msgstr ""
+"Intégration non testée. Seuls les jetons locaux de la CLI sont affichés ; le "
+"quota du compte et les dépenses facturées ne sont pas disponibles."
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid "Some token buckets are missing; totals include recorded tokens only."
+msgstr ""
+"Certains compteurs de jetons sont manquants ; les totaux incluent uniquement "
+"les jetons enregistrés."
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid "No local %1 token usage yet. Run a CLI session to see activity."
+msgstr ""
+"Aucune utilisation locale de jetons %1 pour le moment. Lancez une session "
+"CLI pour voir l’activité."
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid ""
 "No OpenCode sessions yet.\n"
 "Zen activity is device-local and does not report account quota. Run a local "
 "session to see usage from its SQLite database."
@@ -2302,12 +2332,8 @@ msgid "%1 · device-local · no account quota"
 msgstr "%1 · local à l'appareil · aucun quota de compte"
 
 #: package/contents/ui/OpenCodeTab.qml
-msgid "Local MiMo Code activity"
-msgstr "Activité MiMo Code locale"
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid "Local OpenCode activity"
-msgstr "Activité OpenCode locale"
+msgid "Local %1 activity"
+msgstr "Activité locale de %1"
 
 #: package/contents/ui/OpenCodeTab.qml
 msgctxt "stat label"
@@ -3306,6 +3332,10 @@ msgstr "Utilisation Cursor"
 #: package/contents/ui/main.qml
 msgid "Cline Stats"
 msgstr "Statistiques Cline"
+
+#: package/contents/ui/main.qml
+msgid "Junie Usage"
+msgstr "Utilisation de Junie"
 
 #: package/contents/ui/main.qml
 msgid "MiMo Code Usage"

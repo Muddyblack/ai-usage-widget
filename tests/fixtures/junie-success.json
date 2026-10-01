@@ -1,0 +1,29 @@
+{
+  "id": "junie",
+  "now": 1790841600,
+  "inputs": {
+    "usage": {
+      "sessions": [
+        {
+          "id": "session-fixture",
+          "createdAt": 1790841600,
+          "lastActivity": 1790841600,
+          "directory": "demo",
+          "usage": [
+            {
+              "provider": "junie",
+              "model": "gemini-test",
+              "input": 100,
+              "output": 20,
+              "cacheRead": 40,
+              "cacheWrite": 10,
+              "timestamp": 1790841600,
+              "tokensComplete": true,
+              "costStatus": "unavailable"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

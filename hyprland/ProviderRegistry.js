@@ -117,6 +117,11 @@ var providers = [
         accent: "#E8E8E8"
     },
     {
+        id: "junie",
+        label: "Junie",
+        accent: "#48e054"
+    },
+    {
         id: "opencode",
         label: "OpenCode",
         accent: "#B7B1B1"
@@ -125,7 +130,7 @@ var providers = [
 
 // Mirrors OPT_IN_PROVIDERS in aiusage/config.py: what a missing toggle means
 // until providerDefaultsApplied is set (or when applying the defaults failed).
-var OPT_IN = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo", "ollama", "selfhosted"];
+var OPT_IN = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo", "junie", "ollama", "selfhosted"];
 
 function enabled(settings, id) {
     var toggles = (settings && settings.providers) || {};
@@ -139,7 +144,7 @@ function enabled(settings, id) {
 
 // Mirrors AUTO_DETECT_PROVIDERS in aiusage/detect.py: the providers detection
 // can speak for. Every other provider is only ever switched by hand.
-var AUTO_DETECT = ["claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode", "mimo"];
+var AUTO_DETECT = ["claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode", "mimo", "junie"];
 
 // Re-run of detection from the settings page. Detection reports what is
 // installed right now, so it syncs both ways: a detected provider that is off

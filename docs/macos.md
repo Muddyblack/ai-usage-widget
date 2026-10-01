@@ -285,3 +285,9 @@ translation checks too.
 - Interactive checks on a personal Mac: multiple displays, menu bar placement,
   credential discovery, and login-item behavior. CI screenshots do not cover
   those interactions.
+
+
+Junie is available as an **untested** local CLI provider, using `~/.junie/sessions`
+(or `$JUNIE_HOME/sessions`). It uses the shared activity and session views;
+account quota and billed spend are unavailable. See
+[Junie setup and BYOK](providers.md#junie-cli-untested).

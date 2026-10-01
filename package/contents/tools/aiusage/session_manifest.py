@@ -8,7 +8,7 @@ import os
 from dataclasses import dataclass
 
 from . import paths
-from .providers import cursor_sessions, mimo, mistral_sessions, opencode  # noqa: F401
+from .providers import cursor_sessions, junie, mimo, mistral_sessions, opencode  # noqa: F401
 from .providers.grok import grok_home
 from .providers.muse import sessions_root as muse_sessions_root
 from .providers.openai_credentials import codex_home
@@ -202,4 +202,5 @@ def build_manifests() -> list[SessionManifest]:
             [(path, "file", mtime_ns, size, 0) for path, mtime_ns, size in cursor_sessions.session_records()],
         ),
     )
+    groups += (("junie", _matching_files(str(junie.sessions_root()), lambda name: name in ("index.jsonl", "summary.json", "events.jsonl"))),)
     return [_fingerprint(source_id, records) for source_id, records in groups]

@@ -86,6 +86,8 @@ ColumnLayout {
                     return statsSectionRoot.shell.i18n("No Cursor usage this billing cycle yet.\nRequests made with Cursor or cursor-agent will appear here.");
                 if (statsSectionRoot.providerId === "cline")
                     return statsSectionRoot.shell.i18n("No Cline sessions yet.\nRun the Cline CLI and its session logs in ~/.cline will appear here.");
+                if (statsSectionRoot.providerId === "junie")
+                    return statsSectionRoot.shell.i18n("No local Junie token usage yet. Run a CLI session to see activity.");
                 if (statsSectionRoot.providerId === "mimo")
                     return statsSectionRoot.shell.i18n("No local MiMo Code usage yet. Account quota is unavailable.");
                 if (statsSectionRoot.providerId === "opencode")

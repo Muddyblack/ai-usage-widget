@@ -67,8 +67,8 @@ provider (for example `ollama-cloud::opencode`).
 
 ## Defaults and setup per provider
 
-There are 18 provider IDs in the backend. New shared settings are zero based.
-The one-shot initializer can enable only the 10 providers in the backend's
+There are 19 provider IDs in the backend. New shared settings are zero based.
+The one-shot initializer can enable only the 12 providers in the backend's
 `AUTO_DETECT_PROVIDERS` allowlist when local evidence exists. The other 7 are
 manual-only and need an explicit choice, key, or endpoint. Detection does not
 prove authentication or usability. Each service has its own setup requirement:
@@ -80,6 +80,7 @@ prove authentication or usability. Each service has its own setup requirement:
 | OpenAI | An OpenAI API key for organization API usage; a Codex CLI login provides Codex/ChatGPT plan limits and account status |
 | Grok | Grok CLI authenticated with `grok --oauth`; an xAI API key is optional |
 | Kiro | kiro-cli signed in (`kiro-cli login`), or the Kiro IDE signed in at least once |
+| Junie | Junie CLI sessions; authenticate inside Junie using a JetBrains account, Junie token, or BYOK. No key is needed by the widget. Integration is untested. |
 | Mistral AI | A Mistral API key; vibe CLI is optional and adds local session statistics |
 | OpenRouter | An OpenRouter API key entered in widget settings |
 | Ollama Cloud | Enable the provider, then use an Ollama API key in widget settings or `$OLLAMA_API_KEY`; when enabled, the `ollama-cloud` API-key login from OpenCode can also be read automatically |
@@ -335,3 +336,70 @@ quota are unavailable. Session reopening uses `mimo --session <id>`.
 
 Validated against the installed MiMo Code 0.1.15 schema and synthetic fixtures;
 live paid requests and subscription quota were not tested.
+
+
+## Junie CLI (untested)
+
+The `junie` provider reads `$JUNIE_HOME/sessions`, defaulting to
+`~/.junie/sessions` on Linux/macOS and `%USERPROFILE%\.junie\sessions` on
+Windows. It detects the `junie` executable, including the official installer's
+`~/.local/bin` location. Existing settings keep Junie disabled until selected
+or until **Detect installed providers** is run.
+
+The collector reads `index.jsonl`, per-session `summary.json` metadata, and
+`events.jsonl`. It never reads authentication settings, launches Junie, sends a
+model request, or contacts a billing endpoint. Changed files invalidate its
+bounded in-process parser cache and the shared session search index.
+
+Available data: recorded input/output/cache-read/cache-creation tokens,
+per-model breakdowns, daily activity, Today/7-day/30-day/all-time periods,
+workspace names, session titles, recency and resume actions. Failed sessions
+without token events stay in Sessions but do not report a fabricated zero
+usage reading. All frontends use the existing stats and session components.
+
+**Verification:** format checked against the installed JetBrains Junie
+3419.22 `SessionStore`, `UsageAggregator`, `LlmResponseMetadataEvent` and
+`ModelUsage` serializers, plus local failed-session metadata and three recorded
+Gemini usage entries. Tests use synthetic usage events. Live authorization,
+JetBrains subscriptions and billing units have not been tested; the UI remains
+explicitly marked untested.
+
+The event `cost` has no stored unit or billing route. Junie's own `/usage`
+resolves the balance unit from the current authorization, so the widget cannot
+safely call historical values USD or infer which account paid. Dollar spend,
+remaining credits, subscription limits, reset dates and account identity remain
+unavailable. There is no verified free standalone quota endpoint in the
+published CLI repository/documentation. IDE-only history is outside this reader.
+
+### BYOK without JetBrains account authorization
+
+Junie's [quickstart](https://junie.jetbrains.com/docs/junie-cli.html) supports
+BYOK on its own. Use `/account` → **Use your own API key**, choose Google, then
+`/model`; or, in a Linux/macOS shell with an existing Google key:
+
+```sh
+export JUNIE_GOOGLE_API_KEY="$GOOGLE_API_KEY"
+junie --provider google
+```
+
+If the existing variable is `GEMINI_API_KEY`, substitute that variable. In
+Windows PowerShell:
+
+```powershell
+$env:JUNIE_GOOGLE_API_KEY = $env:GOOGLE_API_KEY
+junie --provider google
+```
+
+Google BYOK needs `JUNIE_GOOGLE_API_KEY` and provider `google`; a generic Google
+variable alone does not select Junie's BYOK route. Other providers have
+`JUNIE_ANTHROPIC_API_KEY`, `JUNIE_OPENAI_API_KEY`, `JUNIE_GROK_API_KEY`, and
+`JUNIE_OPENROUTER_API_KEY`. Provider usage is billed directly by that provider.
+Keep these keys in Junie, not the widget.
+
+Sources: [JetBrains repository](https://github.com/JetBrains/junie),
+[BYOK](https://junie.jetbrains.com/docs/byok.html),
+[environment variables](https://junie.jetbrains.com/docs/environment-variables.html),
+[CLI reference](https://junie.jetbrains.com/docs/parameters.html).
+The bundled green SVG is the Junie brand mark from
+[the official site](https://junie.jetbrains.com/), fetched on 2026-10-01;
+it remains JetBrains artwork, separate from the LobeHub icon license.

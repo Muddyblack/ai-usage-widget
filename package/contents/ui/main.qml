@@ -672,6 +672,12 @@ PlasmoidItem {
             icon: "cline.svg"
         },
         {
+            id: "junie",
+            label: "Junie",
+            color: "#48e054",
+            icon: "junie.svg"
+        },
+        {
             id: "mimo",
             label: "MiMo Code",
             color: "#E8E8E8",
@@ -1548,7 +1554,7 @@ PlasmoidItem {
     readonly property var legacyDefaultOnProviders: ["claude", "antigravity", "openai", "kiro", "grok"]
 
     function applyDetectedProviders(detected) {
-        var ids = ["claude", "antigravity", "openai", "kiro", "mistral", "openrouter", "ollama", "selfhosted", "grok", "zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo"];
+        var ids = ["claude", "antigravity", "openai", "kiro", "mistral", "openrouter", "ollama", "selfhosted", "grok", "zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo", "junie"];
         for (var i = 0; i < ids.length; i++) {
             var id = ids[i];
             var key = id + "Enabled";
@@ -1591,7 +1597,7 @@ PlasmoidItem {
 
     // Mirrors AUTO_DETECT_PROVIDERS in aiusage/detect.py: the providers
     // detection can speak for. Every other provider is only switched by hand.
-    readonly property var autoDetectProviders: ["claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode", "mimo"]
+    readonly property var autoDetectProviders: ["claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode", "mimo", "junie"]
     // A configured API key keeps a provider usable without its local tool, so
     // detection never switches such a provider off.
     readonly property var providerKeySettings: ({
@@ -3212,44 +3218,19 @@ PlasmoidItem {
                 tooltipText: "Cursor" + (root.cursorPlanName ? "\n" + i18n("Plan: %1", root.cursorPlanName) : "") + (root.cursorAvailable ? "\n" + i18n("Included usage: %1%", Math.round(root.cursorTotalPct)) : "\n" + (root.cursorError || i18n("Not signed in"))) + (root.cursorResetTime ? "\n" + i18n("Resets: %1", root.cursorResetTime) : "")
             }
 
-            PanelSlot {
-                property var openCodeStats: {
-                    var provider = root.rawProviderById("opencode");
-                    return provider && provider.details ? (provider.details.stats || ({})) : ({});
-                }
-                pct: 0
-                iconColor: "#B7B1B1"
-                iconSource: Qt.resolvedUrl("../icons/opencode-color.svg")
-                iconText: "OC"
-                stale: root.stale && root.panelShows("opencode")
-                visible: root.panelShows("opencode") && !root.showSettings
-                showCost: true
-                costText: openCodeStats.totalTokens > 0 ? root.formatTokens(openCodeStats.totalTokens) : "—"
-                tooltipText: {
-                    var sessions = Math.round(openCodeStats.totalSessions || 0);
-                    var tokens = root.formatTokens(openCodeStats.totalTokens || 0);
-                    return "OpenCode\n" + i18n("%1 tokens", tokens) + " · " + i18np("%1 session", "%1 sessions", sessions);
-                }
+            LocalActivityPanelSlot {
+                rootItem: root
+                providerId: "opencode"
             }
 
-            PanelSlot {
-                property var mimoStats: {
-                    var provider = root.rawProviderById("mimo");
-                    return provider && provider.details ? (provider.details.stats || ({})) : ({});
-                }
-                pct: 0
-                iconColor: "#E8E8E8"
-                iconSource: Qt.resolvedUrl("../icons/mimo.svg")
-                iconText: "Mi"
-                stale: root.stale && root.panelShows("mimo")
-                visible: root.panelShows("mimo") && !root.showSettings
-                showCost: true
-                costText: mimoStats.totalTokens > 0 ? root.formatTokens(mimoStats.totalTokens) : "—"
-                tooltipText: {
-                    var sessions = Math.round(mimoStats.totalSessions || 0);
-                    var tokens = root.formatTokens(mimoStats.totalTokens || 0);
-                    return "MiMo Code\n" + i18n("%1 tokens", tokens) + " · " + i18np("%1 session", "%1 sessions", sessions);
-                }
+            LocalActivityPanelSlot {
+                rootItem: root
+                providerId: "mimo"
+            }
+
+            LocalActivityPanelSlot {
+                rootItem: root
+                providerId: "junie"
             }
 
             PanelSlot {
@@ -3529,6 +3510,9 @@ PlasmoidItem {
 
                             if (tab === "cline")
                                 return i18n("Cline Stats");
+
+                            if (tab === "junie")
+                                return i18n("Junie Usage");
 
                             if (tab === "mimo")
                                 return i18n("MiMo Code Usage");
@@ -3906,6 +3890,14 @@ PlasmoidItem {
                 providerLabel: "MiMo Code"
                 providerIcon: "mimo.svg"
                 accent: "#E8E8E8"
+            }
+
+            OpenCodeTab {
+                rootItem: root
+                providerId: "junie"
+                providerLabel: "Junie"
+                providerIcon: "junie.svg"
+                accent: "#48e054"
             }
 
             UsageChart {

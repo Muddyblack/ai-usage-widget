@@ -37,6 +37,7 @@ SOURCE_REGISTRY: Final = (
     ("antigravity", "Antigravity"),
     ("mistral", "Mistral"),
     ("cursor", "Cursor"),
+    ("junie", "Junie"),
 )
 
 

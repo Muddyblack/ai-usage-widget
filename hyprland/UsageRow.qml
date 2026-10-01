@@ -9,6 +9,7 @@ ColumnLayout {
 
     property string label: ""
     property string detail: ""
+    property string note: ""
     property string resetText: ""
     property string countdownText: ""
     property real value: 0
@@ -156,6 +157,15 @@ ColumnLayout {
         text: row.detail
         color: "#94a3b8"
         font.pixelSize: 11
+        wrapMode: Text.WordWrap
+    }
+
+    Text {
+        visible: row.note !== ""
+        Layout.fillWidth: true
+        text: row.note
+        color: "#94a3b8"
+        font.pixelSize: 10
         wrapMode: Text.WordWrap
     }
 }

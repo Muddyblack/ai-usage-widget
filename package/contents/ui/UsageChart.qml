@@ -5,10 +5,17 @@ import QtQuick.Controls as QQC2
 import org.kde.plasma.plasmoid
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
+import "../code/OpenCodeUsage.js" as OpenCodeUsage
 
 Rectangle {
     id: usageChartContainer
     property Item rootItem
+    property bool persistSelection: true
+    property real referenceTime: {
+        rootItem.usageHistory;
+        return Date.now();
+    }
+    readonly property bool isTokens: (rootItem.currentChartWindow() || {}).unit === "tokens"
 
     readonly property bool isAntigravity: (rootItem.enabledTabs[rootItem.activeTab] || "") === "antigravity"
     readonly property bool hasModelFilter: isAntigravity && (rootItem.antigravityGooglePct !== undefined || rootItem.antigravityExternalPct !== undefined)
@@ -67,7 +74,7 @@ Rectangle {
                 }
                 if (oldestT === 0)
                     return false;
-                var now_ms = new Date().getTime();
+                var now_ms = usageChartContainer.referenceTime;
                 var winSize = rootItem.getChartWindowSize();
                 var maxT = now_ms - rootItem.chartTimeOffset;
                 var minT = maxT - winSize;
@@ -82,6 +89,7 @@ Rectangle {
             }
             MouseArea {
                 id: leftNavMouse
+                objectName: "chartPrevious"
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: parent.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -93,6 +101,7 @@ Rectangle {
 
         // Center label showing current range
         PlasmaComponents.Label {
+            objectName: "chartDateRange"
             text: rootItem.getChartRangeText()
             font.pixelSize: 10
             font.bold: true
@@ -117,6 +126,7 @@ Rectangle {
             }
             MouseArea {
                 id: rightNavMouse
+                objectName: "chartNext"
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: parent.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -166,12 +176,14 @@ Rectangle {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         rootItem.chartWindow = modelData.id;
-                        Plasmoid.configuration.chartWindow = modelData.id;
+                        if (usageChartContainer.persistSelection)
+                            Plasmoid.configuration.chartWindow = modelData.id;
                         // Remember the granularity so it carries to other tabs
                         var gran = modelData.granularity;
                         if (gran !== "") {
                             rootItem.chartGranularity = gran;
-                            Plasmoid.configuration.chartGranularity = gran;
+                            if (usageChartContainer.persistSelection)
+                                Plasmoid.configuration.chartGranularity = gran;
                         }
                     }
                 }
@@ -273,6 +285,8 @@ Rectangle {
     }
     function chartYLabel(fraction) {
         var win = rootItem.currentChartWindow();
+        if (usageChartContainer.isTokens)
+            return OpenCodeUsage.compactTokens(chartMaxRaw * fraction);
         if (win && win.raw) {
             if (win.key === "mv" || rootItem.chartWindow.indexOf("mistral") === 0)
                 return chartMaxRaw > 0 ? "$" + (chartMaxRaw * fraction).toFixed(2) : "";
@@ -301,6 +315,7 @@ Rectangle {
         anchors.right: chartCanvas.left
         anchors.rightMargin: 4
         y: chartCanvas.y + 2
+        objectName: "chartAxisMax"
         text: usageChartContainer.chartYLabel(1.0)
         font.pixelSize: 10
         opacity: 1.0
@@ -327,6 +342,7 @@ Rectangle {
 
     Canvas {
         id: chartCanvas
+        objectName: "usageChartCanvas"
         anchors.top: parent.top
         anchors.bottom: xAxisRow.top
         anchors.left: parent.left
@@ -350,7 +366,11 @@ Rectangle {
         property var scrubRestPt: null
         property real scrubTimestamp: 0
 
-        onHistoryChanged: requestPaint()
+        onHistoryChanged: {
+            scrubIndex = -1;
+            scrubTimestamp = 0;
+            requestPaint();
+        }
         onGeminiHistoryChanged: requestPaint()
         onRestHistoryChanged: requestPaint()
         onIsBothChanged: requestPaint()
@@ -414,7 +434,7 @@ Rectangle {
             ctx.clearRect(0, 0, width, height);
 
             var w = width, h = height;
-            var now_ms = new Date().getTime();
+            var now_ms = usageChartContainer.referenceTime;
             var maxT = now_ms - rootItem.chartTimeOffset;
             var minT = maxT - rootItem.getChartWindowSize();
             var tRange = rootItem.getChartWindowSize();
@@ -640,10 +660,11 @@ Rectangle {
         // ── Hover scrub ──────────────────────────────────────
         MouseArea {
             id: scrubArea
+            objectName: "usageChartScrub"
             anchors.fill: parent
             hoverEnabled: true
             onPositionChanged: function (mouse) {
-                var now_ms = new Date().getTime();
+                var now_ms = usageChartContainer.referenceTime;
                 var maxT = now_ms - rootItem.chartTimeOffset;
                 var tRange = rootItem.getChartWindowSize();
                 var minT = maxT - tRange;
@@ -701,6 +722,7 @@ Rectangle {
             // Custom tooltip positioned near the scrub dot
             Rectangle {
                 id: scrubTooltip
+                objectName: "usageChartTooltip"
                 visible: chartCanvas.scrubIndex >= 0
                 color: Qt.rgba(0, 0, 0, 0.72)
                 border.color: Qt.rgba(1, 1, 1, 0.10)
@@ -710,7 +732,7 @@ Rectangle {
                 height: (chartCanvas.isBoth ? bothTooltipRow.implicitHeight : tooltipRow.implicitHeight) + 8
 
                 property real dotX: {
-                    var now_ms = new Date().getTime();
+                    var now_ms = usageChartContainer.referenceTime;
                     var maxT = now_ms - rootItem.chartTimeOffset;
                     var tRange = rootItem.getChartWindowSize();
                     var minT = maxT - tRange;
@@ -745,12 +767,15 @@ Rectangle {
                     spacing: 0
 
                     PlasmaComponents.Label {
+                        objectName: "chartHoverValue"
                         text: {
                             var pts = chartCanvas.history;
                             if (chartCanvas.scrubIndex < 0 || !pts || chartCanvas.scrubIndex >= pts.length)
                                 return "";
                             var pt = pts[chartCanvas.scrubIndex];
                             var win = rootItem.currentChartWindow();
+                            if (usageChartContainer.isTokens)
+                                return i18n("%1 tokens", Number(pt.raw || 0).toLocaleString(Qt.locale(), "f", 0));
                             if (win && win.raw) {
                                 if (win.key === "mv" || rootItem.chartWindow.indexOf("mistral") === 0)
                                     return "$" + (pt.raw !== undefined ? pt.raw : 0).toFixed(4);
@@ -768,7 +793,10 @@ Rectangle {
                             var pts = chartCanvas.history;
                             if (chartCanvas.scrubIndex < 0 || !pts || chartCanvas.scrubIndex >= pts.length)
                                 return "";
-                            return "  ·  " + Qt.formatDateTime(new Date(pts[chartCanvas.scrubIndex].t), "MMM d, hh:mm");
+                            var point = pts[chartCanvas.scrubIndex];
+                            if (usageChartContainer.isTokens)
+                                return "  ·  " + Qt.formatDate(new Date(point.t), "MMM d") + (point.endDate ? " – " + Qt.formatDate(new Date(OpenCodeUsage.dayTimestamp(point.endDate)), "MMM d") : "");
+                            return "  ·  " + Qt.formatDateTime(new Date(point.t), "MMM d, hh:mm");
                         }
                         font.pixelSize: 11
                         color: Kirigami.Theme.textColor
@@ -859,6 +887,8 @@ Rectangle {
 
         function formatLabel(timestamp) {
             var d = new Date(timestamp);
+            if (usageChartContainer.isTokens)
+                return Qt.formatDate(d, "MMM d");
             if (hourlyWindow)
                 return Qt.formatTime(d, "hh:mm");
             // wide window: stack date over time so labels stay narrow
@@ -869,7 +899,7 @@ Rectangle {
         // so the endpoint hides and the (more meaningful) reset time wins.
         function endpointCrowded(endpointFrac) {
             var resets = usageChartContainer.resetTimestamps;
-            var now_ms = new Date().getTime();
+            var now_ms = usageChartContainer.referenceTime;
             var winSize = rootItem.getChartWindowSize();
             var minT = (now_ms - rootItem.chartTimeOffset) - winSize;
             for (var i = 0; i < resets.length; i++) {
@@ -893,7 +923,7 @@ Rectangle {
                 PlasmaComponents.Label {
                     visible: !xAxisRow.endpointCrowded(parent.frac)
                     text: {
-                        var now_ms = new Date().getTime();
+                        var now_ms = usageChartContainer.referenceTime;
                         var maxT = now_ms - rootItem.chartTimeOffset;
                         var winSize = rootItem.getChartWindowSize();
                         var minT = maxT - winSize;
@@ -926,7 +956,7 @@ Rectangle {
             model: usageChartContainer.resetTimestamps
             delegate: PlasmaComponents.Label {
                 readonly property real frac: {
-                    var now_ms = new Date().getTime();
+                    var now_ms = usageChartContainer.referenceTime;
                     var winSize = rootItem.getChartWindowSize();
                     var maxT = now_ms - rootItem.chartTimeOffset;
                     var minT = maxT - winSize;

@@ -27,12 +27,21 @@ ColumnLayout {
     readonly property var stats: details.stats || ({})
     readonly property bool available: stats.available === true
     readonly property bool goMode: details.accountMode === "go"
-    readonly property string accountModeLabel: providerId === "mimo" ? providerLabel : (goMode ? i18n("OpenCode Go") : i18n("OpenCode Zen"))
+    readonly property string accountModeLabel: providerId !== "opencode" ? providerLabel : (goMode ? i18n("OpenCode Go") : i18n("OpenCode Zen"))
     // Official OpenCode brand color (from opencode.ai logo — light pixel blocks)
     property color accent: "#B7B1B1"
     visible: rootItem.enabledTabs[rootItem.activeTab] === tab.providerId && !rootItem.showSettings
     Layout.fillWidth: true
     spacing: 8
+
+    PlasmaComponents.Label {
+        visible: tab.details.tokensPartial === true
+        Layout.fillWidth: true
+        text: i18n("Some token buckets are missing; totals include recorded tokens only.")
+        color: Kirigami.Theme.neutralTextColor
+        font.pixelSize: 10
+        wrapMode: Text.WordWrap
+    }
 
     // ── Empty state ─────────────────────────────────────────────────────────
     PlasmaComponents.Label {
@@ -40,7 +49,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.topMargin: 8
         horizontalAlignment: Text.AlignHCenter
-        text: tab.providerId === "mimo" ? i18n("No local MiMo Code usage yet. Account quota is unavailable.") : i18n("No OpenCode sessions yet.\nZen activity is device-local and does not report account quota. Run a local session to see usage from its SQLite database.")
+        text: tab.providerId !== "opencode" ? i18n("No local %1 token usage yet. Run a CLI session to see activity.", tab.providerLabel) : i18n("No OpenCode sessions yet.\nZen activity is device-local and does not report account quota. Run a local session to see usage from its SQLite database.")
         font.pixelSize: 11
         opacity: 0.9
         color: Kirigami.Theme.textColor
@@ -125,7 +134,7 @@ ColumnLayout {
     PlasmaComponents.Label {
         visible: tab.goMode && tab.available
         Layout.fillWidth: true
-        text: tab.providerId === "mimo" ? i18n("Local MiMo Code activity") : i18n("Local OpenCode activity")
+        text: i18n("Local %1 activity", tab.providerLabel)
         font.pixelSize: 10
         font.bold: true
         opacity: 0.65
@@ -235,11 +244,10 @@ ColumnLayout {
 
     // ── Daily token usage chart: at the bottom, like UsageChart on other tabs ──
     OpenCodeUsageChart {
-        visible: tab.available
+        visible: tab.available && rootItem.showUsageChart
         stats: tab.stats
         accent: tab.accent
         cardColor: rootItem.resolvedCardBg
-        formatTokens: rootItem.formatTokens
     }
 
     component StatTile: StatTileBase {

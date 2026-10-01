@@ -507,10 +507,9 @@ ColumnLayout {
             wrapMode: Text.WordWrap
         }
 
-        // OpenCode Zen reports no plan windows, so its Usage tab gets the
-        // daily token chart instead of the quota history (as on Plasma).
+        // Local ledgers use the same navigable chart, with a token scale.
         OpenCodeUsageChart {
-            visible: (shell.activeId === "opencode" || shell.activeId === "mimo") && shell.activeProvider() !== null && ((shell.activeProvider().details || {}).stats || {}).available === true
+            visible: (shell.activeId === "opencode" || shell.activeId === "mimo" || shell.activeId === "junie") && shell.settings.showChart && shell.activeProvider() !== null && ((shell.activeProvider().details || {}).stats || {}).available === true
             shell: content.shell
             stats: shell.activeProvider() ? ((shell.activeProvider().details || {}).stats || ({})) : ({})
             accent: shell.activeAccent
