@@ -49,6 +49,11 @@
                 --replace-fail 'PY_DEFAULT="python3"' \
                                'PY_DEFAULT="${pkgs.python3}/bin/python3"'
 
+              # Plasma's refresh deadline must also work with the session PATH.
+              substituteInPlace "$root/contents/ui/UsageRefresh.qml" \
+                --replace-fail 'property string timeoutExecutable: "timeout"' \
+                               'property string timeoutExecutable: "${pkgs.coreutils}/bin/timeout"'
+
               # Register icon in hicolor theme so Plasma Widget Explorer picks it up
               mkdir -p "$out/share/icons/hicolor/scalable/apps"
               cp package/contents/icons/org.muddyblack.aiUsageWidget.svg "$out/share/icons/hicolor/scalable/apps/org.muddyblack.aiUsageWidget.svg"

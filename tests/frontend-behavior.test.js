@@ -7,7 +7,6 @@ const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
 const UsageHistory = require("../package/contents/code/UsageHistory.js");
 const SessionSources = require("../package/contents/code/SessionSources.js");
-const RequestGeneration = require("../package/contents/code/RequestGeneration.js");
 const PanelColor = require("../package/contents/code/PanelColor.js");
 const rootDir = path.resolve(__dirname, "..");
 const staleStateFixtures = require("./behavior/stale-state.json");
@@ -109,7 +108,6 @@ function replaySnapshotState(cases) {
     const context = {
         root,
         UsageHistory,
-        RequestGeneration,
         offlineRetryTimer: root.offlineRetryTimer,
         backoffTimer: root.backoffTimer,
         i18n: root.i18n,

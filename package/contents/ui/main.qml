@@ -8,7 +8,6 @@ import org.kde.plasma.plasmoid
 import "../code/FeatureTabs.js" as FeatureTabs
 import "../code/Format.js" as Format
 import "../code/PanelRotation.js" as PanelRotation
-import "../code/RequestGeneration.js" as RequestGeneration
 import "../code/Shell.js" as Shell
 import "../code/UsageHistory.js" as UsageHistory
 
@@ -1666,12 +1665,6 @@ PlasmoidItem {
         return env + root.scriptPath("get-ai-usage") + " --save-snapshot --provider " + root.shellQuote(ids.join(","));
     }
 
-    // The newest usage request generation. The executable DataSource cannot
-    // cancel a command in flight, so a slow response from an older refresh must
-    // not overwrite newer state; each command carries its generation as a
-    // trailing shell comment, invisible to the backend but preserved in `src`.
-    property int usageGeneration: 0
-
     // The last good envelope lives in the backend's private cache file (it
     // carries account labels, and Plasma rewrites the whole applet config on
     // every change). Every instance writes its answers there, so a widget that
@@ -2193,14 +2186,21 @@ PlasmoidItem {
     function refresh() {
         if (!root.providerDefaultsReady || root.providerDefaultsInitializing)
             return;
-        if (root.enabledTabs.length === 0)
-            return;
-
         if (root.backoffMs > 0)
             return;
-
         if (root.activeTab >= root.enabledTabs.length)
             root.activeTab = 0;
+        usageRefresh.refresh();
+    }
+
+    function usageCommand() {
+        if (!root.providerDefaultsReady || root.providerDefaultsInitializing)
+            return "";
+        if (root.enabledTabs.length === 0)
+            return "";
+
+        if (root.backoffMs > 0)
+            return "";
 
         // The active tab plus every pinned service: those are the only providers
         // whose data is on screen, so those are the only ones worth fetching.
@@ -2227,14 +2227,7 @@ PlasmoidItem {
         // it too, or the panel stays blank.
         if (root.panelTab !== "" && ids.indexOf(root.panelTab) < 0)
             ids.push(root.panelTab);
-        if (ids.length === 0)
-            return;
-
-        var cmd = root.backendCommand(ids);
-        root.usageGeneration = RequestGeneration.nextGeneration(root.usageGeneration);
-        cmd += " #gen=" + root.usageGeneration;
-        usageSource.disconnectSource(cmd);
-        usageSource.connectSource(cmd);
+        return ids.length > 0 ? root.backendCommand(ids) : "";
     }
 
     function refreshPricing() {
@@ -2754,16 +2747,15 @@ PlasmoidItem {
     // ── Provider data ────────────────────────────────────────────────────────
     // One source for every provider: the shared backend already returns the
     // active tab's and every pinned service's data in a single document.
-    CommandSource {
-        id: usageSource
+    UsageRefresh {
+        id: usageRefresh
 
-        onNewData: function (src, data) {
-            disconnectSource(src);
-            // Drop a response from a superseded refresh: only the newest
-            // generation may reach applySnapshot.
-            if (!RequestGeneration.isCurrent(RequestGeneration.generationOf(src), root.usageGeneration))
-                return;
-            root.applySnapshot((data["stdout"] || "").trim());
+        buildCommand: () => root.usageCommand()
+        onFinished: function (data) {
+            // Failed or timed-out commands retain the last good values and
+            // mark them stale through applySnapshot's existing error path.
+            var succeeded = data["exit code"] === 0 && data["exit status"] === 0;
+            root.applySnapshot(succeeded ? (data["stdout"] || "").trim() : "");
         }
     }
 

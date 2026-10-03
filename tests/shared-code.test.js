@@ -10,7 +10,6 @@ const SessionSources = require("../package/contents/code/SessionSources.js");
 const RefreshCoalescer = require("../package/contents/code/RefreshCoalescer.js");
 const ProjectInfoRequests = require("../package/contents/code/ProjectInfoRequests.js");
 const PanelColor = require("../package/contents/code/PanelColor.js");
-const RequestGeneration = require("../package/contents/code/RequestGeneration.js");
 const { execFileSync } = require("node:child_process");
 
 test("panel rotation is opt-in and only runs with multiple pins", () => {
@@ -1044,37 +1043,6 @@ test("quotes a path for the shell without losing a quote", () => {
     assert.equal(execFileSync("/bin/sh", ["-c", cmd], { encoding: "utf8" }), "/home/u/it's a dir/get-ai-usage");
 });
 
-test("request generations advance monotonically and reject stale responses", () => {
-    let generation = 0;
-    generation = RequestGeneration.nextGeneration(generation);
-    assert.equal(generation, 1);
-    generation = RequestGeneration.nextGeneration(generation);
-    assert.equal(generation, 2);
-    // A late response from the first refresh must not be applied.
-    assert.equal(RequestGeneration.isCurrent(1, generation), false);
-    assert.equal(RequestGeneration.isCurrent(2, generation), true);
-    // A corrupt/negative counter restarts rather than sticking at zero.
-    assert.equal(RequestGeneration.nextGeneration(-5), 1);
-    assert.equal(RequestGeneration.nextGeneration("x"), 1);
-});
-
-test("extracts a tagged generation and treats an untagged response as current", () => {
-    assert.equal(RequestGeneration.generationOf("env ... get-ai-usage --provider claude #gen=7"), 7);
-    assert.equal(RequestGeneration.generationOf("get-ai-usage --provider claude"), 0);
-    assert.equal(RequestGeneration.generationOf(null), 0);
-    // A legacy untagged caller carries generation 0, matching a zeroed counter.
-    assert.equal(RequestGeneration.isCurrent(RequestGeneration.generationOf("plain cmd"), 0), true);
-});
-
-test("the generation tag is a shell no-op and survives into the source string", () => {
-    // The tag rides as a trailing shell comment: the backend never sees it,
-    // but Plasma keeps the whole command as `src`, so generationOf can read it.
-    const cmd = 'printf %s done #gen=5';
-    const output = execFileSync("/bin/sh", ["-c", cmd], { encoding: "utf8" });
-    assert.equal(output, "done");
-    assert.equal(RequestGeneration.generationOf(cmd), 5);
-});
-
 test("a failed pricing refresh triggers no usage work", () => {
     assert.equal(RefreshCoalescer.nextAction(false, false, false), "none");
     assert.equal(RefreshCoalescer.nextAction(false, true, false), "none");
@@ -1225,11 +1193,11 @@ test("Hyprland and Plasma share one refresh/session policy instead of duplicatin
     assert.match(hyprland, /SessionRefreshPolicy\.refreshDelayMs/);
     assert.match(plasmaSessions, /SessionRefreshPolicy\.RECONCILE_INTERVAL_MS/);
     assert.match(hyprland, /SessionRefreshPolicy\.cacheExpired/);
-    // Hyprland coalesces the pricing-triggered usage refresh through the shared
-    // rule. Plasma's executable engine gives no reliable "running" signal, so
-    // it refreshes and lets the request generation drop the superseded answer.
+    // Hyprland coalesces pricing-triggered refreshes through the shared rule.
+    // Plasma delegates all usage refreshes to its serialized command runner.
     assert.match(hyprland, /RefreshCoalescer\.nextAction/);
-    assert.match(plasmaShell, /RequestGeneration\.isCurrent/);
+    assert.match(plasmaShell, /UsageRefresh\s*\{/);
+    assert.match(plasmaShell, /usageRefresh\.refresh\(\)/);
     // Neither reimplements the interval as a literal.
     assert.doesNotMatch(hyprland, /600000/);
 });
