@@ -2186,6 +2186,8 @@ PlasmoidItem {
     function refresh() {
         if (!root.providerDefaultsReady || root.providerDefaultsInitializing)
             return;
+        if (root.backoffMs > 0)
+            return;
         if (root.activeTab >= root.enabledTabs.length)
             root.activeTab = 0;
         usageRefresh.refresh();

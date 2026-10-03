@@ -29,10 +29,11 @@ Item {
         activeCommand = command;
         generation += 1;
         // The deadline belongs to the process, so even a blocked UI cannot
-        // keep a backend alive indefinitely. KILL stops the whole process
-        // group, including helpers that ignore TERM. Keep an outer shell:
+        // keep a backend alive indefinitely. KILL (-s works on both GNU and
+        // BusyBox timeout) stops the whole process group, including helpers
+        // that ignore TERM. Keep an outer shell:
         // deleting the DataSource must not kill the timeout supervisor itself.
-        activeSource = Shell.quote(timeoutExecutable) + " --signal=KILL " + Math.max(0.01, timeoutSeconds) + "s /bin/sh -c " + Shell.quote(command) + "; exit $? #gen=" + generation;
+        activeSource = Shell.quote(timeoutExecutable) + " -s KILL " + Math.max(0.01, timeoutSeconds) + "s /bin/sh -c " + Shell.quote(command) + "; exit $? #gen=" + generation;
         source.connectSource(activeSource);
     }
 
