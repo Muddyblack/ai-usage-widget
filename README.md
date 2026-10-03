@@ -183,6 +183,7 @@ Subscription limits and remaining account quota are not available.
 |---|---|
 | KDE Plasma 6.0+ | `X-Plasma-API-Minimum-Version: 6.0`. Needed for the widget only — the Hyprland shell and the [terminal frontend](docs/cli.md) run without it |
 | `plasma5support` | Provides the `executable` DataEngine for running the backend |
+| GNU coreutils (`timeout`) | Bounds each Plasma usage refresh to 60 seconds. Refreshes run one at a time; requests arriving during a refresh are combined into one follow-up |
 | Python 3.8+ | Runs the shared provider backend (standard library only, no `pip install`). Auto-detected from PATH as `python3`, a versioned `python3.x`, or bare `python`. To pin a specific interpreter — a virtualenv, a non-standard prefix — set it under **Settings → Advanced → Python**, or export `$PYTHON3`. NixOS installs need no PATH entry at all: the flake pins the interpreter at build time |
 
 ---
