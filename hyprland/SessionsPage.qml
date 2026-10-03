@@ -126,6 +126,8 @@ ColumnLayout {
         var iconDir = shell.iconDir || (Qt.resolvedUrl("../package/contents/icons/").toString());
         if (id === "codex")
             return iconDir + "codex.svg";
+        if (id === "junie")
+            return iconDir + "junie.svg";
         if (id === "mimo")
             return iconDir + "mimo.svg";
         if (id === "opencode")
@@ -173,6 +175,7 @@ ColumnLayout {
             "grok": "#ef4444",
             "opencode": "#B7B1B1",
             "mimo": "#E8E8E8",
+            "junie": "#48e054",
             "cursor": "#e6e6e6",
             "copilot": "#8b5cf6",
             "kimi": "#1e3a8a",

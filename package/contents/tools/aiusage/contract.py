@@ -35,6 +35,7 @@ PROVIDER_ICONS = {
     "ollama": "ollama.svg",
     "opencode": "opencode-color.svg",
     "mimo": "mimo.svg",
+    "junie": "junie.svg",
     "selfhosted": "local-models.svg",
     "openrouter": "openrouter.svg",
     "zai": "zai.svg",

@@ -30,11 +30,12 @@ ALL_PROVIDERS = [
     "cline",
     "opencode",
     "mimo",
+    "junie",
 ]
 
 # Legacy classification: what a missing toggle means in settings that have
 # not had the zero-default policy applied (providerDefaultsApplied unset).
-OPT_IN_PROVIDERS = {"zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo", "ollama", "selfhosted"}
+OPT_IN_PROVIDERS = {"zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo", "junie", "ollama", "selfhosted"}
 PROVIDER_DEFAULTS_LATCH = "providerDefaultsApplied"
 
 _KEY_EXPORTS = [

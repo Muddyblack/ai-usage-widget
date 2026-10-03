@@ -27,6 +27,7 @@ AUTO_DETECT_PROVIDERS = (
     "cline",
     "opencode",
     "mimo",
+    "junie",
 )
 
 # Command names each provider's tools install. A desktop application (see
@@ -43,6 +44,7 @@ _EXECUTABLES = {
     "cline": ("cline",),
     "opencode": ("opencode",),
     "mimo": ("mimo",),
+    "junie": ("junie",),
 }
 
 # Desktop application names: the .desktop id on Linux, the bundle name on

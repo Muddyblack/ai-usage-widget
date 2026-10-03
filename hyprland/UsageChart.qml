@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
 import "../package/contents/code/UsageHistory.js" as UsageHistory
+import "../package/contents/code/OpenCodeUsage.js" as OpenCodeUsage
 
 // Usage-history chart, ported from the Plasma UsageChart. Self-contained:
 // feed it the unified history array plus the window list for the active tab.
@@ -11,6 +12,12 @@ Rectangle {
     // Full unified history: [{t, s?, w?, cp?, cw?, kr?, ag?, agg?, age?, or?, mv?, gr?, za?, gh?, ds?}]
     property var shell
     property var usageHistory: []
+    property var dailySeries: []
+    property real referenceTime: {
+        usageHistory;
+        return Date.now();
+    }
+    readonly property bool isTokens: currentWindow !== null && currentWindow.unit === "tokens"
     // Chart ranges for the active tab, straight from the provider contract:
     // [{id, key, label, size, granularity, raw, resets}] (size in ms)
     property var windows: []
@@ -61,7 +68,7 @@ Rectangle {
 
     function extractSeries(key, fallbackKey) {
         var out = [];
-        var now_ms = new Date().getTime();
+        var now_ms = chart.referenceTime;
         var maxT = now_ms - chart.chartTimeOffset;
         var minT = maxT - chart.windowSize;
         for (var i = 0; i < usageHistory.length; i++) {
@@ -86,8 +93,10 @@ Rectangle {
 
     // {t, v[, raw]} view of the selected series inside the visible window
     readonly property var series: {
+        if (isTokens)
+            return OpenCodeUsage.chartSeries(chartWindow, dailySeries, referenceTime, chartTimeOffset);
         var out = [];
-        var now_ms = new Date().getTime();
+        var now_ms = chart.referenceTime;
         var maxT = now_ms - chart.chartTimeOffset;
         var minT = maxT - chart.windowSize;
         for (var i = 0; i < usageHistory.length; i++) {
@@ -167,6 +176,8 @@ Rectangle {
     }
 
     function chartYLabel(fraction) {
+        if (isTokens)
+            return OpenCodeUsage.compactTokens(chartMaxRaw * fraction);
         if (isCost) {
             var symbol = currency === "CNY" ? "¥" : (currency === "USD" || historyKey === "mv" ? "$" : "");
             return chartMaxRaw > 0 ? symbol + (chartMaxRaw * fraction).toFixed(2) + (symbol === "" && currency !== "" ? " " + currency : "") : "";
@@ -175,7 +186,7 @@ Rectangle {
     }
 
     function rangeText() {
-        var now_ms = new Date().getTime();
+        var now_ms = chart.referenceTime;
         var maxT = now_ms - chartTimeOffset;
         var minT = maxT - windowSize;
         var minDate = new Date(minT);
@@ -241,7 +252,7 @@ Rectangle {
                 }
                 if (oldestT === 0)
                     return false;
-                var now_ms = new Date().getTime();
+                var now_ms = chart.referenceTime;
                 var minT = (now_ms - chart.chartTimeOffset) - chart.windowSize;
                 return minT > oldestT;
             }
@@ -254,6 +265,7 @@ Rectangle {
             }
             MouseArea {
                 id: leftNavMouse
+                objectName: "chartPrevious"
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: parent.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -262,6 +274,7 @@ Rectangle {
         }
 
         Text {
+            objectName: "chartDateRange"
             text: chart.rangeText()
             font.pixelSize: 9
             font.bold: true
@@ -285,6 +298,7 @@ Rectangle {
             }
             MouseArea {
                 id: rightNavMouse
+                objectName: "chartNext"
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: parent.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -421,6 +435,7 @@ Rectangle {
         anchors.right: chartCanvas.left
         anchors.rightMargin: 4
         y: chartCanvas.y + 2
+        objectName: "chartAxisMax"
         text: chart.chartYLabel(1.0)
         font.pixelSize: 9
         opacity: 0.35
@@ -447,6 +462,7 @@ Rectangle {
 
     Canvas {
         id: chartCanvas
+        objectName: "usageChartCanvas"
         anchors.top: parent.top
         anchors.bottom: xAxisRow.top
         anchors.left: parent.left
@@ -467,7 +483,11 @@ Rectangle {
         property var scrubRestPt: null
         property real scrubTimestamp: 0
 
-        onHistoryChanged: requestPaint()
+        onHistoryChanged: {
+            scrubIndex = -1;
+            scrubTimestamp = 0;
+            requestPaint();
+        }
         onGeminiHistoryChanged: requestPaint()
         onRestHistoryChanged: requestPaint()
         onIsBothChanged: requestPaint()
@@ -484,7 +504,7 @@ Rectangle {
         onHeightChanged: requestPaint()
 
         readonly property bool climbingFast: {
-            var slope = chart.usageSlopePerHour(2 * 3600000);
+            var slope = chart.isTokens ? null : chart.usageSlopePerHour(2 * 3600000);
             return slope !== null && slope > 2;
         }
         SequentialAnimation on pulse {
@@ -524,7 +544,7 @@ Rectangle {
             ctx.clearRect(0, 0, width, height);
 
             var w = width, h = height;
-            var now_ms = new Date().getTime();
+            var now_ms = chart.referenceTime;
             var maxT = now_ms - chart.chartTimeOffset;
             var tRange = chart.windowSize;
             var minT = maxT - tRange;
@@ -749,10 +769,11 @@ Rectangle {
 
         MouseArea {
             id: scrubArea
+            objectName: "usageChartScrub"
             anchors.fill: parent
             hoverEnabled: true
             onPositionChanged: function (mouse) {
-                var now_ms = new Date().getTime();
+                var now_ms = chart.referenceTime;
                 var maxT = now_ms - chart.chartTimeOffset;
                 var tRange = chart.windowSize;
                 var minT = maxT - tRange;
@@ -809,6 +830,7 @@ Rectangle {
 
             Rectangle {
                 id: scrubTooltip
+                objectName: "usageChartTooltip"
                 visible: chartCanvas.scrubIndex >= 0
                 color: Qt.rgba(0, 0, 0, 0.72)
                 border.color: Qt.rgba(1, 1, 1, 0.10)
@@ -818,7 +840,7 @@ Rectangle {
                 height: (chartCanvas.isBoth ? bothTooltipRow.implicitHeight : tooltipRow.implicitHeight) + 8
 
                 property real dotX: {
-                    var now_ms = new Date().getTime();
+                    var now_ms = chart.referenceTime;
                     var maxT = now_ms - chart.chartTimeOffset;
                     var tRange = chart.windowSize;
                     var minT = maxT - tRange;
@@ -853,11 +875,14 @@ Rectangle {
                     spacing: 0
 
                     Text {
+                        objectName: "chartHoverValue"
                         text: {
                             var pts = chartCanvas.history;
                             if (chartCanvas.scrubIndex < 0 || !pts || chartCanvas.scrubIndex >= pts.length)
                                 return "";
                             var pt = pts[chartCanvas.scrubIndex];
+                            if (chart.isTokens)
+                                return chart.shell.i18n("%1 tokens", Number(pt.raw || 0).toLocaleString(Qt.locale(), "f", 0));
                             if (chart.isCost) {
                                 var value = (pt.raw !== undefined ? pt.raw : 0).toFixed(4);
                                 if (chart.currency === "CNY")
@@ -877,7 +902,10 @@ Rectangle {
                             var pts = chartCanvas.history;
                             if (chartCanvas.scrubIndex < 0 || !pts || chartCanvas.scrubIndex >= pts.length)
                                 return "";
-                            return "  ·  " + Qt.formatDateTime(new Date(pts[chartCanvas.scrubIndex].t), "MMM d, hh:mm");
+                            var point = pts[chartCanvas.scrubIndex];
+                            if (chart.isTokens)
+                                return "  ·  " + Qt.formatDate(new Date(point.t), "MMM d") + (point.endDate ? " – " + Qt.formatDate(new Date(OpenCodeUsage.dayTimestamp(point.endDate)), "MMM d") : "");
+                            return "  ·  " + Qt.formatDateTime(new Date(point.t), "MMM d, hh:mm");
                         }
                         font.pixelSize: 11
                         color: "#f8fafc"
@@ -966,6 +994,8 @@ Rectangle {
 
         function formatLabel(timestamp) {
             var d = new Date(timestamp);
+            if (chart.isTokens)
+                return Qt.formatDate(d, "MMM d");
             if (hourlyWindow)
                 return Qt.formatTime(d, "hh:mm");
             return Qt.formatDate(d, "MMM d") + "\n" + Qt.formatTime(d, "hh:mm");
@@ -973,7 +1003,7 @@ Rectangle {
 
         function endpointCrowded(endpointFrac) {
             var resets = chart.resetTimestamps;
-            var now_ms = new Date().getTime();
+            var now_ms = chart.referenceTime;
             var minT = (now_ms - chart.chartTimeOffset) - chart.windowSize;
             for (var i = 0; i < resets.length; i++) {
                 var f = (resets[i] - minT) / chart.windowSize;
@@ -995,7 +1025,7 @@ Rectangle {
                 Text {
                     visible: !xAxisRow.endpointCrowded(parent.frac)
                     text: {
-                        var now_ms = new Date().getTime();
+                        var now_ms = chart.referenceTime;
                         var maxT = now_ms - chart.chartTimeOffset;
                         var minT = maxT - chart.windowSize;
                         return xAxisRow.formatLabel(minT + chart.windowSize * parent.frac);
@@ -1025,7 +1055,7 @@ Rectangle {
             model: chart.resetTimestamps
             delegate: Text {
                 readonly property real frac: {
-                    var now_ms = new Date().getTime();
+                    var now_ms = chart.referenceTime;
                     var maxT = now_ms - chart.chartTimeOffset;
                     var minT = maxT - chart.windowSize;
                     return (modelData - minT) / chart.windowSize;

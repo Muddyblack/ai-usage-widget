@@ -6,6 +6,7 @@ from .copilot import normalize_copilot
 from .cursor import normalize_cursor
 from .deepseek import normalize_deepseek
 from .grok import normalize_grok
+from .junie import normalize_junie
 from .kiro import normalize_kiro
 from .mimo import normalize_mimo
 from .mistral import normalize_mistral
@@ -37,6 +38,7 @@ _DISPATCH = {
     "cline": normalize_cline,
     "opencode": normalize_opencode,
     "mimo": normalize_mimo,
+    "junie": normalize_junie,
 }
 
 

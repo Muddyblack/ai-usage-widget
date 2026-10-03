@@ -464,13 +464,16 @@ _OPENCODE_BILLED = ("opencode", "opencode-go")
 
 
 def opencode_stats(s, now, *, billed_providers=_OPENCODE_BILLED):
-    """Build one stable stats shape from OpenCode's local SQLite ledger."""
+    """Build shared activity stats from local session ledgers."""
     if not isinstance(s, dict):
         return {"available": False}
-    sessions = [row for row in (s.get("sessions") or []) if isinstance(row, dict)]
+    sessions = s.get("sessions")
+    sessions = [row for row in sessions if isinstance(row, dict)] if isinstance(sessions, list) else []
     sessions = [row for row in sessions if row.get("id") or row.get("usage")]
     filtered_sessions = []
     for session in sessions:
+        if not isinstance(session.get("usage"), list):
+            continue
         usage = [
             row
             for row in (session.get("usage") or [])
@@ -506,8 +509,11 @@ def opencode_stats(s, now, *, billed_providers=_OPENCODE_BILLED):
     favorite = ""
     favorite_total = -1
 
-    def session_date(session):
-        timestamp = num(session.get("lastActivity")) or num(session.get("createdAt"))
+    def usage_timestamp(row, session):
+        return num(row.get("timestamp")) or num(session.get("lastActivity")) or num(session.get("createdAt"))
+
+    def usage_date(row, session):
+        timestamp = usage_timestamp(row, session)
         try:
             return datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d") if timestamp > 0 else ""
         except (OverflowError, OSError, ValueError):
@@ -517,12 +523,12 @@ def opencode_stats(s, now, *, billed_providers=_OPENCODE_BILLED):
         directory = session.get("directory") or ""
         if directory:
             workspaces[directory] = workspaces.get(directory, 0) + 1
-        date = session_date(session)
-        if date:
-            daily.setdefault(date, 0)
         session_buckets = [row for row in (session.get("usage") or []) if isinstance(row, dict)]
         all_buckets.extend(session_buckets)
         for row in session_buckets:
+            date = usage_date(row, session)
+            if date:
+                daily.setdefault(date, 0)
             provider = row.get("provider") or "unknown"
             model = row.get("model") or "unknown"
             key = f"{provider}/{model}"
@@ -582,8 +588,8 @@ def opencode_stats(s, now, *, billed_providers=_OPENCODE_BILLED):
             if row.get("costStatus") == "unavailable":
                 upstream_item["costStatus"] = "partial"
             cost_rows.append(row)
-            if tokens > favorite_total:
-                favorite, favorite_total = key, tokens
+            if item["total"] > favorite_total:
+                favorite, favorite_total = key, item["total"]
 
     daily_tokens = [{"date": date, "total": total} for date, total in sorted(daily.items()) if date]
     dates = [row["date"] for row in daily_tokens]
@@ -602,8 +608,9 @@ def opencode_stats(s, now, *, billed_providers=_OPENCODE_BILLED):
         ("30d", "Last 30 days", now - 30 * 86400),
         ("all", "All time", 0),
     ):
-        selected = [row for row in sessions if num(row.get("lastActivity")) >= since]
-        selected_rows = [bucket for row in selected for bucket in (row.get("usage") or []) if isinstance(bucket, dict)]
+        selected = [[bucket for bucket in session["usage"] if since <= usage_timestamp(bucket, session) <= now] for session in sessions]
+        selected = [buckets for buckets in selected if buckets]
+        selected_rows = [bucket for buckets in selected for bucket in buckets]
         periods.append(
             {
                 "key": key,

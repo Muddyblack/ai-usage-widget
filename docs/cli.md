@@ -81,3 +81,9 @@ limits, migration behavior, and platform differences.
 
 Claude needs no key — a local Claude Code login is enough. See
 [`providers.md`](providers.md) for what each of the others reads.
+
+
+Junie local usage is available with `get-ai-usage --provider junie` and
+`ai-usage-cli --provider junie`. It is marked untested, reads local CLI sessions,
+and exposes no account quota or billed dollar spend. See
+[Junie setup](providers.md#junie-cli-untested), including Google BYOK commands.

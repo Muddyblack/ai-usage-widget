@@ -83,17 +83,17 @@ final class SettingsStore: ObservableObject {
     /// Every provider id the backend knows, in the backend's own order.
     static let allProviders = [
         "claude", "antigravity", "openai", "kiro", "mistral", "openrouter", "ollama", "selfhosted",
-        "grok", "zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo",
+        "grok", "zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo", "junie",
     ]
 
     /// What a missing toggle means until providerDefaultsApplied is set (or
     /// when applying the defaults failed). Mirrors config.py:OPT_IN_PROVIDERS.
-    static let optInProviders: Set<String> = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo", "ollama", "selfhosted"]
+    static let optInProviders: Set<String> = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo", "junie", "ollama", "selfhosted"]
 
     /// Mirrors AUTO_DETECT_PROVIDERS in aiusage/detect.py: the providers
     /// detection can speak for. Every other provider is only switched by hand.
     static let autoDetectProviders: Set<String> = [
-        "claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode", "mimo",
+        "claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode", "mimo", "junie",
     ]
 
     /// The settings key of the API key that keeps a provider usable without

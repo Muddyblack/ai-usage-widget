@@ -30,6 +30,7 @@ ColumnLayout {
             resetText: modelData.resetText || ""
             countdownText: rows.countdown(modelData.resetAt || 0)
             detail: modelData.detail || ""
+            note: modelData.note || ""
             barColor: modelData.color || (rows.activeId === "antigravity" && (modelData.key === "external" || modelData.key === "rest" || (modelData.label && modelData.label.indexOf("Claude") !== -1)) ? "#34a853" : rows.accent)
             showMeter: modelData.showMeter !== false
         }

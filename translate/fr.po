@@ -78,65 +78,8 @@ msgid "No data"
 msgstr "Aucune donnée"
 
 #: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
-msgid "Usage trend"
-msgstr "Tendance d'utilisation"
-
-#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
-msgid "Daily usage"
-msgstr "Utilisation quotidienne"
-
-#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
-#: package/contents/ui/main.qml
-msgid "7D"
-msgstr "7 J"
-
-#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
-#: package/contents/ui/main.qml
-msgid "30D"
-msgstr "30 J"
-
-#: hyprland/OpenCodeUsageChart.qml hyprland/SpendTimelineChart.qml
-#: package/contents/ui/OpenCodeUsageChart.qml
-msgid "All"
-msgstr "Tout"
-
-#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
-msgid "Show OpenCode usage for %1"
-msgstr "Afficher l'utilisation d'OpenCode pour %1"
-
-#: hyprland/OpenCodeUsageChart.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/ClineTab.qml package/contents/ui/CursorTab.qml
-#: package/contents/ui/MuseTab.qml package/contents/ui/OpenCodeUsageChart.qml
-#: package/contents/ui/StatsSparkline.qml
-msgid "tokens"
-msgstr "jetons"
-
-#: hyprland/OpenCodeUsageChart.qml package/contents/ui/CopilotTab.qml
-#: package/contents/ui/OpenCodeUsageChart.qml
-msgid "sessions"
-msgstr "sessions"
-
-#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
-#: package/contents/ui/main.qml
-msgid "Last 7 days"
-msgstr "7 derniers jours"
-
-#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
-#: package/contents/ui/main.qml
-msgid "Last 30 days"
-msgstr "30 derniers jours"
-
-#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
-msgid "All time"
-msgstr "Tout l'historique"
-
-#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
-msgid "No daily usage in this range"
-msgstr "Aucune utilisation quotidienne dans cette plage"
-
-#: hyprland/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
-msgid "Daily OpenCode token usage"
-msgstr "Utilisation quotidienne des jetons OpenCode"
+msgid "Daily token usage"
+msgstr "Utilisation quotidienne des jetons"
 
 #: hyprland/OverviewPage.qml package/contents/ui/OverviewTab.qml
 msgid "Enable a provider in Settings to see it here."
@@ -876,6 +819,10 @@ msgstr "30j"
 msgid "90d"
 msgstr "90j"
 
+#: hyprland/SpendTimelineChart.qml package/contents/ui/OpenCodeUsageChart.qml
+msgid "All"
+msgstr "Tout"
+
 #: hyprland/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
 msgid "Limited history (%1 days recorded) — dashed line, not a smoothed trend."
 msgstr ""
@@ -951,7 +898,13 @@ msgstr ""
 "Aucune session Cline pour le moment.\n"
 "Lancez le CLI Cline : ses journaux de session dans ~/.cline apparaîtront ici."
 
-#: hyprland/StatsSection.qml package/contents/ui/OpenCodeTab.qml
+#: hyprland/StatsSection.qml
+msgid "No local Junie token usage yet. Run a CLI session to see activity."
+msgstr ""
+"Aucune utilisation locale de jetons Junie pour le moment. Lancez une session "
+"CLI pour voir l’activité."
+
+#: hyprland/StatsSection.qml
 msgid "No local MiMo Code usage yet. Account quota is unavailable."
 msgstr ""
 "Aucune utilisation locale de MiMo Code pour le moment. Le quota du compte "
@@ -1150,8 +1103,9 @@ msgstr "Requêtes / jour"
 msgid "Messages / day"
 msgstr "Messages / jour"
 
-#: hyprland/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/GrokTab.qml package/contents/ui/MistralTab.qml
+#: hyprland/StatsSection.qml hyprland/UsageChart.qml
+#: package/contents/ui/ClaudeTab.qml package/contents/ui/GrokTab.qml
+#: package/contents/ui/MistralTab.qml package/contents/ui/UsageChart.qml
 #: package/contents/ui/main.qml
 msgid "%1 tokens"
 msgstr "%1 jetons"
@@ -1524,6 +1478,12 @@ msgstr "Coût : %1"
 msgid "Total input+output tokens across all models (all time)"
 msgstr "Total des jetons entrée+sortie pour tous les modèles (toute période)"
 
+#: package/contents/ui/ClaudeTab.qml package/contents/ui/ClineTab.qml
+#: package/contents/ui/CursorTab.qml package/contents/ui/MuseTab.qml
+#: package/contents/ui/StatsSparkline.qml
+msgid "tokens"
+msgstr "jetons"
+
 #: package/contents/ui/ClaudeTab.qml
 msgid "Input: %1"
 msgstr "Entrée : %1"
@@ -1643,6 +1603,10 @@ msgstr "Réinitialisation"
 #: package/contents/ui/CopilotTab.qml
 msgid "next month"
 msgstr "le mois prochain"
+
+#: package/contents/ui/CopilotTab.qml
+msgid "sessions"
+msgstr "sessions"
 
 #: package/contents/ui/CopilotTab.qml
 msgid "messages"
@@ -2276,6 +2240,18 @@ msgid "OpenCode Zen"
 msgstr "OpenCode Zen"
 
 #: package/contents/ui/OpenCodeTab.qml
+msgid "Some token buckets are missing; totals include recorded tokens only."
+msgstr ""
+"Certains compteurs de jetons sont manquants ; les totaux incluent uniquement "
+"les jetons enregistrés."
+
+#: package/contents/ui/OpenCodeTab.qml
+msgid "No local %1 token usage yet. Run a CLI session to see activity."
+msgstr ""
+"Aucune utilisation locale de jetons %1 pour le moment. Lancez une session "
+"CLI pour voir l’activité."
+
+#: package/contents/ui/OpenCodeTab.qml
 msgid ""
 "No OpenCode sessions yet.\n"
 "Zen activity is device-local and does not report account quota. Run a local "
@@ -2302,12 +2278,8 @@ msgid "%1 · device-local · no account quota"
 msgstr "%1 · local à l'appareil · aucun quota de compte"
 
 #: package/contents/ui/OpenCodeTab.qml
-msgid "Local MiMo Code activity"
-msgstr "Activité MiMo Code locale"
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid "Local OpenCode activity"
-msgstr "Activité OpenCode locale"
+msgid "Local %1 activity"
+msgstr "Activité locale de %1"
 
 #: package/contents/ui/OpenCodeTab.qml
 msgctxt "stat label"
@@ -2756,6 +2728,14 @@ msgid "24H"
 msgstr "24 H"
 
 #: package/contents/ui/main.qml
+msgid "7D"
+msgstr "7 J"
+
+#: package/contents/ui/main.qml
+msgid "30D"
+msgstr "30 J"
+
+#: package/contents/ui/main.qml
 msgid "Gemini Models"
 msgstr "Modèles Gemini"
 
@@ -2800,6 +2780,14 @@ msgstr "Quota du forfait épuisé"
 #: package/contents/ui/main.qml
 msgid "Today"
 msgstr "Aujourd'hui"
+
+#: package/contents/ui/main.qml
+msgid "Last 7 days"
+msgstr "7 derniers jours"
+
+#: package/contents/ui/main.qml
+msgid "Last 30 days"
+msgstr "30 derniers jours"
 
 #: package/contents/ui/main.qml
 msgid "rolling 24h"
@@ -3306,6 +3294,10 @@ msgstr "Utilisation Cursor"
 #: package/contents/ui/main.qml
 msgid "Cline Stats"
 msgstr "Statistiques Cline"
+
+#: package/contents/ui/main.qml
+msgid "Junie Usage"
+msgstr "Utilisation de Junie"
 
 #: package/contents/ui/main.qml
 msgid "MiMo Code Usage"

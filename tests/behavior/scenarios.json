@@ -425,5 +425,73 @@
       }]
     },
     "expected": {"rowKeys": ["codex_session"], "panelText": ["100%"], "history": {"cp": 100}, "rowValues": [100]}
+  },
+  {
+    "name": "junie-local-untested",
+    "raw": {
+      "id": "junie",
+      "now": 1790841600,
+      "inputs": {
+        "usage": {
+          "sessions": [
+            {
+              "id": "session-fixture",
+              "createdAt": 1790841600,
+              "lastActivity": 1790841600,
+              "directory": "demo",
+              "usage": [
+                {
+                  "provider": "junie",
+                  "model": "gemini-test",
+                  "input": 100,
+                  "output": 20,
+                  "cacheRead": 40,
+                  "cacheWrite": 10,
+                  "timestamp": 1790841600,
+                  "tokensComplete": true,
+                  "costStatus": "unavailable"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "expected": {
+      "rowKeys": [
+        "today",
+        "7d",
+        "30d",
+        "all"
+      ],
+      "panelText": [
+        "170"
+      ],
+      "history": {},
+      "rowValues": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "name": "junie-missing-data",
+    "raw": {
+      "id": "junie",
+      "now": 1790841600,
+      "inputs": {
+        "usage": {}
+      }
+    },
+    "expected": {
+      "rowKeys": [],
+      "panelText": [
+        "\u2014"
+      ],
+      "history": {},
+      "rowValues": []
+    }
   }
 ]

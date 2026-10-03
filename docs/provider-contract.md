@@ -257,6 +257,9 @@ labels:
 | `opencode` | OpenCode |
 | `mimo` | MiMo Code |
 | `antigravity` | Antigravity |
+| `mistral` | Mistral |
+| `cursor` | Cursor |
+| `junie` | Junie |
 
 The command line accepts `--source <id[,id...]>` and
 `--source=<id[,id...]>`, only with `--sessions`. IDs are trimmed, validated
@@ -738,3 +741,23 @@ non-metered period rows. `details.accountMode` is `local`; `historyValues` and
 `chartWindows` are empty because no account quota endpoint is used. Session
 rows carry `source: "mimo"` and an opaque resume key for `mimo --session <id>`.
 Missing or unreadable databases produce an unavailable provider envelope.
+
+
+### Junie local activity (untested)
+
+`junie` uses the same `details.stats`, activity periods and non-metered windows
+as the other local ledgers. `details.untested: true` and the compact summary
+label its verification status. It emits no quota
+history or reset times. Missing token buckets are flagged by
+`details.tokensPartial`; only explicitly recorded non-negative integer counts
+contribute. Sessions without usage remain searchable, with no `tokens` field.
+
+Input, output, cache read and cache creation counts come from
+`SessionA2uxEvent.event.agentEvent` records whose `kind` is
+`LlmResponseMetadataEvent`, using each entry in `modelUsage` as a delta.
+Event timestamps determine daily and period totals; summary/index files never
+add a second copy of tokens. Standalone subagent transcripts are not counted.
+The stored `cost` lacks a currency and historical billing route, so
+`costStatus` stays `unavailable`, with no USD session cost or spend contribution.
+Session reopening uses `junie --session-id <id>` through an opaque resume key.
+See [Junie provider details](providers.md#junie-cli-untested) for paths and sources.

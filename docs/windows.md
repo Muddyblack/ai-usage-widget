@@ -331,3 +331,9 @@ the Settings page or an environment variable is the usual way in anyway.
 Every one of them can be pointed elsewhere with the provider's environment
 variable (`CURSOR_IDE_DB`, `KIRO_IDE_DB`, `KIRO_CLI_DB`, `MUSE_SESSIONS_DIR`, …)
 while a path is being confirmed.
+
+
+Junie is available as an **untested** local CLI provider, using `%USERPROFILE%\.junie\sessions`
+(or `$JUNIE_HOME/sessions`). It uses the shared activity and session views;
+account quota and billed spend are unavailable. See
+[Junie setup and BYOK](providers.md#junie-cli-untested).

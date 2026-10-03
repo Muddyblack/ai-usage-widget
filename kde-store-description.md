@@ -30,6 +30,7 @@ Switch between tabs in the popup for each service:
 [*] [b]Muse[/b] — Local Muse Code session stats with an offline spend estimate; plan windows behind an opt-in switch (Meta reports them only on a billed call, so it is off by default)
 [*] [b]Cursor[/b] [i](free plan tested)[/i] — Included usage, Auto/API split and on-demand spend, via the cursor-agent or Cursor IDE login
 [*] [b]OpenCode[/b] — Local token usage, costs and sessions in Zen mode; account usage windows in Go mode
+[*] [b]Junie (untested)[/b] — Local CLI token activity, model breakdowns and resumable sessions; account quota and billed spend are unavailable
 [*] [b]MiMo Code[/b] — Local token usage, model breakdowns, session history and recorded or estimated costs
 [*] [b]Ollama Cloud[/b] — Cloud usage windows, including weekly limits in the panel
 [*] [b]Local Models[/b] — Monitor Ollama, vLLM and llama.cpp servers, with automatic endpoint discovery and runtime or GPU metrics where available
@@ -43,7 +44,7 @@ Switch between tabs in the popup for each service:
 [*] [b]Period comparison[/b] — [i]"+12% vs last week"[/i] at the same point in the cycle
 [*] [b]Overview[/b] — see every enabled provider at a glance
 [*] [b]Usage & Spend[/b] — Provider-reported spend and local token-based cost estimates, with daily cost and token charts, expandable histories and 1-day / 7-day / 30-day / all-history timeframes. Labels distinguish actual costs, estimates, subscription-covered usage and free models
-[*] [b]Sessions[/b] — Recent local Claude Code, Codex, Grok CLI, Cline, OpenCode, MiMo Code, Antigravity and Muse activity, with search, pagination and source filters. Cached results remain visible during background refresh. View local title previews and resume supported sessions in your terminal (Muse has no resume command). Previews may contain sensitive text
+[*] [b]Sessions[/b] — Recent local Claude Code, Codex, Grok CLI, Cline, OpenCode, MiMo Code, Junie, Antigravity and Muse activity, with search, pagination and source filters. Cached results remain visible during background refresh. View local title previews and resume supported sessions in your terminal (Muse has no resume command). Previews may contain sensitive text
 [*] [b]Model pricing[/b] — Search cached model rates and refresh the pricing catalog from settings
 [*] [b]Provider detection[/b] — Automatically detects installed providers on fresh installs, with a manual detection button in settings
 [*] [b]Theme-aware[/b] — follows your Plasma accent by default, or flip on per-service brand colors
