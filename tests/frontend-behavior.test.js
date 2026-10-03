@@ -781,11 +781,14 @@ test("OpenCode usage chart range selects matching daily data and period summary"
     assert.ok(boundedAll.every((point, index) => index === 0 || boundedAll[index - 1].date < point.date));
     assert.equal(tab.periodForRange("all", periods).tokens, 1250);
     assert.equal(tab.periodForRange("all", periods).label, "All time");
-    assert.match(source, /7D/);
-    assert.match(source, /30D/);
-    assert.match(source, /key:\s*"all",\s*label:\s*i18n\("All"\)/);
+    // The range pills come from the shared window list; the chart itself is
+    // the shared UsageChart, so hover, navigation and axes are not redrawn here.
+    assert.deepEqual(Array.from(tab.chartWindows(series, now), window => window.label), ["7D", "30D", "All"]);
+    assert.match(source, /^UsageChart \{/m);
+    assert.match(source, /OpenCodeUsage\.chartWindows\(sourceSeries/);
+    assert.match(source, /OpenCodeUsage\.chartSeries\(chartWindow/);
     assert.match(source, /stats\.dailySeries && stats\.dailySeries\.length \? stats\.dailySeries : stats\.dailyTokens/);
-    assert.match(source, /SpendTimelineChart \{/);
+    assert.doesNotMatch(source, /Canvas \{/);
     assert.ok(tabSource.indexOf("OpenCodeUsageChart") > tabSource.indexOf("Secondary stats grid"));
 });
 
@@ -794,11 +797,10 @@ test("Hyprland and Windows show the same OpenCode daily chart on the Usage tab",
     const plasma = qmlSource("package/contents/ui/OpenCodeUsageChart.qml");
     const popup = qmlSource("hyprland/PopupContent.qml");
     for (const source of [chart, plasma]) {
-        assert.match(source, /OpenCodeUsage\.seriesForRange\(selectedRange/);
-        assert.match(source, /OpenCodeUsage\.periodForRange\(selectedRange/);
+        assert.match(source, /UsageChart \{/);
+        assert.match(source, /OpenCodeUsage\.chartWindows\(sourceSeries/);
         assert.match(source, /stats\.dailySeries && stats\.dailySeries\.length \? stats\.dailySeries : stats\.dailyTokens/);
     }
-    assert.match(chart, /showWindowPills: false/);
     assert.match(popup, /OpenCodeUsageChart \{\s*visible: \(shell\.activeId === "opencode" \|\| shell\.activeId === "mimo" \|\| shell\.activeId === "junie"\)[^\n]*stats \|\| \{\}\)\.available === true/);
     // Inside the Usage column, not the Stats sub-tab.
     assert.ok(popup.indexOf("OpenCodeUsageChart") < popup.indexOf("StatsSection {"));

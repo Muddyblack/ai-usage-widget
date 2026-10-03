@@ -3,6 +3,7 @@
 from ..stats import opencode_stats
 from .local_activity import normalize_local_activity
 
+
 def normalize_junie(raw):
     usage = raw["inputs"].get("usage")
     usage = usage if isinstance(usage, dict) else {}
