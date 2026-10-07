@@ -4,6 +4,7 @@ import QtQuick.Controls.Basic as QC
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import Quickshell.Wayland
 import "../../ui"
 import "../../ui/js/I18n.js" as I18n
 
@@ -55,6 +56,7 @@ ShellRoot {
         popupVisible: root.popupOpen
         pillControls: true
         interpreterControls: true
+        compositorGlassAvailable: true
         cliPath: root.repoDir + "/backend/sh/ai-usage-cli"
         // Connected outputs by name, for the settings page's monitor picker.
         screenNames: {
@@ -199,6 +201,9 @@ ShellRoot {
             color: "transparent"
             aboveWindows: true
             exclusiveZone: 0
+            // Our own name rather than Quickshell's default "quickshell", which
+            // other shells (Caelestia) share, so layer rules can target us alone.
+            WlrLayershell.namespace: "ai-usage-widget"
 
             anchors {
                 top: root.positionTop
@@ -339,6 +344,9 @@ ShellRoot {
                 color: "transparent"
                 aboveWindows: true
                 exclusiveZone: 0
+                // The blur itself is Hyprland's: hosts/quickshell/glass.conf
+                // matches only the -glass name, so it applies when switched on.
+                WlrLayershell.namespace: app.settings.compositorGlass === true ? "ai-usage-widget-glass" : "ai-usage-widget"
 
                 onVisibleChanged: {
                     // Only the popup that actually owns the open state may close it —
@@ -365,6 +373,7 @@ ShellRoot {
                 PopupBackground {
                     anchors.fill: parent
                     shell: app
+                    blurred: app.settings.compositorGlass === true
                 }
 
                 // The popup height is capped, but the settings page is far taller than

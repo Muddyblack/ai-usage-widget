@@ -27,6 +27,22 @@ settings are stored locally in
 `~/.config/ai-usage-widget/hyprland-settings.json` (or under
 `$XDG_CONFIG_HOME`).
 
+## Blur behind the popup
+
+The popup is drawn as translucent glass; Hyprland can blur what is behind it.
+Source the supplied layer rules from `hyprland.conf` (Hyprland 0.53+ syntax):
+
+```ini
+source = /path/to/ai-usage-widget/hosts/quickshell/glass.conf
+```
+
+then turn on *Settings → Panel → Blur*. The popup then uses the layer
+namespace `ai-usage-widget-glass`, which is all the rules match, and thins its
+fill so the blur shows through. The pill and the popup otherwise use
+`ai-usage-widget`, so rules of your own can target them without touching other
+Quickshell configurations such as Caelestia. The blur only costs anything while
+the popup is open.
+
 *Settings → Panel → Language* picks the panel's language and switches it on the
 spot. By default it follows `$LANGUAGE`, or else the locale's language, when
 `translate/` has a catalog for it (French so far), reading the same `.po` files

@@ -1,4 +1,5 @@
 import QtQuick
+import QtCore
 import "js/ProviderRegistry.js" as ProviderRegistry
 import "js/Format.js" as Format
 import "js/FeatureTabs.js" as FeatureTabs
@@ -70,7 +71,8 @@ Item {
     property var catalog: I18n.empty()
     property var availableLanguages: []
     readonly property string language: root.settings.language || ""
-    onLanguageChanged: if (root.settingsLoaded) backend.requestCatalog(root.language)
+    onLanguageChanged: if (root.settingsLoaded)
+        backend.requestCatalog(root.language)
     onCatalogChanged: root.publishTrayLabels()
 
     function i18n(text) {
@@ -422,7 +424,27 @@ Item {
         return groups;
     }
 
+    // A host with a system accent colour (Plasma) offers to use it everywhere
+    // instead of each provider's own colour.
+    property bool themeAccentAvailable: false
+    property color themeAccentColor: "#3daee9"
+
+    // Fill of the chart card.
+    readonly property color cardColor: {
+        var c = Qt.color(root.settings.cardBgColor || "#100a1a");
+        var a = root.settings.cardBgOpacity === undefined ? 0.9 : Number(root.settings.cardBgOpacity);
+        return Qt.rgba(c.r, c.g, c.b, Math.max(0, Math.min(1, a)));
+    }
+
+    // A host whose popup frame has a style to choose (Plasma's background hints).
+    property bool backgroundStyleAvailable: false
+    // A host whose compositor can blur behind the popup on request (Quickshell
+    // on Hyprland, via hosts/quickshell/glass.conf): settings.compositorGlass.
+    property bool compositorGlassAvailable: false
+
     readonly property color activeAccent: {
+        if (root.themeAccentAvailable && root.settings.themeAccent === true)
+            return root.themeAccentColor;
         if (root.activeIsFeature)
             return FeatureTabs.accent(root.activeId) || "#38bdf8";
         var p = activeProvider();
@@ -719,6 +741,81 @@ Item {
             callback(text === "" ? null : FeatureTabs.parseRateTable(text));
     }
 
+    // ── Terminal frontend ────────────────────────────────────────────────────
+    // Settings → Advanced → "Open in terminal": the backend starts
+    // ai-usage-cli in the user's terminal (hosts that ship it; see cliPath).
+    property string cliMessage: ""
+    readonly property bool canOpenCli: typeof backend.openCli === "function"
+
+    function openCli() {
+        root.cliMessage = "";
+        if (typeof backend.openCli === "function")
+            backend.openCli();
+    }
+
+    function finishOpenCli(text) {
+        try {
+            var data = JSON.parse((text || "").trim());
+            root.cliMessage = data.ok === true ? "" : root.i18n("Could not open the terminal frontend: %1", data.message || "");
+        } catch (e) {
+            root.cliMessage = root.i18n("Could not open the terminal frontend.");
+        }
+    }
+
+    // ── Popup picture (PNG / SVG) ────────────────────────────────────────────
+    // The popup content grabs itself (PopupContent's save button) to a
+    // temporary PNG; the backend then finishes it as a PNG or SVG in Downloads.
+    // `exporting` lets the content draw an opaque backdrop for the grab, since
+    // the glass behind it is the host's window and is not part of the picture.
+    property bool exporting: false
+    property string snapshotMsg: ""
+
+    function localPath(url) {
+        return decodeURIComponent(String(url).replace(/^file:\/\//, ""));
+    }
+
+    function exportSnapshot(item, format) {
+        if (!item || typeof backend.exportSnapshot !== "function")
+            return;
+        var stamp = Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss");
+        var base = "ai-usage-" + (root.showSettings ? "settings" : (root.activeId || "popup")) + "-" + stamp;
+        var tmp = root.localPath(StandardPaths.writableLocation(StandardPaths.TempLocation)) + "/" + base + ".png";
+        var downloads = StandardPaths.writableLocation(StandardPaths.DownloadLocation);
+        var dest = root.localPath(downloads !== "" ? downloads : StandardPaths.writableLocation(StandardPaths.HomeLocation)) + "/" + base + "." + format;
+        var width = Math.round(item.width);
+        var height = Math.round(item.implicitHeight > 0 ? item.implicitHeight : item.height);
+        root.snapshotMsg = "";
+        root.exporting = true;
+        // One frame for the backdrop to appear before the grab.
+        Qt.callLater(function () {
+            item.grabToImage(function (result) {
+                root.exporting = false;
+                if (!result.saveToFile(tmp)) {
+                    root.snapshotMsg = root.i18n("Export failed: could not capture the image");
+                    snapshotMsgTimer.restart();
+                    return;
+                }
+                backend.exportSnapshot(format, tmp, dest, width, height);
+            });
+        });
+    }
+
+    function finishExportSnapshot(text) {
+        try {
+            var data = JSON.parse((text || "").trim());
+            root.snapshotMsg = data.path ? root.i18n("Saved to %1", data.path) : root.i18n("Export failed: %1", data.error || "");
+        } catch (e) {
+            root.snapshotMsg = root.i18n("Export failed");
+        }
+        snapshotMsgTimer.restart();
+    }
+
+    Timer {
+        id: snapshotMsgTimer
+        interval: 8000
+        onTriggered: root.snapshotMsg = ""
+    }
+
     // ── Provider detection ───────────────────────────────────────────────────
     // Settings → Providers → "Detect installed providers": re-runs the
     // stat-only detection and syncs the toggles with what is installed.
@@ -785,7 +882,6 @@ Item {
     property bool sessionsHasMore: false
     property int sessionsOffset: 0
     property int sessionsActiveOffset: 0
-    property bool sessionsActiveAppend: false
     property double previousSessionClockMs: Date.now()
     readonly property bool sessionsViewVisible: root.popupVisible && !root.showSettings && root.activeId === "sessions"
 
@@ -837,12 +933,11 @@ Item {
         }
     }
 
-    function requestSessions(query, reconcile, sourceIds, offset, append) {
+    function requestSessions(query, reconcile, sourceIds, offset) {
         if (sourceIds !== undefined)
             root.setSessionsSourceIds(sourceIds);
         root.sessionsQuery = (query || "").trim();
         root.sessionsActiveOffset = offset === undefined ? 0 : offset;
-        root.sessionsActiveAppend = append === true;
         root.sessionsActiveRefresh = reconcile === true;
         root.sessionsActiveSourceIds = root.sessionsSourceIds.slice(0);
         root.sessionsActiveSourceSignature = root.sessionsSourceSignature;
@@ -858,17 +953,11 @@ Item {
     }
 
     function querySessions(query, offset, append, sourceIds) {
-        root.requestSessions(query, false, sourceIds, append === true ? offset : 0, append === true);
+        root.requestSessions(query, false, sourceIds, offset);
     }
 
     function reconcileSessions(query, sourceIds) {
-        root.requestSessions(query, true, sourceIds);
-    }
-
-    function loadMoreSessions() {
-        if (root.sessionsLoading || !root.sessionsHasMore)
-            return;
-        root.requestSessions(root.sessionsQuery, false, undefined, root.sessionsOffset + root.sessionsLimit, true);
+        root.requestSessions(query, true, sourceIds, root.sessionsOffset);
     }
 
     function handleSessions(text, query, requestId) {
@@ -910,7 +999,7 @@ Item {
                 root.sessionsTotalExact = data.totalExact === true;
                 root.sessionsOffset = Number(data.offset) || root.sessionsActiveOffset;
                 root.sessionsHasMore = data.hasMore === true;
-                root.sessions = root.sessionsActiveAppend ? root.sessions.concat(page) : page;
+                root.sessions = page;
                 root.sessionsError = "";
                 root.sessionsCacheStatus = data.cacheStatus || "unknown";
                 root.sessionsCacheAgeSeconds = data.cacheAgeSeconds === undefined ? null : data.cacheAgeSeconds;
@@ -1106,6 +1195,14 @@ Item {
 
         function onLastSnapshotLoaded(text) {
             root.applyLastSnapshot(text);
+        }
+
+        function onSnapshotExported(text) {
+            root.finishExportSnapshot(text);
+        }
+
+        function onCliOpened(text) {
+            root.finishOpenCli(text);
         }
 
         function onSnapshotReady(text) {

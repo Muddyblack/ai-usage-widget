@@ -15,6 +15,18 @@ emit_err() { printf '{"error":"%s"}\n' "$1"; }
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/python-interp.sh"
 py_resolve || true
 
+# The work lives in aiusage.snapshot_export, shared with the desktop tray app.
+# The code below is the fallback for a machine where Python does not run at all;
+# the module prints every error as an object and exits 0, so a non-zero exit
+# means the interpreter itself failed.
+if [ -n "$PY" ]; then
+  _pkg_tools="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  if _out="$(PYTHONPATH="$_pkg_tools${PYTHONPATH:+:$PYTHONPATH}" "$PY" -B -m aiusage.snapshot_export "$@" 2>/dev/null)"; then
+    printf '%s\n' "$_out"
+    exit 0
+  fi
+fi
+
 cmd="${1:-}"
 src="${2:-}"
 dest="${3:-}"

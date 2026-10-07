@@ -1441,6 +1441,16 @@ def _terminal_launch(resume_argv, cwd):
         return False, "could not launch session"
 
 
+def open_cli():
+    """Open the terminal frontend (backend/sh/ai-usage-cli) in the user's
+    terminal, as the session button does for a resume. Returns (ok, message)."""
+    script = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, "sh", "ai-usage-cli")
+    script = os.path.normpath(script)
+    if not os.path.isfile(script):
+        return False, "the terminal frontend (ai-usage-cli) is not part of this install"
+    return _terminal_launch([script], os.path.expanduser("~"))
+
+
 def open_session(open_key):
     """Resume one session (by opaque ``openKey``) in the user's terminal.
 

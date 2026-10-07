@@ -1,4 +1,4 @@
-from ..contract import flat_window, money, monthly_window, num, provider_base, provider_error
+from ..contract import account, chip, flat_window, money, monthly_window, num, provider_base, provider_error
 from ..messages import tr
 
 
@@ -43,6 +43,10 @@ def normalize_mistral(raw):
 
     r = provider_base("mistral", "Mistral", "#ff7000", now)
     r["ok"] = valid
+    r["account"] = account(
+        details["vibe"]["activeModel"] or "Mistral Vibe",
+        [chip(tr("CONNECTED"), "plan")] if valid else [],
+    )
     r["summary"] = {
         "pct": pct,
         "text": money(cost, "USD"),

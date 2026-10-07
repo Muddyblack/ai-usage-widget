@@ -40,7 +40,7 @@ FROZEN = getattr(sys, "frozen", False)
 ROOT = Path(getattr(sys, "_MEIPASS", "")) if FROZEN else Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT / "backend"))
 
-from aiusage import config, detect, history, historyio, paths, widget_state  # noqa: E402
+from aiusage import config, detect, history, historyio, paths, snapshot_export, widget_state  # noqa: E402
 from aiusage.__main__ import _refresh_pricing, snapshot  # noqa: E402
 from aiusage.sessions import collect_sessions, open_session, refresh_sessions  # noqa: E402
 
@@ -419,6 +419,10 @@ class Backend(QObject):
     # (ui/CommandBackend.qml is the process-based twin of this class).
     settingsLoaded = Signal(str)
     lastSnapshotLoaded = Signal(str)
+    snapshotExported = Signal(str)
+    # Part of the interface ui/CommandBackend.qml documents; this app has no
+    # terminal frontend to open, so it never emits it.
+    cliOpened = Signal(str)
     catalogLoaded = Signal(str)
     languagesLoaded = Signal(str)
     providerDefaultsLoaded = Signal(str)
@@ -431,6 +435,7 @@ class Backend(QObject):
     _historyCompleted = Signal(str, str)
     _pricingCompleted = Signal(str, str)
     _ratesCompleted = Signal(str, int)
+    _snapshotCompleted = Signal(str)
 
     def __init__(self, first_run=False):
         super().__init__()
@@ -449,6 +454,7 @@ class Backend(QObject):
         self._historyCompleted.connect(self._finish_history, Qt.QueuedConnection)
         self._pricingCompleted.connect(self._finish_pricing, Qt.QueuedConnection)
         self._ratesCompleted.connect(self._finish_rates, Qt.QueuedConnection)
+        self._snapshotCompleted.connect(self.snapshotExported, Qt.QueuedConnection)
 
     # ── Data ──
     def _get_busy(self):
@@ -637,6 +643,13 @@ class Backend(QObject):
     @Slot(str, str)
     def _finish_history(self, op, result):
         self.historyFinished.emit(op, result)
+
+    # ── Popup picture ──
+    @Slot(str, str, str, int, int)
+    def exportSnapshot(self, fmt, src, dest, width, height):
+        """Finish a grab the QML saved to `src` as a PNG or SVG at `dest`; the
+        answer arrives as snapshotExported ({"ok":true,"path":…} or {"error":…})."""
+        self._pool.submit(lambda: self._snapshotCompleted.emit(json.dumps(snapshot_export.export(fmt, src, dest, width, height), ensure_ascii=False)))
 
     # ── Settings ──
     @Property(str, constant=True)

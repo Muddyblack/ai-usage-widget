@@ -409,6 +409,64 @@ ColumnLayout {
                     canvas.scrubIndex = best;
                 }
                 onExited: canvas.scrubIndex = -1
+
+                // The hovered day, as a bubble over its point (as in the usage
+                // chart) rather than a line under the whole chart.
+                Rectangle {
+                    id: scrubTip
+                    readonly property bool shown: canvas.scrubIndex >= 0 && canvas.scrubIndex < canvas.points.length
+                    readonly property var point: shown ? canvas.points[canvas.scrubIndex] : null
+                    visible: shown
+                    width: tipRow.implicitWidth + 16
+                    height: tipRow.implicitHeight + 10
+                    radius: 6
+                    color: Qt.rgba(0, 0, 0, 0.78)
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.12)
+                    z: 5
+
+                    // Above the higher of the two dots, centred on the cursor's day
+                    // and kept inside the chart.
+                    readonly property real anchorX: shown ? canvas.xFor(canvas.scrubIndex) : 0
+                    readonly property real anchorY: {
+                        if (!shown)
+                            return 0;
+                        var ys = [];
+                        if (chart.drawCost)
+                            ys.push(canvas.yForCost(point.usd || 0));
+                        if (chart.drawTokens)
+                            ys.push(canvas.yForTokens(point.total || 0));
+                        return ys.length ? Math.min.apply(null, ys) : canvas.height / 2;
+                    }
+                    x: Math.max(0, Math.min(anchorX - width / 2, canvas.width - width))
+                    y: anchorY - height - 10 < 2 ? Math.min(anchorY + 12, canvas.height - height - 2) : anchorY - height - 10
+
+                    Row {
+                        id: tipRow
+                        anchors.centerIn: parent
+                        spacing: 0
+                        Text {
+                            text: scrubTip.shown ? scrubTip.point.date : ""
+                            font.pixelSize: 11
+                            color: "#f8fafc"
+                            opacity: 0.8
+                        }
+                        Text {
+                            visible: chart.drawCost && scrubTip.shown
+                            text: scrubTip.shown ? "  ·  $" + Number(scrubTip.point.usd || 0).toFixed(2) : ""
+                            font.pixelSize: 11
+                            font.bold: true
+                            color: chart.costColor
+                        }
+                        Text {
+                            visible: chart.drawTokens && scrubTip.shown
+                            text: scrubTip.shown ? "  ·  " + Number(scrubTip.point.total || 0).toLocaleString(Qt.locale(), "f", 0) + " " + shell.i18n("tok") : ""
+                            font.pixelSize: 11
+                            font.bold: true
+                            color: chart.tokenColor
+                        }
+                    }
+                }
             }
         }
     }
@@ -436,27 +494,7 @@ ColumnLayout {
 
     Text {
         Layout.fillWidth: true
-        visible: chart.scrubIndex >= 0 && chart.scrubIndex < chart.points.length
-        text: {
-            if (chart.scrubIndex < 0 || chart.scrubIndex >= chart.points.length)
-                return "";
-            var p = chart.points[chart.scrubIndex];
-            var parts = [p.date];
-            if (chart.drawCost)
-                parts.push("$" + Number(p.usd || 0).toFixed(2));
-            if (chart.drawTokens)
-                parts.push(Number(p.total || 0).toLocaleString(Qt.locale(), "f", 0) + " tok");
-            return parts.join("  ·  ");
-        }
-        font.pixelSize: 10
-        font.family: "monospace"
-        opacity: 0.7
-        color: chart.textColor
-    }
-
-    Text {
-        Layout.fillWidth: true
-        visible: !(chart.scrubIndex >= 0 && chart.scrubIndex < chart.points.length) && chart.points.length > 0 && chart.points.length < 5
+        visible: chart.points.length > 0 && chart.points.length < 5
         text: shell.i18n("Limited history (%1 days recorded) — dashed line, not a smoothed trend.", chart.points.length)
         font.pixelSize: 9
         opacity: 0.4

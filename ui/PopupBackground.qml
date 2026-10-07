@@ -12,6 +12,15 @@ Rectangle {
     id: glass
 
     property var shell
+    // A host whose window already has a blurred, translucent backdrop of its
+    // own (the KDE popup) sets this: only a faint lightening and shading is
+    // drawn, so that backdrop shows through. Otherwise the gradient is a
+    // milky, blue-tinged glass (blurred too if the compositor blurs the layer).
+    property bool translucent: false
+    // The compositor blurs behind this window (Hyprland with glass.conf): the
+    // gradient thins out so the blur reads through, edge and highlight stay.
+    property bool blurred: false
+    readonly property real fillScale: blurred ? 0.62 : 1
     // A host whose window frame already rounds the corners (KDE's popup
     // dialog) can turn the radius down.
     radius: 12
@@ -31,21 +40,28 @@ Rectangle {
         return shell.providerIcon(shell.activeProvider()) || shell.iconSource;
     }
 
-    gradient: Gradient {
+    // Under a host that already draws the glass, nothing is filled here: a
+    // second translucent layer inside the frame reads as a card in a card.
+    color: "transparent"
+    gradient: glass.translucent ? null : glassGradient
+    Gradient {
+        id: glassGradient
         GradientStop {
             position: 0.0
-            color: Qt.rgba(0.09, 0.10, 0.13, 0.96)
+            color: Qt.rgba(0.24, 0.31, 0.45, 0.66 * glass.fillScale)
         }
         GradientStop {
             position: 0.5
-            color: Qt.rgba(0.06, 0.07, 0.09, 0.96)
+            color: Qt.rgba(0.12, 0.17, 0.29, 0.70 * glass.fillScale)
         }
         GradientStop {
             position: 1.0
-            color: Qt.rgba(0.04, 0.045, 0.06, 0.97)
+            color: Qt.rgba(0.06, 0.09, 0.19, 0.76 * glass.fillScale)
         }
     }
-    border.width: 1
+    // The KDE dialog frame already draws an edge; a second one reads as a
+    // double layer.
+    border.width: glass.translucent ? 0 : 1
     border.color: Qt.rgba(1, 1, 1, 0.12)
     clip: true
 
@@ -60,6 +76,7 @@ Rectangle {
     // Soft glow in the top-left in the active tab's accent — also the
     // fallback while a watermark logo is missing.
     Rectangle {
+        id: glow
         width: parent.width * 0.7
         height: parent.height * 0.7
         anchors.top: parent.top
@@ -96,6 +113,7 @@ Rectangle {
     }
 
     Rectangle {
+        visible: !glass.translucent
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right

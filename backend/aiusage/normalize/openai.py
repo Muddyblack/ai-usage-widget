@@ -1,11 +1,14 @@
 from ..billing import empty_org_usage, price_models
 from ..contract import (
+    account,
+    chip,
     jround,
     money,
     provider_base,
     provider_error,
     quota_window,
     rolling_windows,
+    short_model_name,
     unavailable_window,
     window_value,
 )
@@ -87,6 +90,22 @@ def codex_normalize(p):
     }
 
 
+def openai_account(creds, plan, stats):
+    """Codex / ChatGPT identity: the account, the live model and reasoning
+    effort of the newest rollout, the plan."""
+    effort = (stats or {}).get("effortLevel") or ""
+    model = (stats or {}).get("model") or ""
+    effort_tone = "danger" if effort in ("xhigh", "high") else "good" if effort in ("low", "minimal") else "warn"
+    return account(
+        creds.get("email") or creds.get("accountId") or tr("Codex / ChatGPT User"),
+        [
+            chip(short_model_name(model), "accent") if model else None,
+            chip(tr("effort: %1", effort), effort_tone, tr("Reasoning effort: %1", effort)) if effort else None,
+            chip(plan.upper(), "muted" if plan == "free" else "plan") if plan else None,
+        ],
+    )
+
+
 def normalize_openai(raw):
     now = raw["now"]
     inp = raw["inputs"]
@@ -132,6 +151,7 @@ def normalize_openai(raw):
         session_on, weekly_on = codex["session"]["available"], codex["weekly"]["available"]
         headline = codex["session"] if session_on else codex["weekly"]
         r = provider_base("openai", "OpenAI", "#10a37f", now)
+        r["account"] = openai_account(creds, plan, stats)
         r["summary"] = {
             "pct": headline["pct"],
             "text": f"{jround(headline['pct'])}%",
@@ -195,6 +215,8 @@ def normalize_openai(raw):
     # Signed in or keyed, but the plan windows are not exposed. Account status
     # and org billing still render, so this is not an error state.
     r = provider_base("openai", "OpenAI", "#10a37f", now)
+    if logged_in:
+        r["account"] = openai_account(creds, plan, stats)
     r["stale"] = (inp.get("codexError") or "") != ""
     email = creds.get("email") or ""
     total_cost_text = money(org["totalCostUSD"], "USD") if org["totalCostUSD"] > 0 else tr("API")

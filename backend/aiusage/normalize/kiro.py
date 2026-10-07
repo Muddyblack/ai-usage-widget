@@ -1,5 +1,32 @@
-from ..contract import epoch_of, flat_window, jround, monthly_window, num, pct_clamp, provider_base, provider_error
+from ..contract import (
+    account,
+    chip,
+    epoch_of,
+    fact,
+    facts_section,
+    flat_window,
+    jround,
+    monthly_window,
+    note_section,
+    num,
+    pct_clamp,
+    provider_base,
+    provider_error,
+    sections,
+)
 from ..messages import lines, tr
+
+
+def _sign_in_note():
+    return note_section(
+        tr(
+            "Sign in to kiro-cli (kiro-cli login), or open the Kiro IDE and sign in once so the widget can read its usage snapshot. A kiro-cli login expires about an hour after the CLI last ran — start kiro-cli to renew it."
+        )
+    )
+
+
+def _level(pct):
+    return "danger" if pct >= 90 else "warn" if pct >= 70 else ""
 
 
 def normalize_kiro(raw):
@@ -7,9 +34,13 @@ def normalize_kiro(raw):
     res = raw["inputs"].get("usage") or {}
 
     if not isinstance(res, dict) or not res:
-        return provider_error("kiro", "Kiro", "#8b5cf6", now, tr("Kiro: no local usage data found"), {"available": False})
+        r = provider_error("kiro", "Kiro", "#8b5cf6", now, tr("Kiro: no local usage data found"), {"available": False})
+        r["sections"] = sections(_sign_in_note())
+        return r
     if res.get("error") is not None:
-        return provider_error("kiro", "Kiro", "#8b5cf6", now, tr("Kiro: %1", res["error"]), {"available": False})
+        r = provider_error("kiro", "Kiro", "#8b5cf6", now, tr("Kiro: %1", res["error"]), {"available": False})
+        r["sections"] = sections(_sign_in_note())
+        return r
 
     pct = pct_clamp(num(res.get("percentageUsed")))
     used = num(res.get("currentUsage"))
@@ -22,6 +53,29 @@ def normalize_kiro(raw):
     r = provider_base("kiro", "Kiro", "#8b5cf6", now)
     r["ok"] = available
     r["error"] = "" if available else tr("Kiro: usage snapshot is empty")
+    r["account"] = account("Kiro", [chip(plan.upper(), "muted" if plan == "free" else "plan")] if plan else [])
+    unit = str(res.get("displayNamePlural") or "Credits")
+    symbol = res.get("currencySymbol") or "$"
+    remaining, overages = num(res.get("remaining")), num(res.get("currentOverages"))
+    charges, rate = num(res.get("overageCharges")), num(res.get("overageRate"))
+    r["sections"] = sections(
+        facts_section(
+            [
+                fact(tr("Current Usage"), tr("%1 %2", f"{used:.2f}", unit.lower()), "accent"),
+                fact(tr("Remaining"), f"{remaining:.2f}", _level(pct)) if limit > 0 else None,
+                fact(tr("Overage"), f"{symbol}{charges:.2f} ({overages:.2f})", "warn") if overages > 0 or charges > 0 else None,
+                fact(tr("Overage Rate"), f"{symbol}{rate:.2f}/{str(res.get('displayName') or 'credit').lower()}") if rate > 0 else None,
+            ],
+            tinted=True,
+        )
+        if available
+        else None,
+        note_section(
+            tr("Read live with the kiro-cli login. No API key required.")
+            if res.get("source") == "cli"
+            else tr("Read locally from Kiro app state. No API key or network request required.")
+        ),
+    )
     r["summary"] = {"pct": pct, "text": f"{jround(pct)}%", "detail": plan, "hasChart": True}
     r["quotaWindows"] = [flat_window("kiro", tr("Monthly credits"), pct, reset_at, detail, True)]
     r["slots"] = [

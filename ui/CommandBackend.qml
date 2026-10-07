@@ -22,7 +22,7 @@ import QtQuick
 //               sessionsReady(text, query, requestId), openSessionFinished(text),
 //               pricingRefreshFinished(text), pricingRefreshFailed(message),
 //               ratesReady(text), historyFinished(op, result),
-//               settingRequested(key, jsonValue)
+//               settingRequested(key, jsonValue), snapshotExported(json)
 //               lastSnapshotLoaded(text)
 //   methods     requestSettings(), saveSettings(text), requestCatalog(language),
 //               requestLastSnapshot(),
@@ -32,7 +32,8 @@ import QtQuick
 //               refreshSessions(query, requestId, offset[, sourceIds]),
 //               refreshSessionsAndQuery(query, requestId, offset[, sourceIds]),
 //               openSession(key), history(op, payload),
-//               flushHistory(op, payload), setAutostart(enabled),
+//               flushHistory(op, payload), exportSnapshot(format, src, dest, w, h),
+//               openCli(), setAutostart(enabled),
 //               publishTrayState(json), setTrayLabels(json)
 QtObject {
     id: root
@@ -81,25 +82,28 @@ QtObject {
     signal pricingRefreshFailed(string message)
     signal ratesReady(string text)
     signal historyFinished(string op, string result)
+    signal snapshotExported(string text)
+    signal cliOpened(string text)
     signal settingRequested(string key, string value)
 
     // ── Command lines ────────────────────────────────────────────────────────
     // Every value goes in as a positional argument rather than being spliced
     // into the script, so paths with spaces and keys with shell metacharacters
     // stay intact. An empty $PYTHON3 reads as unset in python-interp.sh.
+    // Always braced: in sh, "$10" is "$1" followed by "0", not argument ten.
     function tool(name, args, env) {
         var script = "PYTHON3=\"$1\"";
         var argv = ["sh", "-c", "", "ai-usage", root.pythonPath || ""];
         var keys = Object.keys(env || {});
         for (var i = 0; i < keys.length; i++) {
             argv.push(String(env[keys[i]]));
-            script += " " + keys[i] + "=\"$" + (argv.length - 4) + "\"";
+            script += " " + keys[i] + "=\"${" + (argv.length - 4) + "}\"";
         }
         argv.push(root.toolsDir + "/" + name);
-        script += " exec \"$" + (argv.length - 4) + "\"";
+        script += " exec \"${" + (argv.length - 4) + "}\"";
         for (var j = 0; j < (args || []).length; j++) {
             argv.push(String(args[j]));
-            script += " \"$" + (argv.length - 4) + "\"";
+            script += " \"${" + (argv.length - 4) + "}\"";
         }
         argv[2] = script;
         return argv;
@@ -261,6 +265,21 @@ QtObject {
     function flushHistory(op, payload) {
         root.history(op, payload);
         return "";
+    }
+
+    // Open the terminal frontend in a terminal window.
+    function openCli() {
+        root.runner.run(root.backendArgs(["--open-cli"]), function (out) {
+            root.cliOpened(out || "");
+        });
+    }
+
+    // ── Popup picture ────────────────────────────────────────────────────────
+    // The UI saved its grab to `src`; this finishes it as a PNG or SVG at `dest`.
+    function exportSnapshot(format, src, dest, width, height) {
+        root.runner.run(root.tool("export-snapshot", [format, src, dest, String(width), String(height)]), function (out) {
+            root.snapshotExported(out || "");
+        });
     }
 
     // ── Tray (none on these hosts) ───────────────────────────────────────────

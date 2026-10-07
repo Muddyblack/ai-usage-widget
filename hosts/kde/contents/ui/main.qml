@@ -46,24 +46,31 @@ PlasmoidItem {
         backend: commandBackend
         popupVisible: root.expanded
         interpreterControls: true
+        themeAccentAvailable: true
+        backgroundStyleAvailable: true
+        themeAccentColor: Kirigami.Theme.highlightColor
         cliPath: root.contentsDir + "/backend/sh/ai-usage-cli"
         // Each widget keeps its own pins and rotation (one per panel or
         // screen), in its own KConfig rather than the shared file.
-        hostSettingsKeys: ["pinnedTabs", "panelRotationSec"]
+        hostSettingsKeys: ["pinnedTabs", "panelRotationSec", "backgroundHints"]
         hostSettings: ({
                 pinnedTabs: (Plasmoid.configuration.pinnedTab || "").split(",").filter(function (id) {
                     return id !== "";
                 }),
-                panelRotationSec: Plasmoid.configuration.panelRotationIntervalSec || 0
+                panelRotationSec: Plasmoid.configuration.panelRotationIntervalSec || 0,
+                backgroundHints: Plasmoid.configuration.backgroundHints
             })
         onHostSettingChanged: function (key, value) {
             if (key === "pinnedTabs")
                 Plasmoid.configuration.pinnedTab = value.join(",");
             else if (key === "panelRotationSec")
                 Plasmoid.configuration.panelRotationIntervalSec = value;
+            else if (key === "backgroundHints")
+                Plasmoid.configuration.backgroundHints = value;
         }
     }
 
+    Plasmoid.backgroundHints: Plasmoid.configuration.backgroundHints
     Plasmoid.icon: "org.muddyblack.aiUsageWidget"
     toolTipMainText: app.i18n("AI Usage")
     toolTipSubText: {
@@ -134,7 +141,12 @@ PlasmoidItem {
         // The shared glass (ui/PopupBackground.qml), with its tint and decoration.
         PopupBackground {
             anchors.fill: parent
-            anchors.margins: -Kirigami.Units.smallSpacing
+            // Over the whole dialog, edge to edge.
+            anchors.margins: -popupRoot.margin
+            // Plasma already draws the popup's blurred card; this adds only
+            // the tint and decoration so it stays one layer, not a card in a card.
+            translucent: true
+            radius: 0
             shell: app
         }
 

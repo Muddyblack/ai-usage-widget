@@ -784,6 +784,168 @@ ColumnLayout {
         RowLayout {
             Layout.fillWidth: true
             spacing: 6
+            visible: page.shell.themeAccentAvailable
+            Rectangle {
+                Layout.preferredWidth: 7
+                Layout.preferredHeight: 7
+                radius: 3.5
+                color: "#38bdf8"
+                Layout.alignment: Qt.AlignVCenter
+            }
+            Text {
+                text: page.shell.i18n("Theme accent")
+                font.pixelSize: 11
+                color: "#f8fafc"
+                Layout.preferredWidth: 90
+                elide: Text.ElideRight
+            }
+            StyledToggle {
+                checked: page.shell.settings.themeAccent === true
+                onToggled: page.shell.setSetting2("themeAccent", checked)
+            }
+            Text {
+                Layout.fillWidth: true
+                text: page.shell.i18n("Use the system accent colour")
+                font.pixelSize: 9
+                opacity: 0.45
+                color: "#f8fafc"
+                elide: Text.ElideRight
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Rectangle {
+                Layout.preferredWidth: 7
+                Layout.preferredHeight: 7
+                radius: 3.5
+                color: page.shell.settings.cardBgColor || "#100a1a"
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.3)
+                Layout.alignment: Qt.AlignVCenter
+            }
+            Text {
+                text: page.shell.i18n("Card background")
+                font.pixelSize: 11
+                color: "#f8fafc"
+                Layout.preferredWidth: 90
+                elide: Text.ElideRight
+            }
+            Rectangle {
+                Layout.preferredWidth: 72
+                Layout.preferredHeight: 22
+                radius: 5
+                color: Qt.rgba(1, 1, 1, 0.06)
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.12)
+                QC.TextField {
+                    anchors.fill: parent
+                    anchors.leftMargin: 6
+                    text: page.shell.settings.cardBgColor || "#100a1a"
+                    font.pixelSize: 10
+                    color: "#f8fafc"
+                    background: null
+                    verticalAlignment: TextInput.AlignVCenter
+                    selectByMouse: true
+                    validator: RegularExpressionValidator {
+                        regularExpression: /#[0-9A-Fa-f]{0,6}/
+                    }
+                    onEditingFinished: {
+                        if (/^#[0-9A-Fa-f]{6}$/.test(text))
+                            page.shell.setSetting2("cardBgColor", text.toLowerCase());
+                    }
+                }
+            }
+            SettingCombo {
+                Layout.preferredWidth: 70
+                readonly property var values: [0, 0.25, 0.5, 0.75, 0.9, 1]
+                model: values.map(function (v) {
+                    return Math.round(v * 100) + " %";
+                })
+                currentIndex: {
+                    var current = page.shell.settings.cardBgOpacity === undefined ? 0.9 : Number(page.shell.settings.cardBgOpacity);
+                    var best = 0;
+                    for (var i = 1; i < values.length; i++)
+                        if (Math.abs(values[i] - current) < Math.abs(values[best] - current))
+                            best = i;
+                    return best;
+                }
+                onActivated: page.shell.setSetting2("cardBgOpacity", values[currentIndex])
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            visible: page.shell.backgroundStyleAvailable
+            Rectangle {
+                Layout.preferredWidth: 7
+                Layout.preferredHeight: 7
+                radius: 3.5
+                color: "#a78bfa"
+                Layout.alignment: Qt.AlignVCenter
+            }
+            Text {
+                text: page.shell.i18n("Bg Style")
+                font.pixelSize: 11
+                color: "#f8fafc"
+                Layout.preferredWidth: 90
+                elide: Text.ElideRight
+            }
+            SettingCombo {
+                Layout.preferredWidth: 180
+                model: [page.shell.i18n("Plasma Native"), page.shell.i18n("Translucent (Flat)"), page.shell.i18n("Glassmorphic (Shadow + Blur)")]
+                currentIndex: {
+                    var v = Number(page.shell.settingValue("backgroundHints"));
+                    return v >= 0 && v <= 2 ? v : 1;
+                }
+                onActivated: page.shell.setSetting2("backgroundHints", currentIndex)
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            visible: page.shell.compositorGlassAvailable === true
+            Rectangle {
+                Layout.preferredWidth: 7
+                Layout.preferredHeight: 7
+                radius: 3.5
+                color: "#7dd3fc"
+                Layout.alignment: Qt.AlignVCenter
+            }
+            Text {
+                // TRANSLATORS: the compositor (Hyprland) blurs what is behind the popup
+                text: page.shell.i18n("Blur")
+                font.pixelSize: 11
+                color: "#f8fafc"
+                Layout.preferredWidth: 90
+                elide: Text.ElideRight
+            }
+            StyledToggle {
+                checked: page.shell.settings.compositorGlass === true
+                onToggled: page.shell.setSetting2("compositorGlass", checked)
+            }
+            Text {
+                text: page.shell.i18n("Needs hosts/quickshell/glass.conf sourced in hyprland.conf")
+                font.pixelSize: 9
+                opacity: 0.45
+                color: "#f8fafc"
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
             Rectangle {
                 Layout.preferredWidth: 7
                 Layout.preferredHeight: 7
@@ -1102,7 +1264,7 @@ ColumnLayout {
                 text: page.shell.i18n("Python")
                 font.pixelSize: 11
                 color: "#f8fafc"
-                Layout.preferredWidth: 90
+                Layout.preferredWidth: 50
                 elide: Text.ElideRight
             }
 
@@ -1163,31 +1325,8 @@ ColumnLayout {
                 text: page.shell.i18n("Terminal")
                 font.pixelSize: 11
                 color: "#f8fafc"
-                Layout.preferredWidth: 90
-                elide: Text.ElideRight
-            }
-
-            Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 26
-                radius: 5
-                color: Qt.rgba(1, 1, 1, 0.06)
-                border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.12)
-
-                QC.TextField {
-                    id: cliPathField
-                    anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 4
-                    readOnly: true
-                    text: page.shell.cliPath
-                    font.pixelSize: 10
-                    color: "#f8fafc"
-                    verticalAlignment: TextInput.AlignVCenter
-                    background: null
-                    selectByMouse: true
-                }
+                elide: Text.ElideRight
             }
 
             SettingsButton {
@@ -1200,6 +1339,47 @@ ColumnLayout {
                     cliPathField.deselect();
                 }
             }
+
+            // Runs it right away, in a terminal window of its own.
+            SettingsButton {
+                visible: page.shell.canOpenCli === true
+                text: page.shell.i18n("Open in terminal")
+                onClicked: page.shell.openCli()
+            }
+        }
+
+        // The path gets the full width on its own line.
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 26
+            radius: 5
+            color: Qt.rgba(1, 1, 1, 0.06)
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.12)
+            visible: page.shell.interpreterControls
+
+            QC.TextField {
+                id: cliPathField
+                anchors.fill: parent
+                anchors.leftMargin: 8
+                anchors.rightMargin: 4
+                readOnly: true
+                text: page.shell.cliPath
+                font.pixelSize: 10
+                color: "#f8fafc"
+                verticalAlignment: TextInput.AlignVCenter
+                background: null
+                selectByMouse: true
+            }
+        }
+
+        Text {
+            visible: page.shell.cliMessage !== ""
+            Layout.fillWidth: true
+            text: page.shell.cliMessage
+            font.pixelSize: 9
+            color: "#94a3b8"
+            wrapMode: Text.WordWrap
         }
 
         Text {

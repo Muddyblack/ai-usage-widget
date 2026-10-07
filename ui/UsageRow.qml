@@ -15,6 +15,8 @@ ColumnLayout {
     property real value: 0
     property color barColor: "#7dd3fc"
     property bool showMeter: true
+    // Shown in a bubble while the row is hovered (name, used share, reset time).
+    property string tooltipText: ""
 
     readonly property color dangerColor: "#ff4d4d"
     readonly property color warningColor: "#ffa64d"
@@ -167,5 +169,57 @@ ColumnLayout {
         color: "#94a3b8"
         font.pixelSize: 10
         wrapMode: Text.WordWrap
+    }
+
+    // Hover bubble. A zero-height layout item whose mouse area reaches back up
+    // over the whole row, so the row keeps its layout and the bubble is not
+    // clipped by it.
+    Item {
+        id: tipHost
+        Layout.fillWidth: true
+        Layout.preferredHeight: 0
+        z: 10
+
+        MouseArea {
+            id: rowHover
+            x: 0
+            y: -row.height
+            width: row.width
+            height: row.height
+            hoverEnabled: row.tooltipText !== ""
+            acceptedButtons: Qt.NoButton
+            onContainsMouseChanged: {
+                if (containsMouse)
+                    tipDelay.restart();
+                else {
+                    tipDelay.stop();
+                    tipHost.shown = false;
+                }
+            }
+        }
+        property bool shown: false
+        Timer {
+            id: tipDelay
+            interval: 450
+            onTriggered: tipHost.shown = rowHover.containsMouse
+        }
+        Rectangle {
+            visible: tipHost.shown && row.tooltipText !== ""
+            x: Math.max(0, Math.min(rowHover.mouseX + 10, row.width - width))
+            y: -row.height + rowHover.mouseY + 20
+            width: tipText.implicitWidth + 18
+            height: tipText.implicitHeight + 12
+            radius: 6
+            color: Qt.rgba(0.04, 0.045, 0.06, 0.96)
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.14)
+            Text {
+                id: tipText
+                anchors.centerIn: parent
+                text: row.tooltipText
+                font.pixelSize: 11
+                color: "#e2e8f0"
+            }
+        }
     }
 }

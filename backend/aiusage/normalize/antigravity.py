@@ -1,10 +1,45 @@
-from ..contract import epoch_of, flat_window, jround, monthly_window, num, pct_clamp, provider_base, provider_error
+from ..contract import (
+    account,
+    bar_row,
+    bars_section,
+    chip,
+    compact_tokens,
+    epoch_of,
+    flat_window,
+    jround,
+    monthly_window,
+    note_section,
+    num,
+    pct_clamp,
+    provider_base,
+    provider_error,
+    sections,
+)
 from ..messages import lines, tr
 
 
 def _family(m):
     name = (m.get("label") or m.get("modelId") or "").lower()
     return "gemini" if ("gemini" in name or "google" in name) else "external"
+
+
+def _reset_stamp(epoch):
+    """ "Oct 7, 20:31" in local time, for a tooltip."""
+    if not epoch:
+        return ""
+    import datetime
+
+    dt = datetime.datetime.fromtimestamp(epoch)
+    return f"{dt:%b} {dt.day}, {dt:%H:%M}"
+
+
+def _model_tooltip(m):
+    return lines(
+        m["displayName"],
+        tr("%1% used", jround(m["usedPct"])),
+        tr("⚠ Quota exhausted") if m["isExhausted"] else "",
+        tr("Resets: %1", _reset_stamp(m["resetAt"])) if m["resetAt"] else "",
+    )
 
 
 def _avg(values):
@@ -73,15 +108,64 @@ def normalize_antigravity(raw):
 
     r = provider_base("antigravity", "Antigravity", "#4285f4", now)
     r["summary"] = {"pct": pct, "text": f"{jround(pct)}%", "detail": plan, "hasChart": True}
+    r["account"] = account(
+        res.get("email") or tr("Gemini Code Assist"),
+        [chip(plan, "muted" if str(plan).lower() == "free" else "good", color="" if str(plan).lower() == "free" else "#34a853")] if plan else [],
+    )
+    # A family holding several models gets a header over per-model bars (the
+    # IDE's "Gemini Models" / "Claude & GPT Models" grouping); a family of one
+    # (all the agy CLI reports) is simply a row, as a header over a sub-row
+    # with the same name and number would print everything twice.
+    per_model = any(len(g["models"]) > 1 for g in groups)
+    monthly = num(credits.get("monthly"))
+    available = num(credits.get("available"))
     quota_windows = []
-    for grp in groups:
-        detail = ""
-        if grp["key"] == "gemini" and num(credits.get("monthly")) > 0:
-            detail = tr("%1 / %2 credits", num(credits.get("available")), num(credits.get("monthly")))
-        qw = flat_window(grp["key"], grp["label"], grp["usedPct"], grp["resetAt"], detail, True)
-        qw["color"] = "#4285f4" if grp["key"] == "gemini" else "#34a853"
+    if monthly > 0:
+        # Prompt credits are their own pool, the headline of the tab.
+        qw = flat_window(
+            "credits",
+            tr("Prompt Credits"),
+            (1 - available / monthly) * 100,
+            earliest,
+            tr("%1 / %2 left", available, compact_tokens(monthly)),
+            True,
+        )
+        qw["color"] = "#4285f4"
         quota_windows.append(qw)
+    elif models and (not groups or per_model):
+        # The average says something the family rows do not.
+        qw = flat_window("overall", tr("Overall Quota"), pct, earliest, "", True)
+        qw["color"] = "#4285f4"
+        quota_windows.append(qw)
+    if not per_model:
+        for grp in groups:
+            qw = flat_window(grp["key"], grp["label"], grp["usedPct"], grp["resetAt"], "", True)
+            qw["color"] = "#4285f4" if grp["key"] == "gemini" else "#34a853"
+            quota_windows.append(qw)
     r["quotaWindows"] = quota_windows
+    by_id = {m["modelId"]: m for m in models}
+    r["sections"] = sections(
+        bars_section(
+            [
+                {
+                    "label": grp["label"],
+                    "color": "#4285f4" if grp["key"] == "gemini" else "#34a853",
+                    "pct": grp["usedPct"],
+                    "resetAt": grp["resetAt"],
+                    "rows": [
+                        bar_row(by_id[mid]["displayName"], by_id[mid]["usedPct"], by_id[mid]["isExhausted"], _model_tooltip(by_id[mid]))
+                        for mid in grp["models"]
+                        if mid in by_id
+                    ],
+                }
+                for grp in groups
+            ],
+            title=tr("Model Quotas"),
+        )
+        if per_model
+        else None,
+        note_section(tr("Average quota usage across Gemini models")) if False else None,
+    )
     r["slots"] = [
         {
             "pct": gpct,

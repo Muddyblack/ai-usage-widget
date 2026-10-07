@@ -17,6 +17,10 @@ ColumnLayout {
     property var translate: function (obj, key) {
         return obj[key] || "";
     }
+    // The hover text of a row, from its window; the popup supplies it.
+    property var tooltip: function (window) {
+        return "";
+    }
     readonly property int rowCount: repeater.count
 
     spacing: 12
@@ -38,6 +42,7 @@ ColumnLayout {
             note: rows.translate(modelData, "note")
             barColor: modelData.color || (rows.activeId === "antigravity" && (modelData.key === "external" || modelData.key === "rest" || (modelData.label && modelData.label.indexOf("Claude") !== -1)) ? "#34a853" : rows.accent)
             showMeter: modelData.showMeter !== false
+            tooltipText: rows.tooltip(modelData)
         }
     }
 }

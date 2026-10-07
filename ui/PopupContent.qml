@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
+import QtQuick.Controls.Basic as QC
 import "js/FeatureTabs.js" as FeatureTabs
 
 // The popup's content — header, tabs, usage rows, stats, chart and footer —
@@ -145,30 +146,124 @@ ColumnLayout {
             Layout.fillWidth: true
         }
 
-        // Service status of the active provider; hides itself
-        // when the provider has no status page at all.
-        StatusChip {
-            Layout.alignment: Qt.AlignVCenter
-            shell: content.shell
-            status: {
-                var p = shell.activeProvider();
-                return !shell.showSettings && p && p.details ? (p.details.status || ({})) : ({});
+        // Save a picture of the popup (PNG or SVG, into Downloads).
+        Rectangle {
+            id: saveButton
+            visible: !shell.showSettings && typeof shell.exportSnapshot === "function"
+            Layout.preferredWidth: 32
+            Layout.preferredHeight: 32
+            radius: 6
+            color: saveMouse.containsMouse || saveMenu.visible ? Qt.rgba(1, 1, 1, 0.11) : "transparent"
+
+            Image {
+                anchors.centerIn: parent
+                width: 20
+                height: 20
+                sourceSize.width: 40
+                sourceSize.height: 40
+                source: shell.iconDir + "header-save.svg"
+                opacity: saveMouse.containsMouse || saveMenu.visible ? 1.0 : 0.7
+            }
+            MouseArea {
+                id: saveMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: saveMenu.visible ? saveMenu.close() : saveMenu.open()
+            }
+
+            // Tooltip, drawn here: QQC2's is not available under every host.
+            Rectangle {
+                visible: saveMouse.containsMouse && !saveMenu.visible
+                y: parent.height + 4
+                x: parent.width - width
+                width: saveTip.implicitWidth + 16
+                height: saveTip.implicitHeight + 10
+                radius: 5
+                z: 10
+                color: Qt.rgba(0.04, 0.045, 0.06, 0.96)
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.14)
+                Text {
+                    id: saveTip
+                    anchors.centerIn: parent
+                    text: shell.i18n("Save this view as a picture")
+                    font.pixelSize: 11
+                    color: "#e2e8f0"
+                }
+            }
+
+            QC.Popup {
+                id: saveMenu
+                y: parent.height + 4
+                x: parent.width - width
+                padding: 4
+                closePolicy: QC.Popup.CloseOnEscape | QC.Popup.CloseOnPressOutside
+                background: Rectangle {
+                    radius: 6
+                    color: "#12141a"
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.14)
+                }
+                contentItem: Column {
+                    spacing: 2
+                    Repeater {
+                        model: [
+                            {
+                                format: "png",
+                                label: shell.i18n("Save as PNG")
+                            },
+                            {
+                                format: "svg",
+                                label: shell.i18n("Save as SVG")
+                            }
+                        ]
+                        Rectangle {
+                            required property var modelData
+                            width: Math.max(menuLabel.implicitWidth + 24, 120)
+                            height: 26
+                            radius: 4
+                            color: menuMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.10) : "transparent"
+                            Text {
+                                id: menuLabel
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                text: parent.modelData.label
+                                font.pixelSize: 11
+                                color: "#f8fafc"
+                            }
+                            MouseArea {
+                                id: menuMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    saveMenu.close();
+                                    shell.exportSnapshot(content, parent.modelData.format);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
         // Settings gear / back toggle
         Rectangle {
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 26
+            Layout.preferredWidth: 32
+            Layout.preferredHeight: 32
             radius: 6
             color: gearMouse.containsMouse || shell.showSettings ? Qt.rgba(1, 1, 1, 0.11) : "transparent"
 
-            Text {
+            Image {
                 anchors.centerIn: parent
-                text: shell.showSettings ? "←" : "⚙"
-                color: "#e2e8f0"
-                font.pixelSize: 14
-                opacity: gearMouse.containsMouse || shell.showSettings ? 1.0 : 0.6
+                width: 20
+                height: 20
+                sourceSize.width: 40
+                sourceSize.height: 40
+                source: shell.iconDir + (shell.showSettings ? "header-back.svg" : "header-settings.svg")
+                opacity: gearMouse.containsMouse || shell.showSettings ? 1.0 : 0.7
             }
             MouseArea {
                 id: gearMouse
@@ -181,17 +276,19 @@ ColumnLayout {
 
         Rectangle {
             visible: !shell.showSettings
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 26
+            Layout.preferredWidth: 32
+            Layout.preferredHeight: 32
             radius: 6
             color: refreshMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.11) : "transparent"
 
-            Text {
+            Image {
                 anchors.centerIn: parent
-                text: "⟳"
-                color: "#e2e8f0"
-                font.pixelSize: 14
-                opacity: refreshMouse.containsMouse ? 1.0 : 0.6
+                width: 20
+                height: 20
+                sourceSize.width: 40
+                sourceSize.height: 40
+                source: shell.iconDir + "header-refresh.svg"
+                opacity: refreshMouse.containsMouse ? 1.0 : 0.7
                 rotation: shell.loading ? refreshSpin.value : 0
             }
             // simple spin while a refresh is running
@@ -232,13 +329,14 @@ ColumnLayout {
         shell: content.shell
     }
 
-    // ── Tab bar (Plasma style: logo + name) ─────────────────────
-    // A Flow rather than a row: the enabled provider set is
-    // user-configurable (up to eleven) while the popup width is fixed,
-    // so tabs have to wrap onto another line instead of running off the
-    // edge — and each one has to be as wide as its own label, or the
-    // longest ("Antigravity") gets clipped by its own border.
-    Flow {
+    // ── Tab bar ─────────────────────────────────────────────────
+    // One row of equal-width tabs, whatever their number: a tab narrower than
+    // 62 px drops its name and keeps its logo (the name is a hover tooltip), so
+    // eleven providers still fit one row instead of wrapping onto four. The pin
+    // sits in a tab's corner (always while pinned, on hover otherwise); a right
+    // click pins too.
+    RowLayout {
+        id: tabBar
         Layout.fillWidth: true
         spacing: 4
         visible: shell.popupTabs.length > 1 && !shell.showSettings
@@ -246,119 +344,178 @@ ColumnLayout {
         Repeater {
             model: shell.popupTabs
 
-            Rectangle {
+            Item {
+                id: tabCell
                 required property var modelData
                 required property int index
                 readonly property bool isActive: shell.activeId === modelData.id
+                readonly property bool labelFits: width > 62
+                readonly property bool canPin: !modelData.feature && typeof shell.togglePin === "function"
+                readonly property bool pinned: canPin && typeof shell.isPinned === "function" && shell.isPinned(modelData.id)
 
-                width: tabContent.implicitWidth + 18
-                height: 32
-                radius: 6
-                color: isActive ? Qt.rgba(1, 1, 1, 0.10) : "transparent"
-                border.width: 1
-                border.color: isActive ? Qt.rgba(1, 1, 1, 0.20) : Qt.rgba(1, 1, 1, 0.08)
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 150
-                    }
-                }
+                // Equal shares of the row.
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                Layout.minimumWidth: 0
+                Layout.preferredHeight: 32
+                // Above its neighbours while its tooltip is out.
+                z: tabMouse.containsMouse ? 5 : 0
 
-                MouseArea {
-                    id: tabMouse
+                Rectangle {
+                    id: tab
                     anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        var wasSessions = modelData.id === "sessions" && shell.activeId === "sessions";
-                        shell.activeId = modelData.id;
-                        // A shell may throttle what a tab switch fetches
-                        // (the Windows app does); the ⟳ button always refreshes.
-                        if (modelData.feature) {
-                            if (wasSessions) {
-                                if (typeof shell.reconcileSessions === "function")
-                                    shell.reconcileSessions();
-                                else if (modelData.id === "sessions" && typeof shell.refreshSessions === "function")
-                                    shell.refreshSessions();
-                            }
-                            return;
+                    radius: 6
+                    clip: true
+                    color: tabCell.isActive ? Qt.rgba(1, 1, 1, 0.10) : "transparent"
+                    border.width: 1
+                    border.color: tabCell.isActive ? Qt.rgba(1, 1, 1, 0.20) : Qt.rgba(1, 1, 1, 0.08)
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
                         }
-                        if (typeof shell.refreshTab === "function")
-                            shell.refreshTab();
-                        else
-                            shell.refresh();
                     }
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: 6
-                        color: parent.containsMouse && !isActive ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
-                    }
-                }
 
-                RowLayout {
-                    id: tabContent
-                    anchors.centerIn: parent
-                    spacing: 5
-                    Image {
-                        readonly property string logo: shell.providerIcon(modelData)
-                        visible: logo !== ""
-                        source: logo
-                        Layout.preferredWidth: 12
-                        Layout.preferredHeight: 12
-                        sourceSize.width: 12
-                        sourceSize.height: 12
-                        fillMode: Image.PreserveAspectFit
-                        opacity: isActive ? 1.0 : 0.55
+                    MouseArea {
+                        id: tabMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        onClicked: mouse => {
+                            if (mouse.button === Qt.RightButton) {
+                                if (tabCell.canPin)
+                                    shell.togglePin(tabCell.modelData.id);
+                                return;
+                            }
+                            var wasSessions = tabCell.modelData.id === "sessions" && shell.activeId === "sessions";
+                            shell.activeId = tabCell.modelData.id;
+                            // A shell may throttle what a tab switch fetches
+                            // (the Windows app does); the ⟳ button always refreshes.
+                            if (tabCell.modelData.feature) {
+                                if (wasSessions) {
+                                    if (typeof shell.reconcileSessions === "function")
+                                        shell.reconcileSessions();
+                                    else if (typeof shell.refreshSessions === "function")
+                                        shell.refreshSessions();
+                                }
+                                return;
+                            }
+                            if (typeof shell.refreshTab === "function")
+                                shell.refreshTab();
+                            else
+                                shell.refresh();
+                        }
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 6
+                            color: parent.containsMouse && !tabCell.isActive ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
+                        }
                     }
-                    Rectangle {
-                        visible: shell.providerIcon(modelData) === ""
-                        Layout.preferredWidth: 8
-                        Layout.preferredHeight: 8
-                        radius: 4
-                        color: modelData.accent
-                        opacity: isActive ? 1.0 : 0.5
+
+                    RowLayout {
+                        id: tabContent
+                        // Centred, but never wider than the tab, so the content
+                        // cannot spill onto its neighbours.
+                        anchors.centerIn: parent
+                        width: Math.min(implicitWidth, parent.width - 14)
+                        spacing: 5
+
+                        Image {
+                            readonly property string logo: shell.providerIcon(tabCell.modelData)
+                            visible: logo !== "" && status !== Image.Error
+                            source: logo
+                            Layout.preferredWidth: 13
+                            Layout.preferredHeight: 13
+                            Layout.alignment: Qt.AlignVCenter
+                            sourceSize.width: 26
+                            sourceSize.height: 26
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                            opacity: tabCell.isActive ? 1.0 : 0.55
+                        }
+                        // Providers without a logo get their accent as a dot.
+                        Rectangle {
+                            visible: shell.providerIcon(tabCell.modelData) === ""
+                            Layout.preferredWidth: 8
+                            Layout.preferredHeight: 8
+                            Layout.alignment: Qt.AlignVCenter
+                            radius: 4
+                            color: tabCell.modelData.accent
+                            opacity: tabCell.isActive ? 1.0 : 0.5
+                        }
+                        Text {
+                            visible: tabCell.labelFits
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            text: tabCell.modelData.label
+                            elide: Text.ElideRight
+                            horizontalAlignment: Text.AlignHCenter
+                            font.pixelSize: 12
+                            font.bold: tabCell.isActive
+                            color: "#f8fafc"
+                            opacity: tabCell.isActive ? 1.0 : 0.6
+                        }
                     }
-                    Text {
-                        text: modelData.label
-                        font.pixelSize: 12
-                        font.bold: isActive
-                        color: "#f8fafc"
-                        opacity: isActive ? 1.0 : 0.6
-                    }
-                    // Pin on the panel: always shown while pinned, on hover
-                    // otherwise. A pushpin drawn as head + needle, so it does
+
+                    // Pin toggle: a pushpin drawn as head + needle, so it does
                     // not depend on an icon theme or an emoji font.
                     Item {
                         id: pinButton
-                        readonly property bool pinned: typeof shell.isPinned === "function" && shell.isPinned(modelData.id)
-                        visible: !modelData.feature && typeof shell.togglePin === "function" && (pinned || tabMouse.containsMouse || pinMouse.containsMouse)
-                        Layout.preferredWidth: 10
-                        Layout.preferredHeight: 12
-                        opacity: pinned ? 1.0 : (pinMouse.containsMouse ? 0.9 : 0.4)
+                        visible: tabCell.canPin && (tabCell.pinned || tabMouse.containsMouse || pinMouse.containsMouse)
+                        anchors.top: parent.top
+                        anchors.right: parent.right
+                        anchors.topMargin: 2
+                        anchors.rightMargin: 2
+                        width: 10
+                        height: 12
+                        opacity: tabCell.pinned ? 1.0 : (pinMouse.containsMouse ? 0.9 : 0.45)
                         Rectangle {
                             x: 1
                             y: 0
                             width: 8
                             height: 8
                             radius: 4
-                            color: pinButton.pinned ? modelData.accent : "transparent"
+                            color: tabCell.pinned ? tabCell.modelData.accent : "transparent"
                             border.width: 1.5
-                            border.color: pinButton.pinned ? modelData.accent : "#f8fafc"
+                            border.color: tabCell.pinned ? tabCell.modelData.accent : "#f8fafc"
                         }
                         Rectangle {
                             x: 4
                             y: 8
                             width: 2
                             height: 4
-                            color: pinButton.pinned ? modelData.accent : "#f8fafc"
+                            color: tabCell.pinned ? tabCell.modelData.accent : "#f8fafc"
                         }
                         MouseArea {
                             id: pinMouse
                             anchors.fill: parent
-                            anchors.margins: -4
+                            anchors.margins: -3
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: shell.togglePin(modelData.id)
+                            onClicked: shell.togglePin(tabCell.modelData.id)
                         }
+                    }
+                }
+
+                // The name of an icon-only tab (QQC2's ToolTip is not available
+                // under every host, so it is drawn here).
+                Rectangle {
+                    id: tabTip
+                    visible: !tabCell.labelFits && tabMouse.containsMouse
+                    y: tabCell.height + 4
+                    x: Math.max(-tabCell.x, Math.min(tabBar.width - tabCell.x - width, (tabCell.width - width) / 2))
+                    width: tipLabel.implicitWidth + 16
+                    height: tipLabel.implicitHeight + 10
+                    radius: 5
+                    color: Qt.rgba(0.04, 0.045, 0.06, 0.96)
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.14)
+                    Text {
+                        id: tipLabel
+                        anchors.centerIn: parent
+                        text: (tabCell.modelData.label || "") + (tabCell.pinned ? "  ·  " + shell.i18n("Pinned on panel") : "")
+                        font.pixelSize: 11
+                        color: "#e2e8f0"
                     }
                 }
             }
@@ -372,22 +529,19 @@ ColumnLayout {
         color: Qt.rgba(1, 1, 1, 0.08)
     }
 
-    // ── Provider detail line (plan / account) ───────────────────
-    Text {
-        visible: {
-            if (shell.showSettings || shell.activeIsFeature)
-                return false;
+    // ── Account line: who is signed in, plan / model chips, service status ──
+    AccountRow {
+        id: accountRow
+        z: 10
+        shell: content.shell
+        account: shell.activeProvider() ? (shell.activeProvider().account || ({})) : ({})
+        status: {
             var p = shell.activeProvider();
-            return p && p.summary.detail !== "" && p.error === "";
+            return p && p.details ? (p.details.status || ({})) : ({});
         }
+        accent: shell.activeAccent
+        visible: !shell.showSettings && !shell.activeIsFeature && shell.activeProvider() !== null && accountRow.hasContent
         Layout.fillWidth: true
-        text: {
-            var p = shell.activeProvider();
-            return p ? shell.tr(p.summary, "detail") : "";
-        }
-        color: "#94a3b8"
-        font.pixelSize: 11
-        elide: Text.ElideRight
     }
 
     // ── Error banner ────────────────────────────────────────────
@@ -502,6 +656,7 @@ ColumnLayout {
         spacing: 12
 
         UsageRows {
+            visible: shell.activeId !== "mistral"
             Layout.fillWidth: true
             // The last known values, shown at start until live ones arrive.
             opacity: shell.replaying ? 0.55 : 1
@@ -510,6 +665,36 @@ ColumnLayout {
             accent: shell.activeAccent
             countdown: shell.countdownFor
             translate: shell.tr
+            // Hover: the row's name, used and remaining share, detail and reset time.
+            tooltip: function (w) {
+                var parts = [shell.tr(w, "label")];
+                if (w.showMeter !== false) {
+                    var used = Math.round(w.pct || 0);
+                    parts.push(shell.i18n("Used: %1%", used) + "  ·  " + shell.i18n("%1% left", 100 - used));
+                }
+                var detail = shell.tr(w, "detail");
+                if (detail !== "")
+                    parts.push(detail);
+                if ((w.resetAt || 0) > 0)
+                    parts.push(shell.i18n("Resets: %1", Qt.formatDateTime(new Date(w.resetAt * 1000), "MMM d, hh:mm")));
+                return parts.join("\n");
+            }
+        }
+
+        // Per-model quota groups, balances, rates and footnotes the provider
+        // reports beyond its rows.
+        ProviderSections {
+            Layout.fillWidth: true
+            shell: content.shell
+            provider: shell.activeProvider()
+            accent: shell.activeAccent
+        }
+
+        MistralUsage {
+            Layout.fillWidth: true
+            visible: shell.activeId === "mistral" && shell.activeProvider() && !shell.activeProvider().error
+            shell: content.shell
+            vibe: shell.activeId === "mistral" && shell.activeProvider() ? (shell.activeProvider().details.vibe || ({})) : ({})
         }
 
         // Muse is the only provider whose plan bars cost
@@ -607,6 +792,14 @@ ColumnLayout {
             font.pixelSize: 10
             elide: Text.ElideRight
         }
+        Text {
+            visible: shell.snapshotMsg !== ""
+            text: shell.snapshotMsg
+            color: "#86efac"
+            font.pixelSize: 10
+            elide: Text.ElideMiddle
+            Layout.maximumWidth: 300
+        }
         Item {
             Layout.fillWidth: true
         }
@@ -616,6 +809,27 @@ ColumnLayout {
             color: "#f8fafc"
             opacity: 0.45
             font.pixelSize: 10
+        }
+    }
+
+    // Behind everything while the popup is being saved as a picture, so the
+    // picture is opaque: the glass behind the content belongs to the host's
+    // window and is not part of the grab. A zero-size layout item (it only
+    // takes part in the layout while exporting) whose child draws outside it.
+    Item {
+        id: exportBackdrop
+        visible: shell.exporting === true
+        Layout.preferredWidth: 0
+        Layout.preferredHeight: 0
+        z: -1
+        Rectangle {
+            // The whole content rectangle, whatever the item's own position.
+            x: -exportBackdrop.x
+            y: -exportBackdrop.y
+            width: content.width
+            height: exportBackdrop.y + exportBackdrop.height
+            radius: 12
+            color: "#0d0f14"
         }
     }
 }

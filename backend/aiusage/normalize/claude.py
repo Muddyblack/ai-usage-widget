@@ -1,5 +1,7 @@
 from ..billing import empty_org_usage, price_models
 from ..contract import (
+    account,
+    chip,
     jround,
     num,
     provider_base,
@@ -33,6 +35,47 @@ def scoped_label(name):
     # An unnamed scope still gets a row; "scoped" is vague but it is not a lie,
     # and dropping the row would hide a budget that is being spent.
     return tr("7-day %1", name) if name else tr("7-day scoped")
+
+
+def tier_label(raw):
+    """ "default_claude_max_5x" → "default max 5x": the rate-limit tier as words."""
+    if not raw:
+        return ""
+    words = []
+    for part in str(raw).replace("_claude_ai", "").split("_"):
+        known = {"default": tr("default"), "pro": tr("pro"), "max": tr("max"), "business": tr("business"), "free": tr("free")}
+        words.append(known.get(part.lower()) or (part[:1].upper() + part[1:]))
+    return " ".join(str(w) for w in words)
+
+
+def effort_word(level):
+    return {"high": tr("high"), "low": tr("low"), "medium": tr("medium")}.get(level, level)
+
+
+def claude_account(base_details, plan):
+    """The line under the tabs: tier (or organisation), effort, dream, plan."""
+    if plan == "":
+        return account()
+    name = tier_label(base_details.get("rateLimitTier")) or (
+        tr("%1…", base_details["organizationUuid"][:8]) if base_details.get("organizationUuid") else tr("Claude Code User")
+    )
+    effort = base_details.get("effortLevel") or ""
+    effort_tone = {"high": "accent", "low": "good"}.get(effort, "muted")
+    dream = base_details.get("autoDream") is True
+    return account(
+        name,
+        [
+            chip(tr("effort: %1", effort_word(effort)), effort_tone, tr("Thinking budget: %1", effort)) if effort else None,
+            chip(
+                tr("dream: on") if dream else tr("dream: off"),
+                "accent" if dream else "off",
+                tr("Extended thinking (dream mode): ON\nClaude will reason longer on complex tasks")
+                if dream
+                else tr("Extended thinking (dream mode): OFF"),
+            ),
+            chip(plan.upper(), "muted" if plan == "free" else "plan"),
+        ],
+    )
 
 
 def claude_windows(u):
@@ -139,6 +182,7 @@ def normalize_claude(raw):
     w_detail = tr("%1 / %2 tokens", w_tokens, w_limit) if w_limit > 0 else ""
 
     r = provider_base("claude", "Claude", "#cc785c", now)
+    r["account"] = claude_account(base_details, base_details["subscriptionType"])
     r["summary"] = {
         "pct": w["session"]["pct"],
         "text": f"{jround(w['session']['pct'])}%",

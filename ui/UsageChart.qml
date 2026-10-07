@@ -210,7 +210,7 @@ Rectangle {
     Layout.preferredHeight: implicitHeight
     implicitHeight: hasModelFilter ? 208 : 184
     radius: 10
-    color: Qt.rgba(1, 1, 1, 0.045)
+    color: shell ? shell.cardColor : Qt.rgba(1, 1, 1, 0.045)
     border.width: 1
     border.color: Qt.rgba(1, 1, 1, 0.08)
     clip: true

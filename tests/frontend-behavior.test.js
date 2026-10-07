@@ -260,7 +260,7 @@ test("every host queries cached pages first and preserves page state in flight",
 
     assert.match(state, /onSessionsViewVisibleChanged:[\s\S]{0,120}querySessions\(sessionsQuery, 0, false/);
     assert.match(send, /if \(reconcile\)[\s\S]*refreshSessionsAndQuery[\s\S]*else[\s\S]*backend\.refreshSessions/);
-    assert.match(state, /function reconcileSessions\(query, sourceIds\)\s*\{\s*root\.requestSessions\(query, true, sourceIds\)/);
+    assert.match(state, /function reconcileSessions\(query, sourceIds\)\s*\{\s*root\.requestSessions\(query, true, sourceIds, root\.sessionsOffset\)/);
     assert.match(state, /if \(requestId !== root\.sessionsRequestId[\s\S]*return;/);
     assert.doesNotMatch(request, /sessionsTotal\s*=\s*0|sessionsHasMore\s*=\s*false/);
 });

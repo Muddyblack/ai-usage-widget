@@ -115,31 +115,71 @@ ColumnLayout {
         onTriggered: page.loadRates(0)
     }
 
-    Text {
-        Layout.fillWidth: true
-        text: shell.i18n("Totals come from each provider's own usage APIs and local CLI logs. Ranges differ (30-day, all-time, lifetime).")
-        wrapMode: Text.WordWrap
-        font.pixelSize: 10
-        opacity: 0.45
-        color: "#f8fafc"
-    }
-
-    // Timeframe: one choice for the whole view, as the totals above it use.
+    // Sub-tabs, as in the KDE widget: the provider rows, or the model rate
+    // table. The timeframe (1D / 7D / 30D / ALL) sits at the right of the
+    // first and applies to the rows and the totals; the second has its own
+    // paging below.
     RowLayout {
+        id: spendSubTabs
         Layout.fillWidth: true
         spacing: 4
-        visible: !page.ratesOpen
-
-        Text {
-            text: shell.i18n("Timeframe")
-            font.pixelSize: 10
-            opacity: 0.55
-            color: "#f8fafc"
-            Layout.rightMargin: 4
-        }
 
         Repeater {
             model: [
+                {
+                    open: false,
+                    label: shell.i18n("Providers")
+                },
+                {
+                    open: true,
+                    label: shell.i18n("Model rates")
+                }
+            ]
+
+            Rectangle {
+                required property var modelData
+                readonly property bool chosen: page.ratesOpen === modelData.open
+                Layout.preferredWidth: subTabLabel.implicitWidth + 18
+                Layout.preferredHeight: 24
+                radius: 5
+                color: chosen ? Qt.rgba(1, 1, 1, 0.14) : (subTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.07) : "transparent")
+                border.width: chosen ? 1 : 0
+                border.color: Qt.rgba(1, 1, 1, 0.18)
+
+                Text {
+                    id: subTabLabel
+                    anchors.centerIn: parent
+                    text: parent.modelData.label
+                    font.pixelSize: 11
+                    font.bold: parent.chosen
+                    color: "#f8fafc"
+                    opacity: parent.chosen ? 1 : 0.65
+                }
+                MouseArea {
+                    id: subTabMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: page.ratesOpen = parent.modelData.open
+                }
+            }
+        }
+
+        Item {
+            Layout.fillWidth: true
+        }
+
+        // The age and unit of the rate table, while it is open.
+        Text {
+            visible: page.ratesOpen && page.rateTotal > 0
+            text: (page.rateUnit !== "" ? page.rateUnit : "") + (FeatureTabs.rateAge(page.rateFetchedAt, shell.i18n) !== "" ? " · " + FeatureTabs.rateAge(page.rateFetchedAt, shell.i18n) : "")
+            font.pixelSize: 9
+            opacity: 0.45
+            color: "#f8fafc"
+        }
+
+        Repeater {
+            model: page.ratesOpen ? [] : [
                 {
                     days: 1,
                     label: "1D"
@@ -162,7 +202,7 @@ ColumnLayout {
                 required property var modelData
                 readonly property bool chosen: page.windowDays === modelData.days
                 Layout.preferredWidth: timeframeLabel.implicitWidth + 14
-                Layout.preferredHeight: 20
+                Layout.preferredHeight: 22
                 radius: 4
                 color: chosen ? Qt.rgba(1, 1, 1, 0.14) : (timeframeMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
                 border.width: 1
@@ -190,14 +230,20 @@ ColumnLayout {
                 }
             }
         }
-
-        Item {
-            Layout.fillWidth: true
-        }
     }
 
     Text {
-        visible: page.rows.length === 0
+        visible: !page.ratesOpen
+        Layout.fillWidth: true
+        text: shell.i18n("Totals come from each provider's own usage APIs and local CLI logs. Ranges differ (30-day, all-time, lifetime).")
+        wrapMode: Text.WordWrap
+        font.pixelSize: 10
+        opacity: 0.45
+        color: "#f8fafc"
+    }
+
+    Text {
+        visible: !page.ratesOpen && page.rows.length === 0
         Layout.fillWidth: true
         text: shell.i18n("No cost figures yet. Enable providers that report spend, or use them until local logs appear.")
         wrapMode: Text.WordWrap
@@ -207,7 +253,7 @@ ColumnLayout {
     }
 
     Repeater {
-        model: page.rows
+        model: page.ratesOpen ? [] : page.rows
 
         Rectangle {
             id: rowCard
@@ -342,68 +388,7 @@ ColumnLayout {
         }
     }
 
-    // ── Model rates ────────────────────────────────────────────────────────
-    Rectangle {
-        Layout.fillWidth: true
-        Layout.topMargin: 4
-        implicitHeight: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
-    }
-
-    // The click target wraps the row rather than sitting inside it: a
-    // MouseArea parented straight to a RowLayout becomes a layout item, and
-    // Qt refuses anchors there.
-    Item {
-        Layout.fillWidth: true
-        implicitHeight: ratesHeader.implicitHeight
-
-        RowLayout {
-            id: ratesHeader
-            anchors.fill: parent
-            spacing: 6
-
-            Text {
-                text: shell.i18n("Model rates")
-                font.bold: true
-                font.pixelSize: 12
-                color: "#f8fafc"
-            }
-
-            Text {
-                visible: page.rateTotal > 0
-                text: page.rateUnit
-                font.pixelSize: 9
-                opacity: 0.45
-                color: "#f8fafc"
-            }
-
-            Text {
-                visible: text !== ""
-                text: FeatureTabs.rateAge(page.rateFetchedAt, shell.i18n)
-                font.pixelSize: 9
-                opacity: 0.45
-                color: "#f8fafc"
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Text {
-                text: page.rateLoading ? shell.i18n("Loading\u2026") : (page.ratesOpen ? "\u25be" : "\u25b8")
-                font.pixelSize: 11
-                opacity: 0.6
-                color: "#f8fafc"
-            }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: page.ratesOpen = !page.ratesOpen
-        }
-    }
-
+    // ── Model rates (the second sub-tab) ──────────────────────────────────
     RowLayout {
         visible: page.ratesOpen
         Layout.fillWidth: true

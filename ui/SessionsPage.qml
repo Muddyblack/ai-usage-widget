@@ -653,14 +653,23 @@ ColumnLayout {
                             Layout.alignment: Qt.AlignTop
                             radius: 6
                             color: resumeMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.11) : "transparent"
-                            Image {
+                            Rectangle {
                                 anchors.centerIn: parent
-                                source: Qt.resolvedUrl("../assets/icons/session-terminal.svg")
-                                sourceSize.width: 18
-                                sourceSize.height: 18
-                                width: 18
-                                height: 18
+                                width: 15
+                                height: 12
+                                radius: 2
+                                color: "transparent"
+                                border.width: 1
+                                border.color: "#e2e8f0"
                                 opacity: resumeMouse.containsMouse ? 1 : 0.6
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: ">_"
+                                    font.family: "monospace"
+                                    font.pixelSize: 9
+                                    font.bold: true
+                                    color: "#e2e8f0"
+                                }
                             }
                             MouseArea {
                                 id: resumeMouse

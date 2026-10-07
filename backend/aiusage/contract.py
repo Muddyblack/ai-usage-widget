@@ -406,6 +406,86 @@ def _gatus_summary(d, url):
     }
 
 
+# ── Presentation blocks ──────────────────────────────────────────────────────
+# What a provider shows beyond its quota rows, in terms every frontend can draw
+# without knowing the provider: an account line under the tabs, and sections
+# below the rows. See docs/provider-contract.md ("Account line and sections").
+
+CHIP_TONES = ("plan", "accent", "muted", "off", "good", "warn", "danger")
+
+
+def chip(text, tone="muted", tooltip="", color=""):
+    """A small label on the account line. ``tone`` picks its colour: ``plan``
+    is the provider's own colour, bold and larger (the subscription), ``accent``
+    the same, smaller; ``good``/``warn``/``danger`` are status colours; ``muted``
+    and ``off`` are neutral, ``off`` dimmer. ``color`` ("#rrggbb") overrides the
+    tone's colour. Empty text yields nothing."""
+    if not text:
+        return None
+    return {"text": text, "tone": tone if tone in CHIP_TONES else "muted", "tooltip": tooltip or "", "color": color or ""}
+
+
+def account(name="", chips=()):
+    """The account line: who is signed in (``name``: an email, an organisation,
+    a tier) and a few chips (plan, model, effort …)."""
+    return {"name": name or "", "chips": [c for c in chips if c]}
+
+
+def short_model_name(name):
+    """ "gpt-4o-mini" → "4o-mini", "claude-3-5-sonnet-20241022" → "3.5-sonnet":
+    a model id short enough for a chip."""
+    out = str(name or "")
+    for pattern, repl in (
+        (r"gpt-4o-mini", "4o-mini"),
+        (r"gpt-4o", "4o"),
+        (r"gpt-4-turbo", "4-turbo"),
+        (r"gpt-4-32k", "4-32k"),
+        (r"gpt-4", "4"),
+        (r"gpt-3\.5-turbo", "3.5-turbo"),
+        (r"claude-3-5-", "3.5-"),
+        (r"claude-3-", "3-"),
+        (r"claude-", ""),
+        (r"-\d{8}$", ""),
+        (r"-20\d{2}-\d{2}-\d{2}$", ""),
+    ):
+        out = re.sub(pattern, repl, out)
+    return out
+
+
+def fact(label, value, tone=""):
+    """One label/value line of a facts section. ``tone``: "", plan, good, warn, danger."""
+    return {"label": label, "value": value, "tone": tone}
+
+
+def facts_section(rows, title="", boxed=True, tinted=False):
+    """Label/value lines (a balance, a rate, a limit), in a card when ``boxed``
+    — tinted in the provider's colour when ``tinted``."""
+    rows = [r for r in rows if r]
+    return {"kind": "facts", "title": title, "boxed": boxed, "tinted": tinted, "rows": rows} if rows else None
+
+
+def note_section(text):
+    """A small grey footnote under the rows (where the figures come from, how
+    to connect the provider)."""
+    return {"kind": "note", "text": text} if text else None
+
+
+def bar_row(label, pct, exhausted=False, tooltip="", color=""):
+    """One thin bar of a bars section."""
+    return {"label": label, "pct": pct_clamp(pct), "exhausted": bool(exhausted), "tooltip": tooltip or "", "color": color}
+
+
+def bars_section(groups, title=""):
+    """Groups of thin bars, each group a pooled quota with its own header
+    (``label``, ``color``, ``pct``, ``resetAt``) over its ``rows``."""
+    groups = [g for g in groups if g and g.get("rows")]
+    return {"kind": "bars", "title": title, "groups": groups} if groups else None
+
+
+def sections(*blocks):
+    return [b for b in blocks if b]
+
+
 def provider_base(id_, label, accent, now):
     return {
         "id": id_,
@@ -422,6 +502,8 @@ def provider_base(id_, label, accent, now):
         "slots": [],
         "historyValues": {},
         "details": {},
+        "account": {"name": "", "chips": []},
+        "sections": [],
     }
 
 

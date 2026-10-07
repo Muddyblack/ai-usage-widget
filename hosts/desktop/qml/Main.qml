@@ -169,26 +169,13 @@ Window {
             id: popupContent
 
             width: contentFlick.width
-            height: mainColumn.implicitHeight + (windowsSessionsLoadMore.visible ? windowsSessionsLoadMore.implicitHeight + 10 : 0)
+            height: mainColumn.implicitHeight
 
             PopupContent {
                 id: mainColumn
                 width: parent.width
                 shell: app
             }
-
-            SettingsButton {
-                id: windowsSessionsLoadMore
-
-                visible: !app.showSettings && app.activeId === "sessions" && app.sessionsHasMore
-                x: 0
-                y: mainColumn.implicitHeight + 10
-                width: parent.width
-                text: app.i18n("Load more")
-                enabled: !app.sessionsLoading
-                onClicked: app.loadMoreSessions()
-            }
         }
     }
-
 }

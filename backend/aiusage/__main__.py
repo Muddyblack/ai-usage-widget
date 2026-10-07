@@ -44,6 +44,7 @@ USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize 
   --limit <n>           limit session results to a positive number of rows
   --offset <n>          skip a non-negative number of session rows
   --open-session <key>  resume one listed session (by its openKey) in a terminal
+  --open-cli            open the terminal frontend (ai-usage-cli) in a terminal
   --list                print the known provider ids, one per line
   -h, --help            show this help
 
@@ -188,6 +189,8 @@ def main(argv):
                 sys.stderr.write("get-ai-usage: --offset needs a non-negative integer\n")
                 sys.stderr.write(USAGE + "\n")
                 return 2
+        elif arg == "--open-cli":
+            mode = "open-cli"
         elif arg == "--open-session":
             mode = "open-session"
             i += 1
@@ -276,6 +279,13 @@ def main(argv):
     if mode == "initialize-provider-defaults":
         _emit({"ok": True, "data": config.initialize_provider_defaults()})
         return 0
+
+    if mode == "open-cli":
+        from .sessions import open_cli
+
+        ok, message = open_cli()
+        print(json.dumps({"ok": ok, "message": message}))
+        return 0 if ok else 1
 
     if mode == "open-session":
         from .sessions import open_session
