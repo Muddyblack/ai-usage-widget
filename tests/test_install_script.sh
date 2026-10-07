@@ -5,7 +5,7 @@ repo="$(cd "$(dirname "$0")/.." && pwd)"
 tmp="$(mktemp -d)"
 trap 'rm -rf -- "$tmp"' EXIT
 mkdir -p "$tmp/bin" "$tmp/home" "$tmp/repo/hosts/kde/contents/ui" "$tmp/repo/assets/icons" "$tmp/repo/scripts"
-cp "$repo/test_install.sh" "$tmp/repo/test_install.sh"
+cp "$repo/scripts/test_install.sh" "$tmp/repo/scripts/test_install.sh"
 cp "$repo/hosts/kde/metadata.json" "$tmp/repo/hosts/kde/metadata.json"
 cp "$repo/hosts/kde/contents/ui/main.qml" "$tmp/repo/hosts/kde/contents/ui/main.qml"
 cp "$repo/assets/icons/org.muddyblack.aiUsageWidget.svg" "$tmp/repo/assets/icons/"
@@ -37,7 +37,7 @@ root="$tmp/home/.local/share/plasma/plasmoids"
 export FAKE_KPACKAGE_LOG="$tmp/kpackage.log" FAKE_INSTALLED="$tmp/installed"
 export HOME="$tmp/home" XDG_DATA_HOME="$tmp/home/.local/share" TMPDIR="$tmp" PATH="$tmp/bin:$PATH"
 
-"$tmp/repo/test_install.sh" >/dev/null
+"$tmp/repo/scripts/test_install.sh" >/dev/null
 grep -F -- "-p $root -l" "$FAKE_KPACKAGE_LOG" >/dev/null
 grep -F -- "-p $root -i " "$FAKE_KPACKAGE_LOG" >/dev/null
 if grep -F -- "-p $root -u " "$FAKE_KPACKAGE_LOG" >/dev/null; then
@@ -46,7 +46,7 @@ if grep -F -- "-p $root -u " "$FAKE_KPACKAGE_LOG" >/dev/null; then
 fi
 
 : > "$FAKE_KPACKAGE_LOG"
-"$tmp/repo/test_install.sh" >/dev/null
+"$tmp/repo/scripts/test_install.sh" >/dev/null
 grep -F -- "-p $root -l" "$FAKE_KPACKAGE_LOG" >/dev/null
 grep -F -- "-p $root -u " "$FAKE_KPACKAGE_LOG" >/dev/null
 if grep -F -- "-p $root -i " "$FAKE_KPACKAGE_LOG" >/dev/null; then

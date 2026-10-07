@@ -13,8 +13,8 @@ Nix, install:
 
 | Tool | Needed for |
 |---|---|
-| Plasma SDK (`kpackagetool6`, `plasmoidviewer`) | `./test_install.sh`, `make view` |
-| gettext (`msgfmt`, `xgettext`, `msgmerge`, `msgattrib`) | compiling translations in `./test_install.sh`, `make view`, `make pack`; `make translations` |
+| Plasma SDK (`kpackagetool6`, `plasmoidviewer`) | `make test-install`, `make view` |
+| gettext (`msgfmt`, `xgettext`, `msgmerge`, `msgattrib`) | compiling translations in `make test-install`, `make view`, `make pack`; `make translations` |
 | `zip` | `make pack` |
 | Python 3.8+ | the backend and every test suite |
 | `jq`, `flock`, `timeout` | `make test` (the shell contract tests) |
@@ -45,13 +45,13 @@ default one — which CI enters — stays small. For SQLite timings, use a tmpfs
 ## Development install
 
 ```bash
-./test_install.sh
+make test-install     # or ./scripts/test_install.sh
 ```
 
 Installs as `AI Usage (Test)` alongside the real widget so you can iterate
 without touching your live install.
 
-`test_install.sh`, `make view` and `make pack` compile the translations first,
+`make test-install`, `make view` and `make pack` compile the translations first,
 so they need gettext (`msgfmt`); `nix develop` has it. The compiled `.mo`
 files under `build/kde/contents/locale/` are git-ignored build output: edit
 `translate/*.po` (regenerate with `make translations`), never commit a `.mo`.
@@ -159,7 +159,7 @@ make pack
 ## Releasing
 
 ```bash
-./tag.sh
+make tag     # or ./scripts/tag.sh
 ```
 
 Prompts for a version bump (patch / minor / major), updates

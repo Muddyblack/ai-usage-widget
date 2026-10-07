@@ -6,7 +6,7 @@
 # Usage: translate/build.sh [PACKAGE_DIR]   (default: build/kde)
 #
 # The .mo files are build output, not committed: scripts/build-kde-package.sh
-# (and so `make pack`, the release, `make view`, test_install.sh and the Nix
+# (and so `make pack`, the release, `make view`, `make test-install` and the Nix
 # package) runs this, so the .plasmoid users install already carries them.
 set -euo pipefail
 

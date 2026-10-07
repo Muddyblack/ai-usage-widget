@@ -119,6 +119,12 @@
               echo "wrote $out"
             '');
           };
+          # `nix run .#ruff -- format .` / `-- check . --fix`: the pinned linter,
+          # without entering the dev shell.
+          ruff = {
+            type = "app";
+            program = "${pkgs.ruff}/bin/ruff";
+          };
           cli = {
             type = "app";
             program = toString (pkgs.writeShellScript "ai-usage-cli" ''
@@ -220,7 +226,21 @@
             packages = [
               (pkgs.python3.withPackages (ps: [ ps.pyside6 ps.psutil ]))
               pkgs.ruff
+              pkgs.qt6.qtdeclarative
+              pkgs.qt6.qtsvg
             ];
+            shellHook = ''
+              # nixpkgs' PySide6 ships no QML modules (QtQuick.Controls …): they
+              # come from qtdeclarative, which must be the same Qt it runs on.
+              # A desktop session exports its own Qt/Plasma paths (a different
+              # Qt build) that would be loaded in their place and crash on a
+              # symbol mismatch, so those are dropped first.
+              unset QML2_IMPORT_PATH QT_PLUGIN_PATH QT_ADDITIONAL_PACKAGES_PREFIX_PATH \
+                NIXPKGS_QT6_QML_IMPORT_PATH NIXPKGS_QML_SEARCH_PATHS QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE
+              export QML_IMPORT_PATH="${pkgs.qt6.qtdeclarative}/lib/qt-6/qml"
+              # The provider logos are SVGs: Qt's SVG image-format plugin.
+              export QT_PLUGIN_PATH="${pkgs.qt6.qtsvg}/lib/qt-6/plugins"
+            '';
           };
         });
     };

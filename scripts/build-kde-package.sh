@@ -30,3 +30,11 @@ find "$out" \( -name '__pycache__' -o -name '*.pyc' -o -name '*~' -o -name '*.sw
 
 bash "$root/translate/build.sh" "$out"
 echo "assembled $out"
+
+# Create a `package` symlink in the repo root so that
+#   plasmoidviewer -a package -f planar
+# works without needing to remember the build/kde path.
+# Only done when building to the default location; a custom OUT is left alone.
+if [ "$out" = "$root/build/kde" ]; then
+    ln -sfn build/kde "$root/package"
+fi

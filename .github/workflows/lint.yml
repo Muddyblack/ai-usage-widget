@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   # Figures out which of the two jobs below actually need to run for this
-  # diff, so e.g. a docs-only or hyprland-only PR doesn't pay for a backend
+  # diff, so e.g. a docs-only PR doesn't pay for a backend
   # test run, and a QML-only PR doesn't pay for ruff/pytest.
   changes:
     runs-on: ubuntu-latest
@@ -29,33 +29,25 @@ jobs:
         with:
           filters: |
             qml:
-              - 'package/contents/**/*.qml'
-              - 'package/contents/**/*.js'
-              - 'package/metadata.json'
-              - 'tests/qml/**'
+              # The one UI and every host's QML; their i18n(…) strings are
+              # extracted into translate/*.po.
+              - 'ui/**'
+              - 'hosts/**/*.qml'
+              - 'hosts/**/*.js'
+              - 'hosts/kde/**'
+              - 'scripts/build-kde-package.sh'
               - 'Makefile'
               - 'translate/**'
-              # Their shell.i18n(…) strings are extracted into translate/*.po too.
-              - 'hyprland/**'
-              - 'windows/qml/**'
-              - 'macos/Sources/**'
+              - 'backend/aiusage/**/*.py'
               - 'flake.nix'
               - 'flake.lock'
               - '.github/workflows/lint.yml'
             backend:
-              - 'package/contents/tools/aiusage/**'
-              - 'windows/**'
-              - 'macos/**'
-              - 'scripts/**/*.py'
-              - 'tests/python/**'
-              - 'tests/behavior/**'
-              - 'tests/fixtures/**'
-              - 'tests/*.test.sh'
-              - 'tests/*.test.js'
-              - 'hyprland/**'
-              - 'package/contents/ui/**'
-              # What the node tests exercise: the shared JS and the French catalog.
-              - 'package/contents/code/**'
+              - 'backend/**'
+              - 'hosts/**'
+              - 'ui/**'
+              - 'scripts/**'
+              - 'tests/**'
               - 'translate/**'
               - 'pyproject.toml'
               - '.github/workflows/lint.yml'
@@ -70,13 +62,13 @@ jobs:
       - uses: cachix/install-nix-action@v27
 
       - name: qmllint
-        run: nix develop --command bash -c 'find package/contents -name "*.qml" -print0 | xargs -0 qmllint -E --unresolved-type info'
-
-      - name: QML resource lifecycle tests
-        run: nix develop --command make test-qml
+        run: nix develop --command bash -c 'find ui hosts -name "*.qml" -print0 | xargs -0 qmllint -E --unresolved-type info'
 
       - name: qmlformat check
-        run: nix develop --command bash -c 'find package/contents -name "*.qml" | xargs qmlformat --dry-run 2>&1 | grep -q "would reformat" && echo "Files need formatting, run qmlformat -i" && exit 1 || true'
+        run: nix develop --command bash -c 'find ui hosts -name "*.qml" | xargs qmlformat --dry-run 2>&1 | grep -q "would reformat" && echo "Files need formatting, run qmlformat -i" && exit 1 || true'
+
+      - name: KDE package assembles
+        run: nix develop --command ./scripts/build-kde-package.sh
 
       - name: i18n catalogs complete
         run: nix develop --command ./translate/check.sh
@@ -100,12 +92,12 @@ jobs:
       - name: ruff check
         uses: astral-sh/ruff-action@v4.1.0
         with:
-          args: "check package/contents/tools/aiusage windows macos scripts tests/python"
+          args: "check backend/aiusage hosts scripts tests/python"
 
       - name: ruff format check
         uses: astral-sh/ruff-action@v4.1.0
         with:
-          args: "format --check package/contents/tools/aiusage windows macos scripts tests/python"
+          args: "format --check backend/aiusage hosts scripts tests/python"
 
       - name: portable backend tests
         run: python3 -m unittest discover -s tests/python

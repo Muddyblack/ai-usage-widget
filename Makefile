@@ -1,4 +1,4 @@
-.PHONY: new-language help view view-h view-hyprland hyprland install pack tag test test-py translations check-translations lint-py run-desktop run-windows macos
+.PHONY: new-language test-install format help view view-h view-hyprland hyprland install pack tag test test-py translations check-translations lint-py run-desktop run-windows macos
 .DEFAULT_GOAL := help
 
 help: ## list targets
@@ -28,8 +28,10 @@ view-hyprland: ## preview widget (Hyprland / Quickshell)
 
 hyprland: view-hyprland
 
-install: ## install test copy to local Plasma session
-	@./test_install.sh
+test-install: ## install a side-by-side "(Test)" copy of the KDE widget into your Plasma session
+	@./scripts/test_install.sh
+
+install: test-install
 
 test: ## run the provider backend contract tests
 	@$(MAKE) --no-print-directory test-py
@@ -78,6 +80,10 @@ lint-py: ## lint + format-check the Python backend, frontends and helpers (dev o
 	  echo "ruff not found — install it or run 'nix develop'"; exit 1; \
 	fi
 
+format: ## format and auto-fix the Python (backend, hosts, scripts, tests) with ruff
+	@if command -v ruff >/dev/null 2>&1; then ruff=ruff; else ruff="nix run .#ruff --"; fi; \
+	  $$ruff format backend/aiusage hosts scripts tests/python && $$ruff check --fix backend/aiusage hosts scripts tests/python
+
 opendesktop: ## rasterize the readme SVGs to PNGs and JPGs in docs/readme/opendesktop (needs `inkscape`)
 	@docs/readme/export_opendesktop.sh
 
@@ -96,4 +102,4 @@ pack: ## build .plasmoid archive
 	fi
 
 tag: ## bump version, commit, tag, push
-	@./tag.sh
+	@./scripts/tag.sh

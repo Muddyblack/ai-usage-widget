@@ -111,7 +111,7 @@ jobs:
             dist/package-manifests/ai-usage-winget-*.zip
 
   # The workflow every push runs, with the app job's version-stamped ZIP and DMG
-  # this time (macos.yml derives its version from package/metadata.json,
+  # this time (macos.yml derives its version from hosts/kde/metadata.json,
   # so unlike windows.yml it needs no version input).
   macos:
     uses: ./.github/workflows/macos.yml
