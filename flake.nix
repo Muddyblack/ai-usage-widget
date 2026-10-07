@@ -72,7 +72,7 @@
           tray-helper = pkgs.stdenv.mkDerivation {
             pname = "ai-usage-tray";
             version = metadata.KPlugin.Version;
-            src = ./hyprland/tray;
+            src = ./hosts/quickshell/tray;
             nativeBuildInputs = with pkgs; [ cmake ninja qt6.wrapQtAppsHook ];
             buildInputs = with pkgs; [ qt6.qtbase ];
           };
@@ -139,8 +139,8 @@
                 pkgs.coreutils
                 pkgs.python3
               ]}:"$PATH"
-              # The repo root, not hyprland/ — Quickshell roots its QML sandbox at
-              # the entry point's directory, and hyprland/ cannot reach the shared
+              # The repo root, not hosts/quickshell/ — Quickshell roots its QML sandbox at
+              # the entry point's directory, and hosts/quickshell/ cannot reach the shared
               # JS under package/. See shell.qml.
               config=${self}/shell.qml
               desktop_dir="''${XDG_DATA_HOME:-$HOME/.local/share}/applications"
@@ -216,7 +216,7 @@
           };
 
           # The Windows tray app (windows/) runs on Linux too, which is how it is
-          # developed: `nix develop .#windows`, then `python windows/app.py`.
+          # developed: `nix develop .#windows`, then `python hosts/windows/app.py`.
           # Separate because only people working on that app want PySide6.
           windows = pkgs.mkShell {
             name = "ai-usage-widget-windows";

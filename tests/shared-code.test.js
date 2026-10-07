@@ -1187,7 +1187,7 @@ test("stale opacity is a panel contract, not a popup effect", () => {
 test("Hyprland and Plasma share one refresh/session policy instead of duplicating it", () => {
     const plasmaShell = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/main.qml"), "utf8");
     const plasmaSessions = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/SessionsTab.qml"), "utf8");
-    const hyprland = fs.readFileSync(path.join(__dirname, "..", "hyprland/AiUsageShell.qml"), "utf8");
+    const hyprland = fs.readFileSync(path.join(__dirname, "..", "hosts/quickshell/AiUsageShell.qml"), "utf8");
     // Both adapters delegate the cadence/expiry rule to the shared module.
     assert.match(plasmaSessions, /SessionRefreshPolicy\.refreshDelayMs/);
     assert.match(hyprland, /SessionRefreshPolicy\.refreshDelayMs/);
@@ -1204,7 +1204,7 @@ test("Hyprland and Plasma share one refresh/session policy instead of duplicatin
 
 test("both Linux shells retry a failed history save on the next poll", () => {
     const plasma = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/main.qml"), "utf8");
-    const hyprland = fs.readFileSync(path.join(__dirname, "..", "hyprland/AiUsageShell.qml"), "utf8");
+    const hyprland = fs.readFileSync(path.join(__dirname, "..", "hosts/quickshell/AiUsageShell.qml"), "utf8");
     // failed() is what releases the batch for retry; both must call it.
     assert.match(plasma, /UsageHistory\.failed\(root\.historyStore\)/);
     assert.match(hyprland, /UsageHistory\.failed\(root\.historyStore\)/);
@@ -1215,7 +1215,7 @@ test("both Linux shells retry a failed history save on the next poll", () => {
 
 test("both Linux shells reject a superseded session page", () => {
     const plasma = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/SessionsTab.qml"), "utf8");
-    const hyprland = fs.readFileSync(path.join(__dirname, "..", "hyprland/AiUsageShell.qml"), "utf8");
+    const hyprland = fs.readFileSync(path.join(__dirname, "..", "hosts/quickshell/AiUsageShell.qml"), "utf8");
     // A response only applies when its request id/query/source signature is current.
     assert.match(plasma, /requestSerial/);
     assert.match(hyprland, /sessionsActiveRequestId === root\.sessionsRequestId/);

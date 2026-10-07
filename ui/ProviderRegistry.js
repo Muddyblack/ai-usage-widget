@@ -3,7 +3,7 @@
 // Every provider the settings page can switch on, in display order, with the
 // settings key its API key is stored under. Shared by the two frontends that
 // draw the settings page themselves — the Quickshell panel (AiUsageShell.qml)
-// and the Windows tray app (windows/qml/Main.qml) — so adding a provider here
+// and the Windows tray app (hosts/windows/qml/Main.qml) — so adding a provider here
 // is enough to make it configurable in both.
 
 var providers = [

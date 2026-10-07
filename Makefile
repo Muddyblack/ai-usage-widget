@@ -48,9 +48,9 @@ test-qml: ## test Plasma command cleanup and hidden-window work (nix develop)
 
 run-windows: ## run the Windows tray app on this machine (PySide6 via 'nix develop .#windows')
 	@if command -v nix >/dev/null 2>&1 && [ -f flake.nix ]; then \
-	  nix develop .#windows --command python3 windows/app.py; \
+	  nix develop .#windows --command python3 hosts/windows/app.py; \
 	else \
-	  python3 windows/app.py; \
+	  python3 hosts/windows/app.py; \
 	fi
 
 macos: ## build AI Usage.app (macOS only; --arch arm64 for a fast local build)
@@ -68,8 +68,8 @@ check-translations: ## fail if a locale catalog has untranslated/fuzzy entries
 
 lint-py: ## lint + format-check the Python backend, frontends and helpers (dev only, needs ruff)
 	@if command -v ruff >/dev/null 2>&1; then \
-	  ruff check package/contents/tools/aiusage windows macos scripts tests/python && \
-	  ruff format --check package/contents/tools/aiusage windows macos scripts tests/python; \
+	  ruff check package/contents/tools/aiusage hosts/windows macos scripts tests/python && \
+	  ruff format --check package/contents/tools/aiusage hosts/windows macos scripts tests/python; \
 	else \
 	  echo "ruff not found — install it or run 'nix develop'"; exit 1; \
 	fi

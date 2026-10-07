@@ -1,7 +1,7 @@
 ; Windows installer for the AI Usage tray app (Inno Setup 6).
 ;
-; Built by windows/build-installer.ps1 from PyInstaller's "dist\AI Usage" folder
-; (windows/ai-usage.spec), in .github/workflows/windows.yml — on every push, and
+; Built by hosts/windows/build-installer.ps1 from PyInstaller's "dist\AI Usage" folder
+; (hosts/windows/ai-usage.spec), in .github/workflows/windows.yml — on every push, and
 ; for each release, which release.yml runs that workflow for.
 ;
 ; Per user: no admin rights, installed to %LOCALAPPDATA%\Programs\AI Usage.
@@ -27,9 +27,9 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-OutputDir=..
+OutputDir=..\..
 OutputBaseFilename=AI-Usage-Setup-{#AppVersion}
-SetupIconFile=..\dist\ai-usage.ico
+SetupIconFile=..\..\dist\ai-usage.ico
 UninstallDisplayIcon={app}\AI Usage.exe
 UninstallDisplayName=AI Usage
 Compression=lzma2/max
@@ -47,7 +47,7 @@ Name: "autostart"; Description: "Start AI Usage when I sign in"; Check: not IsUp
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\dist\AI Usage\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\dist\AI Usage\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [InstallDelete]
 ; An update replaces the whole bundle: files a new PyInstaller build no longer

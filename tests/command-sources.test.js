@@ -17,7 +17,7 @@ function qmlFiles(dir) {
 }
 
 test("executable commands run through the disposable CommandSource", () => {
-    const offenders = ["package", "hyprland"]
+    const offenders = ["package", "ui", "hosts"]
         .flatMap((folder) => qmlFiles(path.join(root, folder)))
         .filter((file) => path.basename(file) !== WRAPPER)
         .filter((file) => /engine:\s*"executable"/.test(fs.readFileSync(file, "utf8")))

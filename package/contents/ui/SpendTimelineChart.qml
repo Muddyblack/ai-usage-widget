@@ -7,7 +7,7 @@ import org.kde.kirigami as Kirigami
 // volume on a log axis (tokens swing by orders of magnitude; cost rarely
 // does). Self-contained Canvas, no charting library — mirrors the plain
 // hand-drawn style already used by UsageChart.qml. Kept structurally in step
-// with hyprland/SpendTimelineChart.qml (same props/logic, KDE widgets/theme).
+// with ui/SpendTimelineChart.qml (same props/logic, KDE widgets/theme).
 ColumnLayout {
     id: chart
 

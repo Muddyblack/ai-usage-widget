@@ -35,7 +35,7 @@ pot="$dir/template.pot"
 # Paths are relative to the repo root so template.pot does not embed the build
 # machine's home directory (which would make every diff machine-specific).
 #
-# hyprland/ and windows/qml/ are the Quickshell panel and the Windows tray app:
+# ui/, hosts/quickshell/ and hosts/windows/qml/ are the Quickshell panel and the Windows tray app:
 # their shell.i18n(…) calls land in this same catalog (see package/contents/code/I18n.js).
 #
 # macos/ is the third: Swift, but its i18n("…") calls are the same shape, and
@@ -45,7 +45,7 @@ pot="$dir/template.pot"
 # interpolation; the placeholders are ki18n's %1, as everywhere else.
 cd "$root"
 mapfile -t sources < <(
-    find package/contents/ui package/contents/config package/contents/code hyprland windows/qml \
+    find package/contents/ui package/contents/config package/contents/code ui hosts/quickshell hosts/windows/qml \
         -type f \( -name '*.qml' -o -name '*.js' \) | LC_ALL=C sort
 )
 # The KPlugin name and description are read from metadata.json by KJsonUtils,

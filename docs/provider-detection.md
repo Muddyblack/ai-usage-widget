@@ -117,7 +117,7 @@ only its collector works.
    `package/contents/config/main.xml` and wire provider-specific Plasma
    presentation only when the contract requires it. Verify its KConfig default
    does not contradict the zero-default policy.
-6. Add the provider to `hyprland/ProviderRegistry.js`, including display
+6. Add the provider to `ui/ProviderRegistry.js`, including display
    metadata and key setting. Keep its opt-in classification aligned with
    `config.py`.
 7. Add the provider ID to `macos/Sources/AIUsage/Backend/SettingsStore.swift`

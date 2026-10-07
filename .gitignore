@@ -62,7 +62,7 @@ MANIFEST
 # to build, not something PyInstaller generated.
 !macos/packaging/ai-usage-backend.spec
 # ...except the Windows app's own, hand-written build spec.
-!windows/ai-usage.spec
+!hosts/windows/ai-usage.spec
 
 # Installer logs
 pip-log.txt

@@ -16,8 +16,9 @@ from pathlib import Path
 from _support import REPO  # noqa: F401  (ensures TOOLS is on sys.path)
 
 UI = Path(REPO) / "package" / "contents" / "ui"
-HYPRLAND = Path(REPO) / "hyprland"
-WINDOWS = Path(REPO) / "windows"
+HYPRLAND = Path(REPO) / "hosts" / "quickshell"
+SHARED_UI = Path(REPO) / "ui"
+WINDOWS = Path(REPO) / "hosts" / "windows"
 MACOS = Path(REPO) / "macos" / "Sources" / "AIUsage"
 
 
@@ -39,7 +40,7 @@ class AdapterTimeoutOwnershipTest(unittest.TestCase):
                 self.assertIn("UsageHistory.failed(", _read(path))
 
     def test_the_info_pane_bounds_its_requests_in_every_adapter(self):
-        for path in (UI / "ProjectInfoPane.qml", HYPRLAND / "ProjectInfoPane.qml"):
+        for path in (UI / "ProjectInfoPane.qml", SHARED_UI / "ProjectInfoPane.qml"):
             with self.subTest(adapter=path.name):
                 source = _read(path)
                 self.assertIn("ProjectInfoRequests.js", source)

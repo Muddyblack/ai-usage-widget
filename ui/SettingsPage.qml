@@ -620,7 +620,7 @@ ColumnLayout {
             }
         }
 
-        // The Windows tray app's own display choices (windows/app.py,
+        // The Windows tray app's own display choices (hosts/windows/app.py,
         // tray_entries); a shell with a real panel has none of them.
         RowLayout {
             Layout.fillWidth: true

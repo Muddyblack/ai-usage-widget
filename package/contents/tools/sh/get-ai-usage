@@ -15,7 +15,7 @@
 #   get-ai-usage --list                     known provider ids
 #
 # Three consumers hardcode this path (package/contents/ui/main.qml,
-# hyprland/shell.qml, hyprland/tray/main.cpp), so it has to keep working even
+# ui/shell.qml, hosts/quickshell/tray/main.cpp), so it has to keep working even
 # when python3 is missing — hence the fallback envelope below instead of a
 # bare shebang failure.
 

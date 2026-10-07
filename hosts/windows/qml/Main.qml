@@ -1,16 +1,16 @@
 import QtQuick
 import QtQuick.Controls.Basic as QC
-import "../../hyprland"
-import "../../hyprland/ProviderRegistry.js" as ProviderRegistry
-import "../../package/contents/code/Format.js" as Format
-import "../../package/contents/code/FeatureTabs.js" as FeatureTabs
-import "../../package/contents/code/RefreshCoalescer.js" as RefreshCoalescer
-import "../../package/contents/code/SessionSources.js" as SessionSources
-import "../../package/contents/code/SessionRefreshPolicy.js" as SessionRefreshPolicy
-import "../../package/contents/code/UsageHistory.js" as UsageHistory
-import "../../package/contents/code/I18n.js" as I18n
+import "../../../ui"
+import "../../../ui/ProviderRegistry.js" as ProviderRegistry
+import "../../../package/contents/code/Format.js" as Format
+import "../../../package/contents/code/FeatureTabs.js" as FeatureTabs
+import "../../../package/contents/code/RefreshCoalescer.js" as RefreshCoalescer
+import "../../../package/contents/code/SessionSources.js" as SessionSources
+import "../../../package/contents/code/SessionRefreshPolicy.js" as SessionRefreshPolicy
+import "../../../package/contents/code/UsageHistory.js" as UsageHistory
+import "../../../package/contents/code/I18n.js" as I18n
 
-// The Windows tray popup (windows/app.py places, shows and hides it).
+// The Windows tray popup (hosts/windows/app.py places, shows and hides it).
 //
 // The content is the Hyprland panel's own — PopupContent.qml and the settings
 // page inside it — so this file is only the window around it plus the `shell`
@@ -860,7 +860,7 @@ Window {
     }
 
     // ── Floating pill ────────────────────────────────────────────────────────
-    // The panel pill (hyprland/PanelPill.qml) in a small always-on-top window of
+    // The panel pill (ui/PanelPill.qml) in a small always-on-top window of
     // its own, for anyone who wants the panel's look rather than tray icons.
     // Drag it anywhere; app.py puts it back where it was left (pillPosition) or,
     // the first time, just above the taskbar. A click opens the popup by it.

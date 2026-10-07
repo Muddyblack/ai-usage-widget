@@ -22,7 +22,7 @@ class QmlBackendTokensTest(unittest.TestCase):
     def test_session_content_cannot_enable_rich_text_image_requests(self):
         # Session titles and details are untrusted local file content. Qt's
         # automatic rich text detection can fetch images without a click.
-        for relative in ("package/contents/ui/SessionsTab.qml", "hyprland/SessionsPage.qml"):
+        for relative in ("package/contents/ui/SessionsTab.qml", "ui/SessionsPage.qml"):
             with self.subTest(frontend=relative):
                 with open(os.path.join(_support.REPO, relative), encoding="utf-8") as stream:
                     source = stream.read()

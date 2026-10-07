@@ -19,7 +19,7 @@ vm.runInNewContext(
 
 const ProviderRegistry = {};
 vm.runInNewContext(
-    fs.readFileSync(path.join(rootDir, "hyprland/ProviderRegistry.js"), "utf8")
+    fs.readFileSync(path.join(rootDir, "ui/ProviderRegistry.js"), "utf8")
         .replace(/^\.pragma library\s*/, ""),
     ProviderRegistry,
 );
@@ -194,7 +194,7 @@ test("source popup stages multiple selections and commits once on close", () => 
             owner: "sessionsTab"
         },
         {
-            file: "hyprland/SessionsPage.qml",
+            file: "ui/SessionsPage.qml",
             owner: "page"
         }
     ];
@@ -264,14 +264,14 @@ test("provider registries keep legacy defaults until defaults are applied", () =
 
 test("startup initializes provider defaults before normal provider refresh", () => {
     const plasma = qmlSource("package/contents/ui/main.qml");
-    const hyprland = qmlSource("hyprland/AiUsageShell.qml");
-    const windows = qmlSource("windows/app.py");
+    const hyprland = qmlSource("hosts/quickshell/AiUsageShell.qml");
+    const windows = qmlSource("hosts/windows/app.py");
     const macos = qmlSource("macos/Sources/AIUsage/App/AppDelegate.swift");
 
     assert.match(plasma, /--detect-providers/);
     assert.match(qmlFunctionBlock("package/contents/ui/main.qml", "refresh"), /providerDefaultsReady/);
     assert.match(hyprland, /--initialize-provider-defaults/);
-    assert.match(qmlFunctionBlock("hyprland/AiUsageShell.qml", "refresh"), /providerDefaultsReady/);
+    assert.match(qmlFunctionBlock("hosts/quickshell/AiUsageShell.qml", "refresh"), /providerDefaultsReady/);
     assert.match(windows, /config\.initialize_provider_defaults\(\)/);
     assert.ok(windows.indexOf("config.initialize_provider_defaults()") < windows.indexOf("backend = Backend(first_run)"));
     assert.match(macos, /Backend\.initializeProviderDefaults\(\)/);
@@ -286,12 +286,12 @@ test("popup guards the Ollama weekly window binding", () => {
 
 test("source changes keep normal rows and preserve stale-response recovery clears", () => {
     const kde = qmlSource("package/contents/ui/SessionsTab.qml");
-    const hyprland = qmlSource("hyprland/AiUsageShell.qml");
-    const windows = qmlSource("windows/qml/Main.qml");
+    const hyprland = qmlSource("hosts/quickshell/AiUsageShell.qml");
+    const windows = qmlSource("hosts/windows/qml/Main.qml");
 
     assert.doesNotMatch(qmlFunctionBlock("package/contents/ui/SessionsTab.qml", "setSourceSelection"), /sessionsTab\.sessions\s*=\s*\[\]/);
-    assert.doesNotMatch(qmlFunctionBlock("hyprland/AiUsageShell.qml", "setSessionsSourceIds"), /root\.sessions\s*=\s*\[\]/);
-    assert.doesNotMatch(qmlFunctionBlock("windows/qml/Main.qml", "setSessionsSourceIds"), /root\.sessions\s*=\s*\[\]/);
+    assert.doesNotMatch(qmlFunctionBlock("hosts/quickshell/AiUsageShell.qml", "setSessionsSourceIds"), /root\.sessions\s*=\s*\[\]/);
+    assert.doesNotMatch(qmlFunctionBlock("hosts/windows/qml/Main.qml", "setSessionsSourceIds"), /root\.sessions\s*=\s*\[\]/);
 
     assert.equal(countOccurrences(kde, "sessionsTab.sessions = [];"), 1);
     assert.equal(countOccurrences(hyprland, "root.sessions = [];"), 1);
@@ -331,11 +331,11 @@ test("session refresh policy uses deterministic cache-age and resume boundaries"
 });
 
 test("Windows, Hyprland, and macOS query cached pages first and preserve page state in flight", () => {
-    const windows = qmlSource("windows/qml/Main.qml");
-    const hyprland = qmlSource("hyprland/AiUsageShell.qml");
+    const windows = qmlSource("hosts/windows/qml/Main.qml");
+    const hyprland = qmlSource("hosts/quickshell/AiUsageShell.qml");
     const macos = fs.readFileSync(path.join(rootDir, "macos/Sources/AIUsage/App/AppModel.swift"), "utf8");
-    const windowsRequest = qmlFunctionBlock("windows/qml/Main.qml", "requestSessions");
-    const hyprlandRequest = qmlFunctionBlock("hyprland/AiUsageShell.qml", "startSessionsRequest");
+    const windowsRequest = qmlFunctionBlock("hosts/windows/qml/Main.qml", "requestSessions");
+    const hyprlandRequest = qmlFunctionBlock("hosts/quickshell/AiUsageShell.qml", "startSessionsRequest");
     const macosRequest = macos.match(/private func refreshSessions\(query: String, offset: Int, appending: Bool, refresh: Bool\) \{([\s\S]*?)\n    \}/)?.[1] || "";
 
     assert.match(windows, /onSessionsViewVisibleChanged:[\s\S]{0,120}querySessions\(sessionsQuery, 0, false/);
@@ -357,8 +357,8 @@ test("session response metadata exposes safe freshness and source-removal status
     const cache = fs.readFileSync(path.join(rootDir, "package/contents/tools/aiusage/session_cache.py"), "utf8");
     const adapters = [
         qmlSource("package/contents/ui/SessionsTab.qml"),
-        qmlSource("windows/qml/Main.qml"),
-        qmlSource("hyprland/AiUsageShell.qml"),
+        qmlSource("hosts/windows/qml/Main.qml"),
+        qmlSource("hosts/quickshell/AiUsageShell.qml"),
         fs.readFileSync(path.join(rootDir, "macos/Sources/AIUsage/Backend/Contract.swift"), "utf8")
     ];
 
@@ -374,7 +374,7 @@ test("session response metadata exposes safe freshness and source-removal status
 });
 
 test("Hyprland rejects superseded pages and keeps last-good pagination metadata on cache failure", () => {
-    const handleOutput = qmlFunctionBlock("hyprland/AiUsageShell.qml", "handleSessionsOutput");
+    const handleOutput = qmlFunctionBlock("hosts/quickshell/AiUsageShell.qml", "handleSessionsOutput");
     const state = {
         sessionsActiveRequestId: 4,
         sessionsRequestId: 5,
@@ -441,7 +441,7 @@ test("panel thresholds and stale opacity remain cross-frontend contracts", () =>
     assert.match(plasmaSlot, /PanelColor\.colorFor\(slot\.pct/);
     assert.match(plasmaSlot, /stale \? 0\.55/);
 
-    const hyprlandSlot = qmlSource("hyprland/PanelSlot.qml");
+    const hyprlandSlot = qmlSource("ui/PanelSlot.qml");
     assert.match(hyprlandSlot, /pct >= 90/);
     assert.match(hyprlandSlot, /pct >= 70/);
     assert.match(hyprlandSlot, /stale \? 0\.55/);
@@ -509,7 +509,7 @@ test("last-good panel data survives empty, timeout, stale, and cache identity tr
 });
 const plasma = qmlFunction("package/contents/ui/main.qml", "applyOpenAi");
 const plasmaCost = qmlFunction("package/contents/ui/SessionsTab.qml", "sessionCostText");
-const hyprlandCost = qmlFunction("hyprland/SessionsPage.qml", "sessionCostText");
+const hyprlandCost = qmlFunction("ui/SessionsPage.qml", "sessionCostText");
 const spendTabSource = fs.readFileSync(path.join(rootDir, "package/contents/ui/SpendTab.qml"), "utf8");
 test("QML scrollbars explicitly create horizontal attached objects", () => {
     for (const file of ["SpendTab.qml", "MistralTab.qml", "SessionsTab.qml"]) {
@@ -519,7 +519,7 @@ test("QML scrollbars explicitly create horizontal attached objects", () => {
     }
 });
 const windows = ["providerById", "activeProvider", "pillProvider", "publishTray"]
-    .map(name => qmlFunction("windows/qml/Main.qml", name)
+    .map(name => qmlFunction("hosts/windows/qml/Main.qml", name)
         + "\nroot." + name + " = " + name + ";")
     .join("\n");
 
@@ -793,9 +793,9 @@ test("OpenCode usage chart range selects matching daily data and period summary"
 });
 
 test("Hyprland and Windows show the same OpenCode daily chart on the Usage tab", () => {
-    const chart = qmlSource("hyprland/OpenCodeUsageChart.qml");
+    const chart = qmlSource("ui/OpenCodeUsageChart.qml");
     const plasma = qmlSource("package/contents/ui/OpenCodeUsageChart.qml");
-    const popup = qmlSource("hyprland/PopupContent.qml");
+    const popup = qmlSource("ui/PopupContent.qml");
     for (const source of [chart, plasma]) {
         assert.match(source, /UsageChart \{/);
         assert.match(source, /OpenCodeUsage\.chartWindows\(sourceSeries/);
@@ -869,10 +869,10 @@ test("upstream provider labels cover every OpenCode-routed provider", () => {
 test("spend views identify provider totals and constrain local metadata", () => {
     // The grand total sits in each frontend's popup header, not in the Spend
     // view itself, so the figure stays visible while the view scrolls.
-    for (const file of ["package/contents/ui/main.qml", "hyprland/PopupContent.qml"]) {
+    for (const file of ["package/contents/ui/main.qml", "ui/PopupContent.qml"]) {
         assert.match(fs.readFileSync(path.join(rootDir, file), "utf8"), /Provider\/API total/);
     }
-    for (const file of ["package/contents/ui/SpendTab.qml", "hyprland/SpendPage.qml"]) {
+    for (const file of ["package/contents/ui/SpendTab.qml", "ui/SpendPage.qml"]) {
         const source = fs.readFileSync(path.join(rootDir, file), "utf8");
         assert.match(source, /maximumLineCount: 1/);
         assert.match(source, /elide: Text\.ElideRight/);
@@ -1179,7 +1179,7 @@ test("spend rows keep long text from moving the amount and center it vertically"
 
 test("spend prices align their decimal points with fixed-width digits", () => {
     // Two-decimal amounts plus fixed-width digits put "." in one column.
-    for (const file of ["package/contents/ui/SpendTab.qml", "hyprland/SpendPage.qml"]) {
+    for (const file of ["package/contents/ui/SpendTab.qml", "ui/SpendPage.qml"]) {
         const source = fs.readFileSync(path.join(rootDir, file), "utf8");
         assert.match(source, /font\.family: "monospace"/);
         assert.doesNotMatch(source, /Layout\.preferredWidth: 60/);
@@ -1240,7 +1240,7 @@ test("KDE source popup coalesces multiple checkbox clicks into one query", () =>
 });
 
 test("shared Hyprland/Windows page stages source selection until popup close", () => {
-    const state = replaySourcePopupSelection("hyprland/SessionsPage.qml", "page");
+    const state = replaySourcePopupSelection("ui/SessionsPage.qml", "page");
     state.pendingSourceIds = state.selectedSourceIds.slice(0);
     state.stageSourceSelection(SessionSources.toggled(state.pendingSourceIds, "claude", true, state.sessionSources));
     assert.equal(state.queryCount, 0, "no query while the popup is open");
@@ -1251,7 +1251,7 @@ test("shared Hyprland/Windows page stages source selection until popup close", (
 });
 
 test("shared Hyprland/Windows page close without changes does not query", () => {
-    const state = replaySourcePopupSelection("hyprland/SessionsPage.qml", "page");
+    const state = replaySourcePopupSelection("ui/SessionsPage.qml", "page");
     state.pendingSourceIds = state.selectedSourceIds.slice(0);
     state.commitSourceSelection();
     assert.equal(state.queryCount, 0);

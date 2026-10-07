@@ -75,12 +75,12 @@ winget upgrade --id Muddyblack.AIUsage --exact --source winget
 
 ### Maintaining the manifests
 
-The Windows build runs `windows/package-manifests.py` after packaging each
+The Windows build runs `hosts/windows/package-manifests.py` after packaging each
 stable release. It hashes the actual ZIP and installer, checks the portable
 archive layout, and writes version-specific download URLs. To reproduce:
 
 ```powershell
-python windows/package-manifests.py --version 3.2.0 --assets . --output dist/package-manifests
+python hosts/windows/package-manifests.py --version 3.2.0 --assets . --output dist/package-manifests
 ```
 
 Use assets from that exact release; rebuilding a binary changes its hash.
@@ -175,13 +175,13 @@ adds no provider logic of its own:
 | Provider data, credentials, maths | `package/contents/tools/aiusage` | every frontend |
 | Usage history file and its lock | `aiusage/historyio.py` | Plasma + Hyprland, via `tools/sh/history-io` |
 | Platform directories | `aiusage/paths.py` | every frontend |
-| Popup layout | `hyprland/PopupContent.qml` | Hyprland |
+| Popup layout | `ui/PopupContent.qml` | Hyprland |
 | Settings page, rows, chart, stats | `hyprland/*.qml` | Hyprland |
-| Provider display registry | `hyprland/ProviderRegistry.js` | Hyprland |
+| Provider display registry | `ui/ProviderRegistry.js` | Hyprland |
 | Countdown / history JS | `package/contents/code/*.js` | Plasma + Hyprland |
-| Window, tray icon, autostart | `windows/app.py`, `windows/qml/Main.qml` | — |
+| Window, tray icon, autostart | `hosts/windows/app.py`, `hosts/windows/qml/Main.qml` | — |
 
-`Main.qml` and `hyprland/AiUsageShell.qml` are the two implementations of the
+`Main.qml` and `hosts/quickshell/AiUsageShell.qml` are the two implementations of the
 `shell` interface that `PopupContent.qml` and `SettingsPage.qml` read. A
 property added to one belongs in the other.
 
@@ -191,14 +191,14 @@ On Linux, which is how it is developed:
 
 ```bash
 make run-windows              # PySide6 + psutil from `nix develop .#windows`
-python windows/app.py         # the same, from inside `nix develop .#windows`
-python3 windows/app.py        # or any Python with windows/requirements.txt installed
+python hosts/windows/app.py         # the same, from inside `nix develop .#windows`
+python3 hosts/windows/app.py        # or any Python with hosts/windows/requirements.txt installed
 ```
 
 On Windows, from a checkout:
 
 ```powershell
-pip install -r windows/requirements.txt
+pip install -r hosts/windows/requirements.txt
 python windows\app.py
 ```
 
@@ -208,9 +208,9 @@ opening another tray icon.
 ## Checking it without a desktop
 
 ```bash
-python3 windows/app.py --selftest                      # exit 1 on any QML warning
-python3 windows/app.py --screenshot popup.png          # after the first refresh
-python3 windows/app.py --screenshot settings.png --settings
+python3 hosts/windows/app.py --selftest                      # exit 1 on any QML warning
+python3 hosts/windows/app.py --screenshot popup.png          # after the first refresh
+python3 hosts/windows/app.py --screenshot settings.png --settings
 ```
 
 `--selftest` opens every settings section once, so a binding that only breaks on
@@ -222,14 +222,14 @@ every provider switched off, so it needs no network.
 On Windows (PyInstaller does not cross-compile):
 
 ```powershell
-pip install -r windows/build-requirements.txt
-pyinstaller --noconfirm windows/ai-usage.spec
+pip install -r hosts/windows/build-requirements.txt
+pyinstaller --noconfirm hosts/windows/ai-usage.spec
 "dist\AI Usage\AI Usage.exe" --selftest
 ```
 
-`windows/build-requirements.txt` pins the exact PySide6, PyInstaller and Pillow
+`hosts/windows/build-requirements.txt` pins the exact PySide6, PyInstaller and Pillow
 the releases are built with, so a tag rebuilt later gives the same `.exe`.
-`windows/requirements.txt` keeps the ranges the app itself needs; CI's test job
+`hosts/windows/requirements.txt` keeps the ranges the app itself needs; CI's test job
 installs those as they come, so a new PySide6 is tried there before a bump of
 the pins ships it.
 
@@ -237,7 +237,7 @@ The result is a folder, `dist\AI Usage\`, rather than a single file: a one-file
 build unpacks itself to a temp directory on every start. Zip the folder to ship
 it.
 
-The installer wraps that folder (Inno Setup, `windows/installer.iss`):
+The installer wraps that folder (Inno Setup, `hosts/windows/installer.iss`):
 
 ```powershell
 windows\build-installer.ps1 -Version 2.4.0     # → AI-Usage-Setup-2.4.0.exe

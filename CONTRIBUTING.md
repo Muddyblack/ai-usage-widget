@@ -25,8 +25,8 @@ Nix, install:
 
 Only if you work on that part:
 
-- **Windows tray app** — PySide6 and psutil (`windows/requirements.txt`); building
-  the `.exe` also needs `windows/build-requirements.txt` (PyInstaller) and Inno
+- **Windows tray app** — PySide6 and psutil (`hosts/windows/requirements.txt`); building
+  the `.exe` also needs `hosts/windows/build-requirements.txt` (PyInstaller) and Inno
   Setup on Windows. See [`docs/windows.md`](docs/windows.md).
 - **Hyprland / Quickshell** — Quickshell, plus CMake and Qt 6 for the tray helper;
   `nix run .#hyprland` brings them. See [`docs/hyprland.md`](docs/hyprland.md).
@@ -119,7 +119,7 @@ CI also runs on Windows: platform paths, the shared history file and its lock,
 the Codex app-server client against a fake `codex.cmd`, finding Antigravity
 through `psutil`, credential discovery, and the tray app loading its QML headless
 with every settings section opened once (`make test-py`, or
-`python windows/app.py --selftest`).
+`python hosts/windows/app.py --selftest`).
 
 Linting the Python backend and tray app needs `ruff`:
 

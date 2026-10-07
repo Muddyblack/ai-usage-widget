@@ -12,7 +12,7 @@ msgstr ""
 "Language: fr\\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\\n"
 
-#: hyprland/SettingsPage.qml
+#: ui/SettingsPage.qml
 msgid "Refresh"
 msgstr "Actualisation"
 

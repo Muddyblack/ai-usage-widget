@@ -14,7 +14,7 @@ HAS_PYSIDE = importlib.util.find_spec("PySide6") is not None
 
 if HAS_PYSIDE:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    sys.path.insert(0, os.path.join(REPO, "windows"))
+    sys.path.insert(0, os.path.join(REPO, "hosts", "windows"))
     import app
 
 KEYS = ("AIUSAGE_TEST_ADDED", "AIUSAGE_TEST_CHANGED", "AIUSAGE_TEST_REMOVED")

@@ -175,8 +175,8 @@ class SwiftContractTest(unittest.TestCase):
         self.assertIn("note", self.emitted["quotaWindows"], "no fixture exercises quotaWindows.note")
 
     def test_the_menu_bar_reads_the_same_severity_thresholds_as_the_panel_pill(self):
-        """70 % amber, 90 % red — windows/app.py:_text_colour and
-        hyprland/PanelSlot.qml. A glance has to mean the same thing on every
+        """70 % amber, 90 % red — hosts/windows/app.py:_text_colour and
+        ui/PanelSlot.qml. A glance has to mean the same thing on every
         platform, so the numbers are checked rather than trusted to a comment."""
         for path in (
             os.path.join(REPO, "macos", "Sources", "AIUsage", "MenuBar", "MenuBarTitle.swift"),

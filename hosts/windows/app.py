@@ -1,21 +1,21 @@
 """AI Usage for Windows — a tray icon with the same popup as the Hyprland panel.
 
-The popup is the shared QML under hyprland/ (PopupContent.qml, SettingsPage.qml
+The popup is the shared QML under ui/ (PopupContent.qml, SettingsPage.qml
 and the components they use); qml/Main.qml wraps it in a frameless window and
 implements the `shell` interface they read. The data comes from the same
 aiusage package every other frontend runs, called in-process: there is no
 shell on Windows to run tools/sh/* through, and nothing here needs one.
 
 It runs on Linux too, which is how it is developed: `nix develop .#windows`
-brings PySide6 (or `make run-windows`), else `pip install -r windows/requirements.txt`.
+brings PySide6 (or `make run-windows`), else `pip install -r hosts/windows/requirements.txt`.
 
-  python windows/app.py                  start (a second start toggles the popup)
-  python windows/app.py --selftest       load the QML headless, open every settings
+  python hosts/windows/app.py                  start (a second start toggles the popup)
+  python hosts/windows/app.py --selftest       load the QML headless, open every settings
                                          section once, exit 1 on any QML warning
-  python windows/app.py --screenshot F [--settings]
+  python hosts/windows/app.py --screenshot F [--settings]
                                          render the popup (or the settings page)
                                          into F (PNG) and exit
-  python windows/app.py --screenshot DIR --demo
+  python hosts/windows/app.py --screenshot DIR --demo
                                          render popup.png and settings.png into
                                          DIR using demo fixture data (no network,
                                          no credentials) — used by CI
@@ -37,7 +37,7 @@ from pathlib import Path
 FROZEN = getattr(sys, "frozen", False)
 # Frozen, everything the app reads sits under the bundle root in the same
 # layout as the repository, so the QML's relative imports resolve unchanged.
-ROOT = Path(getattr(sys, "_MEIPASS", "")) if FROZEN else Path(__file__).resolve().parent.parent
+ROOT = Path(getattr(sys, "_MEIPASS", "")) if FROZEN else Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT / "package" / "contents" / "tools"))
 
 from aiusage import config, detect, history, historyio, paths  # noqa: E402
@@ -62,7 +62,7 @@ def _server_name():
 
 SERVER_NAME = _server_name()
 ICON_PATH = ROOT / "package" / "contents" / "icons" / "org.muddyblack.aiUsageWidget.svg"
-MAIN_QML = ROOT / "windows" / "qml" / "Main.qml"
+MAIN_QML = ROOT / "hosts" / "windows" / "qml" / "Main.qml"
 
 # os.environ is process-wide and snapshot() writes the settings' keys into it,
 # so one collection runs at a time and puts the environment back afterwards.
@@ -255,7 +255,7 @@ _DANGER, _WARNING = "#ff4d4d", "#ffa64d"
 
 
 def _text_colour(value):
-    """The panel pill's rule (hyprland/PanelSlot.qml): the logo carries the
+    """The panel pill's rule (ui/PanelSlot.qml): the logo carries the
     provider's colour, the number stays neutral until it is worth a look —
     amber from 70 %, red from 90 %. "" is the neutral colour, which depends on
     the taskbar and is decided when drawing."""
@@ -300,7 +300,7 @@ try:
 except ImportError:
     sys.exit(
         "AI Usage needs PySide6, which is not installed for this Python.\n"
-        "  pip install -r windows/requirements.txt\n"
+        "  pip install -r hosts/windows/requirements.txt\n"
         "or, from a Nix checkout: nix develop .#windows   (or: make run-windows)"
     )
 
@@ -1192,10 +1192,10 @@ class TrayApp:
 # there the pill is a topmost tool window and TrayApp._place positions the popup.
 
 KWIN_PLUGIN = "ai-usage-widget-pill"
-PILL_TITLE = "AI Usage pill"  # windows/qml/Main.qml, pillWindow.title
-POPUP_TITLE = APP_NAME  # windows/qml/Main.qml, the root Window's title
+PILL_TITLE = "AI Usage pill"  # hosts/windows/qml/Main.qml, pillWindow.title
+POPUP_TITLE = APP_NAME  # hosts/windows/qml/Main.qml, the root Window's title
 _KWIN_SCRIPT = """\
-// Loaded by windows/app.py for as long as it runs; see _kwin_keep_pill_above().
+// Loaded by hosts/windows/app.py for as long as it runs; see _kwin_keep_pill_above().
 // The pill and the popup keep above other windows and out of the taskbar, and
 // the popup sits under the pill — over it where there is no room below — and
 // the two move as one: dragging the pill brings the popup, dragging the popup

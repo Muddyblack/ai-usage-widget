@@ -5,30 +5,31 @@ import QtQuick.Controls.Basic as QC
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import "../../ui"
 // Shared with the Plasma widget. Quickshell sandboxes the QML engine to the
 // config root, so these imports only resolve because the root is the repository
-// root (see ../shell.qml) rather than this directory — from `hyprland/` they
+// root (see ../shell.qml) rather than this directory — from `hosts/quickshell/` they
 // would escape it and load as qrc:/qs-blackhole.
-import "../package/contents/code/Format.js" as Format
-import "../package/contents/code/RefreshCoalescer.js" as RefreshCoalescer
-import "../package/contents/code/UsageHistory.js" as UsageHistory
-import "../package/contents/code/FeatureTabs.js" as FeatureTabs
-import "../package/contents/code/SessionSources.js" as SessionSources
-import "../package/contents/code/SessionRefreshPolicy.js" as SessionRefreshPolicy
-import "ProviderRegistry.js" as ProviderRegistry
-import "../package/contents/code/I18n.js" as I18n
+import "../../package/contents/code/Format.js" as Format
+import "../../package/contents/code/RefreshCoalescer.js" as RefreshCoalescer
+import "../../package/contents/code/UsageHistory.js" as UsageHistory
+import "../../package/contents/code/FeatureTabs.js" as FeatureTabs
+import "../../package/contents/code/SessionSources.js" as SessionSources
+import "../../package/contents/code/SessionRefreshPolicy.js" as SessionRefreshPolicy
+import "../../ui/ProviderRegistry.js" as ProviderRegistry
+import "../../package/contents/code/I18n.js" as I18n
 
 // The popup's content is PopupContent.qml, shared with the Windows tray app
-// (windows/qml/Main.qml); this root implements the `shell` interface it and
+// (hosts/windows/qml/Main.qml); this root implements the `shell` interface it and
 // SettingsPage.qml read. Keep the two roots' interfaces in step.
 ShellRoot {
     id: root
 
     readonly property string baseDir: Qt.resolvedUrl(".").toString().replace("file://", "")
     // Shared provider backend — the same executable the Plasma widget calls.
-    readonly property string backendCommand: baseDir + "/../package/contents/tools/sh/get-ai-usage"
-    readonly property string iconSource: "file://" + baseDir + "/../package/contents/icons/org.muddyblack.aiUsageWidget.svg"
-    readonly property string iconDir: "file://" + baseDir + "/../package/contents/icons/"
+    readonly property string backendCommand: baseDir + "/../../package/contents/tools/sh/get-ai-usage"
+    readonly property string iconSource: "file://" + baseDir + "/../../package/contents/icons/org.muddyblack.aiUsageWidget.svg"
+    readonly property string iconDir: "file://" + baseDir + "/../../package/contents/icons/"
 
     // Translations: the Plasma widget's translate/<lang>.po, parsed by I18n.js.
     // The shared QML calls shell.i18n(…), which xgettext extracts into that
@@ -64,7 +65,7 @@ ShellRoot {
 
     function loadCatalog() {
         catalogLoad.exec({
-            command: ["sh", "-c", "for l in \"$@\"; do [ -f \"$0/$l.po\" ] && exec cat \"$0/$l.po\"; done; true", root.baseDir + "/../translate"].concat(root.language !== "" ? [root.language] : root.systemLanguages())
+            command: ["sh", "-c", "for l in \"$@\"; do [ -f \"$0/$l.po\" ] && exec cat \"$0/$l.po\"; done; true", root.baseDir + "/../../translate"].concat(root.language !== "" ? [root.language] : root.systemLanguages())
         });
     }
 
@@ -78,7 +79,7 @@ ShellRoot {
     // The catalogs present, for the language picker.
     property var availableLanguages: []
     Process {
-        command: ["sh", "-c", "for f in \"$0\"/*.po; do [ -f \"$f\" ] && basename \"$f\" .po; done; true", root.baseDir + "/../translate"]
+        command: ["sh", "-c", "for f in \"$0\"/*.po; do [ -f \"$f\" ] && basename \"$f\" .po; done; true", root.baseDir + "/../../translate"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: root.availableLanguages = this.text.split("\n").filter(function (l) {
@@ -585,7 +586,7 @@ ShellRoot {
     property var historyStore: UsageHistory.newStore(root.historyLimit)
 
     function historyTool() {
-        return root.baseDir + "/../package/contents/tools/sh/history-io";
+        return root.baseDir + "/../../package/contents/tools/sh/history-io";
     }
 
     // The store replaces `history` rather than patching it in place, so an

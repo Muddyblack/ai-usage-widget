@@ -22,7 +22,7 @@ provide the menu bar item and popover, while SwiftUI renders the usage and
 settings views. Credential discovery, provider requests, quota calculations,
 and history remain in the shared Python backend.
 
-The Hyprland frontend uses Quickshell. The Windows app (`windows/app.py`)
+The Hyprland frontend uses Quickshell. The Windows app (`hosts/windows/app.py`)
 uses PySide6 to host shared Hyprland QML. That host is a possible starting
 point for an experimental Qt frontend on macOS, but this repository does not
 currently build, test, or package it for Mac users. Treat it as unverified.
@@ -141,7 +141,7 @@ build warns and carries on with the generic Finder icon.
 ### Seeing it without a Mac
 
 The app's `--selftest` and `--screenshot <dir>` switches render the views with
-no menu bar and exit, the way `windows/app.py` does.
+no menu bar and exit, the way `hosts/windows/app.py` does.
 `scripts/demo-envelope.py` feeds them a contract-shaped envelope built
 from `tests/fixtures/`, so the screenshots need no credentials, reach no
 network, and come out the same every time. `.github/workflows/macos.yml` runs both on a
@@ -154,7 +154,7 @@ Three icon styles, in Settings › Menu Bar:
 | | |
 | --- | --- |
 | **Monochrome** (default) | one template logo at the left, the percentages beside it. What macOS wants: a template image inverts with the menu bar, dims with the app, and stays legible over any wallpaper |
-| **One per value, tinted** | a logo beside *every* value, filled with that value's colour — the panel pill's layout, where "the logo contributes its shape and the backend its colour" (`hyprland/PanelSlot.qml`), so severity is read off the icon |
+| **One per value, tinted** | a logo beside *every* value, filled with that value's colour — the panel pill's layout, where "the logo contributes its shape and the backend its colour" (`ui/PanelSlot.qml`), so severity is read off the icon |
 | **One per value, brand colours** | the same layout in the brand's own artwork |
 
 The per-value logos are `NSTextAttachment`s inside the item's attributed title

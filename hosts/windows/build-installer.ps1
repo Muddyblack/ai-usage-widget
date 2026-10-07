@@ -1,10 +1,10 @@
 # Builds AI-Usage-Setup-<version>.exe (repository root) from PyInstaller's
-# "dist\AI Usage" folder with Inno Setup — see windows/installer.iss. Used by
+# "dist\AI Usage" folder with Inno Setup — see hosts/windows/installer.iss. Used by
 # .github/workflows/windows.yml, which release.yml also runs for a tag; run it
 # from the repository root after
-#   pyinstaller --noconfirm windows/ai-usage.spec
+#   pyinstaller --noconfirm hosts/windows/ai-usage.spec
 #
-#   windows/build-installer.ps1 -Version 2.4.0
+#   hosts/windows/build-installer.ps1 -Version 2.4.0
 param([Parameter(Mandatory = $true)][string]$Version)
 $ErrorActionPreference = "Stop"
 
@@ -33,5 +33,5 @@ Write-Output "Using $iscc"
 python -c "from PIL import Image; Image.open('package/icon.png').convert('RGBA').save('dist/ai-usage.ico', sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-& $iscc "/DAppVersion=$Version" "windows\installer.iss"
+& $iscc "/DAppVersion=$Version" "hosts\windows\installer.iss"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

@@ -31,4 +31,4 @@ settings are stored locally in
 spot. By default it follows `$LANGUAGE`, or else the locale's language, when
 `translate/` has a catalog for it (French so far), reading the same `.po` files
 as the Plasma widget. Provider rows the backend words itself (limits, token counts) and the
-menu of the separate tray helper (`hyprland/tray`) are still English.
+menu of the separate tray helper (`hosts/quickshell/tray`) are still English.

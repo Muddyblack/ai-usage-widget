@@ -13,7 +13,7 @@ CLAUDE_LOGO = "file://" + os.path.join(REPO, "package", "contents", "icons", "cl
 
 if HAS_PYSIDE:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    sys.path.insert(0, os.path.join(REPO, "windows"))
+    sys.path.insert(0, os.path.join(REPO, "hosts", "windows"))
     import app
     from PySide6.QtGui import QColor, QGuiApplication
 

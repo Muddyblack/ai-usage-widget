@@ -12,7 +12,7 @@ plain text, so colour can never shift the layout.
 from .contract import num, pct_clamp
 
 # The panel indicators in both frontends switch colour at these percentages
-# (package/contents/ui/PanelSlot.qml, hyprland/PanelSlot.qml,
+# (package/contents/ui/PanelSlot.qml, ui/PanelSlot.qml,
 # package/contents/ui/main.qml). Kept identical here so a quota that reads red
 # in the panel does not read yellow in the terminal. Below the warning
 # threshold the frontends use the plain text colour, and so does this.
