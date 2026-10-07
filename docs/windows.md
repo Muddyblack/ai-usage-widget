@@ -1,6 +1,6 @@
 # The Windows tray app
 
-A tray app with the same popup as the Hyprland panel — the QML is shared, not
+A tray app with the same popup as every other platform — the QML is shared, not
 copied — backed by the same provider package. Preview quality.
 
 ## Installing it
@@ -167,23 +167,22 @@ the shared provider-addition checklist.
 
 ## How it fits together
 
-`windows/` is a PySide6 host for the same popup the Hyprland panel draws. It
-adds no provider logic of its own:
+The Windows app is the shared tray app in `hosts/desktop/` (also the macOS
+host) around the one shared UI. It adds no provider logic of its own:
 
 | Part | Lives in | Shared with |
 |---|---|---|
-| Provider data, credentials, maths | `package/contents/tools/aiusage` | every frontend |
-| Usage history file and its lock | `aiusage/historyio.py` | Plasma + Hyprland, via `tools/sh/history-io` |
-| Platform directories | `aiusage/paths.py` | every frontend |
-| Popup layout | `ui/PopupContent.qml` | Hyprland |
-| Settings page, rows, chart, stats | `hyprland/*.qml` | Hyprland |
-| Provider display registry | `ui/ProviderRegistry.js` | Hyprland |
-| Countdown / history JS | `package/contents/code/*.js` | Plasma + Hyprland |
-| Window, tray icon, autostart | `hosts/windows/app.py`, `hosts/windows/qml/Main.qml` | — |
+| Provider data, credentials, maths | `backend/aiusage` | every host |
+| Usage history file and its lock | `aiusage/historyio.py` | every host |
+| Platform directories | `aiusage/paths.py` | every host |
+| Popup, settings page, rows, chart, stats | `ui/*.qml` | every host |
+| All application state | `ui/AppState.qml` | every host |
+| Provider display registry, countdown / history JS | `ui/js/*.js` | every host |
+| Window, tray icon, autostart | `hosts/desktop/app.py`, `hosts/desktop/qml/Main.qml` | macOS |
+| Installer, PyInstaller spec, package manifests | `hosts/windows/` | — |
 
-`Main.qml` and `hosts/quickshell/AiUsageShell.qml` are the two implementations of the
-`shell` interface that `PopupContent.qml` and `SettingsPage.qml` read. A
-property added to one belongs in the other.
+`app.py`'s `Backend` implements the same interface `ui/CommandBackend.qml`
+documents for the process-based hosts; `ui/AppState.qml` talks only to that.
 
 ## Running it
 
@@ -191,14 +190,14 @@ On Linux, which is how it is developed:
 
 ```bash
 make run-windows              # PySide6 + psutil from `nix develop .#windows`
-python hosts/windows/app.py         # the same, from inside `nix develop .#windows`
-python3 hosts/windows/app.py        # or any Python with hosts/windows/requirements.txt installed
+python hosts/desktop/app.py         # the same, from inside `nix develop .#windows`
+python3 hosts/desktop/app.py        # or any Python with hosts/desktop/requirements.txt installed
 ```
 
 On Windows, from a checkout:
 
 ```powershell
-pip install -r hosts/windows/requirements.txt
+pip install -r hosts/desktop/requirements.txt
 python windows\app.py
 ```
 
@@ -208,9 +207,9 @@ opening another tray icon.
 ## Checking it without a desktop
 
 ```bash
-python3 hosts/windows/app.py --selftest                      # exit 1 on any QML warning
-python3 hosts/windows/app.py --screenshot popup.png          # after the first refresh
-python3 hosts/windows/app.py --screenshot settings.png --settings
+python3 hosts/desktop/app.py --selftest                      # exit 1 on any QML warning
+python3 hosts/desktop/app.py --screenshot popup.png          # after the first refresh
+python3 hosts/desktop/app.py --screenshot settings.png --settings
 ```
 
 `--selftest` opens every settings section once, so a binding that only breaks on
@@ -229,7 +228,7 @@ pyinstaller --noconfirm hosts/windows/ai-usage.spec
 
 `hosts/windows/build-requirements.txt` pins the exact PySide6, PyInstaller and Pillow
 the releases are built with, so a tag rebuilt later gives the same `.exe`.
-`hosts/windows/requirements.txt` keeps the ranges the app itself needs; CI's test job
+`hosts/desktop/requirements.txt` keeps the ranges the app itself needs; CI's test job
 installs those as they come, so a new PySide6 is tried there before a bump of
 the pins ships it.
 

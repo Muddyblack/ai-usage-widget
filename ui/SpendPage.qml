@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic as QC
 import QtQuick.Layouts
-import "../package/contents/code/FeatureTabs.js" as FeatureTabs
+import "js/FeatureTabs.js" as FeatureTabs
 
 ColumnLayout {
     id: page

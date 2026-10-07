@@ -1,5 +1,5 @@
 import QtQuick
-import "../package/contents/code/OpenCodeUsage.js" as OpenCodeUsage
+import "js/OpenCodeUsage.js" as OpenCodeUsage
 
 // The same chart used by quota providers, fed by a local daily token ledger.
 UsageChart {

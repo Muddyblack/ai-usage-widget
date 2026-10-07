@@ -51,7 +51,7 @@ my %C = (
 my $UI   = 'system-ui,-apple-system,Segoe UI,Noto Sans,Roboto,sans-serif';
 my $MONO = 'ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace';
 
-# Mapping to live provider SVGs in package/contents/icons/
+# Mapping to live provider SVGs in assets/icons/
 my %PROVIDER_ICONS = (
     claude      => "claude-color.svg",
     antigravity => "antigravity-color.svg",
@@ -87,7 +87,7 @@ sub write_svg {
 sub defs_block {
     my $brand_defs = "";
     for my $id (sort keys %PROVIDER_ICONS) {
-        my $file = "$DIR/../package/contents/icons/$PROVIDER_ICONS{$id}";
+        my $file = "$DIR/../assets/icons/$PROVIDER_ICONS{$id}";
         next unless -f $file;
         open my $fh, "<", $file or next;
         my $raw = do { local $/; <$fh> };

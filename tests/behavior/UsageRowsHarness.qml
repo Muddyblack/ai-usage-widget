@@ -1,5 +1,5 @@
 import QtQuick
-import "../../hyprland"
+import "../../ui"
 
 Item {
     property string envelopeJson: "{}"

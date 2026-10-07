@@ -1,11 +1,11 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
-import "../package/contents/code/FeatureTabs.js" as FeatureTabs
+import "js/FeatureTabs.js" as FeatureTabs
 
 // The popup's content — header, tabs, usage rows, stats, chart and footer —
 // shared by every frontend that draws the popup itself: the Quickshell panel
-// (AiUsageShell.qml) and the Windows tray app (hosts/windows/qml/Main.qml). Only the
+// (AiUsageShell.qml) and the Windows tray app (hosts/desktop/qml/Main.qml). Only the
 // window around it differs, so this file is the one place the popup is laid out.
 //
 // `shell` is the frontend's root object. Everything read here — providers,
@@ -223,7 +223,7 @@ ColumnLayout {
     SettingsPage {
         id: settingsPage
 
-        // Found by name from hosts/windows/app.py --selftest, which opens each section.
+        // Found by name from hosts/desktop/app.py --selftest, which opens each section.
         objectName: "settingsPage"
         visible: shell.showSettings
         Layout.fillWidth: true

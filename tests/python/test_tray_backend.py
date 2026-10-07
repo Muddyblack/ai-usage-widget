@@ -13,7 +13,7 @@ from unittest import mock
 from _support import REPO
 
 HAS_PYSIDE = importlib.util.find_spec("PySide6") is not None
-WINDOWS_APP = Path(REPO) / "hosts" / "windows" / "app.py"
+WINDOWS_APP = Path(REPO) / "hosts" / "desktop" / "app.py"
 
 
 def load_production_finish_sessions():
@@ -138,7 +138,7 @@ class RateQueryOffThreadTest(unittest.TestCase):
         self.assertEqual(len(submitted), 1)
 
     def test_pricing_refresh_does_not_take_the_environment_lock(self):
-        source = Path(REPO).joinpath("hosts", "windows", "app.py").read_text(encoding="utf-8")
+        source = Path(REPO).joinpath("hosts", "desktop", "app.py").read_text(encoding="utf-8")
         start = source.index("def refresh_pricing_json():")
         end = source.index("def _restore_environ", start)
         self.assertNotIn("_env_lock", source[start:end])
@@ -170,7 +170,7 @@ class SessionRefreshResponseTest(unittest.TestCase):
 
 if HAS_PYSIDE:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    sys.path.insert(0, os.path.join(REPO, "hosts", "windows"))
+    sys.path.insert(0, os.path.join(REPO, "hosts", "desktop"))
     import app
     from PySide6.QtCore import Qt
     from PySide6.QtGui import QGuiApplication

@@ -25,7 +25,7 @@ Nix, install:
 
 Only if you work on that part:
 
-- **Windows tray app** — PySide6 and psutil (`hosts/windows/requirements.txt`); building
+- **Windows tray app** — PySide6 and psutil (`hosts/desktop/requirements.txt`); building
   the `.exe` also needs `hosts/windows/build-requirements.txt` (PyInstaller) and Inno
   Setup on Windows. See [`docs/windows.md`](docs/windows.md).
 - **Hyprland / Quickshell** — Quickshell, plus CMake and Qt 6 for the tray helper;
@@ -53,14 +53,14 @@ without touching your live install.
 
 `test_install.sh`, `make view` and `make pack` compile the translations first,
 so they need gettext (`msgfmt`); `nix develop` has it. The compiled `.mo`
-files under `package/contents/locale/` are git-ignored build output: edit
+files under `build/kde/contents/locale/` are git-ignored build output: edit
 `translate/*.po` (regenerate with `make translations`), never commit a `.mo`.
 
 ## Translations
 
 One catalog per language, `translate/<lang>.po`, serves every frontend. The
 Plasma widget loads it compiled (KDE's `i18n()`); the Hyprland panel and the
-Windows tray app parse the `.po` itself with `package/contents/code/I18n.js`,
+Windows tray app parse the `.po` itself with `ui/js/I18n.js`,
 through `shell.i18n()` / `shell.i18nc()` / `shell.i18np()` — the same call shapes,
 so `translate/Messages.sh` extracts all three frontends into the same file.
 Wrap new UI text in those calls, as one full phrase with `%1` placeholders
@@ -76,7 +76,7 @@ make translations && make check-translations
 ```
 
 Nothing else needs registering: the scripts, CI, packaging and all three
-frontends pick up every `translate/*.po`. `package/metadata.json` can carry a
+frontends pick up every `translate/*.po`. `hosts/kde/metadata.json` can carry a
 `"Name[de]"` / `"Description[de]"` for the widget list.
 
 To remove the test copy:
@@ -119,7 +119,7 @@ CI also runs on Windows: platform paths, the shared history file and its lock,
 the Codex app-server client against a fake `codex.cmd`, finding Antigravity
 through `psutil`, credential discovery, and the tray app loading its QML headless
 with every settings section opened once (`make test-py`, or
-`python hosts/windows/app.py --selftest`).
+`python hosts/desktop/app.py --selftest`).
 
 Linting the Python backend and tray app needs `ruff`:
 
@@ -139,16 +139,16 @@ described in [`docs/providers.md`](docs/providers.md).
 
 For provider defaulting and detection, follow the complete checklist in
 [`docs/provider-detection.md`](docs/provider-detection.md). It covers
-`config.py`, `collect.py`, `envelope.py`, Plasma KConfig, `ProviderRegistry.js`,
-`SettingsStore.swift`, fixtures, tests, and every affected document. A new
+`config.py`, `collect.py`, `envelope.py`, `ProviderRegistry.js`, fixtures,
+tests, and every affected document. A new
 provider must not be called automatically detected unless it is in the backend
 `AUTO_DETECT_PROVIDERS` allowlist and has stat-only, no-network, no-credential-read
 tests.
 
 For behavior shared by frontends, add a case to
 [`tests/behavior/scenarios.json`](tests/behavior/scenarios.json). The
-[behavioral test guide](tests/behavior/README.md) explains how Python, Plasma,
-Hyprland/Windows and Swift consume the same scenarios and how to run the tests.
+[behavioral test guide](tests/behavior/README.md) explains how Python, Node
+and Qt consume the same scenarios and how to run the tests.
 
 ## Packaging
 
@@ -164,5 +164,5 @@ make pack
 ```
 
 Prompts for a version bump (patch / minor / major), updates
-`package/metadata.json`, commits, tags, and pushes. CI then builds the
+`hosts/kde/metadata.json`, commits, tags, and pushes. CI then builds the
 `.plasmoid` and creates a GitHub release automatically.

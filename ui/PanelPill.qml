@@ -14,6 +14,10 @@ Rectangle {
     property bool stale: false
     property bool hasError: false
     property bool active: false      // popup open → keep the hover tint
+    // false inside a desktop panel (KDE) that already draws the frame: only a
+    // faint hover tint remains.
+    property bool framed: true
+    property color textColor: "#f8fafc"
 
     signal clicked
 
@@ -43,8 +47,8 @@ Rectangle {
             easing.type: Easing.OutCubic
         }
     }
-    color: mouse.containsMouse || active ? Qt.rgba(0.10, 0.11, 0.14, 0.92) : Qt.rgba(0.06, 0.07, 0.09, 0.86)
-    border.width: 1
+    color: !framed ? (mouse.containsMouse || active ? Qt.rgba(1, 1, 1, 0.08) : "transparent") : (mouse.containsMouse || active ? Qt.rgba(0.10, 0.11, 0.14, 0.92) : Qt.rgba(0.06, 0.07, 0.09, 0.86))
+    border.width: framed ? 1 : 0
     border.color: Qt.rgba(1, 1, 1, 0.12)
 
     Behavior on color {
@@ -95,13 +99,14 @@ Rectangle {
                     costText: modelData.text !== undefined ? modelData.text : ""
                     stale: pill.stale
                     iconSource: pill.iconSource
+                    textColor: pill.textColor
                 }
 
                 Rectangle {
                     visible: index < pill.slots.length - 1
                     Layout.preferredWidth: 1
                     Layout.preferredHeight: 14
-                    color: Qt.rgba(1, 1, 1, 0.16)
+                    color: Qt.rgba(pill.textColor.r, pill.textColor.g, pill.textColor.b, 0.16)
                     Layout.alignment: Qt.AlignVCenter
                 }
             }

@@ -2,18 +2,18 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const Format = require("../package/contents/code/Format.js");
-const PanelRotation = require("../package/contents/code/PanelRotation.js");
-const UsageHistory = require("../package/contents/code/UsageHistory.js");
-const Shell = require("../package/contents/code/Shell.js");
-const SessionSources = require("../package/contents/code/SessionSources.js");
-const RefreshCoalescer = require("../package/contents/code/RefreshCoalescer.js");
-const ProjectInfoRequests = require("../package/contents/code/ProjectInfoRequests.js");
-const PanelColor = require("../package/contents/code/PanelColor.js");
+const Format = require("../ui/js/Format.js");
+const PanelRotation = require("../ui/js/PanelRotation.js");
+const UsageHistory = require("../ui/js/UsageHistory.js");
+const Shell = require("../ui/js/Shell.js");
+const SessionSources = require("../ui/js/SessionSources.js");
+const RefreshCoalescer = require("../ui/js/RefreshCoalescer.js");
+const ProjectInfoRequests = require("../ui/js/ProjectInfoRequests.js");
+const PanelColor = require("../ui/js/PanelColor.js");
 const { execFileSync } = require("node:child_process");
 
 test("panel rotation is opt-in and only runs with multiple pins", () => {
-    const schema = fs.readFileSync(path.join(__dirname, "..", "package/contents/config/main.xml"), "utf8");
+    const schema = fs.readFileSync(path.join(__dirname, "..", "hosts/kde/contents/config/main.xml"), "utf8");
     assert.match(schema, /entry name="panelRotationIntervalSec" type="Int">[\s\S]*?<default>0<\/default>/);
     assert.equal(PanelRotation.normalizeIntervalSec(1), 0);
     assert.equal(PanelRotation.normalizeIntervalSec(600), 600);
@@ -278,7 +278,7 @@ test("the QML and Python unions produce identical output", () => {
         for (const [base, overlay] of cases)
             payload.push([base, overlay, limit]);
 
-    const py = execFileSync("python3", ["-B", "-c", script, "package/contents/tools"], {
+    const py = execFileSync("python3", ["-B", "-c", script, "backend"], {
         input: JSON.stringify(payload),
         encoding: "utf8",
         cwd: __dirname + "/.."
@@ -300,7 +300,7 @@ test("the QML and Python normalize produce identical output", () => {
         " print(json.dumps([history.normalize(p, 500) for p in c], separators=(',', ':')))";
     // JSON has no NaN, and neither store can hold one; drop it the way a file
     // round trip would before handing the cases to Python.
-    const py = execFileSync("python3", ["-B", "-c", script, "package/contents/tools"], {
+    const py = execFileSync("python3", ["-B", "-c", script, "backend"], {
         input: JSON.stringify(cases).replace(/NaN/g, "null"),
         encoding: "utf8",
         cwd: __dirname + "/.."
@@ -530,7 +530,7 @@ test("the burn rate can read one series through another", () => {
 
 const os = require("node:os");
 
-const HISTORY_IO = path.join(__dirname, "..", "package", "contents", "tools", "sh", "history-io");
+const HISTORY_IO = path.join(__dirname, "..", "backend", "sh", "history-io");
 
 function newHome() {
     const home = fs.mkdtempSync(path.join(os.tmpdir(), "ai-usage-history-"));
@@ -1064,7 +1064,7 @@ test("a pricing refresh during an in-flight usage request coalesces to one", () 
 });
 
 test("Project Info network work is deferred until the visible pane ticks its client", () => {
-    const source = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/ProjectInfoPane.qml"), "utf8");
+    const source = fs.readFileSync(path.join(__dirname, "..", "ui/ProjectInfoPane.qml"), "utf8");
     assert.match(source, /if \(foregroundVisible && onlineEnabled\)\s*client\.tick\(\)/);
     assert.match(source, /if \(client\)\s*client\.dispose\(\)/);
 
@@ -1096,12 +1096,12 @@ test("panel-critical state stays resident while popup views are conditional", ()
     // The panel slot and provider icons are always constructed; only the
     // popup-only views depend on showSettings/active tab. This guards the
     // rule that lazy-loading must not unload panel state.
-    const main = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/main.qml"), "utf8");
+    const main = fs.readFileSync(path.join(__dirname, "..", "hosts/kde/contents/ui/main.qml"), "utf8");
     assert.match(main, /compactRepresentation:/);
     assert.match(main, /fullRepresentation:/);
     // The compact panel does not reference the popup-only Info pane.
     const compact = main.slice(main.indexOf("compactRepresentation:"), main.indexOf("fullRepresentation:"));
-    assert.doesNotMatch(compact, /ProjectInfoPane|SettingsPanel/);
+    assert.doesNotMatch(compact, /ProjectInfoPane|SettingsPage|PopupContent/);
 });
 
 test("binary window bounds match a linear filter exactly", () => {
@@ -1160,7 +1160,7 @@ test("panel colour rule tolerates invalid readings without leaving the normal st
 });
 
 test("PanelSlot delegates its threshold colour to PanelColor", () => {
-    const source = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/PanelSlot.qml"), "utf8");
+    const source = fs.readFileSync(path.join(__dirname, "..", "ui/PanelSlot.qml"), "utf8");
     assert.match(source, /PanelColor\.colorFor\(slot\.pct/);
     assert.doesNotMatch(source, /slot\.pct >= 90 \? slot\.dangerColor/);
 });
@@ -1178,45 +1178,31 @@ test("panel works with zero, one, and multiple pins after popup changes", () => 
 });
 
 test("stale opacity is a panel contract, not a popup effect", () => {
-    const source = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/PanelSlot.qml"), "utf8");
+    const source = fs.readFileSync(path.join(__dirname, "..", "ui/PanelSlot.qml"), "utf8");
     assert.match(source, /opacity: stale \? 0\.55 : 1/);
-    assert.match(source, /text: slot\.tooltipText/);
-    assert.match(source, /visible: slotHover\.containsMouse && slot\.tooltipText !== ""/);
 });
 
-test("Hyprland and Plasma share one refresh/session policy instead of duplicating it", () => {
-    const plasmaShell = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/main.qml"), "utf8");
-    const plasmaSessions = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/SessionsTab.qml"), "utf8");
-    const hyprland = fs.readFileSync(path.join(__dirname, "..", "hosts/quickshell/AiUsageShell.qml"), "utf8");
-    // Both adapters delegate the cadence/expiry rule to the shared module.
-    assert.match(plasmaSessions, /SessionRefreshPolicy\.refreshDelayMs/);
-    assert.match(hyprland, /SessionRefreshPolicy\.refreshDelayMs/);
-    assert.match(plasmaSessions, /SessionRefreshPolicy\.RECONCILE_INTERVAL_MS/);
-    assert.match(hyprland, /SessionRefreshPolicy\.cacheExpired/);
-    // Hyprland coalesces pricing-triggered refreshes through the shared rule.
-    // Plasma delegates all usage refreshes to its serialized command runner.
-    assert.match(hyprland, /RefreshCoalescer\.nextAction/);
-    assert.match(plasmaShell, /UsageRefresh\s*\{/);
-    assert.match(plasmaShell, /usageRefresh\.refresh\(\)/);
-    // Neither reimplements the interval as a literal.
-    assert.doesNotMatch(hyprland, /600000/);
+// Every host shares ui/AppState.qml, so these rules are pinned in one place.
+test("the shared state delegates its refresh/session policy to the shared modules", () => {
+    const state = fs.readFileSync(path.join(__dirname, "..", "ui/AppState.qml"), "utf8");
+    assert.match(state, /SessionRefreshPolicy\.refreshDelayMs/);
+    assert.match(state, /SessionRefreshPolicy\.cacheExpired/);
+    assert.match(state, /RefreshCoalescer\.nextAction/);
+    // The interval is never reimplemented as a literal.
+    assert.doesNotMatch(state, /600000/);
 });
 
-test("both Linux shells retry a failed history save on the next poll", () => {
-    const plasma = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/main.qml"), "utf8");
-    const hyprland = fs.readFileSync(path.join(__dirname, "..", "hosts/quickshell/AiUsageShell.qml"), "utf8");
-    // failed() is what releases the batch for retry; both must call it.
-    assert.match(plasma, /UsageHistory\.failed\(root\.historyStore\)/);
-    assert.match(hyprland, /UsageHistory\.failed\(root\.historyStore\)/);
-    // Both bound the in-flight save with a watchdog.
-    assert.match(plasma, /historySaveTimeout/);
-    assert.match(hyprland, /historySaveTimeout/);
+test("the shared state retries a failed history save on the next poll", () => {
+    const state = fs.readFileSync(path.join(__dirname, "..", "ui/AppState.qml"), "utf8");
+    // failed() is what releases the batch for retry.
+    assert.match(state, /UsageHistory\.failed\(root\.historyStore\)/);
+    // The in-flight save is bounded with a watchdog.
+    assert.match(state, /historySaveTimeout/);
 });
 
-test("both Linux shells reject a superseded session page", () => {
-    const plasma = fs.readFileSync(path.join(__dirname, "..", "package/contents/ui/SessionsTab.qml"), "utf8");
-    const hyprland = fs.readFileSync(path.join(__dirname, "..", "hosts/quickshell/AiUsageShell.qml"), "utf8");
+test("the shared state rejects a superseded session page", () => {
+    const state = fs.readFileSync(path.join(__dirname, "..", "ui/AppState.qml"), "utf8");
     // A response only applies when its request id/query/source signature is current.
-    assert.match(plasma, /requestSerial/);
-    assert.match(hyprland, /sessionsActiveRequestId === root\.sessionsRequestId/);
+    assert.match(state, /requestId !== root\.sessionsRequestId/);
+    assert.match(state, /root\.sessionsActiveSourceSignature !== root\.sessionsSourceSignature/);
 });

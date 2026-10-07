@@ -4,7 +4,7 @@
 set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/.." && pwd)"
-tool="$repo/package/contents/tools/sh/history-io"
+tool="$repo/backend/sh/history-io"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 export XDG_DATA_HOME="$tmp/data"

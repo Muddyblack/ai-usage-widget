@@ -12,13 +12,13 @@ export LANGUAGE=
 set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/.." && pwd)"
-sh_dir="$repo/package/contents/tools/sh"
+sh_dir="$repo/backend/sh"
 
 # ── provider list parity ──────────────────────────────────────────────
 # The shell list must equal config.ALL_PROVIDERS exactly (order included),
 # because --list and the missing-python3 fallback enumerate providers without
 # importing Python.
-canonical="$(PYTHONPATH="$repo/package/contents/tools" python3 -c \
+canonical="$(PYTHONPATH="$repo/backend" python3 -c \
     'from aiusage import config; print(" ".join(config.ALL_PROVIDERS))')"
 shell_list="$("$sh_dir/get-ai-usage" --list | tr '\n' ' ' | sed 's/ $//')"
 if [ "$canonical" != "$shell_list" ]; then
@@ -35,11 +35,11 @@ else
     # must never happen to the working tree.
     tmp="$(mktemp -d)"
     trap 'rm -rf -- "$tmp"' EXIT
-    mkdir -p "$tmp/translate" "$tmp/package"
+    mkdir -p "$tmp/translate" "$tmp/hosts/kde"
     cp "$repo/translate/build.sh" "$repo/translate/fr.po" "$tmp/translate/"
-    cp "$repo/package/metadata.json" "$tmp/package/"
+    cp "$repo/hosts/kde/metadata.json" "$tmp/hosts/kde/"
     build="$tmp/translate/build.sh"
-    mo="$tmp/package/contents/locale/fr/LC_MESSAGES/plasma_applet_org.muddyblack.aiUsageWidget.mo"
+    mo="$tmp/build/kde/contents/locale/fr/LC_MESSAGES/plasma_applet_org.muddyblack.aiUsageWidget.mo"
     mtime() { python3 -c 'import os, sys; print(os.stat(sys.argv[1]).st_mtime_ns)' "$1"; }
 
     # A clean build compiles.

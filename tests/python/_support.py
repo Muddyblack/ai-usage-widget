@@ -14,7 +14,7 @@ from pathlib import Path
 from unittest import mock
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-TOOLS = os.path.join(REPO, "package", "contents", "tools")
+TOOLS = os.path.join(REPO, "backend")
 
 if TOOLS not in sys.path:
     sys.path.insert(0, TOOLS)

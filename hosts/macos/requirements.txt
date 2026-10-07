@@ -1,0 +1,5 @@
+# Runtime for the macOS menu bar app: the shared tray app's needs
+# (hosts/desktop/requirements.txt) plus PyObjC's AppKit bridge, which draws the
+# native menu bar item (hosts/macos/statusitem.py).
+-r ../desktop/requirements.txt
+pyobjc-framework-Cocoa>=10.0

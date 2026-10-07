@@ -17,7 +17,7 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(ROOT, "package", "contents", "tools"))
+sys.path.insert(0, os.path.join(ROOT, "backend"))
 
 from aiusage.contract import finalize  # noqa: E402
 from aiusage.normalize import normalize  # noqa: E402

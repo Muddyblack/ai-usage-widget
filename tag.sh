@@ -17,11 +17,11 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-METADATA_PATH="package/metadata.json"
+METADATA_PATH="hosts/kde/metadata.json"
 METADATA_FILE="$HERE/$METADATA_PATH"
 
 if [ ! -f "$METADATA_FILE" ]; then
-    echo "Error: package/metadata.json not found!" >&2
+    echo "Error: hosts/kde/metadata.json not found!" >&2
     exit 1
 fi
 

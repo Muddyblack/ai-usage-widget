@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
-import "../package/contents/code/ProjectInfo.js" as Project
-import "../package/contents/code/ProjectInfoRequests.js" as InfoRequests
+import "js/ProjectInfo.js" as Project
+import "js/ProjectInfoRequests.js" as InfoRequests
 
 Column {
     id: info
@@ -67,7 +67,7 @@ Column {
         Image {
             width: 56
             height: 56
-            source: (info.shell && info.shell.iconSource) ? info.shell.iconSource : Qt.resolvedUrl("../package/icon.png")
+            source: (info.shell && info.shell.iconSource) ? info.shell.iconSource : Qt.resolvedUrl("../assets/icon.png")
             sourceSize.width: 112
             sourceSize.height: 112
             fillMode: Image.PreserveAspectFit
@@ -215,7 +215,7 @@ Column {
                     y: 12
                     width: 20
                     height: 20
-                    source: (info.shell && info.shell.iconDir ? info.shell.iconDir : Qt.resolvedUrl("../package/contents/icons/")) + parent.modelData.icon
+                    source: (info.shell && info.shell.iconDir ? info.shell.iconDir : Qt.resolvedUrl("../assets/icons/")) + parent.modelData.icon
                     sourceSize: Qt.size(40, 40)
                     fillMode: Image.PreserveAspectFit
                 }
@@ -421,7 +421,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 22
                         height: 22
-                        source: (info.shell && info.shell.iconDir ? info.shell.iconDir : Qt.resolvedUrl("../package/contents/icons/")) + parent.modelData.icon
+                        source: (info.shell && info.shell.iconDir ? info.shell.iconDir : Qt.resolvedUrl("../assets/icons/")) + parent.modelData.icon
                         fillMode: Image.PreserveAspectFit
                         sourceSize: Qt.size(44, 44)
                     }

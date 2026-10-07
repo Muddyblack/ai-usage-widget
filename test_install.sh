@@ -2,7 +2,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-METADATA="$HERE/package/metadata.json"
+METADATA="$HERE/hosts/kde/metadata.json"
 
 # Find kpackagetool6 anywhere on PATH (works on NixOS, Arch, Ubuntu, Fedora, etc.)
 TOOL="$(command -v kpackagetool6 2>/dev/null || true)"
@@ -43,12 +43,11 @@ XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 PACKAGE_ROOT="$XDG_DATA_HOME/plasma/plasmoids"
 mkdir -p "$PACKAGE_ROOT"
 
-# The .mo catalogs are build output (git-ignored); compile them before copying.
-"$HERE/translate/build.sh"
-
 TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/$(basename "$HERE")-test.XXXXXX")"
 trap 'rm -rf -- "$TEMP_DIR"' EXIT
-cp -r "$HERE/package/." "$TEMP_DIR/"
+# The package is assembled from hosts/kde, ui/, backend/ and assets/ (and the
+# .mo catalogs compiled) straight into the temporary copy.
+"$HERE/scripts/build-kde-package.sh" "$TEMP_DIR"
 
 sed -i "s/$ID/$TEST_ID/g" "$TEMP_DIR/metadata.json"
 sed -i "s/\"Name\": \"$NAME\"/\"Name\": \"$NAME (Test)\"/g" "$TEMP_DIR/metadata.json"

@@ -16,78 +16,119 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: hosts/quickshell/AiUsageShell.qml package/contents/ui/main.qml hosts/windows/qml/Main.qml
-msgid "Saved to %1"
-msgstr "Enregistré dans %1"
+#: hosts/desktop/qml/Main.qml
+msgid "Load more"
+msgstr "Charger plus"
 
-#: hosts/quickshell/AiUsageShell.qml hosts/windows/qml/Main.qml
-msgid "Export failed"
-msgstr "Échec de l'export"
+#: hosts/kde/contents/ui/main.qml
+msgid "AI Usage"
+msgstr "AI Usage"
 
-#: hosts/quickshell/AiUsageShell.qml hosts/windows/qml/Main.qml
+#: hosts/kde/contents/ui/main.qml ui/AppState.qml ui/SettingsPage.qml
+msgid "Refresh"
+msgstr "Actualisation"
+
+#: hosts/kde/contents/ui/main.qml ui/AppState.qml ui/PopupContent.qml
+msgid "Settings"
+msgstr "Paramètres"
+
+#: ui/AppState.qml
+msgid "Loading"
+msgstr "Chargement"
+
+#: ui/AppState.qml
+msgid "No data"
+msgstr "Aucune donnée"
+
+#: ui/AppState.qml
+msgid "Open AI Usage"
+msgstr "Ouvrir AI Usage"
+
+#: ui/AppState.qml
+msgid "Tray style"
+msgstr "Style de la zone de notification"
+
+#: ui/AppState.qml ui/SettingsPage.qml
+msgid "Logo and percent"
+msgstr "Logo et pourcentage"
+
+#: ui/AppState.qml ui/SettingsPage.qml
+msgid "Numbers"
+msgstr "Nombres"
+
+#: ui/AppState.qml ui/SettingsPage.qml
+msgid "Ring"
+msgstr "Anneau"
+
+#: ui/AppState.qml ui/SettingsPage.qml
+msgid "Floating pill"
+msgstr "Pilule flottante"
+
+#: ui/AppState.qml
+msgid "Start with Windows"
+msgstr "Démarrer avec Windows"
+
+#: ui/AppState.qml ui/PopupContent.qml ui/SettingsPage.qml
+msgid "Start at login"
+msgstr "Démarrer à la connexion"
+
+#: ui/AppState.qml
+msgid "Quit"
+msgstr "Quitter"
+
+#: ui/AppState.qml
 msgid "usage backend returned no data"
 msgstr "le backend d'utilisation n'a renvoyé aucune donnée"
 
-#: hosts/quickshell/AiUsageShell.qml package/contents/ui/main.qml hosts/windows/qml/Main.qml
+#: ui/AppState.qml
 msgid "Detection failed."
 msgstr "La détection a échoué."
 
-#: hosts/quickshell/AiUsageShell.qml package/contents/ui/main.qml hosts/windows/qml/Main.qml
+#: ui/AppState.qml
 msgid "No changes: enabled providers match what is installed."
 msgstr ""
 "Aucun changement : les fournisseurs activés correspondent à ce qui est "
 "installé."
 
-#: hosts/quickshell/AiUsageShell.qml package/contents/ui/main.qml hosts/windows/qml/Main.qml
+#: ui/AppState.qml
 msgid "Enabled: %1"
 msgstr "Activés : %1"
 
-#: hosts/quickshell/AiUsageShell.qml package/contents/ui/main.qml hosts/windows/qml/Main.qml
+#: ui/AppState.qml
 msgid "Disabled (not installed): %1"
 msgstr "Désactivés (non installés) : %1"
 
-#: hosts/quickshell/AiUsageShell.qml package/contents/ui/main.qml hosts/windows/qml/Main.qml
-msgid "Could not refresh pricing."
-msgstr "Impossible d'actualiser les tarifs."
-
-#: hosts/quickshell/AiUsageShell.qml package/contents/ui/SessionsTab.qml
-#: hosts/windows/qml/Main.qml
+#: ui/AppState.qml
 msgid "Could not load cached sessions."
 msgstr "Impossible de charger les sessions en cache."
 
-#: hosts/quickshell/AiUsageShell.qml package/contents/ui/SessionsTab.qml
-#: hosts/windows/qml/Main.qml
+#: ui/AppState.qml
 msgid "Could not load sessions."
 msgstr "Impossible de charger les sessions."
 
-#: hosts/quickshell/AiUsageShell.qml package/contents/ui/SessionsTab.qml
-#: hosts/windows/qml/Main.qml
+#: ui/AppState.qml
 msgid "Could not resume session."
 msgstr "Impossible de reprendre la session."
 
-#: hosts/quickshell/AiUsageShell.qml
-msgid "usage backend failed"
-msgstr "échec du backend d'utilisation"
+#: ui/AppState.qml
+msgid "Could not refresh pricing."
+msgstr "Impossible d'actualiser les tarifs."
 
-#: hosts/quickshell/AiUsageShell.qml hosts/windows/qml/Main.qml
-msgid "Loading"
-msgstr "Chargement"
+#: ui/AppState.qml
+msgid "Saved to %1"
+msgstr "Enregistré dans %1"
 
-#: hosts/quickshell/AiUsageShell.qml hosts/windows/qml/Main.qml
-msgid "No data"
-msgstr "Aucune donnée"
+#: ui/AppState.qml
+msgid "Export failed"
+msgstr "Échec de l'export"
 
-#: ui/OpenCodeUsageChart.qml package/contents/ui/OpenCodeUsageChart.qml
+#: ui/OpenCodeUsageChart.qml
 msgid "Daily token usage"
 msgstr "Utilisation quotidienne des jetons"
 
-#: ui/OverviewPage.qml package/contents/ui/OverviewTab.qml
+#: ui/OverviewPage.qml
 msgid "Enable a provider in Settings to see it here."
 msgstr "Activez un fournisseur dans les paramètres pour le voir ici."
-
-#: ui/PopupContent.qml package/contents/ui/main.qml hosts/windows/qml/Main.qml
-msgid "Settings"
-msgstr "Paramètres"
 
 #: ui/PopupContent.qml
 msgid "%1 Usage"
@@ -101,7 +142,7 @@ msgstr "Vues, pilule, position et graphique"
 msgid "Views, language and usage chart"
 msgstr "Vues, langue et graphique d'utilisation"
 
-#: ui/PopupContent.qml package/contents/ui/main.qml
+#: ui/PopupContent.qml
 msgid "About AI Usage Monitor and project links"
 msgstr "À propos d'AI Usage Monitor et liens du projet"
 
@@ -109,44 +150,39 @@ msgstr "À propos d'AI Usage Monitor et liens du projet"
 msgid "Local endpoints: Ollama, vLLM and llama.cpp"
 msgstr "Points de terminaison locaux : Ollama, vLLM et llama.cpp"
 
-#: ui/PopupContent.qml package/contents/ui/main.qml
+#: ui/PopupContent.qml
 msgid "Refresh interval and usage history"
 msgstr "Intervalle de rafraîchissement et historique d'utilisation"
 
-#: ui/PopupContent.qml package/contents/ui/main.qml
+#: ui/PopupContent.qml
 msgid "Python interpreter and terminal tool"
 msgstr "Interpréteur Python et outil terminal"
 
-#: ui/PopupContent.qml ui/SettingsPage.qml
-msgid "Start at login"
-msgstr "Démarrer à la connexion"
-
-#: ui/PopupContent.qml package/contents/ui/main.qml
+#: ui/PopupContent.qml
 msgid "Turn providers on and set their keys"
 msgstr "Activer les fournisseurs et configurer leurs clés"
 
-#: ui/PopupContent.qml package/contents/ui/main.qml
+#: ui/PopupContent.qml
 msgid "%1 provider"
 msgid_plural "%1 providers"
 msgstr[0] "%1 fournisseur"
 msgstr[1] "%1 fournisseurs"
 
 #: ui/PopupContent.qml ui/SettingsPage.qml
-#: package/contents/ui/SettingsPanel.qml package/contents/ui/main.qml
 msgid "Refreshing…"
 msgstr "Actualisation…"
 
-#: ui/PopupContent.qml package/contents/ui/main.qml
+#: ui/PopupContent.qml
 msgid "%1 local session"
 msgid_plural "%1 local sessions"
 msgstr[0] "%1 session locale"
 msgstr[1] "%1 sessions locales"
 
-#: ui/PopupContent.qml package/contents/ui/SubTabBar.qml
+#: ui/PopupContent.qml
 msgid "Usage"
 msgstr "Utilisation"
 
-#: ui/PopupContent.qml package/contents/ui/SubTabBar.qml
+#: ui/PopupContent.qml
 msgid "Stats"
 msgstr "Statistiques"
 
@@ -158,56 +194,55 @@ msgstr ""
 "Le quota du forfait est désactivé : Meta ne l'indique que lors d'un appel de "
 "modèle facturé. Tout ce qui précède est lu dans les fichiers locaux de Muse."
 
-#: ui/PopupContent.qml package/contents/ui/MuseTab.qml
+#: ui/PopupContent.qml
 msgid "Plan quota: Meta refused the credential."
 msgstr "Quota du plan : Meta a refusé les identifiants."
 
-#: ui/PopupContent.qml package/contents/ui/MuseTab.qml
+#: ui/PopupContent.qml
 msgid ""
 "Plan quota: could not reach Meta — the local numbers above are unaffected."
 msgstr ""
 "Quota du plan : impossible de joindre Meta — les données locales ci-dessus "
 "ne sont pas affectées."
 
-#: ui/PopupContent.qml package/contents/ui/MuseTab.qml
+#: ui/PopupContent.qml
 msgid "Plan quota needs a Meta API key, or a `muse login` that stored one."
 msgstr ""
 "Le quota du plan nécessite une clé API Meta, ou un `muse login` qui en a "
 "stocké une."
 
-#: ui/PopupContent.qml package/contents/ui/MuseTab.qml
+#: ui/PopupContent.qml
 msgid "Plan quota needs a model: run Muse once so it caches its catalog."
 msgstr ""
 "Le quota du plan nécessite un modèle : exécutez Muse une fois pour qu'il "
 "mette en cache son catalogue."
 
-#: ui/PopupContent.qml package/contents/ui/MuseTab.qml
+#: ui/PopupContent.qml
 msgid "No plan windows on this account — pay-as-you-go has none."
 msgstr ""
 "Aucune fenêtre de plan sur ce compte — le paiement à l'usage n'en a pas."
 
-#: ui/PopupContent.qml package/contents/ui/main.qml
+#: ui/PopupContent.qml
 msgid "updated %1"
 msgstr "mis à jour %1"
 
-#: ui/ProviderSettingRow.qml package/contents/ui/ProviderSettingRow.qml
-#: package/contents/ui/SettingsPanel.qml
+#: ui/ProviderSettingRow.qml
 msgid "Off"
 msgstr "Désactivé"
 
-#: ui/ProviderSettingRow.qml package/contents/ui/ProviderSettingRow.qml
+#: ui/ProviderSettingRow.qml
 msgid "Local"
 msgstr "Local"
 
-#: ui/ProviderSettingRow.qml package/contents/ui/ProviderSettingRow.qml
+#: ui/ProviderSettingRow.qml
 msgid "Live"
 msgstr "En direct"
 
-#: ui/ProviderSettingRow.qml package/contents/ui/ProviderSettingRow.qml
+#: ui/ProviderSettingRow.qml
 msgid "key set"
 msgstr "clé définie"
 
-#: ui/ProviderSettingRow.qml package/contents/ui/ProviderSettingRow.qml
+#: ui/ProviderSettingRow.qml
 msgid "API key"
 msgstr "Clé API"
 
@@ -220,11 +255,10 @@ msgid "Server URLs, separated by commas"
 msgstr "URLs du serveur, séparées par des virgules"
 
 #: ui/ProviderSettingRow.qml ui/SettingsPage.qml
-#: package/contents/ui/SettingsPanel.qml
 msgid "Engine"
 msgstr "Moteur"
 
-#: ui/ProviderSettingRow.qml package/contents/ui/ProviderSettingRow.qml
+#: ui/ProviderSettingRow.qml
 msgid ""
 "Live: plan windows come from a billed model call (~130 tokens per refresh, "
 "cached 30 min)."
@@ -232,7 +266,7 @@ msgstr ""
 "En direct : les fenêtres de plan proviennent d'un appel modélisé facturé "
 "(~130 jetons par actualisation, mis en cache 30 min)."
 
-#: ui/ProviderSettingRow.qml package/contents/ui/ProviderSettingRow.qml
+#: ui/ProviderSettingRow.qml
 msgid ""
 "Local: read from Muse's own files, free. Meta reports plan windows only on a "
 "billed call — that is what Live buys."
@@ -240,65 +274,65 @@ msgstr ""
 "Local : lecture depuis les fichiers de Muse, gratuit. Meta ne signale les "
 "fenêtres de plan que lors d'un appel facturé — c'est ce qu'achète En direct."
 
-#: ui/ProviderSettingRow.qml package/contents/ui/ProviderSettingRow.qml
+#: ui/ProviderSettingRow.qml
 msgid "Quota"
 msgstr "Quota"
 
-#: ui/ProviderSettingRow.qml package/contents/ui/ProviderSettingRow.qml
+#: ui/ProviderSettingRow.qml
 msgid "fallback if the plan reports none"
 msgstr "valeur de repli si le plan n'en indique aucun"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "All sources"
 msgstr "Toutes les sources"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "%1 source selected"
 msgid_plural "%1 sources selected"
 msgstr[0] "%1 source sélectionnée"
 msgstr[1] "%1 sources sélectionnées"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Search sessions…"
 msgstr "Rechercher des sessions…"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Search sessions"
 msgstr "Rechercher des sessions"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Filter sessions by source"
 msgstr "Filtrer les sessions par source"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Refresh failed; no cached sessions are available."
 msgstr "Échec de l’actualisation ; aucune session en cache n’est disponible."
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Refresh incomplete; showing cached sessions."
 msgstr "Actualisation incomplète ; affichage des sessions en cache."
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "No cached session data yet."
 msgstr "Aucune donnée de session en cache pour le moment."
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "%1 session source was removed."
 msgid_plural "%1 session sources were removed."
 msgstr[0] "%1 source de session a été supprimée."
 msgstr[1] "%1 sources de session ont été supprimées."
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Cached session data · %1 min old"
 msgid_plural "Cached session data · %1 min old"
 msgstr[0] "Données de session en cache · datant de %1 min"
 msgstr[1] "Données de session en cache · datant de %1 min"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Session cache status unavailable."
 msgstr "Statut du cache des sessions indisponible."
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid ""
 "No local agent sessions found. They appear after Claude Code, Codex, Muse, "
 "Cline or Grok CLI records activity."
@@ -306,121 +340,118 @@ msgstr ""
 "Aucune session locale d’agent trouvée. Elles apparaissent lorsque Claude "
 "Code, Codex, Muse, Cline ou Grok CLI enregistre une activité."
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "No sessions match your search."
 msgstr "Aucune session ne correspond à votre recherche."
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Session"
 msgstr "Session"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Active"
 msgstr "Active"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Idle"
 msgstr "Inactive"
 
-#: ui/SessionsPage.qml package/contents/ui/MistralTab.qml
-#: package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "just now"
 msgstr "à l'instant"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "%1 min ago"
 msgid_plural "%1 min ago"
 msgstr[0] "il y a %1 min"
 msgstr[1] "il y a %1 min"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "%1 h ago"
 msgid_plural "%1 h ago"
 msgstr[0] "il y a %1 h"
 msgstr[1] "il y a %1 h"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "%1 d ago"
 msgid_plural "%1 d ago"
 msgstr[0] "il y a %1 j"
 msgstr[1] "il y a %1 j"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Cost unavailable"
 msgstr "Coût indisponible"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Free model"
 msgstr "Modèle gratuit"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Covered by plan · $%1 on API"
 msgstr "Couvert par le forfait · $%1 sur l'API"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Covered by plan · ~$%1 on API"
 msgstr "Couvert par le forfait · ~$%1 sur l'API"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Actual provider cost: $%1 (exact)"
 msgstr "Coût réel du fournisseur : $%1 (exact)"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Actual provider cost: $%1 (partial)"
 msgstr "Coût réel du fournisseur : $%1 (partiel)"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Calculated estimate: $%1 (exact)"
 msgstr "Estimation calculée : $%1 (exacte)"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Calculated estimate: $%1 (partial)"
 msgstr "Estimation calculée : $%1 (partielle)"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Mixed cost: $%1 (exact)"
 msgstr "Coût mixte : $%1 (exact)"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Mixed cost: $%1 (partial)"
 msgstr "Coût mixte : $%1 (partiel)"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Cost: $%1 (exact)"
 msgstr "Coût : $%1 (exact)"
 
-#: ui/SessionsPage.qml package/contents/ui/SessionsTab.qml
+#: ui/SessionsPage.qml
 msgid "Cost: $%1 (partial)"
 msgstr "Coût : $%1 (partiel)"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Refreshing pricing…"
 msgstr "Actualisation des tarifs…"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Pricing updated."
 msgstr "Tarifs mis à jour."
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Pricing refresh failed; using saved rates."
 msgstr ""
 "Échec de l'actualisation des tarifs ; utilisation des tarifs enregistrés."
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "No pricing rates available; try again."
 msgstr "Aucun tarif disponible ; réessayez."
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
-#: package/contents/ui/SpendTab.qml
+#: ui/SettingsPage.qml
 msgid "Providers"
 msgstr "Fournisseurs"
 
-#: ui/SettingsPage.qml package/contents/ui/SelfhostedTab.qml
-#: package/contents/ui/SettingsPanel.qml package/contents/ui/main.qml
+#: ui/SettingsPage.qml
 msgid "Local Models"
 msgstr "Modèles locaux"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Panel"
 msgstr "Panneau"
 
@@ -428,24 +459,24 @@ msgstr "Panneau"
 msgid "Display"
 msgstr "Affichage"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgctxt "settings tab"
 msgid "Data"
 msgstr "Données"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Advanced"
 msgstr "Avancé"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Info"
 msgstr "Infos"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Detecting…"
 msgstr "Détection…"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Detect installed providers"
 msgstr "Détecter les fournisseurs installés"
 
@@ -458,19 +489,19 @@ msgstr ""
 "stockées dans %1 ; laissez-en une vide pour utiliser les variables "
 "d'environnement ou une connexion CLI existante."
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Monitor Ollama, vLLM, or llama.cpp servers"
 msgstr "Surveiller les serveurs Ollama, vLLM ou llama.cpp"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Server URLs"
 msgstr "URL des serveurs"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "e.g. http://127.0.0.1:11434, http://127.0.0.1:8000"
 msgstr "p. ex. http://127.0.0.1:11434, http://127.0.0.1:8000"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid ""
 "Separate multiple endpoints with commas. Leave empty to auto-discover Ollama "
 "(:11434), vLLM (:8000), and llama.cpp (:8080)."
@@ -478,15 +509,15 @@ msgstr ""
 "Séparez plusieurs points de terminaison par des virgules. Laissez vide pour "
 "détecter automatiquement Ollama (:11434), vLLM (:8000) et llama.cpp (:8080)."
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Bearer Token (optional)"
 msgstr "Jeton Bearer (facultatif)"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Optional auth token"
 msgstr "Jeton d'authentification facultatif"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid ""
 "Token counters reflect usage since server start. GPU VRAM tracking is "
 "enabled automatically where supported."
@@ -495,33 +526,33 @@ msgstr ""
 "serveur. Le suivi de la VRAM GPU est activé automatiquement lorsqu'il est "
 "pris en charge."
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Optional tabs that sit ahead of your providers in the popup."
 msgstr ""
 "Onglets facultatifs affichés avant vos fournisseurs dans la fenêtre "
 "contextuelle."
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Overview"
 msgstr "Vue d’ensemble"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "All enabled providers at a glance"
 msgstr "Tous les fournisseurs activés en un coup d’œil"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Usage & Spend"
 msgstr "Utilisation et dépenses"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Combined cost figures across providers"
 msgstr "Coûts cumulés des fournisseurs"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Sessions"
 msgstr "Sessions"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Recent local agent sessions (no transcripts)"
 msgstr "Sessions locales récentes des agents (sans transcriptions)"
 
@@ -589,29 +620,13 @@ msgstr "Suivre le focus"
 msgid "All monitors"
 msgstr "Tous les écrans"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Usage chart"
 msgstr "Graphique d'usage"
 
 #: ui/SettingsPage.qml
 msgid "Tray"
 msgstr "Zone de notification"
-
-#: ui/SettingsPage.qml hosts/windows/qml/Main.qml
-msgid "Logo and percent"
-msgstr "Logo et pourcentage"
-
-#: ui/SettingsPage.qml hosts/windows/qml/Main.qml
-msgid "Numbers"
-msgstr "Nombres"
-
-#: ui/SettingsPage.qml hosts/windows/qml/Main.qml
-msgid "Ring"
-msgstr "Anneau"
-
-#: ui/SettingsPage.qml hosts/windows/qml/Main.qml
-msgid "Floating pill"
-msgstr "Pilule flottante"
 
 #: ui/SettingsPage.qml
 msgid ""
@@ -624,48 +639,43 @@ msgstr ""
 "La pilule flottante est la pilule du panneau dans une petite fenêtre : "
 "faites-la glisser n'importe où, cliquez dessus pour ouvrir ce popup."
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
-#: hosts/windows/qml/Main.qml
-msgid "Refresh"
-msgstr "Actualisation"
-
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "1 min"
 msgstr "1 min"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "2 min"
 msgstr "2 min"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "5 min"
 msgstr "5 min"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "10 min"
 msgstr "10 min"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "15 min"
 msgstr "15 min"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "30 min"
 msgstr "30 min"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Pricing"
 msgstr "Tarifs"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Refresh pricing"
 msgstr "Actualiser les tarifs"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "History"
 msgstr "Historique"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Export"
 msgstr "Exporter"
 
@@ -675,7 +685,7 @@ msgid_plural "%1 points"
 msgstr[0] "%1 point"
 msgstr[1] "%1 points"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid ""
 "The chart's recorded history, as JSON — for a backup, or to carry it to "
 "another machine."
@@ -691,11 +701,11 @@ msgstr ""
 "Lance AI Usage dans la zone de notification à l'ouverture de session. Le "
 "même interrupteur se trouve dans le menu de l'icône."
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Python"
 msgstr "Python"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "auto-detect"
 msgstr "détection automatique"
 
@@ -709,15 +719,15 @@ msgstr ""
 "automatique depuis le PATH (python3 → python3.x → python). L'assistant de la "
 "zone de notification le prend en compte à sa prochaine actualisation."
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Terminal"
 msgstr "Terminal"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid "Copy"
 msgstr "Copier"
 
-#: ui/SettingsPage.qml package/contents/ui/SettingsPanel.qml
+#: ui/SettingsPage.qml
 msgid ""
 "Same data as this popup, as a table in a shell. Link it into ~/.local/bin to "
 "run it as ai-usage-cli, or pass --compact for one status-bar line."
@@ -726,17 +736,17 @@ msgstr ""
 "Liez-le dans ~/.local/bin pour l'exécuter sous le nom ai-usage-cli, ou "
 "passez --compact pour une ligne de barre d'état."
 
-#: ui/SpendPage.qml package/contents/ui/SpendTab.qml
+#: ui/SpendPage.qml
 msgid "Could not read model pricing."
 msgstr "Impossible de lire la tarification des modèles."
 
-#: ui/SpendPage.qml package/contents/ui/SpendTab.qml
+#: ui/SpendPage.qml
 msgid "No cached model rates yet — refresh pricing in settings."
 msgstr ""
 "Aucun tarif de modèle en cache pour l'instant — actualisez la tarification "
 "dans les paramètres."
 
-#: ui/SpendPage.qml package/contents/ui/SpendTab.qml
+#: ui/SpendPage.qml
 msgid ""
 "Totals come from each provider's own usage APIs and local CLI logs. Ranges "
 "differ (30-day, all-time, lifetime)."
@@ -745,7 +755,7 @@ msgstr ""
 "journaux locaux des outils en ligne de commande. Les périodes diffèrent (30 "
 "jours, depuis le début, durée de vie)."
 
-#: ui/SpendPage.qml package/contents/ui/SpendTab.qml
+#: ui/SpendPage.qml
 msgid ""
 "No cost figures yet. Enable providers that report spend, or use them until "
 "local logs appear."
@@ -754,36 +764,35 @@ msgstr ""
 "les dépenses, ou utilisez-les jusqu’à ce que des journaux locaux "
 "apparaissent."
 
-#: ui/SpendPage.qml package/contents/ui/SpendTab.qml
+#: ui/SpendPage.qml
 msgid "Model rates"
 msgstr "Tarifs des modèles"
 
-#: ui/SpendPage.qml package/contents/ui/SpendTab.qml
+#: ui/SpendPage.qml
 msgid "Loading…"
 msgstr "Chargement…"
 
-#: ui/SpendPage.qml package/contents/ui/SpendTab.qml
+#: ui/SpendPage.qml
 msgid "Filter by provider or model…"
 msgstr "Filtrer par fournisseur ou modèle…"
 
-#: ui/SpendPage.qml package/contents/ui/SpendTab.qml
+#: ui/SpendPage.qml
 msgid "Model"
 msgstr "Modèle"
 
-#: ui/SpendPage.qml package/contents/ui/SpendTab.qml
+#: ui/SpendPage.qml
 msgid "In"
 msgstr "Entrée"
 
-#: ui/SpendPage.qml package/contents/ui/SpendTab.qml
+#: ui/SpendPage.qml
 msgid "Out"
 msgstr "Sortie"
 
-#: ui/SpendPage.qml package/contents/ui/SpendTab.qml
+#: ui/SpendPage.qml
 msgid "Cached"
 msgstr "En cache"
 
-#: ui/SpendPage.qml package/contents/ui/KimiTab.qml
-#: package/contents/ui/MistralTab.qml
+#: ui/SpendPage.qml
 msgid "%1 of %2"
 msgstr "%1 sur %2"
 
@@ -795,19 +804,19 @@ msgstr "Précédent"
 msgid "Next"
 msgstr "Suivant"
 
-#: ui/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+#: ui/SpendTimelineChart.qml
 msgid "Cost"
 msgstr "Coût"
 
-#: ui/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+#: ui/SpendTimelineChart.qml
 msgid "Tokens (log)"
 msgstr "Jetons (log)"
 
-#: ui/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+#: ui/SpendTimelineChart.qml
 msgid "· no token history"
 msgstr "· aucun historique de jetons"
 
-#: ui/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+#: ui/SpendTimelineChart.qml
 msgid "· no cost history"
 msgstr "· aucun historique de coût"
 
@@ -819,54 +828,53 @@ msgstr "30j"
 msgid "90d"
 msgstr "90j"
 
-#: ui/SpendTimelineChart.qml package/contents/ui/OpenCodeUsageChart.qml
+#: ui/SpendTimelineChart.qml
 msgid "All"
 msgstr "Tout"
 
-#: ui/SpendTimelineChart.qml package/contents/ui/SpendTimelineChart.qml
+#: ui/SpendTimelineChart.qml
 msgid "Limited history (%1 days recorded) — dashed line, not a smoothed trend."
 msgstr ""
 "Historique limité (%1 jours enregistrés) — ligne pointillée, pas une "
 "tendance lissée."
 
-#: ui/StatsSection.qml package/contents/ui/CopilotTab.qml
+#: ui/StatsSection.qml
 msgid "Top repositories"
 msgstr "Principaux dépôts"
 
-#: ui/StatsSection.qml package/contents/ui/ClineTab.qml
-#: package/contents/ui/MuseTab.qml package/contents/ui/OpenCodeTab.qml
+#: ui/StatsSection.qml
 msgid "Top workspaces"
 msgstr "Espaces de travail principaux"
 
-#: ui/StatsSection.qml package/contents/ui/main.qml
+#: ui/StatsSection.qml
 #, no-javascript-format
 msgctxt "duration in days, abbreviated"
 msgid "%1d"
 msgstr "%1j"
 
-#: ui/StatsSection.qml package/contents/ui/main.qml
+#: ui/StatsSection.qml
 msgctxt "duration in hours, abbreviated"
 msgid "%1h"
 msgstr "%1h"
 
-#: ui/StatsSection.qml package/contents/ui/main.qml
+#: ui/StatsSection.qml
 msgctxt "duration in minutes, abbreviated"
 msgid "%1m"
 msgstr "%1min"
 
-#: ui/StatsSection.qml package/contents/ui/main.qml
+#: ui/StatsSection.qml
 msgid "<1m"
 msgstr "< 1 min"
 
-#: ui/StatsSection.qml package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgid "No Codex history yet"
 msgstr "Aucun historique Codex pour le moment"
 
-#: ui/StatsSection.qml package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgid "Run a Codex CLI session and stats will appear here."
 msgstr "Lancez une session CLI Codex et les statistiques apparaîtront ici."
 
-#: ui/StatsSection.qml package/contents/ui/CopilotTab.qml
+#: ui/StatsSection.qml
 msgid ""
 "No local activity stats yet.\n"
 "Run the Copilot CLI to fill ~/.copilot/session-store.db"
@@ -882,7 +890,7 @@ msgstr ""
 "Aucune session Muse pour le moment.\n"
 "Lancez Muse Code : ses journaux apparaîtront ici."
 
-#: ui/StatsSection.qml package/contents/ui/CursorTab.qml
+#: ui/StatsSection.qml
 msgid ""
 "No Cursor usage this billing cycle yet.\n"
 "Requests made with Cursor or cursor-agent will appear here."
@@ -890,7 +898,7 @@ msgstr ""
 "Aucune utilisation de Cursor pour ce cycle de facturation pour le moment.\n"
 "Les requêtes effectuées avec Cursor ou cursor-agent apparaîtront ici."
 
-#: ui/StatsSection.qml package/contents/ui/ClineTab.qml
+#: ui/StatsSection.qml
 msgid ""
 "No Cline sessions yet.\n"
 "Run the Cline CLI and its session logs in ~/.cline will appear here."
@@ -920,7 +928,7 @@ msgstr ""
 "Activez OpenCode et lancez une session locale ; l'utilisation est lue depuis "
 "sa base SQLite."
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
+#: ui/StatsSection.qml
 msgid ""
 "No local activity stats yet.\n"
 "Run Claude Code to generate ~/.claude/stats-cache.json"
@@ -928,17 +936,11 @@ msgstr ""
 "Aucune statistique d'activité locale.\n"
 "Exécutez Claude Code pour générer ~/.claude/stats-cache.json"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/ClineTab.qml package/contents/ui/CopilotTab.qml
-#: package/contents/ui/CursorTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgid "Activity Stats"
 msgstr "Statistiques d'activité"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/ClineTab.qml package/contents/ui/CursorTab.qml
-#: package/contents/ui/MuseTab.qml package/contents/ui/OpenAiTab.qml
-#: package/contents/ui/OpenCodeTab.qml
+#: ui/StatsSection.qml
 msgctxt "stat label"
 msgid "tokens"
 msgstr "jetons"
@@ -951,60 +953,41 @@ msgstr "Total des jetons pour tous les modèles (ce cycle de facturation)"
 msgid "Total tokens across all models (all time)"
 msgstr "Total des jetons pour tous les modèles (toute période)"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/ClineTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenAiTab.qml package/contents/ui/OpenCodeTab.qml
+#: ui/StatsSection.qml
 msgctxt "stat label"
 msgid "sessions"
 msgstr "sessions"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/CopilotTab.qml package/contents/ui/MuseTab.qml
+#: ui/StatsSection.qml
 msgid "%1 messages total"
 msgstr "%1 messages au total"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/ClineTab.qml package/contents/ui/CopilotTab.qml
-#: package/contents/ui/CursorTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenAiTab.qml package/contents/ui/OpenCodeTab.qml
+#: ui/StatsSection.qml
 msgid "active days"
 msgstr "jours actifs"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/ClineTab.qml package/contents/ui/CopilotTab.qml
-#: package/contents/ui/CursorTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgid "Since %1"
 msgstr "Depuis %1"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/ClineTab.qml package/contents/ui/CopilotTab.qml
-#: package/contents/ui/MuseTab.qml package/contents/ui/OpenAiTab.qml
-#: package/contents/ui/OpenCodeTab.qml
+#: ui/StatsSection.qml
 #, no-javascript-format
 msgctxt "streak length in days, abbreviated"
 msgid "%1d"
 msgstr "%1j"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/ClineTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenAiTab.qml package/contents/ui/OpenCodeTab.qml
+#: ui/StatsSection.qml
 msgctxt "stat label"
 msgid "streak"
 msgstr "série"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/ClineTab.qml package/contents/ui/CopilotTab.qml
-#: package/contents/ui/MuseTab.qml package/contents/ui/OpenAiTab.qml
-#: package/contents/ui/OpenCodeTab.qml
+#: ui/StatsSection.qml
 #, no-javascript-format
 msgctxt "longest streak in days, abbreviated"
 msgid "best %1d"
 msgstr "meilleure %1j"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/CopilotTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgid ""
 "Current consecutive-day streak\n"
 "Longest: %1 day"
@@ -1018,43 +1001,33 @@ msgstr[1] ""
 "Série actuelle de jours consécutifs\n"
 "Plus longue : %1 jours"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/ClineTab.qml package/contents/ui/CopilotTab.qml
-#: package/contents/ui/MuseTab.qml package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgid "longest session"
 msgstr "session la plus longue"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/CopilotTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgid "%1 msg"
 msgid_plural "%1 msgs"
 msgstr[0] "%1 message"
 msgstr[1] "%1 messages"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/ClineTab.qml package/contents/ui/CopilotTab.qml
-#: package/contents/ui/CursorTab.qml package/contents/ui/MuseTab.qml
+#: ui/StatsSection.qml
 msgid "peak hour"
 msgstr "heure de pointe"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
+#: ui/StatsSection.qml
 msgid "Hour of day with the most activity"
 msgstr "Heure de la journée avec le plus d'activité"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/CopilotTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgid "tool calls"
 msgstr "appels d'outils"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/CopilotTab.qml package/contents/ui/MuseTab.qml
+#: ui/StatsSection.qml
 msgid "Total tool invocations across all sessions"
 msgstr "Total des invocations d'outils dans toutes les sessions"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/ClineTab.qml
+#: ui/StatsSection.qml
 msgctxt "stat label"
 msgid "spend"
 msgstr "dépense"
@@ -1063,31 +1036,31 @@ msgstr "dépense"
 msgid "Total cost across all models (this billing cycle)"
 msgstr "Coût total pour tous les modèles (ce cycle de facturation)"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
+#: ui/StatsSection.qml
 msgid "Total cost across all models (all time)"
 msgstr "Coût total pour tous les modèles (toute période)"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
+#: ui/StatsSection.qml
 msgid "web searches"
 msgstr "recherches web"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
+#: ui/StatsSection.qml
 msgid "Total web search requests across all models"
 msgstr "Total des requêtes de recherche web pour tous les modèles"
 
-#: ui/StatsSection.qml package/contents/ui/CopilotTab.qml
+#: ui/StatsSection.qml
 msgid "files touched"
 msgstr "fichiers modifiés"
 
-#: ui/StatsSection.qml package/contents/ui/CopilotTab.qml
+#: ui/StatsSection.qml
 msgid "Distinct files read or edited across all sessions"
 msgstr "Fichiers distincts lus ou modifiés dans toutes les sessions"
 
-#: ui/StatsSection.qml package/contents/ui/CopilotTab.qml
+#: ui/StatsSection.qml
 msgid "repos"
 msgstr "dépôts"
 
-#: ui/StatsSection.qml package/contents/ui/CopilotTab.qml
+#: ui/StatsSection.qml
 msgid "Repositories the CLI has been run in"
 msgstr "Dépôts dans lesquels le CLI a été exécuté"
 
@@ -1104,9 +1077,6 @@ msgid "Messages / day"
 msgstr "Messages / jour"
 
 #: ui/StatsSection.qml ui/UsageChart.qml
-#: package/contents/ui/ClaudeTab.qml package/contents/ui/GrokTab.qml
-#: package/contents/ui/MistralTab.qml package/contents/ui/UsageChart.qml
-#: package/contents/ui/main.qml
 msgid "%1 tokens"
 msgstr "%1 jetons"
 
@@ -1118,42 +1088,38 @@ msgstr "%1 requêtes"
 msgid "%1 messages"
 msgstr "%1 messages"
 
-#: ui/StatsSection.qml package/contents/ui/main.qml
+#: ui/StatsSection.qml
 msgid "%1 session"
 msgid_plural "%1 sessions"
 msgstr[0] "%1 session"
 msgstr[1] "%1 sessions"
 
-#: ui/StatsSection.qml package/contents/ui/OpenAiTab.qml
-#: package/contents/ui/OpenCodeTab.qml
+#: ui/StatsSection.qml
 msgid "Models"
 msgstr "Modèles"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgid "%1 in"
 msgstr "%1 en entrée"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/MuseTab.qml package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgid "%1 out"
 msgstr "%1 en sortie"
 
-#: ui/StatsSection.qml package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgctxt "abbreviated sessions"
 msgid "%1 sess"
 msgstr "%1 sess"
 
-#: ui/StatsSection.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgid "computed %1"
 msgstr "calculé %1"
 
-#: ui/StatsSection.qml package/contents/ui/CursorTab.qml
+#: ui/StatsSection.qml
 msgid "Cursor dashboard ↗"
 msgstr "Tableau de bord Cursor ↗"
 
-#: ui/StatsSection.qml package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgid "Codex analytics ↗"
 msgstr "Analyses Codex ↗"
 
@@ -1162,2218 +1128,97 @@ msgid "Open the cursor.com usage dashboard in your browser"
 msgstr ""
 "Ouvrir le tableau de bord d'utilisation cursor.com dans votre navigateur"
 
-#: ui/StatsSection.qml package/contents/ui/OpenAiTab.qml
+#: ui/StatsSection.qml
 msgid "Open chatgpt.com Codex usage analytics in your browser"
 msgstr ""
 "Ouvrir les analyses d'utilisation Codex sur chatgpt.com dans votre navigateur"
 
-#: ui/StatusChip.qml package/contents/ui/StatusChip.qml
+#: ui/StatusChip.qml
 msgid "Status"
 msgstr "Statut"
 
-#: ui/StatusChip.qml package/contents/ui/StatusChip.qml
+#: ui/StatusChip.qml
 msgid "Unknown"
 msgstr "Inconnu"
 
-#: ui/StatusChip.qml package/contents/ui/StatusChip.qml
+#: ui/StatusChip.qml
 msgid "Affected:"
 msgstr "Affecté :"
 
-#: ui/StatusChip.qml package/contents/ui/StatusChip.qml
+#: ui/StatusChip.qml
 msgid "Incident:"
 msgid_plural "Incidents:"
 msgstr[0] "Incident :"
 msgstr[1] "Incidents :"
 
-#: ui/StatusChip.qml package/contents/ui/StatusChip.qml
+#: ui/StatusChip.qml
 msgid "Latest update:"
 msgstr "Dernière mise à jour :"
 
-#: ui/StatusChip.qml package/contents/ui/StatusChip.qml
+#: ui/StatusChip.qml
 msgid "Click to open status page"
 msgstr "Cliquer pour ouvrir la page de statut"
 
-#: ui/StatusChip.qml package/contents/ui/StatusChip.qml
+#: ui/StatusChip.qml
 msgid "Status ↗"
 msgstr "Statut ↗"
 
-#: ui/StatusChip.qml package/contents/ui/StatusChip.qml
+#: ui/StatusChip.qml
 msgid "Major Outage"
 msgstr "Panne majeure"
 
-#: ui/StatusChip.qml package/contents/ui/StatusChip.qml
+#: ui/StatusChip.qml
 msgid "Partial Outage"
 msgstr "Panne partielle"
 
-#: ui/StatusChip.qml package/contents/ui/StatusChip.qml
+#: ui/StatusChip.qml
 msgid "Minor Issues"
 msgstr "Problèmes mineurs"
 
-#: ui/StatusChip.qml package/contents/ui/StatusChip.qml
+#: ui/StatusChip.qml
 msgid "Operational"
 msgstr "Opérationnel"
 
-#: ui/UsageChart.qml package/contents/ui/UsageChart.qml
+#: ui/UsageChart.qml
 msgid "Both"
 msgstr "Les deux"
 
-#: ui/UsageChart.qml package/contents/ui/UsageChart.qml
+#: ui/UsageChart.qml
 msgid "Combined"
 msgstr "Combiné"
 
-#: ui/UsageChart.qml package/contents/ui/UsageChart.qml
+#: ui/UsageChart.qml
 msgctxt "quota model"
 msgid "Rest"
 msgstr "Reste"
 
-#: ui/UsageChart.qml package/contents/ui/UsageChart.qml
+#: ui/UsageChart.qml
 msgid "No data in this range"
 msgstr "Aucune donnée dans cette plage"
 
-#: ui/UsageChart.qml package/contents/ui/UsageChart.qml
+#: ui/UsageChart.qml
 msgctxt "chart reset window"
 msgid "week reset"
 msgstr "réinitialisation hebdomadaire"
 
-#: ui/UsageChart.qml package/contents/ui/UsageChart.qml
+#: ui/UsageChart.qml
 msgctxt "chart reset window"
 msgid "5h reset"
 msgstr "réinitialisation 5h"
 
-#: ui/UsageChart.qml package/contents/ui/UsageChart.qml
-#: package/contents/ui/main.qml
+#: ui/UsageChart.qml
 #, javascript-format
 msgid "Gemini: %1%"
 msgstr "Gemini : %1%"
 
-#: ui/UsageChart.qml package/contents/ui/UsageChart.qml
+#: ui/UsageChart.qml
 #, javascript-format
 msgid "Rest: %1%"
 msgstr "Reste : %1%"
 
-#: package/contents/ui/AntigravityTab.qml
-msgid "Gemini Code Assist"
-msgstr "Gemini Code Assist"
-
-#: package/contents/ui/AntigravityTab.qml
-msgid "Prompt Credits"
-msgstr "Crédits de prompt"
-
-#: package/contents/ui/AntigravityTab.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/GrokTab.qml
-msgid "resets %1"
-msgstr "réinitialisation %1"
-
-#: package/contents/ui/AntigravityTab.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/CursorTab.qml package/contents/ui/KiroTab.qml
-#: package/contents/ui/OpenAiTab.qml package/contents/ui/main.qml
-msgid "resetting..."
-msgstr "réinitialisation..."
-
-#: package/contents/ui/AntigravityTab.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/CopilotTab.qml package/contents/ui/CursorTab.qml
-#: package/contents/ui/KimiTab.qml package/contents/ui/KiroTab.qml
-#: package/contents/ui/MuseTab.qml package/contents/ui/OpenAiTab.qml
-#: package/contents/ui/OpenCodeTab.qml package/contents/ui/ZaiTab.qml
-msgid "in %1"
-msgstr "dans %1"
-
-#: package/contents/ui/AntigravityTab.qml
-msgid "%1 / %2 left"
-msgstr "%1 / %2 restant"
-
-#: package/contents/ui/AntigravityTab.qml
-#, javascript-format
-msgid ""
-"Prompt Credits\n"
-"Used: %1%"
-msgstr ""
-"Crédits de prompt\n"
-"Utilisé : %1%"
-
-#: package/contents/ui/AntigravityTab.qml package/contents/ui/ClaudeTab.qml
-#: package/contents/ui/CursorTab.qml package/contents/ui/KiroTab.qml
-#: package/contents/ui/main.qml
-msgid "Resets: %1"
-msgstr "Réinitialisation : %1"
-
-#: package/contents/ui/AntigravityTab.qml
-msgid "Overall Quota"
-msgstr "Quota global"
-
-#: package/contents/ui/AntigravityTab.qml package/contents/ui/CursorTab.qml
-#: package/contents/ui/KiroTab.qml package/contents/ui/OpenRouterTab.qml
-msgid "last month"
-msgstr "mois dernier"
-
-#: package/contents/ui/AntigravityTab.qml
-msgid "Average quota usage across Gemini models"
-msgstr "Utilisation moyenne du quota pour les modèles Gemini"
-
-#: package/contents/ui/AntigravityTab.qml
-#, javascript-format
-msgid "%1% used"
-msgstr "%1% utilisé"
-
-#: package/contents/ui/AntigravityTab.qml
-msgid "Model Quotas"
-msgstr "Quotas des modèles"
-
-#: package/contents/ui/AntigravityTab.qml package/contents/ui/main.qml
-msgid "resets in %1"
-msgstr "réinitialisation dans %1"
-
-#: package/contents/ui/AntigravityTab.qml
-msgid "· resetting…"
-msgstr "· réinitialisation…"
-
-#: package/contents/ui/AntigravityTab.qml
-msgid ""
-"\n"
-"⚠ Quota exhausted"
-msgstr ""
-"\n"
-"⚠ Quota épuisé"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "Claude Code User"
-msgstr "Utilisateur Claude Code"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "Thinking budget: %1"
-msgstr "Budget de réflexion : %1"
-
-#: package/contents/ui/ClaudeTab.qml package/contents/ui/OpenAiTab.qml
-msgctxt "effort level"
-msgid "effort: %1"
-msgstr "effort : %1"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid ""
-"Extended thinking (dream mode): ON\n"
-"Claude will reason longer on complex tasks"
-msgstr ""
-"Réflexion étendue (mode rêve) : ACTIVÉ\n"
-"Claude réfléchira plus longtemps sur les tâches complexes"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "Extended thinking (dream mode): OFF"
-msgstr "Réflexion étendue (mode rêve) : DÉSACTIVÉ"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "dream: on"
-msgstr "rêve : activé"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "dream: off"
-msgstr "rêve : désactivé"
-
-#: package/contents/ui/ClaudeTab.qml package/contents/ui/OpenAiTab.qml
-msgid "5 Hours"
-msgstr "5 heures"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "yesterday"
-msgstr "hier"
-
-#: package/contents/ui/ClaudeTab.qml
-#, javascript-format
-msgid ""
-"Claude 5-hour rolling window\n"
-"Usage: %1%"
-msgstr ""
-"Fenêtre glissante Claude de 5 heures\n"
-"Utilisation : %1%"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "7 Days"
-msgstr "7 jours"
-
-#: package/contents/ui/ClaudeTab.qml package/contents/ui/OpenAiTab.qml
-msgid "last week"
-msgstr "semaine dernière"
-
-#: package/contents/ui/ClaudeTab.qml
-#, javascript-format
-msgid ""
-"Claude 7-day rolling window\n"
-"Usage: %1%"
-msgstr ""
-"Fenêtre glissante Claude de 7 jours\n"
-"Utilisation : %1%"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid ""
-"Estimated API cost for your 7-day token usage\n"
-"if billed at pay-as-you-go rates.\n"
-"\n"
-"Assumes 3:1 input:output token ratio.\n"
-"Actual cost depends on model mix used.\n"
-"\n"
-"Add a Claude Admin API key in settings\n"
-"for exact per-model billing data."
-msgstr ""
-"Coût API estimé pour votre utilisation de jetons sur 7 jours\n"
-"si facturé aux tarifs à l'usage.\n"
-"\n"
-"Suppose un ratio entrée/sortie de 3:1.\n"
-"Le coût réel dépend des modèles utilisés.\n"
-"\n"
-"Ajoutez une clé API Admin Claude dans les paramètres\n"
-"pour des données de facturation exactes par modèle."
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "API equiv. (7d)"
-msgstr "Équiv. API (7j)"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "est. ≈"
-msgstr "est. ≈"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "Extra budget"
-msgstr "Budget supplémentaire"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "%1 tokens remaining"
-msgstr "%1 jetons restants"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "Extra Purchases"
-msgstr "Achats supplémentaires"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "%1 / %2 %3 used"
-msgstr "%1 / %2 %3 utilisé"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid ""
-"Claude pay-as-you-go credit spend\n"
-"Limit: %1 %2"
-msgstr ""
-"Dépense de crédits Claude à l'usage\n"
-"Limite : %1 %2"
-
-#: package/contents/ui/ClaudeTab.qml package/contents/ui/OpenAiTab.qml
-msgid "API Usage (30d)"
-msgstr "Utilisation API (30j)"
-
-#: package/contents/ui/ClaudeTab.qml package/contents/ui/OpenAiTab.qml
-msgid "Input: %1 tokens"
-msgstr "Entrée : %1 jetons"
-
-#: package/contents/ui/ClaudeTab.qml package/contents/ui/OpenAiTab.qml
-msgid "Output: %1 tokens"
-msgstr "Sortie : %1 jetons"
-
-#: package/contents/ui/ClaudeTab.qml package/contents/ui/OpenAiTab.qml
-msgid "unpriced"
-msgstr "non tarifé"
-
-#: package/contents/ui/ClaudeTab.qml package/contents/ui/OpenAiTab.qml
-msgid "Cost: %1"
-msgstr "Coût : %1"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "Total input+output tokens across all models (all time)"
-msgstr "Total des jetons entrée+sortie pour tous les modèles (toute période)"
-
-#: package/contents/ui/ClaudeTab.qml package/contents/ui/ClineTab.qml
-#: package/contents/ui/CursorTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/StatsSparkline.qml
-msgid "tokens"
-msgstr "jetons"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "Input: %1"
-msgstr "Entrée : %1"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "Output: %1"
-msgstr "Sortie : %1"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "Cache read: %1"
-msgstr "Lecture cache : %1"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "Cache write: %1"
-msgstr "Écriture cache : %1"
-
-#: package/contents/ui/ClaudeTab.qml
-msgid "Web searches: %1"
-msgstr "Recherches web : %1"
-
-#: package/contents/ui/ClineTab.qml package/contents/ui/CursorTab.qml
-msgid "%1 tok"
-msgstr "%1 jet"
-
-#: package/contents/ui/ClineTab.qml package/contents/ui/MistralTab.qml
-#: package/contents/ui/StatsTopList.qml
-msgid "1 session"
-msgid_plural "%1 sessions"
-msgstr[0] "1 session"
-msgstr[1] "%1 sessions"
-
-#: package/contents/ui/ClineTab.qml
-msgid "Cline CLI · all time"
-msgstr "Cline CLI · toute période"
-
-#: package/contents/ui/ClineTab.qml package/contents/ui/CursorTab.qml
-#: package/contents/ui/MuseTab.qml
-msgid "%1 output"
-msgstr "%1 sortie"
-
-#: package/contents/ui/ClineTab.qml package/contents/ui/CursorTab.qml
-msgid "%1 input"
-msgstr "%1 entrée"
-
-#: package/contents/ui/ClineTab.qml package/contents/ui/CursorTab.qml
-msgid "%1 cache read"
-msgstr "%1 lecture cache"
-
-#: package/contents/ui/ClineTab.qml
-msgid "Cost Cline recorded per session"
-msgstr "Coût Cline enregistré par session"
-
-#: package/contents/ui/ClineTab.qml
-msgid "Hour of day when most sessions started"
-msgstr "Heure de la journée avec le plus de sessions démarrées"
-
-#: package/contents/ui/CopilotTab.qml
-msgid "GitHub Copilot · @%1"
-msgstr "GitHub Copilot · @%1"
-
-#: package/contents/ui/CopilotTab.qml package/contents/ui/MistralTab.qml
-#: package/contents/ui/ZaiTab.qml
-msgid "CONNECTED"
-msgstr "CONNECTÉ"
-
-#: package/contents/ui/CopilotTab.qml package/contents/ui/DeepSeekTab.qml
-#: package/contents/ui/GrokTab.qml package/contents/ui/KimiTab.qml
-#: package/contents/ui/MistralTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/OpenAiTab.qml package/contents/ui/OpenRouterTab.qml
-#: package/contents/ui/ZaiTab.qml
-msgid "Not connected"
-msgstr "Non connecté"
-
-#: package/contents/ui/CopilotTab.qml
-msgid ""
-"No GitHub login found. Sign in with the Copilot\n"
-"CLI or `gh auth login`, or set a token in settings."
-msgstr ""
-"Aucun identifiant GitHub trouvé. Connectez-vous avec le CLI\n"
-"Copilot ou `gh auth login`, ou définissez un jeton dans les paramètres."
-
-#: package/contents/ui/CopilotTab.qml
-msgid "Copilot error"
-msgstr "Erreur Copilot"
-
-#: package/contents/ui/CopilotTab.qml
-msgid "Premium Requests"
-msgstr "Requêtes premium"
-
-#: package/contents/ui/CopilotTab.qml package/contents/ui/OpenRouterTab.qml
-msgid "unlimited"
-msgstr "illimité"
-
-#: package/contents/ui/CopilotTab.qml
-msgid "GitHub Copilot premium requests"
-msgstr "Requêtes premium GitHub Copilot"
-
-#: package/contents/ui/CopilotTab.qml package/contents/ui/MuseTab.qml
-#: package/contents/ui/ZaiTab.qml
-msgid "Resets in %1"
-msgstr "Réinitialisation dans %1"
-
-#: package/contents/ui/CopilotTab.qml
-msgid "Used"
-msgstr "Utilisé"
-
-#: package/contents/ui/CopilotTab.qml package/contents/ui/KiroTab.qml
-#: package/contents/ui/OpenRouterTab.qml
-msgid "Remaining"
-msgstr "Restant"
-
-#: package/contents/ui/CopilotTab.qml
-msgctxt "reset time"
-msgid "Reset"
-msgstr "Réinitialisation"
-
-#: package/contents/ui/CopilotTab.qml
-msgid "next month"
-msgstr "le mois prochain"
-
-#: package/contents/ui/CopilotTab.qml
-msgid "sessions"
-msgstr "sessions"
-
-#: package/contents/ui/CopilotTab.qml
-msgid "messages"
-msgstr "messages"
-
-#: package/contents/ui/CopilotTab.qml
-msgid "Prompts sent across all Copilot CLI sessions"
-msgstr "Prompts envoyés dans toutes les sessions Copilot CLI"
-
-#: package/contents/ui/CopilotTab.qml
-msgid "streak"
-msgstr "série"
-
-#: package/contents/ui/CopilotTab.qml package/contents/ui/MuseTab.qml
-msgid "Hour of day with the most activity (UTC)"
-msgstr "Heure de la journée avec la plus forte activité (UTC)"
-
-#: package/contents/ui/CursorTab.qml
-msgid "Included usage"
-msgstr "Utilisation incluse"
-
-#: package/contents/ui/CursorTab.qml package/contents/ui/KimiTab.qml
-#: package/contents/ui/KiroTab.qml
-msgid "%1 / %2 used"
-msgstr "%1 / %2 utilisé"
-
-#: package/contents/ui/CursorTab.qml
-#, javascript-format
-msgid "%1% of included usage"
-msgstr "%1% de l'utilisation incluse"
-
-#: package/contents/ui/CursorTab.qml
-msgid "Cursor included usage this billing cycle"
-msgstr "Utilisation incluse de Cursor pour ce cycle de facturation"
-
-#: package/contents/ui/CursorTab.qml
-msgid "Auto + Composer"
-msgstr "Auto + Composer"
-
-#: package/contents/ui/CursorTab.qml
-msgid "Share of the included usage spent by Auto and Composer"
-msgstr "Part de l'utilisation incluse consommée par Auto et Composer"
-
-#: package/contents/ui/CursorTab.qml
-msgid "API models"
-msgstr "Modèles API"
-
-#: package/contents/ui/CursorTab.qml
-msgid "Share of the included usage spent on models picked by name"
-msgstr ""
-"Part de l'utilisation incluse consommée par les modèles sélectionnés par nom"
-
-#: package/contents/ui/CursorTab.qml
-msgid "On-demand"
-msgstr "À la demande"
-
-#: package/contents/ui/CursorTab.qml
-msgid "Billing cycle ends"
-msgstr "Fin du cycle de facturation"
-
-#: package/contents/ui/CursorTab.qml
-msgid "Read with the Cursor IDE login. No API key required."
-msgstr "Lu avec la connexion Cursor IDE. Aucune clé API requise."
-
-#: package/contents/ui/CursorTab.qml
-msgid ""
-"Read with the cursor-agent login (~/.config/cursor/auth.json). No API key "
-"required."
-msgstr ""
-"Lu avec la connexion cursor-agent (~/.config/cursor/auth.json). Aucune clé "
-"API requise."
-
-#: package/contents/ui/CursorTab.qml
-msgid "this billing cycle"
-msgstr "ce cycle de facturation"
-
-#: package/contents/ui/CursorTab.qml
-msgid "usage value"
-msgstr "valeur d'utilisation"
-
-#: package/contents/ui/CursorTab.qml
-msgid ""
-"What Cursor prices this cycle's requests at — covered by the plan up to its "
-"included amount"
-msgstr ""
-"Ce que Cursor facture pour les requêtes de ce cycle — couvert par le forfait "
-"jusqu'à son montant inclus"
-
-#: package/contents/ui/CursorTab.qml
-msgctxt "stat label"
-msgid "requests"
-msgstr "requêtes"
-
-#: package/contents/ui/CursorTab.qml
-msgid "Per-day figures cover the newest requests only"
-msgstr "Les chiffres quotidiens ne couvrent que les requêtes les plus récentes"
-
-#: package/contents/ui/CursorTab.qml
-msgctxt "stat label"
-msgid "conversations"
-msgstr "conversations"
-
-#: package/contents/ui/CursorTab.qml
-msgid "Hour of day with the most requests"
-msgstr "Heure de la journée avec le plus de requêtes"
-
-#: package/contents/ui/CursorTab.qml
-msgid "longest chat"
-msgstr "plus longue conversation"
-
-#: package/contents/ui/CursorTab.qml
-msgid "%1 req"
-msgid_plural "%1 reqs"
-msgstr[0] "%1 req"
-msgstr[1] "%1 req"
-
-#: package/contents/ui/CursorTab.qml
-msgid "Usage unavailable"
-msgstr "Utilisation indisponible"
-
-#: package/contents/ui/CursorTab.qml package/contents/ui/main.qml
-msgid "Not signed in"
-msgstr "Non connecté"
-
-#: package/contents/ui/CursorTab.qml
-msgid ""
-"Run cursor-agent login (or sign in to the Cursor IDE). No API key needed."
-msgstr ""
-"Exécutez cursor-agent login (ou connectez-vous au Cursor IDE). Aucune clé "
-"API requise."
-
-#: package/contents/ui/DeepSeekTab.qml
-msgid "AVAILABLE"
-msgstr "DISPONIBLE"
-
-#: package/contents/ui/DeepSeekTab.qml
-msgid "LOW BALANCE"
-msgstr "SOLDE FAIBLE"
-
-#: package/contents/ui/DeepSeekTab.qml
-msgid ""
-"Set a DeepSeek API key in settings or via\n"
-"$DEEPSEEK_API_KEY / ~/.config/deepseek/api-key"
-msgstr ""
-"Définissez une clé API DeepSeek dans les paramètres ou via\n"
-"$DEEPSEEK_API_KEY / ~/.config/deepseek/api-key"
-
-#: package/contents/ui/DeepSeekTab.qml
-msgid "DeepSeek error"
-msgstr "Erreur DeepSeek"
-
-#: package/contents/ui/DeepSeekTab.qml
-msgid "Total Balance"
-msgstr "Solde total"
-
-#: package/contents/ui/DeepSeekTab.qml
-msgid "Granted"
-msgstr "Accordé"
-
-#: package/contents/ui/DeepSeekTab.qml
-msgid "Topped Up"
-msgstr "Rechargé"
-
-#: package/contents/ui/DeepSeekTab.qml
-msgid "Currencies"
-msgstr "Devises"
-
-#: package/contents/ui/DeepSeekTab.qml package/contents/ui/ZaiTab.qml
-msgid "unknown"
-msgstr "inconnu"
-
-#: package/contents/ui/GrokTab.qml
-msgid "Run grok --oauth, or add an xAI API key in settings."
-msgstr "Exécutez grok --oauth, ou ajoutez une clé API xAI dans les paramètres."
-
-#: package/contents/ui/GrokTab.qml
-msgid "Credit usage"
-msgstr "Utilisation des crédits"
-
-#: package/contents/ui/GrokTab.qml
-msgid "Grok CLI billing credits"
-msgstr "Crédits de facturation Grok CLI"
-
-#: package/contents/ui/GrokTab.qml
-msgid "Billing quota is not exposed for this Grok account."
-msgstr "Le quota de facturation n'est pas disponible pour ce compte Grok."
-
-#: package/contents/ui/GrokTab.qml
-msgid "1 local session"
-msgid_plural "%1 local sessions"
-msgstr[0] "1 session locale"
-msgstr[1] "%1 sessions locales"
-
-#: package/contents/ui/GrokTab.qml
-msgid "%1 tool call"
-msgid_plural "%1 tool calls"
-msgstr[0] "%1 appel d'outil"
-msgstr[1] "%1 appels d'outils"
-
-#: package/contents/ui/KimiTab.qml package/contents/ui/main.qml
-msgid "Kimi Code: %1"
-msgstr "Kimi Code : %1"
-
-#: package/contents/ui/KimiTab.qml
-msgid "Used: %1 / %2"
-msgstr "Utilisé : %1 / %2"
-
-#: package/contents/ui/KimiTab.qml
-msgid "Kimi Code plan"
-msgstr "Forfait Kimi Code"
-
-#: package/contents/ui/KimiTab.qml
-msgid "Kimi Code reports the plan quota as used up for this billing cycle"
-msgstr ""
-"Kimi Code signale que le quota du forfait est épuisé pour ce cycle de "
-"facturation"
-
-#: package/contents/ui/KimiTab.qml
-msgid "Extra usage"
-msgstr "Utilisation supplémentaire"
-
-#: package/contents/ui/KimiTab.qml
-msgid ""
-"Read with the kimi CLI login (~/.kimi-code). Run kimi once when the login "
-"expires."
-msgstr ""
-"Lu avec la connexion kimi CLI (~/.kimi-code). Exécutez kimi une fois lorsque "
-"la connexion expire."
-
-#: package/contents/ui/KimiTab.qml
-msgid ""
-"Sign in to Kimi Code (kimi → /login), or set a Moonshot API key in settings "
-"or via $MOONSHOT_API_KEY / $KIMI_API_KEY"
-msgstr ""
-"Connectez-vous à Kimi Code (kimi → /login), ou définissez une clé API "
-"Moonshot dans les paramètres ou via $MOONSHOT_API_KEY / $KIMI_API_KEY"
-
-#: package/contents/ui/KimiTab.qml
-msgid "Kimi error"
-msgstr "Erreur Kimi"
-
-#: package/contents/ui/KimiTab.qml
-msgid "Available balance"
-msgstr "Solde disponible"
-
-#: package/contents/ui/KimiTab.qml
-msgid "Voucher balance"
-msgstr "Solde de bons"
-
-#: package/contents/ui/KimiTab.qml
-msgid "Cash balance"
-msgstr "Solde espèces"
-
-#: package/contents/ui/KiroTab.qml package/contents/ui/main.qml
-msgid "Credits"
-msgstr "Crédits"
-
-#: package/contents/ui/KiroTab.qml package/contents/ui/OpenRouterTab.qml
-msgid "%1 used"
-msgstr "%1 utilisé"
-
-#: package/contents/ui/KiroTab.qml
-msgid ""
-"Kiro monthly credit usage\n"
-"Used: %1"
-msgstr ""
-"Utilisation mensuelle des crédits Kiro\n"
-"Utilisé : %1"
-
-#: package/contents/ui/KiroTab.qml
-msgid "Current Usage"
-msgstr "Utilisation actuelle"
-
-#: package/contents/ui/KiroTab.qml
-msgid "credits"
-msgstr "crédits"
-
-#: package/contents/ui/KiroTab.qml
-msgid "Overage"
-msgstr "Dépassement"
-
-#: package/contents/ui/KiroTab.qml
-msgid "Overage Rate"
-msgstr "Taux de dépassement"
-
-#: package/contents/ui/KiroTab.qml
-msgid "credit"
-msgstr "crédit"
-
-#: package/contents/ui/KiroTab.qml
-msgid "Read live with the kiro-cli login. No API key required."
-msgstr "Lu en direct avec la connexion kiro-cli. Aucune clé API requise."
-
-#: package/contents/ui/KiroTab.qml
-msgid ""
-"Read locally from Kiro app state. No API key or network request required."
-msgstr ""
-"Lu localement depuis l'état de l'application Kiro. Aucune clé API ni requête "
-"réseau requise."
-
-#: package/contents/ui/KiroTab.qml
-msgid "No Kiro usage data found"
-msgstr "Aucune donnée d'utilisation Kiro trouvée"
-
-#: package/contents/ui/KiroTab.qml
-msgid ""
-"Sign in to kiro-cli (kiro-cli login), or open the Kiro IDE and sign in once "
-"so the widget can read its usage snapshot. A kiro-cli login expires about an "
-"hour after the CLI last ran — start kiro-cli to renew it."
-msgstr ""
-"Connectez-vous à kiro-cli (kiro-cli login), ou ouvrez le Kiro IDE et "
-"connectez-vous une fois pour que le widget puisse lire son instantané "
-"d'utilisation. Une connexion kiro-cli expire environ une heure après la "
-"dernière exécution du CLI — démarrez kiro-cli pour la renouveler."
-
-#: package/contents/ui/MistralTab.qml
-msgid "%1m ago"
-msgstr "il y a %1 min"
-
-#: package/contents/ui/MistralTab.qml
-msgid "%1h ago"
-msgstr "il y a %1 h"
-
-#: package/contents/ui/MistralTab.qml
-#, no-javascript-format
-msgid "%1d ago"
-msgstr "il y a %1 j"
-
-#: package/contents/ui/MistralTab.qml
-msgid "%1w ago"
-msgstr "il y a %1 sem"
-
-#: package/contents/ui/MistralTab.qml
-msgid "INVALID KEY"
-msgstr "CLÉ INVALIDE"
-
-#: package/contents/ui/MistralTab.qml
-msgid "NO KEY"
-msgstr "PAS DE CLÉ"
-
-#: package/contents/ui/MistralTab.qml
-msgid ""
-"Run the vibe CLI, or set a Mistral API key via\n"
-"$MISTRAL_API_KEY · ~/.vibe/.env · ⚙ settings"
-msgstr ""
-"Exécutez le CLI vibe, ou définissez une clé API Mistral via\n"
-"$MISTRAL_API_KEY · ~/.vibe/.env · ⚙ paramètres"
-
-#: package/contents/ui/MistralTab.qml
-msgid "TOTAL SPEND · VIBE CLI"
-msgstr "DÉPENSE TOTALE · VIBE CLI"
-
-#: package/contents/ui/MistralTab.qml
-msgctxt "stat label"
-msgid "Input"
-msgstr "Entrée"
-
-#: package/contents/ui/MistralTab.qml package/contents/ui/MuseTab.qml
-msgctxt "stat label"
-msgid "Output"
-msgstr "Sortie"
-
-#: package/contents/ui/MistralTab.qml
-msgctxt "stat label"
-msgid "Steps"
-msgstr "Étapes"
-
-#: package/contents/ui/MistralTab.qml
-msgid "Tool calls"
-msgstr "Appels d'outils"
-
-#: package/contents/ui/MistralTab.qml
-msgid "%1 failed"
-msgstr "%1 en échec"
-
-#: package/contents/ui/MistralTab.qml
-msgid "RECENT SESSIONS"
-msgstr "SESSIONS RÉCENTES"
-
-#: package/contents/ui/MistralTab.qml
-msgid "untitled"
-msgstr "sans titre"
-
-#: package/contents/ui/MistralTab.qml
-msgid "Mistral has no billing API — figures come from local vibe CLI logs."
-msgstr ""
-"Mistral n'a pas d'API de facturation — les données proviennent des journaux "
-"locaux du CLI vibe."
-
-#: package/contents/ui/MuseTab.qml
-msgid "Muse Code · %1"
-msgstr "Muse Code · %1"
-
-#: package/contents/ui/MuseTab.qml
-msgid "No Muse activity yet"
-msgstr "Aucune activité Muse pour le moment"
-
-#: package/contents/ui/MuseTab.qml
-msgid ""
-"Run a Muse Code session and its local logs\n"
-"will appear here."
-msgstr ""
-"Lancez une session Muse Code et ses journaux locaux\n"
-"apparaîtront ici."
-
-#: package/contents/ui/MuseTab.qml
-msgid ""
-"Sign in with `muse login`. Nothing to paste:\n"
-"this tab only reads Muse's own local files."
-msgstr ""
-"Connectez-vous avec `muse login`. Rien à coller :\n"
-"cet onglet lit uniquement les fichiers locaux de Muse."
-
-#: package/contents/ui/MuseTab.qml
-msgid "Current"
-msgstr "Actuel"
-
-#: package/contents/ui/MuseTab.qml
-msgid "Muse current window"
-msgstr "Fenêtre actuelle de Muse"
-
-#: package/contents/ui/MuseTab.qml package/contents/ui/OpenAiTab.qml
-msgid "Weekly"
-msgstr "Hebdomadaire"
-
-#: package/contents/ui/MuseTab.qml
-msgid "Muse weekly window"
-msgstr "Fenêtre hebdomadaire de Muse"
-
-#: package/contents/ui/MuseTab.qml
-msgctxt "stat label"
-msgid "Tokens"
-msgstr "Jetons"
-
-#: package/contents/ui/MuseTab.qml
-msgctxt "stat label"
-msgid "Spend (est.)"
-msgstr "Dépense (est.)"
-
-#: package/contents/ui/MuseTab.qml
-msgid "Model calls"
-msgstr "Appels de modèle"
-
-#: package/contents/ui/MuseTab.qml
-msgid ""
-"Plan quota is off: Meta reports it only on a billed model call.\n"
-"Everything above is read from Muse's own local files.\n"
-"Settings › Providers › Muse › Live turns it on."
-msgstr ""
-"Le quota du plan est désactivé : Meta ne le signale que lors d'un appel de "
-"modèle facturé.\n"
-"Tout ce qui précède est lu depuis les fichiers locaux de Muse.\n"
-"Paramètres › Fournisseurs › Muse › Actif l'active."
-
-#: package/contents/ui/MuseTab.qml
-msgid "Muse Code CLI"
-msgstr "CLI Muse Code"
-
-#: package/contents/ui/MuseTab.qml
-msgid "%1 input (context is resent each call)"
-msgstr "%1 entrée (contexte renvoyé à chaque appel)"
-
-#: package/contents/ui/MuseTab.qml
-msgctxt "stat label"
-msgid "spend (est.)"
-msgstr "dépense (est.)"
-
-#: package/contents/ui/MuseTab.qml
-msgid "Tokens priced with the model catalog Muse caches locally"
-msgstr ""
-"Jetons tarifés avec le catalogue de modèles que Muse met en cache localement"
-
-#: package/contents/ui/MuseTab.qml
-msgctxt "stat label"
-msgid "subagents"
-msgstr "sous-agents"
-
-#: package/contents/ui/MuseTab.qml
-msgid "Delegated subagent sessions, logged separately by Muse"
-msgstr "Sessions de sous-agents délégués, journalisées séparément par Muse"
-
-#: package/contents/ui/OllamaTab.qml
-msgid "Ollama Cloud usage"
-msgstr "Utilisation d'Ollama Cloud"
-
-#: package/contents/ui/OllamaTab.qml
-msgid ""
-"Checking usage… Enable this provider and sign in to Ollama Cloud in "
-"OpenCode, set $OLLAMA_API_KEY, or enter a key in Settings."
-msgstr ""
-"Vérification de l'utilisation… Activez ce fournisseur et connectez-vous à "
-"Ollama Cloud dans OpenCode, définissez $OLLAMA_API_KEY ou saisissez une clé "
-"dans les paramètres."
-
-#: package/contents/ui/OllamaTab.qml
-msgid "Ollama does not provide a reset time in this response."
-msgstr "Ollama ne fournit pas d'heure de réinitialisation dans cette réponse."
-
-#: package/contents/ui/OllamaTab.qml
-msgid "%1: %2 requests"
-msgstr "Nombre de requêtes pour %1 : %2"
-
-#: package/contents/ui/OllamaTab.qml
-msgid "Recent activity cost: $%1"
-msgstr "Coût de l'activité récente : %1 $"
-
-#: package/contents/ui/OllamaTab.qml
-msgid ""
-"Usage comes from an undocumented Ollama Cloud endpoint; its fields may "
-"change."
-msgstr ""
-"L'utilisation provient d'un point de terminaison Ollama Cloud non "
-"documenté ; ses champs peuvent changer."
-
-#: package/contents/ui/OpenAiTab.qml
-msgid "Codex / ChatGPT User"
-msgstr "Utilisateur Codex / ChatGPT"
-
-#: package/contents/ui/OpenAiTab.qml
-msgid "Reasoning effort: %1"
-msgstr "Effort de raisonnement : %1"
-
-#: package/contents/ui/OpenAiTab.qml
-msgid "last 5h"
-msgstr "5 dernières h"
-
-#: package/contents/ui/OpenAiTab.qml
-#, javascript-format
-msgid "%1% of messages left"
-msgstr "%1% de messages restants"
-
-#: package/contents/ui/OpenAiTab.qml
-#, javascript-format
-msgid ""
-"Codex 5-hour limit\n"
-"Used: %1%"
-msgstr ""
-"Limite Codex de 5 heures\n"
-"Utilisé : %1%"
-
-#: package/contents/ui/OpenAiTab.qml
-#, javascript-format
-msgid "%1% left"
-msgstr "%1% restant"
-
-#: package/contents/ui/OpenAiTab.qml
-#, javascript-format
-msgid ""
-"Codex weekly limit\n"
-"Used: %1%"
-msgstr ""
-"Limite hebdomadaire Codex\n"
-"Utilisé : %1%"
-
-#: package/contents/ui/OpenAiTab.qml
-msgid "⚠ Limit reached — wait for reset"
-msgstr "⚠ Limite atteinte — en attente de la réinitialisation"
-
-#: package/contents/ui/OpenAiTab.qml
-msgid "LIMIT"
-msgstr "LIMITE"
-
-#: package/contents/ui/OpenAiTab.qml
-msgid ""
-"%1 5-hour limit\n"
-"Used: %2%"
-msgstr ""
-"Limite de 5 heures %1\n"
-"Utilisé : %2%"
-
-#: package/contents/ui/OpenAiTab.qml
-msgid ""
-"%1 weekly limit\n"
-"Used: %2%"
-msgstr ""
-"Limite hebdomadaire %1\n"
-"Utilisé : %2%"
-
-#: package/contents/ui/OpenAiTab.qml
-msgid ""
-"Plan limits above. Add an OpenAI API key in settings for API token/cost data."
-msgstr ""
-"Limites du plan ci-dessus. Ajoutez une clé API OpenAI dans les paramètres "
-"pour les données de jetons/coût de l'API."
-
-#: package/contents/ui/OpenAiTab.qml
-msgid ""
-"Codex plan limits are separate from OpenAI API billing. Add an OpenAI API "
-"key in settings for token and cost data."
-msgstr ""
-"Les limites du plan Codex sont séparées de la facturation API OpenAI. "
-"Ajoutez une clé API OpenAI dans les paramètres pour les données de jetons et "
-"de coût."
-
-#: package/contents/ui/OpenAiTab.qml
-msgid "API KEY"
-msgstr "CLÉ API"
-
-#: package/contents/ui/OpenAiTab.qml
-msgid "No API usage returned for the last 30 days."
-msgstr "Aucune utilisation API pour les 30 derniers jours."
-
-#: package/contents/ui/OpenAiTab.qml
-msgid ""
-"Add an OpenAI API key for API usage, or\n"
-"log in with Codex CLI for account status."
-msgstr ""
-"Ajoutez une clé API OpenAI pour l'utilisation API, ou\n"
-"connectez-vous avec le CLI Codex pour l'état du compte."
-
-#: package/contents/ui/OpenAiTab.qml
-msgid "Cumulative tokens across all Codex sessions"
-msgstr "Jetons cumulés sur toutes les sessions Codex"
-
-#: package/contents/ui/OpenAiTab.qml
-msgid "%1 prompt total"
-msgid_plural "%1 prompts total"
-msgstr[0] "%1 prompt au total"
-msgstr[1] "%1 prompts au total"
-
-#: package/contents/ui/OpenAiTab.qml
-msgid "Function and custom tool invocations across all sessions"
-msgstr "Appels de fonctions et outils personnalisés sur toutes les sessions"
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid "OpenCode Go"
-msgstr "OpenCode Go"
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid "OpenCode Zen"
-msgstr "OpenCode Zen"
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid "Some token buckets are missing; totals include recorded tokens only."
-msgstr ""
-"Certains compteurs de jetons sont manquants ; les totaux incluent uniquement "
-"les jetons enregistrés."
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid "No local %1 token usage yet. Run a CLI session to see activity."
-msgstr ""
-"Aucune utilisation locale de jetons %1 pour le moment. Lancez une session "
-"CLI pour voir l’activité."
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid ""
-"No OpenCode sessions yet.\n"
-"Zen activity is device-local and does not report account quota. Run a local "
-"session to see usage from its SQLite database."
-msgstr ""
-"Aucune session OpenCode pour le moment.\n"
-"L'activité Zen est locale à l'appareil et ne signale aucun quota de compte. "
-"Lancez une session locale pour voir l'utilisation depuis sa base SQLite."
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid "OpenCode Go usage unavailable: %1"
-msgstr "Utilisation d'OpenCode Go indisponible : %1"
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid "OpenCode Go usage unavailable"
-msgstr "Utilisation d'OpenCode Go indisponible"
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid "%1 · account"
-msgstr "%1 · compte"
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid "%1 · device-local · no account quota"
-msgstr "%1 · local à l'appareil · aucun quota de compte"
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid "Local %1 activity"
-msgstr "Activité locale de %1"
-
-#: package/contents/ui/OpenCodeTab.qml
-msgctxt "stat label"
-msgid "cost"
-msgstr "coût"
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid "Recorded provider cost plus exact model catalog estimates"
-msgstr ""
-"Coût fournisseur enregistré plus estimations exactes du catalogue des modèles"
-
-#: package/contents/ui/OpenCodeTab.qml
-msgid "top model"
-msgstr "meilleur modèle"
-
-#: package/contents/ui/OpenRouterTab.qml
-msgid "OpenRouter support is in BETA and currently untested."
-msgstr ""
-"La prise en charge d'OpenRouter est en BÊTA et n'a pas encore été testée."
-
-#: package/contents/ui/OpenRouterTab.qml
-msgid "FREE"
-msgstr "GRATUIT"
-
-#: package/contents/ui/OpenRouterTab.qml
-msgid "PAID"
-msgstr "PAYANT"
-
-#: package/contents/ui/OpenRouterTab.qml
-msgid ""
-"Set an OpenRouter API key in ⚙ settings or via\n"
-"$OPENROUTER_API_KEY / ~/.config/openrouter/api-key"
-msgstr ""
-"Définir une clé API OpenRouter dans ⚙ paramètres ou via\n"
-"$OPENROUTER_API_KEY / ~/.config/openrouter/api-key"
-
-#: package/contents/ui/OpenRouterTab.qml
-msgid "Credit Usage"
-msgstr "Utilisation des crédits"
-
-#: package/contents/ui/OpenRouterTab.qml
-msgid ""
-"OpenRouter credit spend\n"
-"$%1 of $%2 limit"
-msgstr ""
-"Dépense de crédits OpenRouter\n"
-"$%1 sur $%2 de limite"
-
-#: package/contents/ui/OpenRouterTab.qml
-msgid "All-time Spend"
-msgstr "Dépense totale"
-
-#: package/contents/ui/OpenRouterTab.qml
-msgid "Credit Limit"
-msgstr "Limite de crédits"
-
-#: package/contents/ui/OpenRouterTab.qml
-msgid "Rate Limit"
-msgstr "Limite de débit"
-
-#: package/contents/ui/OpenRouterTab.qml
-msgid "min"
-msgstr "min"
-
-#: package/contents/ui/OpenRouterTab.qml
-msgid "%1 req / %2"
-msgstr "%1 req / %2"
-
-#: package/contents/ui/OpenRouterTab.qml
-msgid "Free tier active — rate limits apply"
-msgstr "Forfait gratuit actif — les limites de débit s'appliquent"
-
-#: package/contents/ui/ProjectInfoPane.qml
-msgid ""
-"An open-source AI quota & usage monitor for Plasma, Hyprland, macOS and "
-"Windows. Explore the project, get updates, or help improve it."
-msgstr ""
-"Un moniteur open source de quota et d'utilisation d'IA pour Plasma, "
-"Hyprland, macOS et Windows. Explorez le projet, obtenez les mises à jour ou "
-"aidez à l'améliorer."
-
-#: package/contents/ui/ProjectInfoPane.qml
-msgid "Installed version · %1"
-msgstr "Version installée · %1"
-
-#: package/contents/ui/ProjectInfoPane.qml
-msgid "Latest stable release · %1"
-msgstr "Dernière version stable · %1"
-
-#: package/contents/ui/ProjectInfoPane.qml
-msgid "Get update ↗"
-msgstr "Obtenir la mise à jour ↗"
-
-#: package/contents/ui/ProjectInfoPane.qml
-msgid "View latest release ↗"
-msgstr "Voir la dernière version ↗"
-
-#: package/contents/ui/ProjectInfoPane.qml
-msgid "Check again"
-msgstr "Vérifier à nouveau"
-
-#: package/contents/ui/ProjectInfoPane.qml
-msgid "License · %1"
-msgstr "Licence · %1"
-
-#: package/contents/ui/ProjectInfoPane.qml
-msgid "From the bundled LICENSE file"
-msgstr "Depuis le fichier LICENSE inclus"
-
-#: package/contents/ui/ProjectInfoPane.qml
-msgid "Contributors"
-msgstr "Contributeurs"
-
-#: package/contents/ui/ProjectInfoPane.qml
-msgid "See all on GitHub ↗"
-msgstr "Voir tout sur GitHub ↗"
-
-#: package/contents/ui/ProjectInfoPane.qml
-msgid "Support the project"
-msgstr "Soutenir le projet"
-
-#: package/contents/ui/ProjectInfoPane.qml
-msgid "View source on GitHub ↗"
-msgstr "Voir le code source sur GitHub ↗"
-
-#: package/contents/ui/ProjectInfoPane.qml
-msgid "Report an issue ↗"
-msgstr "Signaler un problème ↗"
-
-#: package/contents/ui/ProviderSettingRow.qml
-msgid "Hide options"
-msgstr "Masquer les options"
-
-#: package/contents/ui/ProviderSettingRow.qml
-msgid "Server URL and options"
-msgstr "URL du serveur et options"
-
-#: package/contents/ui/ProviderSettingRow.qml
-msgid "Key and options"
-msgstr "Clé et options"
-
-#: package/contents/ui/ProviderSettingRow.qml
-msgid "Local runtime (Ollama, vLLM, or llama.cpp)"
-msgstr "Exécution locale (Ollama, vLLM ou llama.cpp)"
-
-#: package/contents/ui/ProviderSettingRow.qml
-msgid "Server URLs, separated by commas (empty: auto-detect)"
-msgstr ""
-"URLs du serveur, séparées par des virgules (vide : détection automatique)"
-
-#: package/contents/ui/ProviderSettingRow.qml
-msgid "Optional bearer token"
-msgstr "Jeton d'authentification optionnel"
-
-#: package/contents/ui/SelfhostedTab.qml
-msgid "Since server start: %1 prompt · %2 generated tokens"
-msgstr ""
-"Depuis le démarrage du serveur : %1 jetons de prompt · %2 jetons générés"
-
-#: package/contents/ui/SelfhostedTab.qml
-msgid "Generation: %1 tokens/s"
-msgstr "Génération : %1 jetons/s"
-
-#: package/contents/ui/SelfhostedTab.qml
-msgid "Slot %1: %2 · %3 / %4 context tokens"
-msgstr "Emplacement %1 : %2 · %3 / %4 jetons de contexte"
-
-#: package/contents/ui/SessionsTab.qml
-msgid "Resume session"
-msgstr "Reprendre la session"
-
-#: package/contents/ui/SessionsTab.qml
-msgid "Could not parse sessions."
-msgstr "Impossible d’analyser les sessions."
-
-#: package/contents/ui/SettingsPanel.qml
-msgid ""
-"Expand a provider for its API key and options. Keys are optional wherever a "
-"local CLI login can be read instead."
-msgstr ""
-"Développez un fournisseur pour sa clé API et ses options. Les clés sont "
-"optionnelles lorsqu'une connexion CLI locale peut être lue à la place."
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Language follows System Settings → Region & Language."
-msgstr "La langue suit Configuration du système → Région et langue."
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "History graph in the popup"
-msgstr "Graphique d'historique dans le popup"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Theme accent"
-msgstr "Accent du thème"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Use Plasma accent color"
-msgstr "Utiliser l'accent de Plasma"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Panel rotation"
-msgstr "Rotation du panneau"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "30 seconds"
-msgstr "30 secondes"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "1 minute"
-msgstr "1 minute"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "2 minutes"
-msgstr "2 minutes"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "5 minutes"
-msgstr "5 minutes"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "10 minutes"
-msgstr "10 minutes"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Rotate pinned providers in the compact panel"
-msgstr "Faire pivoter les fournisseurs épinglés dans le panneau compact"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Popup BG"
-msgstr "Fond du popup"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Click to open color picker"
-msgstr "Cliquer pour ouvrir le sélecteur de couleur"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Opacity:"
-msgstr "Opacité :"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Card BG"
-msgstr "Fond de la carte"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Bg Style"
-msgstr "Style de fond"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Plasma Native"
-msgstr "Plasma natif"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Translucent (Flat)"
-msgstr "Translucide (plat)"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Glassmorphic (Shadow + Blur)"
-msgstr "Glassmorphique (ombre + flou)"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Popup Decoration"
-msgstr "Décoration du popup"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Accent Glow"
-msgstr "Halo d'accent"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Provider Logo"
-msgstr "Logo du fournisseur"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "None"
-msgstr "Aucun"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "How often usage is re-read"
-msgstr "Fréquence de relecture de l'utilisation"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid "Import"
-msgstr "Importer"
-
-#: package/contents/ui/SettingsPanel.qml
-msgid ""
-"Interpreter for the backend — e.g. a venv's bin/python. Empty auto-detects "
-"from PATH."
-msgstr ""
-"Interpréteur pour le backend — par ex. le bin/python d'un venv. Si vide, "
-"détection automatique depuis PATH."
-
-#: package/contents/ui/SpendTab.qml
-msgid "30d API"
-msgstr "API sur 30 j"
-
-#: package/contents/ui/SpendTab.qml
-msgid "all-time"
-msgstr "depuis le début"
-
-#: package/contents/ui/SpendTab.qml
-msgid "vibe CLI"
-msgstr "CLI Vibe"
-
-#: package/contents/ui/SpendTab.qml
-msgid "local est."
-msgstr "estimation locale"
-
-#: package/contents/ui/SpendTab.qml
-msgid "local"
-msgstr "local"
-
-#: package/contents/ui/SpendTab.qml
-msgid "on-demand"
-msgstr "à la demande"
-
-#: package/contents/ui/SpendTab.qml
-msgid "Spend timeframe: 1 day"
-msgstr "Période de dépenses : 1 jour"
-
-#: package/contents/ui/SpendTab.qml
-msgid "Spend timeframe: 7 days"
-msgstr "Période de dépenses : 7 jours"
-
-#: package/contents/ui/SpendTab.qml
-msgid "Spend timeframe: 30 days"
-msgstr "Période de dépenses : 30 jours"
-
-#: package/contents/ui/SpendTab.qml
-msgid "Spend timeframe: all history"
-msgstr "Période de dépenses : tout l'historique"
-
-#: package/contents/ui/StatsSparkline.qml
-msgid "%1 / day"
-msgstr "%1 / jour"
-
-#: package/contents/ui/ZaiTab.qml
-msgid "Z.AI · %1"
-msgstr "Z.AI · %1"
-
-#: package/contents/ui/ZaiTab.qml
-msgid ""
-"Set a Z.AI token in settings or via\n"
-"$ZAI_TOKEN / $Z_AI_API_KEY / ~/.config/zai/token"
-msgstr ""
-"Définir un jeton Z.AI dans les paramètres ou via\n"
-"$ZAI_TOKEN / $Z_AI_API_KEY / ~/.config/zai/token"
-
-#: package/contents/ui/ZaiTab.qml
-msgid "Z.AI error"
-msgstr "Erreur Z.AI"
-
-#: package/contents/ui/ZaiTab.qml
-msgid "5h Tokens"
-msgstr "Jetons 5h"
-
-#: package/contents/ui/ZaiTab.qml
-msgid "Z.AI token quota"
-msgstr "Quota de jetons Z.AI"
-
-#: package/contents/ui/ZaiTab.qml
-msgid "Monthly Tools"
-msgstr "Outils mensuels"
-
-#: package/contents/ui/ZaiTab.qml
-msgid "%1 remaining"
-msgstr "%1 restants"
-
-#: package/contents/ui/ZaiTab.qml
-msgid "Z.AI monthly tool quota"
-msgstr "Quota d'outils mensuels Z.AI"
-
-#: package/contents/ui/ZaiTab.qml
-msgid "Model usage"
-msgstr "Utilisation du modèle"
-
-#: package/contents/ui/main.qml
-msgid "Credit"
-msgstr "Crédit"
-
-#: package/contents/ui/main.qml
-msgid "empty → $MISTRAL_API_KEY"
-msgstr "vide → $MISTRAL_API_KEY"
-
-#: package/contents/ui/main.qml
-msgid "empty → $OPENROUTER_API_KEY"
-msgstr "vide → $OPENROUTER_API_KEY"
-
-#: package/contents/ui/main.qml
-msgid "optional — OpenCode login or $OLLAMA_API_KEY"
-msgstr "optionnel — connexion OpenCode ou $OLLAMA_API_KEY"
-
-#: package/contents/ui/main.qml
-msgid "empty → $GROK_API_KEY"
-msgstr "vide → $GROK_API_KEY"
-
-#: package/contents/ui/main.qml
-msgid "empty → $ZAI_TOKEN"
-msgstr "vide → $ZAI_TOKEN"
-
-#: package/contents/ui/main.qml
-msgid "optional — gh/Copilot login is used"
-msgstr "optionnel — la connexion gh/Copilot est utilisée"
-
-#: package/contents/ui/main.qml
-msgid "empty → $DEEPSEEK_API_KEY"
-msgstr "vide → $DEEPSEEK_API_KEY"
-
-#: package/contents/ui/main.qml
-msgid "empty → $MOONSHOT_API_KEY"
-msgstr "vide → $MOONSHOT_API_KEY"
-
-#: package/contents/ui/main.qml
-msgid "optional — the CLI login is used"
-msgstr "optionnel — la connexion CLI est utilisée"
-
-#: package/contents/ui/main.qml
-msgid "Export failed: could not capture image"
-msgstr "Échec de l'export : impossible de capturer l'image"
-
-#: package/contents/ui/main.qml
-msgid "offline"
-msgstr "hors ligne"
-
-#: package/contents/ui/main.qml
-msgid "token expired"
-msgstr "jeton expiré"
-
-#: package/contents/ui/main.qml
-msgid "access denied"
-msgstr "accès refusé"
-
-#: package/contents/ui/main.qml
-msgid "rate limited"
-msgstr "limite de débit atteinte"
-
-#: package/contents/ui/main.qml
-msgid "err %1"
-msgstr "erreur %1"
-
-#: package/contents/ui/main.qml
-msgid "5H"
-msgstr "5 H"
-
-#: package/contents/ui/main.qml
-msgid "24H"
-msgstr "24 H"
-
-#: package/contents/ui/main.qml
-msgid "7D"
-msgstr "7 J"
-
-#: package/contents/ui/main.qml
-msgid "30D"
-msgstr "30 J"
-
-#: package/contents/ui/main.qml
-msgid "Gemini Models"
-msgstr "Modèles Gemini"
-
-#: package/contents/ui/main.qml
-msgid "Claude & GPT Models"
-msgstr "Modèles Claude & GPT"
-
-#: package/contents/ui/main.qml
-msgid "Weekly limit"
-msgstr "Limite hebdomadaire"
-
-#: package/contents/ui/main.qml
-msgid "Daily limit"
-msgstr "Limite quotidienne"
-
-#: package/contents/ui/main.qml
-msgid "%1-day limit"
-msgid_plural "%1-day limit"
-msgstr[0] "Limite de %1 jour"
-msgstr[1] "Limite de %1 jours"
-
-#: package/contents/ui/main.qml
-msgid "%1-hour limit"
-msgid_plural "%1-hour limit"
-msgstr[0] "Limite de %1 heure"
-msgstr[1] "Limite de %1 heures"
-
-#: package/contents/ui/main.qml
-msgid "%1-minute limit"
-msgid_plural "%1-minute limit"
-msgstr[0] "Limite de %1 minute"
-msgstr[1] "Limite de %1 minutes"
-
-#: package/contents/ui/main.qml
-msgid "Plan usage"
-msgstr "Utilisation du forfait"
-
-#: package/contents/ui/main.qml
-msgid "Plan quota used up"
-msgstr "Quota du forfait épuisé"
-
-#: package/contents/ui/main.qml
-msgid "Today"
-msgstr "Aujourd'hui"
-
-#: package/contents/ui/main.qml
-msgid "Last 7 days"
-msgstr "7 derniers jours"
-
-#: package/contents/ui/main.qml
-msgid "Last 30 days"
-msgstr "30 derniers jours"
-
-#: package/contents/ui/main.qml
-msgid "rolling 24h"
-msgstr "24 h glissantes"
-
-#: package/contents/ui/main.qml
-msgctxt "rate limit tier"
-msgid "default"
-msgstr "Par défaut"
-
-#: package/contents/ui/main.qml
-msgctxt "rate limit tier"
-msgid "pro"
-msgstr "Pro"
-
-#: package/contents/ui/main.qml
-msgctxt "rate limit tier"
-msgid "max"
-msgstr "Max"
-
-#: package/contents/ui/main.qml
-msgctxt "rate limit tier"
-msgid "business"
-msgstr "Business"
-
-#: package/contents/ui/main.qml
-msgctxt "rate limit tier"
-msgid "free"
-msgstr "Free"
-
-#: package/contents/ui/main.qml
-msgctxt "effort level"
-msgid "high"
-msgstr "élevé"
-
-#: package/contents/ui/main.qml
-msgctxt "effort level"
-msgid "low"
-msgstr "faible"
-
-#: package/contents/ui/main.qml
-msgctxt "effort level"
-msgid "medium"
-msgstr "moyen"
-
-#: package/contents/ui/main.qml
-msgid "~%1m to 100%"
-msgstr "~%1m pour atteindre 100%"
-
-#: package/contents/ui/main.qml
-msgid "~%1h to 100%"
-msgstr "~%1h pour atteindre 100%"
-
-#: package/contents/ui/main.qml
-msgid "~%1d to 100%"
-msgstr "~%1j pour atteindre 100%"
-
-#: package/contents/ui/main.qml
-msgid "≈ same as %1"
-msgstr "≈ identique à %1"
-
-#: package/contents/ui/main.qml
-msgid "%1 vs %2"
-msgstr "%1 par rapport à %2"
-
-#: package/contents/ui/main.qml
-msgid "usage backend unavailable"
-msgstr "backend d'utilisation indisponible"
-
-#: package/contents/ui/main.qml
-msgid "AI API Usage"
-msgstr "Utilisation de l'API IA"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Claude 5H: %1%"
-msgstr "Claude 5H : %1%"
-
-#: package/contents/ui/main.qml
-msgid "%1 / %2 tokens"
-msgstr "%1 / %2 jetons"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Claude 7D: %1%"
-msgstr "Claude 7J : %1%"
-
-#: package/contents/ui/main.qml
-msgid "Extra budget: %1 tokens left"
-msgstr "Budget supplémentaire : %1 jetons restants"
-
-#: package/contents/ui/main.qml
-msgid "Extra usage: %1 / %2 %3"
-msgstr "Utilisation supplémentaire : %1 / %2 %3"
-
-#: package/contents/ui/main.qml
-msgid "API Cost (30d): $%1"
-msgstr "Coût API (30j) : $%1"
-
-#: package/contents/ui/main.qml
-msgid "Plan: %1"
-msgstr "Forfait : %1"
-
-#: package/contents/ui/main.qml
-msgid "Credits: %1 / %2"
-msgstr "Crédits : %1 / %2"
-
-#: package/contents/ui/main.qml
-msgid "API usage: configured"
-msgstr "Utilisation API : configurée"
-
-#: package/contents/ui/main.qml
-msgid "API cost (30d): $%1"
-msgstr "Coût API (30j) : $%1"
-
-#: package/contents/ui/main.qml
-msgid "Codex: signed in as %1"
-msgstr "Codex : connecté en tant que %1"
-
-#: package/contents/ui/main.qml
-msgid "Codex: signed in"
-msgstr "Codex : connecté"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Codex 5H left: %1%"
-msgstr "Codex 5H restant : %1%"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Codex weekly left: %1%"
-msgstr "Codex hebdomadaire restant : %1%"
-
-#: package/contents/ui/main.qml
-msgid "API usage needs an OpenAI API key"
-msgstr "L'utilisation API nécessite une clé API OpenAI"
-
-#: package/contents/ui/main.qml
-msgid "Overage: %1"
-msgstr "Dépassement : %1"
-
-#: package/contents/ui/main.qml
-msgid "API key: configured"
-msgstr "Clé API : configurée"
-
-#: package/contents/ui/main.qml
-msgid "%1 model available"
-msgid_plural "%1 models available"
-msgstr[0] "%1 modèle disponible"
-msgstr[1] "%1 modèles disponibles"
-
-#: package/contents/ui/main.qml
-msgid "Spent: $%1"
-msgstr "Dépensé : $%1"
-
-#: package/contents/ui/main.qml
-msgid "Limit: $%1"
-msgstr "Limite : $%1"
-
-#: package/contents/ui/main.qml
-msgid "Free tier"
-msgstr "Forfait gratuit"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Grok credits: %1% used"
-msgstr "Crédits Grok : %1% utilisé"
-
-#: package/contents/ui/main.qml
-msgid "Grok CLI connected; billing quota unavailable"
-msgstr "Grok CLI connecté ; quota de facturation indisponible"
-
-#: package/contents/ui/main.qml
-msgid "%1 local CLI session"
-msgid_plural "%1 local CLI sessions"
-msgstr[0] "%1 session CLI locale"
-msgstr[1] "%1 sessions CLI locales"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Z.AI tokens: %1%"
-msgstr "Jetons Z.AI : %1%"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Tools: %1%"
-msgstr "Outils : %1%"
-
-#: package/contents/ui/main.qml
-msgid "Tools left: %1"
-msgstr "Outils restants : %1"
-
-#: package/contents/ui/main.qml
-msgid "Level: %1"
-msgstr "Niveau : %1"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Copilot: %1%"
-msgstr "Copilot : %1%"
-
-#: package/contents/ui/main.qml
-msgid "%1 / %2 requests"
-msgstr "%1 / %2 requêtes"
-
-#: package/contents/ui/main.qml
-msgid "Balance: %1"
-msgstr "Solde : %1"
-
-#: package/contents/ui/main.qml
-msgid "Available for API calls"
-msgstr "Disponible pour les appels API"
-
-#: package/contents/ui/main.qml
-msgid "Balance unavailable"
-msgstr "Solde indisponible"
-
-#: package/contents/ui/main.qml
-msgid "Moonshot balance: %1"
-msgstr "Solde Moonshot : %1"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Included usage: %1%"
-msgstr "Utilisation incluse : %1%"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Auto: %1%"
-msgstr "Auto : %1%"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "API: %1%"
-msgstr "API : %1%"
-
-#: package/contents/ui/main.qml
-msgid "Tokens: %1 (all time)"
-msgstr "Jetons : %1 (tout temps)"
-
-#: package/contents/ui/main.qml
-msgid "Sessions: %1"
-msgstr "Sessions : %1"
-
-#: package/contents/ui/main.qml
-msgid "Spend: %1"
-msgstr "Dépenses : %1"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Current: %1%"
-msgstr "En cours : %1%"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Weekly: %1%"
-msgstr "Hebdomadaire : %1%"
-
-#: package/contents/ui/main.qml
-msgid "Spend (est.): %1"
-msgstr "Dépenses (est.) : %1"
-
-#: package/contents/ui/main.qml
-msgid "Updated %1 (stale)"
-msgstr "Mis à jour %1 (obsolète)"
-
-#: package/contents/ui/main.qml
-msgid "Updated %1"
-msgstr "Mis à jour %1"
-
-#: package/contents/ui/main.qml
-msgid "Exported to %1"
-msgstr "Exporté vers %1"
-
-#: package/contents/ui/main.qml
-msgid "Imported %1 points"
-msgstr "%1 points importés"
-
-#: package/contents/ui/main.qml
-msgid "⚠ history I/O failed"
-msgstr "⚠ échec de lecture/écriture de l'historique"
-
-#: package/contents/ui/main.qml
-msgid "Choose Popup Background Color"
-msgstr "Choisir la couleur de fond du popup"
-
-#: package/contents/ui/main.qml
-msgid "Choose Card Background Color"
-msgstr "Choisir la couleur de fond de la carte"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Claude 5-hour: %1%"
-msgstr "Claude 5 heures : %1%"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Claude 7-day: %1%"
-msgstr "Claude 7 jours : %1%"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Gemini (Google) quota: %1%"
-msgstr "Quota Gemini (Google) : %1%"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "External models quota: %1%"
-msgstr "Quota de modèles externes : %1%"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Codex 5h: %1% left"
-msgstr "Codex 5h : %1% restant"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "Codex weekly: %1% left"
-msgstr "Codex hebdomadaire : %1% restant"
-
-#: package/contents/ui/main.qml
-msgid "API usage configured"
-msgstr "Utilisation API configurée"
-
-#: package/contents/ui/main.qml
-msgid "Cost (30d): $%1"
-msgstr "Coût (30j) : $%1"
-
-#: package/contents/ui/main.qml
-msgid "In: %1"
-msgstr "Entrées : %1"
-
-#: package/contents/ui/main.qml
-msgid "Out: %1"
-msgstr "Sorties : %1"
-
-#: package/contents/ui/main.qml
-msgid ""
-"\n"
-"API usage needs an OpenAI API key"
-msgstr ""
-"\n"
-"L'utilisation API nécessite une clé API OpenAI"
-
-#: package/contents/ui/main.qml
-msgid ""
-"\n"
-"Codex signed in"
-msgstr ""
-"\n"
-"Codex connecté"
-
-#: package/contents/ui/main.qml
-#, javascript-format
-msgid "OpenAI Codex weekly: %1% left"
-msgstr "OpenAI Codex hebdomadaire : %1% restant"
-
-#: package/contents/ui/main.qml
-msgid "✓ key"
-msgstr "✓ clé"
-
-#: package/contents/ui/main.qml
-msgid ""
-"\n"
-"API key configured"
-msgstr ""
-"\n"
-"Clé API configurée"
-
-#: package/contents/ui/main.qml
-msgid ""
-"\n"
-"No key set"
-msgstr ""
-"\n"
-"Aucune clé définie"
-
-#: package/contents/ui/main.qml
-msgid "Spend (vibe): $%1"
-msgstr "Dépense (vibe) : $%1"
-
-#: package/contents/ui/main.qml
-msgid "%1 model"
-msgid_plural "%1 models"
-msgstr[0] "%1 modèle"
-msgstr[1] "%1 modèles"
-
-#: package/contents/ui/main.qml
-msgid "Used: $%1"
-msgstr "Utilisé : $%1"
-
-#: package/contents/ui/main.qml
-msgid "Checking…"
-msgstr "Vérification…"
-
-#: package/contents/ui/main.qml
-msgid "Grok CLI connected; billing quota is not exposed"
-msgstr "Grok CLI connecté ; le quota de facturation n'est pas exposé"
-
-#: package/contents/ui/main.qml
-msgid "Token reset: %1"
-msgstr "Réinitialisation des jetons : %1"
-
-#: package/contents/ui/main.qml
-msgid "Granted: %1"
-msgstr "Accordé : %1"
-
-#: package/contents/ui/main.qml
-msgid "Topped up: %1"
-msgstr "Rechargé : %1"
-
-#: package/contents/ui/main.qml
-msgid ""
-"\n"
-"No API key set"
-msgstr ""
-"\n"
-"Aucune clé API définie"
-
-#: package/contents/ui/main.qml
-msgid "Voucher: %1"
-msgstr "Bons : %1"
-
-#: package/contents/ui/main.qml
-msgid "Cash: %1"
-msgstr "Espèces : %1"
-
-#: package/contents/ui/main.qml
-msgid ""
-"\n"
-"No Moonshot API key or Kimi Code login"
-msgstr ""
-"\n"
-"Aucune clé API Moonshot ni connexion Kimi Code"
-
-#: package/contents/ui/main.qml
-msgid "No sessions yet"
-msgstr "Aucune session pour le moment"
-
-#: package/contents/ui/main.qml
-msgid ""
-"\n"
-"No local sessions yet"
-msgstr ""
-"\n"
-"Aucune session locale pour le moment"
-
-#: package/contents/ui/main.qml
-msgid "Claude Usage"
-msgstr "Utilisation Claude"
-
-#: package/contents/ui/main.qml
-msgid "Antigravity Usage"
-msgstr "Utilisation Antigravity"
-
-#: package/contents/ui/main.qml
-msgid "OpenAI Usage"
-msgstr "Utilisation OpenAI"
-
-#: package/contents/ui/main.qml
-msgid "Kiro Usage"
-msgstr "Utilisation Kiro"
-
-#: package/contents/ui/main.qml
-msgid "Mistral Usage"
-msgstr "Utilisation Mistral"
-
-#: package/contents/ui/main.qml
-msgid "OpenRouter Usage"
-msgstr "Utilisation OpenRouter"
-
-#: package/contents/ui/main.qml
-msgid "Ollama Cloud Usage"
-msgstr "Utilisation d'Ollama Cloud"
-
-#: package/contents/ui/main.qml
-msgid "Grok Usage"
-msgstr "Utilisation Grok"
-
-#: package/contents/ui/main.qml
-msgid "Z.AI Usage"
-msgstr "Utilisation Z.AI"
-
-#: package/contents/ui/main.qml
-msgid "Copilot Usage"
-msgstr "Utilisation Copilot"
-
-#: package/contents/ui/main.qml
-msgid "DeepSeek Balance"
-msgstr "Solde DeepSeek"
-
-#: package/contents/ui/main.qml
-msgid "Kimi Usage"
-msgstr "Utilisation Kimi"
-
-#: package/contents/ui/main.qml
-msgid "Kimi Balance"
-msgstr "Solde Kimi"
-
-#: package/contents/ui/main.qml
-msgid "Cursor Usage"
-msgstr "Utilisation Cursor"
-
-#: package/contents/ui/main.qml
-msgid "Cline Stats"
-msgstr "Statistiques Cline"
-
-#: package/contents/ui/main.qml
-msgid "Junie Usage"
-msgstr "Utilisation de Junie"
-
-#: package/contents/ui/main.qml
-msgid "MiMo Code Usage"
-msgstr "Utilisation MiMo Code"
-
-#: package/contents/ui/main.qml
-msgid "OpenCode Usage"
-msgstr "Utilisation OpenCode"
-
-#: package/contents/ui/main.qml translate/metadata-i18n.js
+#: translate/metadata-i18n.js
 msgid "AI Usage Monitor"
 msgstr "Moniteur d'utilisation IA"
-
-#: package/contents/ui/main.qml
-msgid "Views, colors, chart and popup style"
-msgstr "Vues, couleurs, graphique et style de la fenêtre contextuelle"
-
-#: package/contents/ui/main.qml
-msgid "Export current tab as PNG or SVG"
-msgstr "Exporter l'onglet actuel en PNG ou SVG"
-
-#: package/contents/ui/main.qml
-msgid "Export as PNG"
-msgstr "Exporter en PNG"
-
-#: package/contents/ui/main.qml
-msgid "Export as SVG"
-msgstr "Exporter en SVG"
-
-#: package/contents/ui/main.qml
-msgid "Unpin from panel"
-msgstr "Détacher du panneau"
-
-#: package/contents/ui/main.qml
-msgid "Pin on panel"
-msgstr "Épingler au panneau"
-
-#: package/contents/ui/main.qml
-msgid "Combined API spend"
-msgstr "Dépense API combinée"
-
-#: package/contents/ui/main.qml
-msgid "Claude (30d): $%1"
-msgstr "Claude (30j) : $%1"
-
-#: package/contents/ui/main.qml
-msgid "OpenAI (30d): $%1"
-msgstr "OpenAI (30j) : $%1"
-
-#: package/contents/ui/main.qml
-msgid "OpenRouter (all-time): $%1"
-msgstr "OpenRouter (total) : $%1"
-
-#: package/contents/ui/main.qml
-msgid "updated %1 · stale"
-msgstr "mis à jour %1 · obsolète"
-
-#: hosts/windows/qml/Main.qml
-msgid "Open AI Usage"
-msgstr "Ouvrir AI Usage"
-
-#: hosts/windows/qml/Main.qml
-msgid "Tray style"
-msgstr "Style de la zone de notification"
-
-#: hosts/windows/qml/Main.qml
-msgid "Start with Windows"
-msgstr "Démarrer avec Windows"
-
-#: hosts/windows/qml/Main.qml
-msgid "Quit"
-msgstr "Quitter"
-
-#: hosts/windows/qml/Main.qml
-msgid "Load more"
-msgstr "Charger plus"
 
 #: translate/metadata-i18n.js
 msgid ""
@@ -3382,529 +1227,3 @@ msgid ""
 msgstr ""
 "Suivi multi-services de quotas IA avec ventilation des coûts (Claude, "
 "Antigravity, OpenAI, Grok, Kiro, OpenRouter & Mistral)"
-
-#: macos/Sources/AIUsage/App/SettingsWindow.swift
-msgid "AI Usage Settings"
-msgstr "Paramètres d'AI Usage"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Local sessions"
-msgstr "Sessions locales"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "local CLI logs"
-msgstr "journaux CLI locaux"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Anthropic"
-msgstr "Anthropic"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "OpenAI"
-msgstr "OpenAI"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "OpenRouter"
-msgstr "OpenRouter"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Ollama Cloud"
-msgstr "Ollama Cloud"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Ollama"
-msgstr "Ollama"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "GitHub Copilot"
-msgstr "GitHub Copilot"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Google"
-msgstr "Google"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "ZenMux"
-msgstr "ZenMux"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "OpenCode"
-msgstr "OpenCode"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Claude Code"
-msgstr "Claude Code"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Codex"
-msgstr "Codex"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Cline"
-msgstr "Cline"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Grok CLI"
-msgstr "Grok CLI"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Muse"
-msgstr "Muse"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Antigravity"
-msgstr "Antigravity"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "Local source"
-msgstr "Source locale"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "via OpenCode"
-msgstr "via OpenCode"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "covered by plan"
-msgstr "couvert par le forfait"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "would cost on API"
-msgstr "coûterait sur l'API"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "partial"
-msgstr "partiel"
-
-#: macos/Sources/AIUsage/Backend/Contract.swift
-msgid "local sessions"
-msgstr "sessions locales"
-
-#: macos/Sources/AIUsage/Backend/SettingsStore.swift
-msgid "Monochrome"
-msgstr "Monochrome"
-
-#: macos/Sources/AIUsage/Backend/SettingsStore.swift
-msgid "One per value, tinted"
-msgstr "Un par valeur, teinté"
-
-#: macos/Sources/AIUsage/Backend/SettingsStore.swift
-msgid "One per value, brand colours"
-msgstr "Un par valeur, couleurs de la marque"
-
-#: macos/Sources/AIUsage/MenuBar/StatusItemController.swift
-#: macos/Sources/AIUsage/Views/UsageView.swift
-msgid "Quit AI Usage"
-msgstr "Quitter AI Usage"
-
-#: macos/Sources/AIUsage/Support/Formatters.swift
-msgid "resetting…"
-msgstr "réinitialisation…"
-
-#: macos/Sources/AIUsage/Views/HistoryChartView.swift
-msgid "Not enough history yet — it builds up as the widget polls."
-msgstr ""
-"Pas encore assez d'historique — il s'accumule au fil des actualisations du "
-"widget."
-
-#: macos/Sources/AIUsage/Views/HistoryChartView.swift
-msgid "Usage over the last %1"
-msgstr "Utilisation sur les derniers %1"
-
-#: macos/Sources/AIUsage/Views/InfoView.swift
-msgid "Could not check for updates"
-msgstr "Impossible de vérifier les mises à jour"
-
-#: macos/Sources/AIUsage/Views/InfoView.swift
-msgid "Version comparison unavailable"
-msgstr "Comparaison de version indisponible"
-
-#: macos/Sources/AIUsage/Views/InfoView.swift
-msgid "Update available"
-msgstr "Mise à jour disponible"
-
-#: macos/Sources/AIUsage/Views/InfoView.swift
-msgid "Newer than latest release"
-msgstr "Plus récent que la dernière version"
-
-#: macos/Sources/AIUsage/Views/InfoView.swift
-msgid "Up to date"
-msgstr "À jour"
-
-#: macos/Sources/AIUsage/Views/InfoView.swift
-msgid "By %1 ↗"
-msgstr "Par %1 ↗"
-
-#: macos/Sources/AIUsage/Views/InfoView.swift
-msgid "GitHub stars ↗"
-msgstr "Étoiles GitHub ↗"
-
-#: macos/Sources/AIUsage/Views/InfoView.swift
-msgid "GitHub downloads ↗"
-msgstr "Téléchargements GitHub ↗"
-
-#: macos/Sources/AIUsage/Views/InfoView.swift
-msgid "OpenDesktop downloads ↗"
-msgstr "Téléchargements OpenDesktop ↗"
-
-#: macos/Sources/AIUsage/Views/OverviewView.swift
-msgid "%1%"
-msgstr "%1 %"
-
-#: macos/Sources/AIUsage/Views/QuotaRowView.swift
-msgid "Resets %1"
-msgstr "Réinitialisation %1"
-
-#: macos/Sources/AIUsage/Views/SessionsView.swift
-msgid "Refresh sessions"
-msgstr "Actualiser les sessions"
-
-#: macos/Sources/AIUsage/Views/SessionsView.swift
-msgid "%1 source"
-msgid_plural "%1 sources"
-msgstr[0] "%1 source"
-msgstr[1] "%1 sources"
-
-#: macos/Sources/AIUsage/Views/SessionsView.swift
-msgid "No cached sessions."
-msgstr "Aucune session en cache."
-
-#: macos/Sources/AIUsage/Views/SessionsView.swift
-msgid "Covered by plan · %1 on API"
-msgstr "Couvert par le forfait · %1 sur l'API"
-
-#: macos/Sources/AIUsage/Views/SessionsView.swift
-msgid "Covered by plan · ~%1 on API"
-msgstr "Couvert par le forfait · ~%1 sur l'API"
-
-#: macos/Sources/AIUsage/Views/SessionsView.swift
-msgid "Actual %1 + estimate %2 (%3)"
-msgstr "Coût réel %1 + estimation %2 (%3)"
-
-#: macos/Sources/AIUsage/Views/SessionsView.swift
-msgid "Actual cost: %1 (%2)"
-msgstr "Coût réel : %1 (%2)"
-
-#: macos/Sources/AIUsage/Views/SessionsView.swift
-msgid "Calculated estimate: %1 (%2)"
-msgstr "Estimation calculée : %1 (%2)"
-
-#: macos/Sources/AIUsage/Views/SessionsView.swift
-msgid "Cost: %1 (%2)"
-msgstr "Coût : %1 (%2)"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Admin API key"
-msgstr "Clé API Admin"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Optional. Adds organisation-wide usage next to your own."
-msgstr ""
-"Optionnel. Ajoute l'utilisation à l'échelle de l'organisation à côté de la "
-"vôtre."
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Optional. Codex sign-in is read from ~/.codex."
-msgstr "Optionnel. La connexion Codex est lue depuis ~/.codex."
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Optional. OpenCode's Ollama Cloud login is used when this is empty."
-msgstr ""
-"Optionnel. La connexion Ollama Cloud d'OpenCode est utilisée si ce champ est "
-"vide."
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Token"
-msgstr "Jeton"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "GitHub token"
-msgstr "Jeton GitHub"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Optional. `gh auth token` is used when this is empty."
-msgstr "Optionnel. `gh auth token` est utilisé lorsque ce champ est vide."
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "META_API_KEY"
-msgstr "META_API_KEY"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Optional. The CLI's own login is used when this is empty."
-msgstr ""
-"Optionnel. La connexion propre au CLI est utilisée lorsque ce champ est vide."
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Menu Bar"
-msgstr "Barre des menus"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Data"
-msgstr "Données"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "General"
-msgstr "Général"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Server URLs, comma separated (empty: auto detect)"
-msgstr ""
-"URLs du serveur, séparées par des virgules (vide : détection automatique)"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Engine: auto, ollama, vllm, llama.cpp"
-msgstr "Moteur : auto, ollama, vllm, llama.cpp"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Views"
-msgstr "Vues"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Optional tabs that sit ahead of your providers in the popover."
-msgstr ""
-"Onglets facultatifs affichés avant vos fournisseurs dans la fenêtre "
-"contextuelle."
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Show"
-msgstr "Afficher"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Values"
-msgstr "Valeurs"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "One"
-msgstr "Une"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Two"
-msgstr "Deux"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Three"
-msgstr "Trois"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Icon"
-msgstr "Icône"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid ""
-"Monochrome is what macOS expects: it inverts with the menu bar and stays "
-"legible over any wallpaper. The other two show a logo beside every value, "
-"the way the Plasma panel does."
-msgstr ""
-"Le monochrome correspond aux attentes de macOS : il s'inverse avec la barre "
-"des menus et reste lisible sur tout fond d'écran. Les deux autres affichent "
-"un logo à côté de chaque valeur, comme sur le panneau Plasma."
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Colour every percentage"
-msgstr "Colorer chaque pourcentage"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid ""
-"Off, a percentage stays in the menu bar's own colour until it is worth a "
-"look — amber from 70 %, red from 90 %."
-msgstr ""
-"Désactivé, un pourcentage conserve la couleur de la barre des menus jusqu'à "
-"ce qu'il mérite attention — orange à partir de 70 %, rouge à partir de 90 %."
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Provider"
-msgstr "Fournisseur"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Refresh the shared model pricing catalog now."
-msgstr "Actualiser le catalogue partagé des tarifs des modèles."
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Refresh every"
-msgstr "Actualiser toutes les"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "15 minutes"
-msgstr "15 minutes"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "30 minutes"
-msgstr "30 minutes"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "1 hour"
-msgstr "1 heure"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Follow the system"
-msgstr "Suivre le système"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Translations come from the same catalogs the Linux frontends read."
-msgstr ""
-"Les traductions proviennent des mêmes catalogues que ceux lus par les "
-"interfaces Linux."
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Show the usage history chart"
-msgstr "Afficher le graphique d'historique d'utilisation"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Open at Login"
-msgstr "Ouvrir avec la session"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid ""
-"macOS is waiting for you to allow this in System Settings › General › Login "
-"Items."
-msgstr ""
-"macOS attend que vous l'autorisiez dans Réglages Système › Général › "
-"Ouverture."
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Available once the app is running from AI Usage.app."
-msgstr "Disponible dès que l'application est exécutée depuis AI Usage.app."
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Muse live quota"
-msgstr "Quota Muse en direct"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid ""
-"Meta publishes Muse's plan windows only on a billed model call, so reading "
-"them costs a few tokens per refresh. Everything else Muse shows is read from "
-"local files and costs nothing."
-msgstr ""
-"Meta ne publie les fenêtres de plan de Muse que lors d'un appel de modèle "
-"facturé, leur lecture coûte donc quelques jetons par actualisation. Tout le "
-"reste affiché par Muse est lu depuis des fichiers locaux et ne coûte rien."
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid "Settings file"
-msgstr "Fichier de paramètres"
-
-#: macos/Sources/AIUsage/Views/SettingsView.swift
-msgid ""
-"Shared with `ai-usage-cli` and with this widget's Linux frontends, so a key "
-"pasted here is pasted once."
-msgstr ""
-"Partagé avec `ai-usage-cli` et avec les interfaces Linux de ce widget, pour "
-"qu'une clé collée ici ne soit collée qu'une seule fois."
-
-#: macos/Sources/AIUsage/Views/SpendChartView.swift
-msgid "Day"
-msgstr "Jour"
-
-#: macos/Sources/AIUsage/Views/SpendChartView.swift
-#: macos/Sources/AIUsage/Views/StatsView.swift
-msgid "Tokens"
-msgstr "Jetons"
-
-#: macos/Sources/AIUsage/Views/SpendView.swift
-msgid "Metered: %1 · Incl. plan: %2"
-msgstr "Mesuré : %1 · Forfait incl. : %2"
-
-#: macos/Sources/AIUsage/Views/SpendView.swift
-msgid "Incl. plan: %1"
-msgstr "Forfait incl. : %1"
-
-#: macos/Sources/AIUsage/Views/SpendView.swift
-msgid "Metered: %1"
-msgstr "Mesuré : %1"
-
-#: macos/Sources/AIUsage/Views/SpendView.swift
-msgid "Spend timeframe"
-msgstr "Période de dépenses"
-
-#: macos/Sources/AIUsage/Views/SpendView.swift
-msgid ""
-"Provider totals come from each provider's own usage APIs. Local source rows "
-"show actual, estimated, or mixed provenance and coverage separately."
-msgstr ""
-"Les totaux des fournisseurs proviennent de leurs propres API d'utilisation. "
-"Les lignes de source locale indiquent séparément la provenance réelle, "
-"estimée ou mixte ainsi que la couverture."
-
-#: macos/Sources/AIUsage/Views/SpendView.swift
-msgid "Hide history"
-msgstr "Masquer l'historique"
-
-#: macos/Sources/AIUsage/Views/SpendView.swift
-msgid "Show history"
-msgstr "Afficher l'historique"
-
-#: macos/Sources/AIUsage/Views/StatsView.swift
-msgid "Messages"
-msgstr "Messages"
-
-#: macos/Sources/AIUsage/Views/StatsView.swift
-msgid "Files"
-msgstr "Fichiers"
-
-#: macos/Sources/AIUsage/Views/StatsView.swift
-msgid "Web searches"
-msgstr "Recherches web"
-
-#: macos/Sources/AIUsage/Views/StatsView.swift
-msgid "Active days"
-msgstr "Jours actifs"
-
-#: macos/Sources/AIUsage/Views/StatsView.swift
-msgid "Streak"
-msgstr "Série"
-
-#: macos/Sources/AIUsage/Views/StatsView.swift
-msgid "Longest session"
-msgstr "Session la plus longue"
-
-#: macos/Sources/AIUsage/Views/StatsView.swift
-msgid "Peak hour"
-msgstr "Heure de pointe"
-
-#: macos/Sources/AIUsage/Views/StatsView.swift
-msgid "Top model"
-msgstr "Modèle principal"
-
-#: macos/Sources/AIUsage/Views/UsageView.swift
-msgid "AI Usage"
-msgstr "AI Usage"
-
-#: macos/Sources/AIUsage/Views/UsageView.swift
-msgid "Choose a provider"
-msgstr "Choisir un fournisseur"
-
-#: macos/Sources/AIUsage/Views/UsageView.swift
-msgid "More actions"
-msgstr "Plus d'actions"
-
-#: macos/Sources/AIUsage/Views/UsageView.swift
-msgid "The usage backend is missing"
-msgstr "Le backend d'utilisation est manquant"
-
-#: macos/Sources/AIUsage/Views/UsageView.swift
-msgid "This build has no copy of the Python backend to ask."
-msgstr ""
-"Cette version ne dispose d'aucune copie du backend Python à interroger."
-
-#: macos/Sources/AIUsage/Views/UsageView.swift
-msgid "Could not read usage"
-msgstr "Impossible de lire l'utilisation"
-
-#: macos/Sources/AIUsage/Views/UsageView.swift
-msgid "Reading usage…"
-msgstr "Lecture de l'utilisation…"
-
-#: macos/Sources/AIUsage/Views/UsageView.swift
-msgid "No providers are switched on"
-msgstr "Aucun fournisseur n'est activé"
-
-#: macos/Sources/AIUsage/Views/UsageView.swift
-msgid "Open Settings to choose the services to follow."
-msgstr "Ouvrez les Paramètres pour choisir les services à suivre."
-
-#: macos/Sources/AIUsage/Views/UsageView.swift
-msgid "Usage history"
-msgstr "Historique d'utilisation"
-
-#: macos/Sources/AIUsage/Views/UsageView.swift
-msgid "Not read yet"
-msgstr "Pas encore lu"

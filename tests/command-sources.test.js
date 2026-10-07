@@ -4,8 +4,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 // A raw executable DataSource remembers every command string it has ever run.
-// Only CommandSource.qml (one disposable source per command) may name the engine.
-const WRAPPER = "CommandSource.qml";
+// Only the KDE host's PlasmaRunner.qml (one disposable source per command) may
+// name the engine.
+const WRAPPER = "PlasmaRunner.qml";
 const root = path.join(__dirname, "..");
 
 function qmlFiles(dir) {
@@ -17,10 +18,10 @@ function qmlFiles(dir) {
 }
 
 test("executable commands run through the disposable CommandSource", () => {
-    const offenders = ["package", "ui", "hosts"]
+    const offenders = ["ui", "hosts"]
         .flatMap((folder) => qmlFiles(path.join(root, folder)))
         .filter((file) => path.basename(file) !== WRAPPER)
         .filter((file) => /engine:\s*"executable"/.test(fs.readFileSync(file, "utf8")))
         .map((file) => path.relative(root, file));
-    assert.deepEqual(offenders, [], "use CommandSource.qml instead of a raw executable DataSource");
+    assert.deepEqual(offenders, [], "run commands through PlasmaRunner.qml instead of a raw executable DataSource");
 });

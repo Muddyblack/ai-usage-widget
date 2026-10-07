@@ -1,6 +1,6 @@
 # Exact versions for the .exe that CI builds and releases ship, so a release
 # rebuilt from its tag gets the same Qt, the same bootloader and the same
-# hooks. The app's own needs are the ranges in hosts/windows/requirements.txt, which
+# hooks. The app's own needs are the ranges in hosts/desktop/requirements.txt, which
 # CI's test job installs as they come — a new PySide6 shows up there first.
 # Keep these inside those ranges, and bump them on purpose (then try the build
 # in a Windows VM; see docs/windows.md).

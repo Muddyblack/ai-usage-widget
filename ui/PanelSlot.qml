@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
+import "js/PanelColor.js" as PanelColor
 
 // Compact panel readout, mirroring the Plasma PanelSlot: layered tinted icon +
 // animated % (or cost text) that rolls up/down when the value changes.
@@ -15,6 +16,8 @@ RowLayout {
     // compact representation, the panel reads severity from the icon's colour,
     // so the logo contributes its shape and the backend its colour.
     property string iconSource: ""
+    // The normal-level text colour; a host on a light panel passes its theme's.
+    property color textColor: "#f8fafc"
 
     readonly property color dangerColor: "#ff4d4d"
     readonly property color warningColor: "#ffa64d"
@@ -82,7 +85,7 @@ RowLayout {
         text: slot.costText !== "" ? slot.costText : Math.round(slot.displayPct) + "%"
         font.pixelSize: 12
         font.bold: true
-        color: slot.costText !== "" ? slot.iconColor : (slot.pct >= 90 ? slot.dangerColor : slot.pct >= 70 ? slot.warningColor : "#f8fafc")
+        color: slot.costText !== "" ? slot.iconColor : PanelColor.colorFor(slot.pct, slot.textColor)
         Layout.alignment: Qt.AlignVCenter
     }
 }

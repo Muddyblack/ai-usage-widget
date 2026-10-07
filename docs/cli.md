@@ -9,10 +9,10 @@ a shell prompt, or in a status bar.
 
 ```bash
 # From a cloned checkout: put the tools on PATH …
-export PATH="$PWD/package/contents/tools/sh:$PATH"
+export PATH="$PWD/backend/sh:$PATH"
 
 # … or link just the frontend (it resolves symlinks to find its package)
-ln -s "$PWD/package/contents/tools/sh/ai-usage-cli" ~/.local/bin/ai-usage-cli
+ln -s "$PWD/backend/sh/ai-usage-cli" ~/.local/bin/ai-usage-cli
 
 # … or, on NixOS, run it straight from the flake without installing anything
 nix run .#cli

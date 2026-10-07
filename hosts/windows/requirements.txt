@@ -1,5 +1,0 @@
-# Runtime for the Windows tray app (hosts/windows/app.py). The backend itself stays
-# standard-library-only; psutil is only how Antigravity is found without /proc.
-# 6.8+: the floating pill's tooltip is a popup window of its own (popupType).
-PySide6-Essentials>=6.8
-psutil>=5.9

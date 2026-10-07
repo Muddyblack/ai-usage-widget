@@ -9,11 +9,11 @@ import unittest
 from _support import REPO
 
 HAS_PYSIDE = importlib.util.find_spec("PySide6") is not None
-CLAUDE_LOGO = "file://" + os.path.join(REPO, "package", "contents", "icons", "claude-color.svg")
+CLAUDE_LOGO = "file://" + os.path.join(REPO, "assets", "icons", "claude-color.svg")
 
 if HAS_PYSIDE:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    sys.path.insert(0, os.path.join(REPO, "hosts", "windows"))
+    sys.path.insert(0, os.path.join(REPO, "hosts", "desktop"))
     import app
     from PySide6.QtGui import QColor, QGuiApplication
 

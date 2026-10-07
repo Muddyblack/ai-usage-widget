@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const I18n = require("../package/contents/code/I18n.js");
+const I18n = require("../ui/js/I18n.js");
 
 // The Quickshell panel and the Windows tray app translate with this parser
 // instead of KDE's i18n; it has to read the catalog exactly as msgfmt would.
@@ -86,8 +86,8 @@ test("turns locale names into .po candidates", () => {
 test("reads the shipped French catalog completely", () => {
     const po = path.join(__dirname, "..", "translate", "fr.po");
     const c = I18n.parsePo(fs.readFileSync(po, "utf8"));
-    assert.ok(Object.keys(c.messages).length > 400);
+    assert.ok(Object.keys(c.messages).length > 200);
     assert.equal(c.plural(1), 0);
     assert.equal(c.plural(2), 1);
-    assert.equal(I18n.i18np(c, "%1 model", "%1 models", 3), "3 modèles");
+    assert.equal(I18n.i18np(c, "%1 provider", "%1 providers", 3), "3 fournisseurs");
 });

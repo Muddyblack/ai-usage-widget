@@ -620,7 +620,7 @@ ColumnLayout {
             }
         }
 
-        // The Windows tray app's own display choices (hosts/windows/app.py,
+        // The Windows tray app's own display choices (hosts/desktop/app.py,
         // tray_entries); a shell with a real panel has none of them.
         RowLayout {
             Layout.fillWidth: true
@@ -991,7 +991,7 @@ ColumnLayout {
                     anchors.leftMargin: 8
                     anchors.rightMargin: 4
                     readOnly: true
-                    text: page.shell.baseDir + "/../package/contents/tools/sh/ai-usage-cli"
+                    text: page.shell.cliPath
                     font.pixelSize: 10
                     color: "#f8fafc"
                     verticalAlignment: TextInput.AlignVCenter

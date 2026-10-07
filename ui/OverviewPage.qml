@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import "../package/contents/code/FeatureTabs.js" as FeatureTabs
+import "js/FeatureTabs.js" as FeatureTabs
 
 // Hyprland / Windows Overview — every enabled provider's headline meter.
 ColumnLayout {

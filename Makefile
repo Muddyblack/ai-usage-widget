@@ -1,4 +1,4 @@
-.PHONY: help view view-h view-hyprland hyprland install pack tag test test-py test-qml translations check-translations lint-py run-windows macos macos-test
+.PHONY: help view view-h view-hyprland hyprland install pack tag test test-py translations check-translations lint-py run-desktop run-windows macos
 .DEFAULT_GOAL := help
 
 help: ## list targets
@@ -8,14 +8,14 @@ view: ## preview widget (planar)
 	@if command -v nix >/dev/null 2>&1 && [ -f flake.nix ]; then \
 	  nix run .#view; \
 	else \
-	  ./translate/build.sh && plasmoidviewer -a package -f planar; \
+	  ./scripts/build-kde-package.sh && plasmoidviewer -a build/kde -f planar; \
 	fi
 
 view-h: ## preview widget (horizontal)
 	@if command -v nix >/dev/null 2>&1 && [ -f flake.nix ]; then \
 	  nix run .#view -- horizontal; \
 	else \
-	  ./translate/build.sh && plasmoidviewer -a package -f horizontal; \
+	  ./scripts/build-kde-package.sh && plasmoidviewer -a build/kde -f horizontal; \
 	fi
 
 view-hyprland: ## preview widget (Hyprland / Quickshell)
@@ -43,21 +43,17 @@ test: ## run the provider backend contract tests
 test-py: ## run the portable unittest suites (also what CI runs on Windows)
 	@python3 -m unittest discover -s tests/python
 
-test-qml: ## test Plasma command cleanup and hidden-window work (nix develop)
-	@QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software qmltestrunner -input tests/qml
-
-run-windows: ## run the Windows tray app on this machine (PySide6 via 'nix develop .#windows')
+run-desktop: ## run the desktop tray app (Windows/macOS host) on this machine (PySide6 via 'nix develop .#windows')
 	@if command -v nix >/dev/null 2>&1 && [ -f flake.nix ]; then \
-	  nix develop .#windows --command python3 hosts/windows/app.py; \
+	  nix develop .#windows --command python3 hosts/desktop/app.py; \
 	else \
-	  python3 hosts/windows/app.py; \
+	  python3 hosts/desktop/app.py; \
 	fi
 
-macos: ## build AI Usage.app (macOS only; --arch arm64 for a fast local build)
-	@macos/scripts/build-app.sh $(ARGS)
+run-windows: run-desktop
 
-macos-test: ## run the macOS frontend's Swift suites (macOS only)
-	@swift test --package-path macos
+macos: ## build AI Usage.app (macOS only; needs hosts/macos/build-requirements.txt)
+	@hosts/macos/build-app.sh
 
 translations: ## regenerate template.pot from sources and compile the .mo catalogs
 	@./translate/Messages.sh
@@ -68,8 +64,8 @@ check-translations: ## fail if a locale catalog has untranslated/fuzzy entries
 
 lint-py: ## lint + format-check the Python backend, frontends and helpers (dev only, needs ruff)
 	@if command -v ruff >/dev/null 2>&1; then \
-	  ruff check package/contents/tools/aiusage hosts/windows macos scripts tests/python && \
-	  ruff format --check package/contents/tools/aiusage hosts/windows macos scripts tests/python; \
+	  ruff check backend/aiusage hosts scripts tests/python && \
+	  ruff format --check backend/aiusage hosts scripts tests/python; \
 	else \
 	  echo "ruff not found — install it or run 'nix develop'"; exit 1; \
 	fi
@@ -82,12 +78,12 @@ pack: ## build .plasmoid archive
 	@if command -v nix >/dev/null 2>&1 && [ -f flake.nix ]; then \
 	  nix run .#pack; \
 	else \
-	  ver=$$(grep -oE '"Version":[[:space:]]*"[^"]+"' package/metadata.json | head -1 | sed -E 's/.*"([^"]+)"$$/\1/'); \
+	  ver=$$(grep -oE '"Version":[[:space:]]*"[^"]+"' hosts/kde/metadata.json | head -1 | sed -E 's/.*"([^"]+)"$$/\1/'); \
 	  name=$$(basename "$$PWD"); \
 	  out="$$PWD/$$name-$$ver.plasmoid"; \
 	  rm -f "$$out"; \
-	  ./translate/build.sh && \
-	  (cd package && zip -r "$$out" . -x '*.swp' '*~'); \
+	  ./scripts/build-kde-package.sh && \
+	  (cd build/kde && zip -r "$$out" . -x '*.swp' '*~'); \
 	  echo "wrote $$out"; \
 	fi
 

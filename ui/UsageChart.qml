@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
-import "../package/contents/code/UsageHistory.js" as UsageHistory
-import "../package/contents/code/OpenCodeUsage.js" as OpenCodeUsage
+import "js/UsageHistory.js" as UsageHistory
+import "js/OpenCodeUsage.js" as OpenCodeUsage
 
 // Usage-history chart, ported from the Plasma UsageChart. Self-contained:
 // feed it the unified history array plus the window list for the active tab.

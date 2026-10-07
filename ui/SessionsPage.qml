@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic as QC
-import "../package/contents/code/FeatureTabs.js" as FeatureTabs
-import "../package/contents/code/SessionSources.js" as SessionSources
+import "js/FeatureTabs.js" as FeatureTabs
+import "js/SessionSources.js" as SessionSources
 
 ColumnLayout {
     id: page
@@ -123,7 +123,7 @@ ColumnLayout {
     function sourceIcon(id) {
         if (!id)
             return shell.iconSource || "";
-        var iconDir = shell.iconDir || (Qt.resolvedUrl("../package/contents/icons/").toString());
+        var iconDir = shell.iconDir || (Qt.resolvedUrl("../assets/icons/").toString());
         if (id === "codex")
             return iconDir + "codex.svg";
         if (id === "junie")
@@ -655,7 +655,7 @@ ColumnLayout {
                             color: resumeMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.11) : "transparent"
                             Image {
                                 anchors.centerIn: parent
-                                source: Qt.resolvedUrl("../package/contents/icons/session-terminal.svg")
+                                source: Qt.resolvedUrl("../assets/icons/session-terminal.svg")
                                 sourceSize.width: 18
                                 sourceSize.height: 18
                                 width: 18

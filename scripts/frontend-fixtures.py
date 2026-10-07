@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "package/contents/tools"))
+sys.path.insert(0, str(ROOT / "backend"))
 
 from aiusage.contract import finalize  # noqa: E402
 from aiusage.normalize import normalize  # noqa: E402
