@@ -22,6 +22,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      # hosts/kde/metadata.json is the version's one source (scripts/tag.sh
+      # bumps it); a tag pushed by hand without the bump would ship a package
+      # that reports the old version.
+      - name: Check the tag matches metadata.json
+        run: |
+          META="$(jq -r .KPlugin.Version hosts/kde/metadata.json)"
+          if [ "${GITHUB_REF_NAME#v}" != "$META" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match metadata.json version $META"
+            exit 1
+          fi
+
       # make pack compiles the translations (msgfmt) before zipping.
       - name: Install gettext
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext

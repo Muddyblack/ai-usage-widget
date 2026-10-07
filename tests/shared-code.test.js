@@ -1206,3 +1206,12 @@ test("the shared state rejects a superseded session page", () => {
     assert.match(state, /requestId !== root\.sessionsRequestId/);
     assert.match(state, /root\.sessionsActiveSourceSignature !== root\.sessionsSourceSignature/);
 });
+
+test("the installed version shown in the UI matches metadata.json", () => {
+    const root = path.join(__dirname, "..");
+    const metadata = JSON.parse(fs.readFileSync(path.join(root, "hosts/kde/metadata.json"), "utf8"));
+    const projectInfo = fs.readFileSync(path.join(root, "ui/js/ProjectInfo.js"), "utf8");
+    const match = /^var currentVersion = "([^"]+)";$/m.exec(projectInfo);
+    assert.ok(match, "ui/js/ProjectInfo.js declares currentVersion");
+    assert.equal(match[1], metadata.KPlugin.Version);
+});

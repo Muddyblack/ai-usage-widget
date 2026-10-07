@@ -156,7 +156,8 @@ jobs:
           INPUT_VERSION: ${{ inputs.version }}
         run: |
           $version = "$env:INPUT_VERSION".TrimStart("v")
-          if (-not $version) { $version = "0.0.0-ci" }
+          # No input: the version in hosts/kde/metadata.json, the one source.
+          if (-not $version) { $version = (Get-Content hosts/kde/metadata.json -Raw | ConvertFrom-Json).KPlugin.Version }
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: build

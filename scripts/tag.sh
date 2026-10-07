@@ -19,6 +19,10 @@ done
 
 METADATA_PATH="hosts/kde/metadata.json"
 METADATA_FILE="$HERE/$METADATA_PATH"
+# The version every host shows under Settings -> Info; kept equal to metadata.json
+# (tests/shared-code.test.js checks it).
+PROJECT_INFO_PATH="ui/js/ProjectInfo.js"
+PROJECT_INFO_FILE="$HERE/$PROJECT_INFO_PATH"
 
 if [ ! -f "$METADATA_FILE" ]; then
     echo "Error: hosts/kde/metadata.json not found!" >&2
@@ -51,8 +55,9 @@ offer_metadata_rollback() {
     fi
 
     sed -i "s/\"Version\": \"${NEW_VERSION}\"/\"Version\": \"${CURRENT_VERSION}\"/" "$METADATA_FILE"
+    sed -i "s/^var currentVersion = \".*\";$/var currentVersion = \"${CURRENT_VERSION}\";/" "$PROJECT_INFO_FILE"
     if [[ "$METADATA_STAGED_BY_RELEASE" == true ]]; then
-        git add -u -- "$METADATA_PATH"
+        git add -u -- "$METADATA_PATH" "$PROJECT_INFO_PATH"
     fi
     METADATA_BUMP_PENDING=false
     echo "Restored metadata.json → ${CURRENT_VERSION}"
@@ -213,7 +218,8 @@ fi
 
 # Write new version to metadata.json
 sed -i "s/\"Version\": \"${CURRENT_VERSION}\"/\"Version\": \"${NEW_VERSION}\"/" "$METADATA_FILE"
-echo "Updated metadata.json → ${NEW_VERSION}"
+sed -i "s/^var currentVersion = \".*\";$/var currentVersion = \"${NEW_VERSION}\";/" "$PROJECT_INFO_FILE"
+echo "Updated metadata.json and ProjectInfo.js → ${NEW_VERSION}"
 if [[ "$NEW_VERSION" != "$CURRENT_VERSION" ]]; then
     METADATA_BUMP_PENDING=true
 fi

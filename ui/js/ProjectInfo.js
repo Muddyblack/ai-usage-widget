@@ -42,7 +42,7 @@ function contributors(text) {
     } catch (error) { return []; }
 }
 
-var currentVersion = "3.1.1";
+var currentVersion = "3.3.0";
 var latestReleaseUrl = "https://api.github.com/repos/Muddyblack/ai-usage-widget/releases/latest";
 var releasesPage = repository + "/releases";
 
