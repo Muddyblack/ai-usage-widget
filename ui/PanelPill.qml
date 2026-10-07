@@ -13,6 +13,40 @@ Rectangle {
     property var slots: []
     property bool stale: false
     property bool hasError: false
+    // Several providers side by side (pinned on the panel): [{icon, slots,
+    // stale, hasError}], from AppState.panelGroups. When empty, the single
+    // provider above is shown.
+    property var groups: []
+    readonly property var shownGroups: groups.length > 0 ? groups : [
+        {
+            icon: pill.iconSource,
+            slots: pill.slots,
+            stale: pill.stale,
+            hasError: pill.hasError
+        }
+    ]
+    // Every slot of every group, in order, with what it is drawn with.
+    readonly property var items: {
+        var out = [];
+        for (var g = 0; g < shownGroups.length; g++) {
+            var group = shownGroups[g] || {};
+            var slots = group.slots || [];
+            for (var i = 0; i < slots.length; i++)
+                out.push({
+                    slot: slots[i],
+                    icon: group.icon || "",
+                    stale: group.stale === true,
+                    groupStart: g > 0 && i === 0
+                });
+        }
+        return out;
+    }
+    readonly property bool anyError: {
+        for (var g = 0; g < shownGroups.length; g++)
+            if (shownGroups[g] && shownGroups[g].hasError)
+                return true;
+        return false;
+    }
     property bool active: false      // popup open → keep the hover tint
     // false inside a desktop panel (KDE) that already draws the frame: only a
     // faint hover tint remains.
@@ -27,8 +61,8 @@ Rectangle {
     // QQC2 ToolTip style isn't available under Quickshell.
     readonly property string tooltipText: {
         var lines = [];
-        for (var i = 0; i < pill.slots.length; i++) {
-            var t = pill.slots[i].tooltip;
+        for (var i = 0; i < pill.items.length; i++) {
+            var t = pill.items[i].slot.tooltip;
             if (t !== undefined && t !== "")
                 lines.push(t);
         }
@@ -63,14 +97,14 @@ Rectangle {
         spacing: 8
 
         Rectangle {
-            visible: pill.hasError
+            visible: pill.anyError
             Layout.preferredWidth: 6
             Layout.preferredHeight: 6
             radius: 3
             color: pill.dangerColor
             Layout.alignment: Qt.AlignVCenter
             SequentialAnimation on opacity {
-                running: pill.hasError
+                running: pill.anyError
                 loops: Animation.Infinite
                 NumberAnimation {
                     to: 0.3
@@ -86,27 +120,33 @@ Rectangle {
         }
 
         Repeater {
-            model: pill.slots
+            model: pill.items
 
             RowLayout {
                 required property var modelData
                 required property int index
                 spacing: 8
 
+                // Between two providers a wider gap than between two values.
+                Item {
+                    visible: modelData.groupStart
+                    Layout.preferredWidth: 2
+                }
+
                 PanelSlot {
-                    pct: modelData.pct !== undefined ? modelData.pct : 0
-                    iconColor: modelData.color !== undefined ? modelData.color : "#cc785c"
-                    costText: modelData.text !== undefined ? modelData.text : ""
-                    stale: pill.stale
-                    iconSource: pill.iconSource
+                    pct: modelData.slot.pct !== undefined ? modelData.slot.pct : 0
+                    iconColor: modelData.slot.color !== undefined ? modelData.slot.color : "#cc785c"
+                    costText: modelData.slot.text !== undefined && modelData.slot.text !== null ? modelData.slot.text : ""
+                    stale: modelData.stale
+                    iconSource: modelData.icon
                     textColor: pill.textColor
                 }
 
                 Rectangle {
-                    visible: index < pill.slots.length - 1
-                    Layout.preferredWidth: 1
+                    visible: index < pill.items.length - 1
+                    Layout.preferredWidth: pill.items[index + 1] && pill.items[index + 1].groupStart ? 2 : 1
                     Layout.preferredHeight: 14
-                    color: Qt.rgba(pill.textColor.r, pill.textColor.g, pill.textColor.b, 0.16)
+                    color: Qt.rgba(pill.textColor.r, pill.textColor.g, pill.textColor.b, pill.items[index + 1] && pill.items[index + 1].groupStart ? 0.28 : 0.16)
                     Layout.alignment: Qt.AlignVCenter
                 }
             }

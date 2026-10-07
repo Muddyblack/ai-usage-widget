@@ -7,6 +7,7 @@ import "js/SessionSources.js" as SessionSources
 import "js/SessionRefreshPolicy.js" as SessionRefreshPolicy
 import "js/UsageHistory.js" as UsageHistory
 import "js/I18n.js" as I18n
+import "js/PanelRotation.js" as PanelRotation
 
 // The one application state every host shares: providers, settings, tabs,
 // sessions, pricing, history and translations. PopupContent.qml and every page
@@ -83,6 +84,31 @@ Item {
     }
     function i18ncp(context, singular, plural, n) {
         return I18n.i18ncp.apply(null, [root.catalog].concat(Array.prototype.slice.call(arguments)));
+    }
+
+    // Text the backend words itself (row labels, details, errors, tooltips),
+    // translated. The envelope carries a field's template beside it as
+    // `<key>I18n` ({id, args}, or {lines: [...]} for multi-line text; see
+    // backend/aiusage/messages.py); without one the English text itself is
+    // looked up, which still catches fixed messages that crossed a cache.
+    function tr(obj, key) {
+        if (!obj)
+            return "";
+        var text = obj[key];
+        if (text === undefined || text === null || text === "")
+            return "";
+        var msg = obj[key + "I18n"];
+        if (msg && Array.isArray(msg.lines))
+            return msg.lines.map(function (line) {
+                return line.plain ? line.id : root.trMessage(line);
+            }).join("\n");
+        if (msg && msg.id !== undefined)
+            return root.trMessage(msg);
+        return root.i18n(String(text));
+    }
+
+    function trMessage(msg) {
+        return I18n.i18n.apply(null, [root.catalog, String(msg.id)].concat((msg.args || []).map(String)));
     }
 
     // ── Settings ─────────────────────────────────────────────────────────────
@@ -166,8 +192,30 @@ Item {
         root.saveSettings();
     }
 
+    // ── Per-widget settings ──────────────────────────────────────────────────
+    // A host that can show several instances (KDE: one widget per panel) keeps
+    // these keys per instance instead of in the shared file: it lists them in
+    // hostSettingsKeys, binds hostSettings to its own store, and saves what
+    // hostSettingChanged reports. Read them with settingValue().
+    property var hostSettingsKeys: []
+    property var hostSettings: ({})
+    signal hostSettingChanged(string key, var value)
+
+    function settingValue(key) {
+        if (root.hostSettingsKeys.indexOf(key) >= 0)
+            return root.hostSettings[key];
+        return root.settings[key];
+    }
+
     // Mutate a top-level settings field and persist.
     function setSetting2(key, value) {
+        if (root.hostSettingsKeys.indexOf(key) >= 0) {
+            var h = Object.assign({}, root.hostSettings);
+            h[key] = value;
+            root.hostSettings = h;
+            root.hostSettingChanged(key, value);
+            return;
+        }
         var s = JSON.parse(JSON.stringify(root.settings));
         s[key] = value;
         root.settings = s;
@@ -275,12 +323,103 @@ Item {
         return root.providers[0];
     }
 
+    // ── Panel pins and rotation ──────────────────────────────────────────────
+    // Providers pinned on the panel stay there whatever tab the popup shows;
+    // with several pinned, the panel shows them side by side — or one at a
+    // time, rotating, when panelRotationSec is set.
+    readonly property var pinnedTabs: {
+        var raw = root.settingValue("pinnedTabs");
+        var list = Array.isArray(raw) ? raw : (typeof raw === "string" ? raw.split(",") : []);
+        var pins = [];
+        for (var i = 0; i < list.length; i++) {
+            var id = String(list[i]).trim();
+            // Before the first answer every pin stands; after it, only the
+            // providers that are still enabled.
+            if (id !== "" && pins.indexOf(id) < 0 && !FeatureTabs.isFeatureTab(id) && (root.providers.length === 0 || root.providerById(id)))
+                pins.push(id);
+        }
+        return pins;
+    }
+    readonly property int panelRotationSec: PanelRotation.normalizeIntervalSec(Number(root.settingValue("panelRotationSec") || 0))
+    readonly property bool panelRotationEnabled: PanelRotation.isEnabled(root.panelRotationSec, root.pinnedTabs)
+    property string rotationProviderId: ""
+    onPinnedTabsChanged: root.rotationProviderId = PanelRotation.normalizeSelection(root.pinnedTabs, root.rotationProviderId)
+
+    Timer {
+        interval: Math.max(1, root.panelRotationSec) * 1000
+        running: root.panelRotationEnabled && !root.popupVisible
+        repeat: true
+        onTriggered: root.rotationProviderId = PanelRotation.nextSelection(root.pinnedTabs, root.rotationProviderId)
+    }
+
+    function isPinned(id) {
+        return root.pinnedTabs.indexOf(id) >= 0;
+    }
+
+    function togglePin(id) {
+        if (!id || FeatureTabs.isFeatureTab(id))
+            return;
+        var pins = root.pinnedTabs.slice();
+        var at = pins.indexOf(id);
+        if (at >= 0)
+            pins.splice(at, 1);
+        else
+            pins.push(id);
+        root.setSetting2("pinnedTabs", pins);
+    }
+
+    // The providers the panel shows right now, in order.
+    readonly property var panelProviderIds: {
+        if (root.pinnedTabs.length === 0) {
+            var p = root.unpinnedPillProvider();
+            return p ? [p.id] : [];
+        }
+        if (root.panelRotationEnabled)
+            return [PanelRotation.normalizeSelection(root.pinnedTabs, root.rotationProviderId)];
+        return root.pinnedTabs;
+    }
+
     // What the panel pill shows: the active provider normally, or the last
     // real provider seen while a feature tab is active — never "no data".
-    function pillProvider() {
+    function unpinnedPillProvider() {
         if (!root.activeIsFeature)
             return root.activeProvider();
         return root.providerById(root.lastProviderId) || root.providers[0] || null;
+    }
+
+    // The one provider a single readout stands for (a tray icon, the menu bar
+    // item): the first the panel shows.
+    function pillProvider() {
+        if (root.pinnedTabs.length > 0)
+            return root.providerById(root.panelProviderIds[0]) || root.unpinnedPillProvider();
+        return root.unpinnedPillProvider();
+    }
+
+    // One group per provider the panel shows, for PanelPill.groups.
+    readonly property var panelGroups: {
+        var groups = [];
+        var ids = root.panelProviderIds;
+        for (var i = 0; i < ids.length; i++) {
+            var p = root.providerById(ids[i]);
+            if (!p)
+                continue;
+            groups.push({
+                id: p.id,
+                icon: root.providerIcon(p) || root.iconSource,
+                slots: root.slotsFor(p).length > 0 ? root.slotsFor(p) : [root.noDataSlot()],
+                stale: root.errorText !== "" || !!p.stale || root.replaying,
+                hasError: (p.error || "") !== ""
+            });
+        }
+        if (groups.length === 0)
+            groups.push({
+                id: "",
+                icon: root.iconSource,
+                slots: root.pillSlots,
+                stale: root.pillStale,
+                hasError: root.pillHasError
+            });
+        return groups;
     }
 
     readonly property color activeAccent: {
@@ -293,6 +432,28 @@ Item {
     // The pill's slots, with the loading and no-data placeholders every host
     // shows. The backend sends text: null for "show the percentage", which a
     // string property cannot take.
+    function noDataSlot() {
+        return {
+            pct: 0,
+            color: "#cc785c",
+            text: "—",
+            tooltip: root.i18n("No data")
+        };
+    }
+
+    function slotsFor(p) {
+        var raw = p && p.slots ? p.slots : [];
+        var out = [];
+        for (var i = 0; i < raw.length; i++)
+            out.push({
+                pct: raw[i].pct || 0,
+                color: raw[i].color || "#cc785c",
+                text: root.tr(raw[i], "text"),
+                tooltip: root.tr(raw[i], "tooltip")
+            });
+        return out;
+    }
+
     readonly property var pillSlots: {
         var p = root.pillProvider();
         if (root.loading && root.providers.length === 0)
@@ -304,29 +465,12 @@ Item {
                     tooltip: root.i18n("Loading")
                 }
             ];
-        var raw = p && p.slots ? p.slots : [];
-        if (raw.length === 0)
-            return [
-                {
-                    pct: 0,
-                    color: "#cc785c",
-                    text: "—",
-                    tooltip: root.i18n("No data")
-                }
-            ];
-        var out = [];
-        for (var i = 0; i < raw.length; i++)
-            out.push({
-                pct: raw[i].pct || 0,
-                color: raw[i].color || "#cc785c",
-                text: raw[i].text || "",
-                tooltip: raw[i].tooltip || ""
-            });
-        return out;
+        var out = root.slotsFor(p);
+        return out.length > 0 ? out : [root.noDataSlot()];
     }
     readonly property bool pillStale: {
         var p = root.pillProvider();
-        return root.errorText !== "" || (p ? !!p.stale : false);
+        return root.errorText !== "" || root.replaying || (p ? !!p.stale : false);
     }
     readonly property bool pillHasError: {
         var p = root.pillProvider();
@@ -404,20 +548,20 @@ Item {
         for (var i = 0; i < root.providers.length; i++) {
             var q = root.providers[i];
             if (q.label && q.summary && q.summary.text)
-                lines.push(q.label + ": " + q.summary.text);
+                lines.push(q.label + ": " + root.tr(q.summary, "text"));
         }
         var slots = [];
         var raw = p && p.slots ? p.slots : [];
         for (var j = 0; j < raw.length; j++) {
             var s = raw[j] || {};
-            var text = s.text === null || s.text === undefined ? "" : String(s.text);
+            var text = s.text === null || s.text === undefined ? "" : root.tr(s, "text");
             slots.push({
                 pct: s.pct || 0,
                 color: String(s.color || ""),
                 text: text,
                 // Windows cuts a tray tooltip at 127 characters, so each icon
                 // names only its own value.
-                tooltip: s.tooltip ? String(s.tooltip) : p.label + ": " + (text || Math.round(s.pct || 0) + "%")
+                tooltip: s.tooltip ? root.tr(s, "tooltip") : p.label + ": " + (text || Math.round(s.pct || 0) + "%")
             });
         }
         backend.publishTrayState(JSON.stringify({
@@ -439,7 +583,9 @@ Item {
             settings: root.i18n("Settings"),
             trayStyle: root.i18n("Tray style"),
             icons: root.i18n("Logo and percent"),
+            // TRANSLATORS: tray icon style: only the percentages, as digits
             numbers: root.i18n("Numbers"),
+            // TRANSLATORS: tray icon style: one circular progress ring
             ring: root.i18n("Ring"),
             floatingPill: root.i18n("Floating pill"),
             startWithWindows: root.i18n("Start with Windows"),
@@ -449,7 +595,32 @@ Item {
     }
 
     // ── Backend fetch ────────────────────────────────────────────────────────
-    function applySnapshot(text) {
+    // At start the last good answer (saved by every refresh) is shown at once,
+    // marked stale, until the first live one replaces it; a replay that
+    // arrives after a live answer is dropped.
+    property bool replaying: false
+    property bool liveSnapshotSeen: false
+
+    function applyLastSnapshot(text) {
+        if (root.liveSnapshotSeen)
+            return;
+        var data;
+        try {
+            data = JSON.parse((text || "").trim() || "{}");
+        } catch (e) {
+            return;
+        }
+        if (!data || !Array.isArray(data.providers) || data.providers.length === 0)
+            return;
+        root.replaying = true;
+        root.applySnapshot(text, true);
+    }
+
+    function applySnapshot(text, replayed) {
+        if (replayed !== true) {
+            root.liveSnapshotSeen = true;
+            root.replaying = false;
+        }
         try {
             var data = JSON.parse((text || "").trim());
             root.providers = data.providers || [];
@@ -472,11 +643,14 @@ Item {
                 var last = (root.settings || {}).lastTab || "";
                 root.activeId = isOpenable(last) ? last : (data.active || (root.providers[0] || {}).id || "");
             }
-            root.errorText = "";
             root.nowTick = new Date().getTime();
+            root.publishTray();
+            // A replay is not a reading: no history point, no freshness.
+            if (replayed === true)
+                return;
+            root.errorText = "";
             root.lastFetched = root.nowTick;
             root.recordHistory();
-            root.publishTray();
         } catch (e) {
             root.errorText = root.i18n("usage backend returned no data");
         }
@@ -930,6 +1104,10 @@ Item {
             root.applyProviderDetection(text);
         }
 
+        function onLastSnapshotLoaded(text) {
+            root.applyLastSnapshot(text);
+        }
+
         function onSnapshotReady(text) {
             root.applySnapshot(text);
         }
@@ -1010,6 +1188,7 @@ Item {
         root.publishTrayLabels();
         backend.requestLanguages();
         backend.requestSettings();
+        backend.requestLastSnapshot();
         backend.history("autoload", "");
     }
 

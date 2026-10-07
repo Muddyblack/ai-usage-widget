@@ -38,9 +38,9 @@ var FIELDS = {
     lastTab: "lastTab",
     antigravityChartFilter: "antigravityChartFilter",
     providerDefaultsApplied: "providerDefaultsApplied",
-    panelRotationIntervalSec: "panelRotationSec",
-    useThemeAccent: "useThemeAccent",
-    popupBgOpacity: "popupBgOpacity"
+    popupBgColor: "popupBgColor",
+    popupBgOpacity: "popupBgOpacity",
+    popupDecoration: "popupDecoration"
 };
 
 function present(value) {
@@ -76,11 +76,8 @@ function migrate(text, kconfig) {
         if (present(kconfig[field]) && out[FIELDS[field]] === undefined)
             out[FIELDS[field]] = kconfig[field];
     }
-    // The old widget kept its pins as one comma-separated string.
-    if (present(kconfig.pinnedTab) && out.pinnedTabs === undefined)
-        out.pinnedTabs = String(kconfig.pinnedTab).split(",").filter(function (p) {
-            return p !== "";
-        });
+    // Pins and panel rotation stay in each widget's own KConfig (see
+    // main.qml, hostSettingsKeys): they are per widget, not shared.
     out.kdeMigrated = true;
     return JSON.stringify(out);
 }

@@ -58,25 +58,24 @@ files under `build/kde/contents/locale/` are git-ignored build output: edit
 
 ## Translations
 
-One catalog per language, `translate/<lang>.po`, serves every frontend. The
-Plasma widget loads it compiled (KDE's `i18n()`); the Hyprland panel and the
-Windows tray app parse the `.po` itself with `ui/js/I18n.js`,
-through `shell.i18n()` / `shell.i18nc()` / `shell.i18np()` — the same call shapes,
-so `translate/Messages.sh` extracts all three frontends into the same file.
-Wrap new UI text in those calls, as one full phrase with `%1` placeholders
-rather than pieces joined with `+`.
+One catalog per language, `translate/<lang>.po`, serves every platform: the
+shared UI parses it at runtime (`ui/js/I18n.js`) through `shell.i18n()` /
+`shell.i18nc()` / `shell.i18np()`, and text the backend words itself is
+written as `tr("…")` (`backend/aiusage/messages.py`) and translated by the UI
+from the same catalog. `translate/Messages.sh` extracts both. Write new text
+as one full phrase with `%1` placeholders rather than pieces joined with `+`,
+and see [`translate/README.md`](translate/README.md) for Weblate.
 
 Adding a language:
 
 ```bash
-make translations                                   # refresh translate/template.pot
-msginit -i translate/template.pot -l de -o translate/de.po
+make new-language CODE=de                           # starts translate/de.po
 # translate de.po, then:
 make translations && make check-translations
 ```
 
-Nothing else needs registering: the scripts, CI, packaging and all three
-frontends pick up every `translate/*.po`. `hosts/kde/metadata.json` can carry a
+Nothing else needs registering: the scripts, CI, packaging and every
+host pick up every `translate/*.po`. `hosts/kde/metadata.json` can carry a
 `"Name[de]"` / `"Description[de]"` for the widget list.
 
 To remove the test copy:

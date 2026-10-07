@@ -25,6 +25,7 @@ import subprocess
 
 from .. import paths
 from ..http import as_json, clean_credential, error_json, fetch_json, http_error_json, resolve_key
+from ..messages import tr
 
 # Sent by the Copilot editor plugins; /copilot_internal rejects a request that
 # does not identify an editor.
@@ -249,11 +250,11 @@ def _billing_usage(api_key, username, quota):
     if not username:
         user_result = _github_get("https://api.github.com/user", api_key, os.environ.get("COPILOT_USER_RESPONSE_FILE"))
         if user_result.status != 200:
-            return http_error_json("GitHub", user_result.status, "Invalid GitHub token")
+            return http_error_json("GitHub", user_result.status, tr("Invalid GitHub token"))
         user_body = as_json(user_result.body) or {}
         username = user_body.get("login")
         if not isinstance(username, str) or username == "":
-            return error_json("GitHub username missing")
+            return error_json(tr("GitHub username missing"))
 
     usage_result = _github_get(
         f"https://api.github.com/users/{username}/settings/billing/premium_request/usage",
@@ -264,12 +265,12 @@ def _billing_usage(api_key, username, quota):
         return http_error_json(
             "GitHub Copilot",
             usage_result.status,
-            "GitHub token cannot read Copilot premium request usage",
+            tr("GitHub token cannot read Copilot premium request usage"),
         )
 
     usage_body = as_json(usage_result.body)
     if usage_body is None:
-        return error_json("GitHub Copilot invalid JSON")
+        return error_json(tr("GitHub Copilot invalid JSON"))
 
     items = usage_body if isinstance(usage_body, list) else (usage_body.get("usageItems") or [])
     used = 0

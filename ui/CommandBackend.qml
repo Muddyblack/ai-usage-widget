@@ -23,7 +23,9 @@ import QtQuick
 //               pricingRefreshFinished(text), pricingRefreshFailed(message),
 //               ratesReady(text), historyFinished(op, result),
 //               settingRequested(key, jsonValue)
+//               lastSnapshotLoaded(text)
 //   methods     requestSettings(), saveSettings(text), requestCatalog(language),
+//               requestLastSnapshot(),
 //               requestLanguages(), initializeProviderDefaults(),
 //               detectProviders(), refresh(), refreshPricing(),
 //               requestRates(query, limit, offset, requestId),
@@ -66,6 +68,7 @@ QtObject {
     property bool pricingBusy: false
 
     signal settingsLoaded(string text)
+    signal lastSnapshotLoaded(string text)
     signal catalogLoaded(string text)
     signal languagesLoaded(string text)
     signal providerDefaultsLoaded(string text)
@@ -164,12 +167,19 @@ QtObject {
         if (root.busy)
             return;
         root.busy = true;
-        root.runner.run(root.backendArgs(["--all"]), function (out, err, code) {
+        // --save-snapshot keeps the last good answer for the next start.
+        root.runner.run(root.backendArgs(["--all", "--save-snapshot"]), function (out, err, code) {
             if ((out || "").trim() !== "")
                 root.snapshotReady(out);
             else
                 root.refreshFailed(root.firstLine(err) || "usage backend failed");
             root.busy = false;
+        });
+    }
+
+    function requestLastSnapshot() {
+        root.runner.run(root.backendArgs(["--last-snapshot"]), function (out) {
+            root.lastSnapshotLoaded(out || "");
         });
     }
 

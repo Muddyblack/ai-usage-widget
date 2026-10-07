@@ -1,5 +1,6 @@
 """Untested Junie local activity, shared by every frontend."""
 
+from ..messages import tr
 from ..stats import opencode_stats
 from .local_activity import normalize_local_activity
 
@@ -16,7 +17,7 @@ def normalize_junie(raw):
     sessions = [row for row in sessions if isinstance(row, dict)] if isinstance(sessions, list) else []
     r["details"]["sessionCount"] = len(sessions)
     if not stats.get("available"):
-        r["error"] = "Junie (untested): no recorded token usage yet. Run a session using /account or junie --provider google."
+        r["error"] = tr("Junie (untested): no recorded token usage yet. Run a session using /account or junie --provider google.")
         r["summary"]["detail"] = r["error"]
         r["slots"][0]["tooltip"] = r["summary"]["detail"]
     else:

@@ -1,4 +1,5 @@
 from ..contract import epoch_of, flat_window, jround, monthly_window, num, pct_clamp, provider_base, provider_error, reset_text
+from ..messages import tr
 
 
 def normalize_grok(raw):
@@ -11,7 +12,7 @@ def normalize_grok(raw):
             "Grok",
             "#e6e6e6",
             now,
-            "Grok: run grok --oauth or configure an xAI key",
+            tr("Grok: run grok --oauth or configure an xAI key"),
             {"hasKey": False, "loggedIn": False},
         )
 
@@ -23,34 +24,39 @@ def normalize_grok(raw):
     has_chart = quota_kind != "free-tier"
     sessions = num(res.get("sessionCount"))
     if quota_kind == "free-tier":
-        reset = {"text": res.get("quotaWindow") or "rolling 24h", "at": 0}
+        reset = {"text": res.get("quotaWindow") or tr("rolling 24h"), "at": 0}
     else:
         at = epoch_of(res.get("billingPeriodEnd") or "")
         reset = {"text": reset_text(at), "at": at}
-    detail = res.get("teamName") or res.get("email") or res.get("tierId") or "Grok CLI"
+    detail = res.get("teamName") or res.get("email") or res.get("tierId") or tr("Grok CLI")
 
     r = provider_base("grok", "Grok", "#e6e6e6", now)
     r["error"] = res.get("billingError") or ""
     r["summary"] = {
         "pct": pct,
-        "text": f"{jround(pct)}%" if has_billing else "CLI",
+        "text": f"{jround(pct)}%" if has_billing else tr("CLI"),
         "detail": detail,
         "hasChart": has_chart,
     }
     if has_billing:
-        qw0 = flat_window("grok", "Credit usage", pct, reset["at"], f"{used} / {limit}" if limit > 0 else "", True)
+        qw0 = flat_window("grok", tr("Credit usage"), pct, reset["at"], f"{used} / {limit}" if limit > 0 else "", True)
         qw0["resetText"] = reset["text"]
         quota_windows = [qw0]
     else:
-        quota_windows = [flat_window("grok", "Billing quota", 0, 0, "Not exposed for this Grok account", False)]
+        quota_windows = [flat_window("grok", tr("Billing quota"), 0, 0, tr("Not exposed for this Grok account"), False)]
     quota_windows.append(
         flat_window(
             "grok_local",
-            "Local CLI activity",
+            tr("Local CLI activity"),
             0,
             0,
-            f"{sessions}{' session · ' if sessions == 1 else ' sessions · '}"
-            f"{num(res.get('totalTokens'))} tokens · {num(res.get('totalToolCalls'))} tool calls",
+            tr(
+                "%1%2%3 tokens · %4 tool calls",
+                sessions,
+                " session · " if sessions == 1 else " sessions · ",
+                num(res.get("totalTokens")),
+                num(res.get("totalToolCalls")),
+            ),
             False,
         )
     )
@@ -59,8 +65,8 @@ def normalize_grok(raw):
         {
             "pct": pct,
             "color": "#e6e6e6",
-            "text": None if has_billing else "CLI",
-            "tooltip": (f"Grok credits: {jround(pct)}% used" if has_billing else "Grok CLI connected; billing quota is not exposed"),
+            "text": None if has_billing else tr("CLI"),
+            "tooltip": (tr("Grok credits: %1% used", jround(pct)) if has_billing else tr("Grok CLI connected; billing quota is not exposed")),
         }
     ]
     r["chartWindows"] = monthly_window("grok", "gr", False) if has_chart else []

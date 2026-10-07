@@ -9,6 +9,7 @@ import json
 import os
 
 from ..http import as_json, clean_credential, fetch_json
+from ..messages import tr
 
 
 def _opencode_key():
@@ -33,7 +34,7 @@ def get_ollama_usage():
     if not key:
         return {}
     if any(ord(ch) < 32 or ord(ch) == 127 for ch in key):
-        return {"error": "Ollama Cloud: invalid API key characters"}
+        return {"error": tr("Ollama Cloud: invalid API key characters")}
     result = fetch_json(
         "https://ollama.com/api/usage",
         headers={"Authorization": f"Bearer {key}"},
@@ -51,5 +52,5 @@ def get_ollama_usage():
         return {"error": messages.get(result.status, f"Ollama Cloud: HTTP {result.status}")}
     body = as_json(result.body)
     if not isinstance(body, dict) or not body or body.get("error"):
-        return {"error": "Ollama Cloud: invalid usage response"}
+        return {"error": tr("Ollama Cloud: invalid usage response")}
     return body

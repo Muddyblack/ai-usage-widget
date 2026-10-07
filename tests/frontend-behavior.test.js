@@ -330,23 +330,24 @@ test("panel thresholds and stale opacity remain panel contracts", () => {
 
     // The pill falls back to the last real provider while a feature tab is open.
     const state = qmlSource("ui/AppState.qml");
-    assert.match(qmlFunctionBlock("ui/AppState.qml", "pillProvider"), /lastProviderId/);
+    assert.match(qmlFunctionBlock("ui/AppState.qml", "unpinnedPillProvider"), /lastProviderId/);
     assert.match(state, /readonly property var pillSlots/);
 });
 
 // A replay only paints a widget that has no live answer yet: once one arrived,
 // a replay that resolves late must leave the live state (and its freshness) alone.
 const hyprlandCost = qmlFunction("ui/SessionsPage.qml", "sessionCostText");
-const windows = ["providerById", "activeProvider", "pillProvider", "publishTray"]
+const windows = ["providerById", "activeProvider", "unpinnedPillProvider", "pillProvider", "publishTray", "tr", "trMessage"]
     .map(name => qmlFunction("ui/AppState.qml", name)
         + "\nroot." + name + " = " + name + ";")
     .join("\n");
 
 function publishWindowsTray(state) {
     let published;
-    const root = { providers: [], settings: {}, providerIcon: () => "", ...state };
+    const root = { providers: [], settings: {}, pinnedTabs: [], panelProviderIds: [], catalog: {}, i18n: text => text, providerIcon: () => "", ...state };
     const backend = { defaultTrayStyle: "numbers", publishTrayState: value => { published = JSON.parse(value); } };
-    vm.runInNewContext(windows + "\nroot.publishTray();", { root, backend });
+    const I18n = { i18n: (catalog, text, ...args) => text.replace(/%(\d)/g, (all, i) => args[Number(i) - 1] ?? all) };
+    vm.runInNewContext(windows + "\nroot.publishTray();", { root, backend, I18n });
     return published;
 }
 

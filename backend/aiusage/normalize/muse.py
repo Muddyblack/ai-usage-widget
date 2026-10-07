@@ -13,6 +13,7 @@ from ..contract import (
     unavailable_window,
     window_value,
 )
+from ..messages import tr
 from ..stats import muse_stats
 
 _MUSE_ACCENT = "#0064e0"
@@ -77,22 +78,22 @@ def normalize_muse(raw):
     windows = []
     for key, label, w in (("muse_current", "Current", current), ("muse_weekly", "Weekly", weekly)):
         if w["available"]:
-            windows.append(quota_window(key, label, w, f"{jround(w['pct'])}% used"))
+            windows.append(quota_window(key, label, w, tr("%1% used", jround(w["pct"]))))
 
     if stats.get("available"):
         windows.append(
             flat_window(
                 "muse_tokens",
-                "Tokens",
+                tr("Tokens"),
                 0,
                 0,
                 tokens,
                 False,
-                note=f"{_compact(output)} out · {int(calls)} calls" if calls else _compact(output) + " out",
+                note=tr("%1 out · %2 calls", _compact(output), int(calls)) if calls else _compact(output) + " out",
             )
         )
     if cost > 0:
-        windows.append(flat_window("muse_spend", "Spend (est.)", 0, 0, money(cost, currency), False, note=model))
+        windows.append(flat_window("muse_spend", tr("Spend (est.)"), 0, 0, money(cost, currency), False, note=model))
 
     # The headline is the plan window when there is one to show, and the
     # lifetime total otherwise — Muse is the only provider that can be in
@@ -100,7 +101,7 @@ def normalize_muse(raw):
     headline = current if current["available"] else weekly
     pct = headline["pct"] if headline["available"] else 0
 
-    tooltip = f"Muse tokens: {tokens}"
+    tooltip = tr("Muse tokens: %1", tokens)
     if cost > 0:
         tooltip += f"\nSpend (est.): {money(cost, currency)}"
     if headline["available"]:
@@ -110,7 +111,7 @@ def normalize_muse(raw):
     r["summary"] = {
         "pct": pct,
         "text": f"{jround(pct)}%" if headline["available"] else tokens,
-        "detail": model if model else f"{int(num(stats.get('totalSessions')))} sessions",
+        "detail": model if model else tr("%1 sessions", int(num(stats.get("totalSessions")))),
         "hasChart": True,
     }
     r["quotaWindows"] = windows

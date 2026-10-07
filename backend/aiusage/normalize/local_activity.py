@@ -1,15 +1,23 @@
 """Shared presentation for local token ledgers; no account quota is inferred."""
 
 from ..contract import compact_tokens, flat_window, money, provider_base, provider_error
+from ..messages import lines, tr
 
 
 def _period_text(period):
-    text = f"{compact_tokens(period.get('tokens'))} tokens · {period.get('sessions', 0)} session"
-    if period.get("sessions") != 1:
-        text += "s"
-    if period.get("cost", 0) > 0:
-        text += f" · {money(period.get('cost'), 'USD')}"
-    return text
+    return _usage_text(period.get("sessions", 0), period.get("tokens"), period.get("cost", 0))
+
+
+def _usage_text(count, tokens, cost):
+    """ "1.2M tokens · 3 sessions · $0.42" as one translatable sentence."""
+    tokens = compact_tokens(tokens)
+    if cost > 0:
+        if count == 1:
+            return tr("%1 tokens · %2 session · %3", tokens, count, money(cost, "USD"))
+        return tr("%1 tokens · %2 sessions · %3", tokens, count, money(cost, "USD"))
+    if count == 1:
+        return tr("%1 tokens · %2 session", tokens, count)
+    return tr("%1 tokens · %2 sessions", tokens, count)
 
 
 def normalize_local_activity(now, stats, *, provider_id="opencode", label="OpenCode", accent="#B7B1B1", mode="zen", source="local SQLite"):
@@ -19,7 +27,7 @@ def normalize_local_activity(now, stats, *, provider_id="opencode", label="OpenC
             label,
             accent,
             now,
-            f"{label}: no local sessions yet",
+            tr("%1: no local sessions yet", label),
             {"stats": stats, "source": source, "accountMode": mode},
         )
     periods = stats.get("periods") or []
@@ -40,7 +48,7 @@ def normalize_local_activity(now, stats, *, provider_id="opencode", label="OpenC
             "pct": 0,
             "color": accent,
             "text": compact_tokens(recent.get("tokens")),
-            "tooltip": f"{label} local usage\n" + "\n".join(f"{p.get('label')}: {_period_text(p)}" for p in periods),
+            "tooltip": lines(tr("%1 local usage", label), *(tr("%1: %2", p.get("label"), _period_text(p)) for p in periods)),
         }
     ]
     r["details"] = {

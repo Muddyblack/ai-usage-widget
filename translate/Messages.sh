@@ -64,6 +64,30 @@ xgettext \
     --output="$pot" \
     "${sources[@]}"
 
+# The backend words its own rows and errors (backend/aiusage/messages.py):
+# every tr("…") there is extracted in a second pass with the Python parser and
+# merged in, so backend and UI strings share the one catalog the UI reads.
+mapfile -t py_sources < <(find backend/aiusage -type f -name '*.py' | LC_ALL=C sort)
+py_pot="$(mktemp)"
+xgettext \
+    --from-code=UTF-8 \
+    --language=Python \
+    --add-comments=TRANSLATORS \
+    --add-location=file \
+    --keyword=tr \
+    --package-name="AI Usage Monitor" \
+    --package-version="$version" \
+    --msgid-bugs-address="$bug_url/issues" \
+    --output="$py_pot" \
+    "${py_sources[@]}"
+if [ -s "$py_pot" ]; then
+    # --use-first keeps the QML pass's header; the Python pass only adds entries.
+    msgcat --use-first --add-location=file --output="$pot" "$pot" "$py_pot"
+fi
+rm -f "$py_pot"
+# Python's parser flags "%"-strings as python-format; ours are ki18n's %1.
+sed -i '/^#, python-format$/d; s/^\(#,.*\), python-format/\1/; s/^#, python-format, /#, /' "$pot"
+
 # xgettext keys the catalog header on the charmap; normalise it so the .pot is
 # stable and the merge in a fresh checkout is a no-op.
 sed -i 's/^"Content-Type: text\/plain; charset=CHARSET\\n"$/"Content-Type: text\/plain; charset=UTF-8\\n"/' "$pot"

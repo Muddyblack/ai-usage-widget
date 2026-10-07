@@ -1,4 +1,5 @@
 from ..contract import epoch_of, flat_window, jround, monthly_window, num, pct_clamp, provider_base, provider_error
+from ..messages import lines, tr
 
 
 def normalize_kiro(raw):
@@ -6,29 +7,29 @@ def normalize_kiro(raw):
     res = raw["inputs"].get("usage") or {}
 
     if not isinstance(res, dict) or not res:
-        return provider_error("kiro", "Kiro", "#8b5cf6", now, "Kiro: no local usage data found", {"available": False})
+        return provider_error("kiro", "Kiro", "#8b5cf6", now, tr("Kiro: no local usage data found"), {"available": False})
     if res.get("error") is not None:
-        return provider_error("kiro", "Kiro", "#8b5cf6", now, f"Kiro: {res['error']}", {"available": False})
+        return provider_error("kiro", "Kiro", "#8b5cf6", now, tr("Kiro: %1", res["error"]), {"available": False})
 
     pct = pct_clamp(num(res.get("percentageUsed")))
     used = num(res.get("currentUsage"))
     limit = num(res.get("usageLimit"))
     reset_at = epoch_of(res.get("resetDate") or "")
     available = limit > 0 or used > 0
-    detail = f"{used} / {limit} credits"
+    detail = tr("%1 / %2 credits", used, limit)
     plan = res.get("planType") or ""
 
     r = provider_base("kiro", "Kiro", "#8b5cf6", now)
     r["ok"] = available
-    r["error"] = "" if available else "Kiro: usage snapshot is empty"
+    r["error"] = "" if available else tr("Kiro: usage snapshot is empty")
     r["summary"] = {"pct": pct, "text": f"{jround(pct)}%", "detail": plan, "hasChart": True}
-    r["quotaWindows"] = [flat_window("kiro", "Monthly credits", pct, reset_at, detail, True)]
+    r["quotaWindows"] = [flat_window("kiro", tr("Monthly credits"), pct, reset_at, detail, True)]
     r["slots"] = [
         {
             "pct": pct,
             "color": "#8b5cf6",
             "text": None,
-            "tooltip": "Kiro" + (f"\nPlan: {plan.upper()}" if plan != "" else "") + f"\nCredits: {detail}",
+            "tooltip": lines("Kiro", tr("Plan: %1", plan.upper()) if plan != "" else "", tr("Credits: %1", detail)),
         }
     ]
     r["chartWindows"] = monthly_window("kiro", "kr", False) if available else []

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..contract import epoch_of, finite_number
+from ..messages import tr
 
 _MAX_SESSIONS = 60
 
@@ -47,9 +48,9 @@ def _read(path: Path) -> MistralSession | None:
     session_id = data.get("session_id") or path.parent.name
     if not isinstance(session_id, str) or not session_id:
         return None
-    title = data.get("title") or "Mistral Vibe"
+    title = data.get("title") or tr("Mistral Vibe")
     if not isinstance(title, str):
-        title = "Mistral Vibe"
+        title = tr("Mistral Vibe")
     environment = data.get("environment") if isinstance(data.get("environment"), dict) else {}
     project = environment.get("working_directory") or data.get("origin_directory") or ""
     if not isinstance(project, str):

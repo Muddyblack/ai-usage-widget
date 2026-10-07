@@ -47,6 +47,21 @@ PlasmoidItem {
         popupVisible: root.expanded
         interpreterControls: true
         cliPath: root.contentsDir + "/backend/sh/ai-usage-cli"
+        // Each widget keeps its own pins and rotation (one per panel or
+        // screen), in its own KConfig rather than the shared file.
+        hostSettingsKeys: ["pinnedTabs", "panelRotationSec"]
+        hostSettings: ({
+                pinnedTabs: (Plasmoid.configuration.pinnedTab || "").split(",").filter(function (id) {
+                    return id !== "";
+                }),
+                panelRotationSec: Plasmoid.configuration.panelRotationIntervalSec || 0
+            })
+        onHostSettingChanged: function (key, value) {
+            if (key === "pinnedTabs")
+                Plasmoid.configuration.pinnedTab = value.join(",");
+            else if (key === "panelRotationSec")
+                Plasmoid.configuration.panelRotationIntervalSec = value;
+        }
     }
 
     Plasmoid.icon: "org.muddyblack.aiUsageWidget"
@@ -98,6 +113,7 @@ PlasmoidItem {
             slots: app.pillSlots
             stale: app.pillStale
             hasError: app.pillHasError
+            groups: app.panelGroups
             onClicked: root.expanded = !root.expanded
         }
     }
@@ -115,27 +131,11 @@ PlasmoidItem {
         Layout.preferredHeight: implicitHeight
         Layout.maximumHeight: implicitHeight
 
-        // The same glass every host draws; Plasma's popup blur shows through.
-        Rectangle {
+        // The shared glass (ui/PopupBackground.qml), with its tint and decoration.
+        PopupBackground {
             anchors.fill: parent
             anchors.margins: -Kirigami.Units.smallSpacing
-            radius: 12
-            gradient: Gradient {
-                GradientStop {
-                    position: 0.0
-                    color: Qt.rgba(0.09, 0.10, 0.13, 0.94)
-                }
-                GradientStop {
-                    position: 0.5
-                    color: Qt.rgba(0.06, 0.07, 0.09, 0.94)
-                }
-                GradientStop {
-                    position: 1.0
-                    color: Qt.rgba(0.04, 0.045, 0.06, 0.95)
-                }
-            }
-            border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.12)
+            shell: app
         }
 
         Flickable {

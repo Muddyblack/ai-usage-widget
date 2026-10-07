@@ -1,0 +1,4 @@
+# Languages whose catalog must stay 100% translated (translate/check.sh fails
+# otherwise). Add a language here once it is complete and someone keeps it so;
+# languages still being translated (e.g. on Weblate) stay out and may be partial.
+fr

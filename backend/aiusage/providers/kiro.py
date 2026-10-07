@@ -29,6 +29,7 @@ import time
 from .. import paths
 from ..contract import epoch_of, num
 from ..http import as_json, clean_credential, fetch_json, http_error_text
+from ..messages import tr
 
 _MARKER_KEY = "kiro.resourceNotifications.usageState"
 _PLAN_BY_LIMIT = {50: "free", 1000: "pro", 2000: "pro+", 10000: "power"}
@@ -166,9 +167,9 @@ def _ide_usage():
     if usage_state is None:
         usage_state = _brace_match_scan(db_path)
     if usage_state is None:
-        return {"error": "No Kiro usage snapshot — open Kiro and let it refresh"}
+        return {"error": tr("No Kiro usage snapshot — open Kiro and let it refresh")}
     if not isinstance(usage_state, dict):
-        return {"error": "Kiro usage payload could not be parsed"}
+        return {"error": tr("Kiro usage payload could not be parsed")}
 
     breakdowns = usage_state.get("usageBreakdowns")
     breakdown = breakdowns[0] if isinstance(breakdowns, list) and breakdowns else {}
@@ -251,14 +252,14 @@ def _region_of(arn):
 def parse_cli_usage(body):
     """The getUsageLimits response (as parsed JSON) → the shared record."""
     if not isinstance(body, dict):
-        return {"error": "Kiro usage response could not be parsed"}
+        return {"error": tr("Kiro usage response could not be parsed")}
     items = body.get("usageBreakdownList")
     if not isinstance(items, list) or not items:
         single = body.get("usageBreakdown")
         items = [single] if isinstance(single, dict) else []
     items = [b for b in items if isinstance(b, dict)]
     if not items:
-        return {"error": "Kiro usage response has no credit breakdown"}
+        return {"error": tr("Kiro usage response has no credit breakdown")}
     breakdown = next((b for b in items if b.get("resourceType") == "CREDIT"), items[0])
 
     def precise(key):
@@ -288,10 +289,10 @@ def _cli_usage():
         return None
     login = _cli_login(db_path)
     if login is None:
-        return {"error": "kiro-cli is not signed in — run kiro-cli login"}
+        return {"error": tr("kiro-cli is not signed in — run kiro-cli login")}
     token, arn, expires = login
     if expires and expires <= time.time():
-        return {"error": "kiro-cli login expired — run kiro-cli once to refresh it"}
+        return {"error": tr("kiro-cli login expired — run kiro-cli once to refresh it")}
 
     import urllib.parse
 
@@ -303,7 +304,7 @@ def _cli_usage():
         fixture_path=os.environ.get("KIRO_CLI_USAGE_RESPONSE_FILE"),
     )
     if result.status in (401, 403):
-        return {"error": "kiro-cli login rejected — run kiro-cli once to refresh it"}
+        return {"error": tr("kiro-cli login rejected — run kiro-cli once to refresh it")}
     if result.status != 200:
         return {"error": http_error_text(result.status)}
     return parse_cli_usage(as_json(result.body))
@@ -322,4 +323,4 @@ def get_kiro_usage():
         return cli
     if ide is not None:
         return ide
-    return {"error": "No Kiro state found — sign in to Kiro IDE or kiro-cli once"}
+    return {"error": tr("No Kiro state found — sign in to Kiro IDE or kiro-cli once")}

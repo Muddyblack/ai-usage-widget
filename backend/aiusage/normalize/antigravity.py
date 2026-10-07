@@ -1,4 +1,5 @@
 from ..contract import epoch_of, flat_window, jround, monthly_window, num, pct_clamp, provider_base, provider_error
+from ..messages import lines, tr
 
 
 def _family(m):
@@ -15,7 +16,7 @@ def normalize_antigravity(raw):
     res = raw["inputs"].get("usage") or {}
 
     if not isinstance(res, dict) or not res:
-        return provider_error("antigravity", "Antigravity", "#4285f4", now, "Antigravity not configured", {})
+        return provider_error("antigravity", "Antigravity", "#4285f4", now, tr("Antigravity not configured"), {})
 
     if res.get("error") is not None:
         first_line = (res["error"] or "").split("\n")[0]
@@ -59,7 +60,7 @@ def normalize_antigravity(raw):
         groups.append(
             {
                 "key": key,
-                "label": "Gemini Models" if key == "gemini" else "Claude & GPT Models",
+                "label": tr("Gemini Models") if key == "gemini" else tr("Claude & GPT Models"),
                 "usedPct": _avg([m["usedPct"] for m in group_quoted]),
                 "resetAt": min(group_resets) if group_resets else 0,
                 "isExhausted": any(m["isExhausted"] for m in group),
@@ -76,7 +77,7 @@ def normalize_antigravity(raw):
     for grp in groups:
         detail = ""
         if grp["key"] == "gemini" and num(credits.get("monthly")) > 0:
-            detail = f"{num(credits.get('available'))} / {num(credits.get('monthly'))} credits"
+            detail = tr("%1 / %2 credits", num(credits.get("available")), num(credits.get("monthly")))
         qw = flat_window(grp["key"], grp["label"], grp["usedPct"], grp["resetAt"], detail, True)
         qw["color"] = "#4285f4" if grp["key"] == "gemini" else "#34a853"
         quota_windows.append(qw)
@@ -86,13 +87,13 @@ def normalize_antigravity(raw):
             "pct": gpct,
             "color": "#4285f4",
             "text": None,
-            "tooltip": f"Gemini (Google) quota: {jround(gpct)}%" + (f"\nPlan: {plan}" if plan != "" else ""),
+            "tooltip": lines(tr("Gemini (Google) quota: %1%", jround(gpct)), tr("Plan: %1", plan) if plan != "" else ""),
         },
         {
             "pct": epct,
             "color": "#34a853",
             "text": None,
-            "tooltip": f"External models quota: {jround(epct)}%" + (f"\nPlan: {plan}" if plan != "" else ""),
+            "tooltip": lines(tr("External models quota: %1%", jround(epct)), tr("Plan: %1", plan) if plan != "" else ""),
         },
     ]
     r["chartWindows"] = monthly_window("antigravity", "ag", False)

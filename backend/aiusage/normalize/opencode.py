@@ -19,6 +19,7 @@ from ..contract import (
     provider_error,
     resetting,
 )
+from ..messages import tr
 from ..stats import opencode_stats
 from .local_activity import normalize_local_activity
 
@@ -97,7 +98,7 @@ def _normalize_go(now, stats, account):
             "OpenCode",
             ACCENT,
             now,
-            f"OpenCode Go: {go_error}",
+            tr("OpenCode Go: %1", go_error),
             {"stats": stats, "source": "OpenCode Go API", "accountMode": "go", "goError": go_error},
         )
     if not isinstance(go_usage, dict):
@@ -106,7 +107,7 @@ def _normalize_go(now, stats, account):
             "OpenCode",
             ACCENT,
             now,
-            "OpenCode Go: no usage data",
+            tr("OpenCode Go: no usage data"),
             {"stats": stats, "source": "OpenCode Go API", "accountMode": "go"},
         )
     usage = go_usage.get("usage")
@@ -116,7 +117,7 @@ def _normalize_go(now, stats, account):
             "OpenCode",
             ACCENT,
             now,
-            "OpenCode Go: malformed usage response",
+            tr("OpenCode Go: malformed usage response"),
             {"stats": stats, "source": "OpenCode Go API", "accountMode": "go"},
         )
 
@@ -132,7 +133,7 @@ def _normalize_go(now, stats, account):
             "OpenCode",
             ACCENT,
             now,
-            "OpenCode Go: no usable quota windows",
+            tr("OpenCode Go: no usable quota windows"),
             {"stats": stats, "source": "OpenCode Go API", "accountMode": "go"},
         )
 
@@ -143,14 +144,14 @@ def _normalize_go(now, stats, account):
     r = provider_base("opencode", "OpenCode", ACCENT, now)
     r["summary"] = {"pct": primary_pct, "text": f"{jround(primary_pct)}%", "detail": primary_label, "hasChart": True}
     r["quotaWindows"] = [
-        flat_window(key, label, pct, reset_at, f"{jround(pct)}% used", True) for _name, (key, label, _period, (pct, reset_at)) in parsed.items()
+        flat_window(key, label, pct, reset_at, tr("%1% used", jround(pct)), True) for _name, (key, label, _period, (pct, reset_at)) in parsed.items()
     ]
     r["slots"] = [
         {
             "pct": pct,
             "color": ACCENT,
             "text": f"{jround(pct)}%",
-            "tooltip": f"OpenCode Go {label}\n{jround(pct)}% used",
+            "tooltip": tr("OpenCode Go %1\n%2% used", label, jround(pct)),
         }
         for _name, (key, label, _period, (pct, reset_at)) in parsed.items()
     ]

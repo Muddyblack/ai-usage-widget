@@ -9,7 +9,18 @@ ColumnLayout {
     property var shell
     spacing: 12
 
+    // The timeframe every row and total is cut to: 1, 7 or 30 days, or 0 for
+    // all of each provider's history. Remembered in the settings.
+    readonly property int windowDays: Number(shell.settings.spendWindowDays || 0)
+
     readonly property var rows: {
+        var cut = FeatureTabs.spendRowsForWindow(page.allRows, page.windowDays).slice();
+        cut.sort(function (a, b) {
+            return b.cost - a.cost;
+        });
+        return cut;
+    }
+    readonly property var allRows: {
         var out = FeatureTabs.spendProviderRows(shell.providers, shell.localSpend);
         var localRows = FeatureTabs.localSpendRows(shell.localSpend, out, shell.providers);
         for (var i = 0; i < localRows.length; i++) {
@@ -113,6 +124,78 @@ ColumnLayout {
         color: "#f8fafc"
     }
 
+    // Timeframe: one choice for the whole view, as the totals above it use.
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 4
+        visible: !page.ratesOpen
+
+        Text {
+            text: shell.i18n("Timeframe")
+            font.pixelSize: 10
+            opacity: 0.55
+            color: "#f8fafc"
+            Layout.rightMargin: 4
+        }
+
+        Repeater {
+            model: [
+                {
+                    days: 1,
+                    label: "1D"
+                },
+                {
+                    days: 7,
+                    label: "7D"
+                },
+                {
+                    days: 30,
+                    label: "30D"
+                },
+                {
+                    days: 0,
+                    label: shell.i18nc("spend timeframe: all history", "ALL")
+                }
+            ]
+
+            Rectangle {
+                required property var modelData
+                readonly property bool chosen: page.windowDays === modelData.days
+                Layout.preferredWidth: timeframeLabel.implicitWidth + 14
+                Layout.preferredHeight: 20
+                radius: 4
+                color: chosen ? Qt.rgba(1, 1, 1, 0.14) : (timeframeMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, chosen ? 0.22 : 0.08)
+
+                Text {
+                    id: timeframeLabel
+                    anchors.centerIn: parent
+                    text: parent.modelData.label
+                    font.pixelSize: 10
+                    font.bold: parent.chosen
+                    color: "#f8fafc"
+                    opacity: parent.chosen ? 1 : 0.65
+                }
+                MouseArea {
+                    id: timeframeMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        shell.setSetting2("spendWindowDays", parent.modelData.days);
+                        // The per-row charts follow the new timeframe.
+                        page.expandedWindowDays = ({});
+                    }
+                }
+            }
+        }
+
+        Item {
+            Layout.fillWidth: true
+        }
+    }
+
     Text {
         visible: page.rows.length === 0
         Layout.fillWidth: true
@@ -131,7 +214,7 @@ ColumnLayout {
             required property var modelData
             readonly property bool canExpand: !!((modelData.dailyCost && modelData.dailyCost.length > 1) || (modelData.dailyTokens && modelData.dailyTokens.length > 1))
             readonly property bool isExpanded: page.expandedProviders[modelData.id] === true
-            readonly property int windowDays: page.expandedWindowDays[modelData.id] !== undefined ? page.expandedWindowDays[modelData.id] : 0
+            readonly property int windowDays: page.expandedWindowDays[modelData.id] !== undefined ? page.expandedWindowDays[modelData.id] : page.windowDays
 
             Layout.fillWidth: true
             implicitHeight: body.implicitHeight + 14 + (canExpand && isExpanded ? detail.implicitHeight + 10 : 0)

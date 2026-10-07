@@ -104,7 +104,9 @@ def finish():
         "languages": state.property("availableLanguages").toVariant(),
         "translated": state.property("pillSlots").toVariant()[0]["tooltip"] if state.property("pillSlots").toVariant() else "",
         "settingsApplied": s.get("providerDefaultsApplied"),
-        "commands": [c[-1] for c in runner.ran],
+        "commands": [arg for c in runner.ran for arg in c[5:]],
+        "pinned": state.property("pinnedTabs").toVariant(),
+        "panel": [g["id"] for g in state.property("panelGroups").toVariant()],
     }))
     app.quit()
 
@@ -163,9 +165,12 @@ class CommandBackendTest(unittest.TestCase):
         self.assertTrue(result["settingsApplied"])
         self.assertEqual(result["errorText"], "")
         self.assertIn("fr", result["languages"])
-        # Settings, catalog list, history, defaults, then the usage fetch.
+        # Settings, catalog list, history, defaults, then the usage fetch,
+        # which keeps its answer for the next start's replay.
         self.assertIn("--initialize-provider-defaults", result["commands"])
         self.assertIn("--all", result["commands"])
+        self.assertIn("--save-snapshot", result["commands"])
+        self.assertIn("--last-snapshot", result["commands"])
 
     def test_latched_defaults_go_straight_to_the_fetch(self):
         result, _ = self.run_harness({"providerDefaultsApplied": True, "providers": {}})
@@ -173,6 +178,13 @@ class CommandBackendTest(unittest.TestCase):
         self.assertTrue(result["ready"])
         self.assertNotIn("--initialize-provider-defaults", result["commands"])
         self.assertIn("--all", result["commands"])
+
+    def test_pins_keep_only_enabled_providers_on_the_panel(self):
+        result, _ = self.run_harness({"providerDefaultsApplied": True, "providers": {"claude": True}, "pinnedTabs": ["claude", "gone", "sessions"]})
+        self.assertEqual(result["warnings"], [])
+        # A pin for a provider no longer enabled, or for a feature tab, drops out.
+        self.assertEqual(result["pinned"], ["claude"])
+        self.assertEqual(result["panel"], ["claude"])
 
 
 if __name__ == "__main__":

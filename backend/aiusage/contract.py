@@ -10,6 +10,8 @@ import datetime
 import math
 import re
 
+from .messages import Msg, tr
+
 SCHEMA_VERSION = 1
 
 # Brand artwork per provider, as a bare filename under contents/icons/. The
@@ -428,20 +430,30 @@ def provider_error(id_, label, accent, now, error, details):
     r["ok"] = False
     r["stale"] = True
     r["error"] = error
-    r["summary"] = {"pct": 0, "text": "unavailable", "detail": error, "hasChart": True}
+    r["summary"] = {"pct": 0, "text": tr("unavailable"), "detail": error, "hasChart": True}
     r["slots"] = [{"pct": 0, "color": accent, "text": "—", "tooltip": error}]
     r["details"] = details
     return r
 
 
 def finalize(obj):
-    """Recursively collapse integral floats to int ahead of json.dumps."""
+    """Recursively collapse integral floats to int ahead of json.dumps, and
+    give every translatable field (a :class:`messages.Msg`) its ``<key>I18n``
+    sibling — the template and arguments the frontends translate."""
     if isinstance(obj, float):
         if math.isfinite(obj) and obj == int(obj):
             return int(obj)
         return obj
+    if isinstance(obj, Msg):
+        return str(obj)
     if isinstance(obj, dict):
-        return {k: finalize(v) for k, v in obj.items()}
+        out = {}
+        for k, v in obj.items():
+            out[k] = finalize(v)
+            if isinstance(v, Msg) and isinstance(k, str) and not k.endswith("I18n"):
+                # Lines is a Msg too: its i18n() lists one entry per line.
+                out[k + "I18n"] = v.i18n()
+        return out
     if isinstance(obj, list):
         return [finalize(v) for v in obj]
     return obj

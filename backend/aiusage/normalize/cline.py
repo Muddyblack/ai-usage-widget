@@ -1,7 +1,9 @@
 import datetime
 
-from ..contract import compact_tokens, flat_window, money, num, provider_base, provider_error
+from ..contract import compact_tokens, flat_window, num, provider_base, provider_error
+from ..messages import lines, tr
 from ..stats import cline_stats
+from .local_activity import _usage_text
 
 ACCENT = "#e6e6e6"
 
@@ -14,8 +16,7 @@ def _period(sessions, since):
 
 
 def _describe(count, tokens, cost):
-    text = f"{compact_tokens(tokens)} tokens · {count} session" + ("" if count == 1 else "s")
-    return text + (f" · {money(cost, 'USD')}" if cost > 0 else "")
+    return _usage_text(count, tokens, cost)
 
 
 def normalize_cline(raw):
@@ -26,7 +27,7 @@ def normalize_cline(raw):
     res = raw["inputs"].get("usage") or {}
     stats = cline_stats(res, now)
     if not stats.get("available"):
-        return provider_error("cline", "Cline", ACCENT, now, "Cline: no sessions yet — run cline once", {"stats": stats})
+        return provider_error("cline", "Cline", ACCENT, now, tr("Cline: no sessions yet — run cline once"), {"stats": stats})
 
     sessions = [s for s in res.get("sessions") or [] if isinstance(s, dict)]
     midnight = datetime.datetime.fromtimestamp(now).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
@@ -38,14 +39,14 @@ def normalize_cline(raw):
     month_count, month_tokens, _cost = periods[2][2]
 
     r = provider_base("cline", "Cline", ACCENT, now)
-    r["summary"] = {"pct": 0, "text": compact_tokens(month_tokens), "detail": "last 30 days", "hasChart": False}
+    r["summary"] = {"pct": 0, "text": compact_tokens(month_tokens), "detail": tr("last 30 days"), "hasChart": False}
     r["quotaWindows"] = [flat_window(key, label, 0, 0, _describe(*p), False) for key, label, p in periods]
     r["slots"] = [
         {
             "pct": 0,
             "color": ACCENT,
             "text": compact_tokens(month_tokens),
-            "tooltip": "Cline" + "".join(f"\n{label}: {_describe(*p)}" for _key, label, p in periods),
+            "tooltip": lines("Cline", *(tr("%1: %2", label, _describe(*p)) for _key, label, p in periods)),
         }
     ]
     r["details"] = {

@@ -16,6 +16,7 @@ from dataclasses import dataclass
 
 from ..contract import epoch_of
 from ..http import as_json, fetch_json, resolve_key
+from ..messages import tr
 
 CLIENT_VER = "0.2.106"
 
@@ -344,9 +345,9 @@ def _grok_billing_calls(access_token, client_ver):
         if parsed is not None:
             credits_json = parsed
     elif cr.status in (401, 403):
-        billing_error = "Grok auth expired — run grok --oauth"
+        billing_error = tr("Grok auth expired — run grok --oauth")
     elif cr.status not in (0, None, ""):
-        billing_error = f"Billing HTTP {cr.status}"
+        billing_error = tr("Billing HTTP %1", cr.status)
 
     br = fetch_json("https://cli-chat-proxy.grok.com/v1/billing", headers=headers, timeout=12)
     if br.status == 200:

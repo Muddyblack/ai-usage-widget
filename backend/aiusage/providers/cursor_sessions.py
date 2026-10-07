@@ -7,6 +7,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from ..messages import tr
+
 _MAX_SESSIONS = 60
 
 
@@ -31,7 +33,7 @@ def _read(path: Path) -> CursorSession | None:
     if not isinstance(data, dict) or data.get("hasConversation") is not True:
         return None
     session_id = path.parent.name
-    title = data.get("title") or "Cursor"
+    title = data.get("title") or tr("Cursor")
     cwd = data.get("cwd") or ""
     if not isinstance(title, str) or not isinstance(cwd, str) or not session_id:
         return None

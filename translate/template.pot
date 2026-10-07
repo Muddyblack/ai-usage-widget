@@ -1,660 +1,633 @@
-# French translations for AI Usage Monitor package.
-# Copyright (C) 2026 THE AI Usage Monitor'S COPYRIGHT HOLDER
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the AI Usage Monitor package.
-# Automatically generated, 2026.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Usage Monitor 2.3.1\n"
+"Project-Id-Version: AI Usage Monitor 3.3.0\n"
 "Report-Msgid-Bugs-To: https://github.com/Muddyblack/ai-usage-widget/issues\n"
-"PO-Revision-Date: 2026-09-12 09:06+0200\n"
-"Last-Translator: Automatically generated\n"
-"Language-Team: French\n"
-"Language: fr\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #: hosts/desktop/qml/Main.qml
 msgid "Load more"
-msgstr "Charger plus"
+msgstr ""
 
 #: hosts/kde/contents/ui/main.qml
 msgid "AI Usage"
-msgstr "AI Usage"
+msgstr ""
 
 #: hosts/kde/contents/ui/main.qml ui/AppState.qml ui/SettingsPage.qml
 msgid "Refresh"
-msgstr "Actualisation"
+msgstr ""
 
 #: hosts/kde/contents/ui/main.qml ui/AppState.qml ui/PopupContent.qml
 msgid "Settings"
-msgstr "Paramètres"
+msgstr ""
 
 #: ui/AppState.qml
 msgid "No data"
-msgstr "Aucune donnée"
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Loading"
-msgstr "Chargement"
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Open AI Usage"
-msgstr "Ouvrir AI Usage"
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Tray style"
-msgstr "Style de la zone de notification"
+msgstr ""
 
 #: ui/AppState.qml ui/SettingsPage.qml
 msgid "Logo and percent"
-msgstr "Logo et pourcentage"
+msgstr ""
 
 #. TRANSLATORS: tray icon style: only the percentages, as digits
 #: ui/AppState.qml ui/SettingsPage.qml
 msgid "Numbers"
-msgstr "Nombres"
+msgstr ""
 
 #. TRANSLATORS: tray icon style: one circular progress ring
 #: ui/AppState.qml ui/SettingsPage.qml
 msgid "Ring"
-msgstr "Anneau"
+msgstr ""
 
 #: ui/AppState.qml ui/SettingsPage.qml
 msgid "Floating pill"
-msgstr "Pilule flottante"
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Start with Windows"
-msgstr "Démarrer avec Windows"
+msgstr ""
 
 #: ui/AppState.qml ui/PopupContent.qml ui/SettingsPage.qml
 msgid "Start at login"
-msgstr "Démarrer à la connexion"
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Quit"
-msgstr "Quitter"
+msgstr ""
 
 #: ui/AppState.qml
 msgid "usage backend returned no data"
-msgstr "le backend d'utilisation n'a renvoyé aucune donnée"
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Detection failed."
-msgstr "La détection a échoué."
+msgstr ""
 
 #: ui/AppState.qml
 msgid "No changes: enabled providers match what is installed."
 msgstr ""
-"Aucun changement : les fournisseurs activés correspondent à ce qui est "
-"installé."
 
 #: ui/AppState.qml
 msgid "Enabled: %1"
-msgstr "Activés : %1"
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Disabled (not installed): %1"
-msgstr "Désactivés (non installés) : %1"
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Could not load cached sessions."
-msgstr "Impossible de charger les sessions en cache."
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Could not load sessions."
-msgstr "Impossible de charger les sessions."
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Could not resume session."
-msgstr "Impossible de reprendre la session."
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Could not refresh pricing."
-msgstr "Impossible d'actualiser les tarifs."
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Saved to %1"
-msgstr "Enregistré dans %1"
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Export failed"
-msgstr "Échec de l'export"
+msgstr ""
 
 #: ui/OpenCodeUsageChart.qml
 msgid "Daily token usage"
-msgstr "Utilisation quotidienne des jetons"
+msgstr ""
 
 #: ui/OverviewPage.qml
 msgid "Enable a provider in Settings to see it here."
-msgstr "Activez un fournisseur dans les paramètres pour le voir ici."
+msgstr ""
 
 #: ui/PopupContent.qml
 msgid "%1 Usage"
-msgstr "Utilisation %1"
+msgstr ""
 
 #: ui/PopupContent.qml
 msgid "Views, pill, position and chart"
-msgstr "Vues, pilule, position et graphique"
+msgstr ""
 
 #: ui/PopupContent.qml
 msgid "Views, language and usage chart"
-msgstr "Vues, langue et graphique d'utilisation"
+msgstr ""
 
 #: ui/PopupContent.qml
 msgid "About AI Usage Monitor and project links"
-msgstr "À propos d'AI Usage Monitor et liens du projet"
+msgstr ""
 
 #: ui/PopupContent.qml
 msgid "Local endpoints: Ollama, vLLM and llama.cpp"
-msgstr "Points de terminaison locaux : Ollama, vLLM et llama.cpp"
+msgstr ""
 
 #: ui/PopupContent.qml
 msgid "Refresh interval and usage history"
-msgstr "Intervalle de rafraîchissement et historique d'utilisation"
+msgstr ""
 
 #: ui/PopupContent.qml
 msgid "Python interpreter and terminal tool"
-msgstr "Interpréteur Python et outil terminal"
+msgstr ""
 
 #: ui/PopupContent.qml
 msgid "Turn providers on and set their keys"
-msgstr "Activer les fournisseurs et configurer leurs clés"
+msgstr ""
 
 #: ui/PopupContent.qml
 msgid "%1 provider"
 msgid_plural "%1 providers"
-msgstr[0] "%1 fournisseur"
-msgstr[1] "%1 fournisseurs"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ui/PopupContent.qml ui/SettingsPage.qml
 msgid "Refreshing…"
-msgstr "Actualisation…"
+msgstr ""
 
 #: ui/PopupContent.qml
 msgid "%1 local session"
 msgid_plural "%1 local sessions"
-msgstr[0] "%1 session locale"
-msgstr[1] "%1 sessions locales"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ui/PopupContent.qml
 msgid "Usage"
-msgstr "Utilisation"
+msgstr ""
 
 #. TRANSLATORS: sub-tab with activity statistics (tokens, sessions, models)
 #: ui/PopupContent.qml
 msgid "Stats"
-msgstr "Statistiques"
+msgstr ""
 
 #: ui/PopupContent.qml
 msgid ""
 "Plan quota is off: Meta reports it only on a billed model call. Everything "
 "above is read from Muse's own local files."
 msgstr ""
-"Le quota du forfait est désactivé : Meta ne l'indique que lors d'un appel de "
-"modèle facturé. Tout ce qui précède est lu dans les fichiers locaux de Muse."
 
 #: ui/PopupContent.qml
 msgid "Plan quota: Meta refused the credential."
-msgstr "Quota du plan : Meta a refusé les identifiants."
+msgstr ""
 
 #: ui/PopupContent.qml
 msgid ""
 "Plan quota: could not reach Meta — the local numbers above are unaffected."
 msgstr ""
-"Quota du plan : impossible de joindre Meta — les données locales ci-dessus "
-"ne sont pas affectées."
 
 #: ui/PopupContent.qml
 msgid "Plan quota needs a Meta API key, or a `muse login` that stored one."
 msgstr ""
-"Le quota du plan nécessite une clé API Meta, ou un `muse login` qui en a "
-"stocké une."
 
 #: ui/PopupContent.qml
 msgid "Plan quota needs a model: run Muse once so it caches its catalog."
 msgstr ""
-"Le quota du plan nécessite un modèle : exécutez Muse une fois pour qu'il "
-"mette en cache son catalogue."
 
 #: ui/PopupContent.qml
 msgid "No plan windows on this account — pay-as-you-go has none."
 msgstr ""
-"Aucune fenêtre de plan sur ce compte — le paiement à l'usage n'en a pas."
 
 #: ui/PopupContent.qml
 msgid "last known %1 · refreshing…"
-msgstr "dernière valeur connue %1 · actualisation…"
+msgstr ""
 
 #: ui/PopupContent.qml
 msgid "updated %1"
-msgstr "mis à jour %1"
+msgstr ""
 
 #: ui/ProviderSettingRow.qml ui/SettingsPage.qml
 msgid "Off"
-msgstr "Désactivé"
+msgstr ""
 
 #: ui/ProviderSettingRow.qml
 msgid "Local"
-msgstr "Local"
+msgstr ""
 
 #: ui/ProviderSettingRow.qml
 msgid "Live"
-msgstr "En direct"
+msgstr ""
 
 #: ui/ProviderSettingRow.qml
 msgid "key set"
-msgstr "clé définie"
+msgstr ""
 
 #: ui/ProviderSettingRow.qml
 msgid "API key"
-msgstr "Clé API"
+msgstr ""
 
 #: ui/ProviderSettingRow.qml
 msgid "Server URL"
-msgstr "URL du serveur"
+msgstr ""
 
 #: ui/ProviderSettingRow.qml
 msgid "Server URLs, separated by commas"
-msgstr "URLs du serveur, séparées par des virgules"
+msgstr ""
 
 #: ui/ProviderSettingRow.qml ui/SettingsPage.qml
 msgid "Engine"
-msgstr "Moteur"
+msgstr ""
 
 #: ui/ProviderSettingRow.qml
 msgid ""
 "Live: plan windows come from a billed model call (~130 tokens per refresh, "
 "cached 30 min)."
 msgstr ""
-"En direct : les fenêtres de plan proviennent d'un appel modélisé facturé "
-"(~130 jetons par actualisation, mis en cache 30 min)."
 
 #: ui/ProviderSettingRow.qml
 msgid ""
 "Local: read from Muse's own files, free. Meta reports plan windows only on a "
 "billed call — that is what Live buys."
 msgstr ""
-"Local : lecture depuis les fichiers de Muse, gratuit. Meta ne signale les "
-"fenêtres de plan que lors d'un appel facturé — c'est ce qu'achète En direct."
 
 #: ui/ProviderSettingRow.qml
 msgid "Quota"
-msgstr "Quota"
+msgstr ""
 
 #: ui/ProviderSettingRow.qml
 msgid "fallback if the plan reports none"
-msgstr "valeur de repli si le plan n'en indique aucun"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "All sources"
-msgstr "Toutes les sources"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "%1 source selected"
 msgid_plural "%1 sources selected"
-msgstr[0] "%1 source sélectionnée"
-msgstr[1] "%1 sources sélectionnées"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ui/SessionsPage.qml
 msgid "Search sessions…"
-msgstr "Rechercher des sessions…"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Search sessions"
-msgstr "Rechercher des sessions"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Filter sessions by source"
-msgstr "Filtrer les sessions par source"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Refresh failed; no cached sessions are available."
-msgstr "Échec de l’actualisation ; aucune session en cache n’est disponible."
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Refresh incomplete; showing cached sessions."
-msgstr "Actualisation incomplète ; affichage des sessions en cache."
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "No cached session data yet."
-msgstr "Aucune donnée de session en cache pour le moment."
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "%1 session source was removed."
 msgid_plural "%1 session sources were removed."
-msgstr[0] "%1 source de session a été supprimée."
-msgstr[1] "%1 sources de session ont été supprimées."
+msgstr[0] ""
+msgstr[1] ""
 
 #: ui/SessionsPage.qml
 msgid "Cached session data · %1 min old"
 msgid_plural "Cached session data · %1 min old"
-msgstr[0] "Données de session en cache · datant de %1 min"
-msgstr[1] "Données de session en cache · datant de %1 min"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ui/SessionsPage.qml
 msgid "Session cache status unavailable."
-msgstr "Statut du cache des sessions indisponible."
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid ""
 "No local agent sessions found. They appear after Claude Code, Codex, Muse, "
 "Cline or Grok CLI records activity."
 msgstr ""
-"Aucune session locale d’agent trouvée. Elles apparaissent lorsque Claude "
-"Code, Codex, Muse, Cline ou Grok CLI enregistre une activité."
 
 #: ui/SessionsPage.qml
 msgid "No sessions match your search."
-msgstr "Aucune session ne correspond à votre recherche."
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Session"
-msgstr "Session"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Active"
-msgstr "Active"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Idle"
-msgstr "Inactive"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "just now"
-msgstr "à l'instant"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "%1 min ago"
 msgid_plural "%1 min ago"
-msgstr[0] "il y a %1 min"
-msgstr[1] "il y a %1 min"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ui/SessionsPage.qml
 msgid "%1 h ago"
 msgid_plural "%1 h ago"
-msgstr[0] "il y a %1 h"
-msgstr[1] "il y a %1 h"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ui/SessionsPage.qml
 msgid "%1 d ago"
 msgid_plural "%1 d ago"
-msgstr[0] "il y a %1 j"
-msgstr[1] "il y a %1 j"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ui/SessionsPage.qml
 msgid "Cost unavailable"
-msgstr "Coût indisponible"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Free model"
-msgstr "Modèle gratuit"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Covered by plan · $%1 on API"
-msgstr "Couvert par le forfait · $%1 sur l'API"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Covered by plan · ~$%1 on API"
-msgstr "Couvert par le forfait · ~$%1 sur l'API"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Actual provider cost: $%1 (exact)"
-msgstr "Coût réel du fournisseur : $%1 (exact)"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Actual provider cost: $%1 (partial)"
-msgstr "Coût réel du fournisseur : $%1 (partiel)"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Calculated estimate: $%1 (exact)"
-msgstr "Estimation calculée : $%1 (exacte)"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Calculated estimate: $%1 (partial)"
-msgstr "Estimation calculée : $%1 (partielle)"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Mixed cost: $%1 (exact)"
-msgstr "Coût mixte : $%1 (exact)"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Mixed cost: $%1 (partial)"
-msgstr "Coût mixte : $%1 (partiel)"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Cost: $%1 (exact)"
-msgstr "Coût : $%1 (exact)"
+msgstr ""
 
 #: ui/SessionsPage.qml
 msgid "Cost: $%1 (partial)"
-msgstr "Coût : $%1 (partiel)"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Refreshing pricing…"
-msgstr "Actualisation des tarifs…"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Pricing updated."
-msgstr "Tarifs mis à jour."
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Pricing refresh failed; using saved rates."
 msgstr ""
-"Échec de l'actualisation des tarifs ; utilisation des tarifs enregistrés."
 
 #: ui/SettingsPage.qml
 msgid "No pricing rates available; try again."
-msgstr "Aucun tarif disponible ; réessayez."
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Providers"
-msgstr "Fournisseurs"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Local Models"
-msgstr "Modèles locaux"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Panel"
-msgstr "Panneau"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Display"
-msgstr "Affichage"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgctxt "settings tab"
 msgid "Data"
-msgstr "Données"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Advanced"
-msgstr "Avancé"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Info"
-msgstr "Infos"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Detecting…"
-msgstr "Détection…"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Detect installed providers"
-msgstr "Détecter les fournisseurs installés"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid ""
 "Expand a provider for its API key and options. Keys are stored in %1; leave "
 "one blank to use env vars or an existing CLI login."
 msgstr ""
-"Dépliez un fournisseur pour sa clé API et ses options. Les clés sont "
-"stockées dans %1 ; laissez-en une vide pour utiliser les variables "
-"d'environnement ou une connexion CLI existante."
 
 #: ui/SettingsPage.qml
 msgid "Monitor Ollama, vLLM, or llama.cpp servers"
-msgstr "Surveiller les serveurs Ollama, vLLM ou llama.cpp"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Server URLs"
-msgstr "URL des serveurs"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "e.g. http://127.0.0.1:11434, http://127.0.0.1:8000"
-msgstr "p. ex. http://127.0.0.1:11434, http://127.0.0.1:8000"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid ""
 "Separate multiple endpoints with commas. Leave empty to auto-discover Ollama "
 "(:11434), vLLM (:8000), and llama.cpp (:8080)."
 msgstr ""
-"Séparez plusieurs points de terminaison par des virgules. Laissez vide pour "
-"détecter automatiquement Ollama (:11434), vLLM (:8000) et llama.cpp (:8080)."
 
 #: ui/SettingsPage.qml
 msgid "Bearer Token (optional)"
-msgstr "Jeton Bearer (facultatif)"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Optional auth token"
-msgstr "Jeton d'authentification facultatif"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid ""
 "Token counters reflect usage since server start. GPU VRAM tracking is "
 "enabled automatically where supported."
 msgstr ""
-"Les compteurs de jetons indiquent l'utilisation depuis le démarrage du "
-"serveur. Le suivi de la VRAM GPU est activé automatiquement lorsqu'il est "
-"pris en charge."
 
 #: ui/SettingsPage.qml
 msgid "Optional tabs that sit ahead of your providers in the popup."
 msgstr ""
-"Onglets facultatifs affichés avant vos fournisseurs dans la fenêtre "
-"contextuelle."
 
 #: ui/SettingsPage.qml
 msgid "Overview"
-msgstr "Vue d’ensemble"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "All enabled providers at a glance"
-msgstr "Tous les fournisseurs activés en un coup d’œil"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Usage & Spend"
-msgstr "Utilisation et dépenses"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Combined cost figures across providers"
-msgstr "Coûts cumulés des fournisseurs"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Sessions"
-msgstr "Sessions"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Recent local agent sessions (no transcripts)"
-msgstr "Sessions locales récentes des agents (sans transcriptions)"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Language"
-msgstr "Langue"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "System default"
-msgstr "Par défaut du système"
+msgstr ""
 
 #. TRANSLATORS: the small rounded usage readout floating on the desktop edge
 #: ui/SettingsPage.qml
 msgid "Pill"
-msgstr "Pilule"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Always"
-msgstr "Toujours"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Edge hover"
-msgstr "Survol du bord"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Tray only"
-msgstr "Zone de notification uniquement"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Position"
-msgstr "Position"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Top left"
-msgstr "En haut à gauche"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Top center"
-msgstr "En haut au centre"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Top right"
-msgstr "En haut à droite"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Bottom left"
-msgstr "En bas à gauche"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Bottom center"
-msgstr "En bas au centre"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Bottom right"
-msgstr "En bas à droite"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Monitor"
-msgstr "Écran"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Follow focus"
-msgstr "Suivre le focus"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "All monitors"
-msgstr "Tous les écrans"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Usage chart"
-msgstr "Graphique d'usage"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Panel rotation"
-msgstr "Rotation du panneau"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "30 seconds"
-msgstr "30 secondes"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "1 minute"
-msgstr "1 minute"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "2 minutes"
-msgstr "2 minutes"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "5 minutes"
-msgstr "5 minutes"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "10 minutes"
-msgstr "10 minutes"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid ""
@@ -664,48 +637,42 @@ msgid_plural ""
 "%1 providers pinned. With several pinned, the panel shows them side by side, "
 "or one at a time when rotation is on."
 msgstr[0] ""
-"%1 fournisseur épinglé. Avec plusieurs épinglés, le panneau les affiche côte "
-"à côte, ou un à la fois si la rotation est activée."
 msgstr[1] ""
-"%1 fournisseurs épinglés. Avec plusieurs épinglés, le panneau les affiche "
-"côte à côte, ou un à la fois si la rotation est activée."
 
 #: ui/SettingsPage.qml
 msgid ""
 "Pin a provider with the pin on its tab to keep it on the panel whatever the "
 "popup shows."
 msgstr ""
-"Épinglez un fournisseur avec l'épingle de son onglet pour le garder sur le "
-"panneau, quel que soit l'onglet affiché."
 
 #: ui/SettingsPage.qml
 msgid "Popup tint"
-msgstr "Teinte de la fenêtre"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Tint strength"
-msgstr "Intensité de la teinte"
+msgstr ""
 
 #. TRANSLATORS: what is drawn faintly behind the popup's content
 #: ui/SettingsPage.qml
 msgid "Decoration"
-msgstr "Décoration"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Accent glow"
-msgstr "Halo d'accent"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Provider logo"
-msgstr "Logo du fournisseur"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "None"
-msgstr "Aucun"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Tray"
-msgstr "Zone de notification"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid ""
@@ -713,80 +680,72 @@ msgid ""
 "same square, so each value is two icons. The floating pill is the panel's "
 "own pill in a small window: drag it anywhere, click it for this popup."
 msgstr ""
-"Logo et pourcentage reprend la pilule du panneau ; la zone de notification "
-"donne à chaque icône le même carré, donc chaque valeur occupe deux icônes. "
-"La pilule flottante est la pilule du panneau dans une petite fenêtre : "
-"faites-la glisser n'importe où, cliquez dessus pour ouvrir ce popup."
 
 #: ui/SettingsPage.qml
 msgid "1 min"
-msgstr "1 min"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "2 min"
-msgstr "2 min"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "5 min"
-msgstr "5 min"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "10 min"
-msgstr "10 min"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "15 min"
-msgstr "15 min"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "30 min"
-msgstr "30 min"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Pricing"
-msgstr "Tarifs"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Refresh pricing"
-msgstr "Actualiser les tarifs"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "History"
-msgstr "Historique"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Export"
-msgstr "Exporter"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "%1 point"
 msgid_plural "%1 points"
-msgstr[0] "%1 point"
-msgstr[1] "%1 points"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ui/SettingsPage.qml
 msgid ""
 "The chart's recorded history, as JSON — for a backup, or to carry it to "
 "another machine."
 msgstr ""
-"L'historique enregistré du graphique, au format JSON — pour une sauvegarde, "
-"ou pour le transférer vers une autre machine."
 
 #: ui/SettingsPage.qml
 msgid ""
 "Starts AI Usage in the tray when you sign in. The same switch is in the tray "
 "icon's menu."
 msgstr ""
-"Lance AI Usage dans la zone de notification à l'ouverture de session. Le "
-"même interrupteur se trouve dans le menu de l'icône."
 
 #: ui/SettingsPage.qml
 msgid "Python"
-msgstr "Python"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "auto-detect"
-msgstr "détection automatique"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid ""
@@ -794,217 +753,189 @@ msgid ""
 "from PATH (python3 → python3.x → python). The tray helper picks this up on "
 "its next refresh."
 msgstr ""
-"Interpréteur du backend — p. ex. le bin/python d'un venv. Vide : détection "
-"automatique depuis le PATH (python3 → python3.x → python). L'assistant de la "
-"zone de notification le prend en compte à sa prochaine actualisation."
 
 #: ui/SettingsPage.qml
 msgid "Terminal"
-msgstr "Terminal"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "Copy"
-msgstr "Copier"
+msgstr ""
 
 #: ui/SettingsPage.qml
 msgid ""
 "Same data as this popup, as a table in a shell. Link it into ~/.local/bin to "
 "run it as ai-usage-cli, or pass --compact for one status-bar line."
 msgstr ""
-"Mêmes données que ce menu contextuel, sous forme de tableau dans un shell. "
-"Liez-le dans ~/.local/bin pour l'exécuter sous le nom ai-usage-cli, ou "
-"passez --compact pour une ligne de barre d'état."
 
 #: ui/SpendPage.qml
 msgid "Could not read model pricing."
-msgstr "Impossible de lire la tarification des modèles."
+msgstr ""
 
 #: ui/SpendPage.qml
 msgid "No cached model rates yet — refresh pricing in settings."
 msgstr ""
-"Aucun tarif de modèle en cache pour l'instant — actualisez la tarification "
-"dans les paramètres."
 
 #: ui/SpendPage.qml
 msgid ""
 "Totals come from each provider's own usage APIs and local CLI logs. Ranges "
 "differ (30-day, all-time, lifetime)."
 msgstr ""
-"Les totaux proviennent des API d’utilisation de chaque fournisseur et des "
-"journaux locaux des outils en ligne de commande. Les périodes diffèrent (30 "
-"jours, depuis le début, durée de vie)."
 
 #: ui/SpendPage.qml
 msgid "Timeframe"
-msgstr "Période"
+msgstr ""
 
 #: ui/SpendPage.qml
 msgctxt "spend timeframe: all history"
 msgid "ALL"
-msgstr "TOUT"
+msgstr ""
 
 #: ui/SpendPage.qml
 msgid ""
 "No cost figures yet. Enable providers that report spend, or use them until "
 "local logs appear."
 msgstr ""
-"Aucun coût disponible pour le moment. Activez des fournisseurs qui indiquent "
-"les dépenses, ou utilisez-les jusqu’à ce que des journaux locaux "
-"apparaissent."
 
 #: ui/SpendPage.qml
 msgid "Model rates"
-msgstr "Tarifs des modèles"
+msgstr ""
 
 #: ui/SpendPage.qml
 msgid "Loading…"
-msgstr "Chargement…"
+msgstr ""
 
 #: ui/SpendPage.qml
 msgid "Filter by provider or model…"
-msgstr "Filtrer par fournisseur ou modèle…"
+msgstr ""
 
 #: ui/SpendPage.qml
 msgid "Model"
-msgstr "Modèle"
+msgstr ""
 
 #: ui/SpendPage.qml
 msgid "In"
-msgstr "Entrée"
+msgstr ""
 
 #: ui/SpendPage.qml
 msgid "Out"
-msgstr "Sortie"
+msgstr ""
 
 #: ui/SpendPage.qml
 msgid "Cached"
-msgstr "En cache"
+msgstr ""
 
 #: ui/SpendPage.qml
 msgid "%1 of %2"
-msgstr "%1 sur %2"
+msgstr ""
 
 #: ui/SpendPage.qml
 msgid "Previous"
-msgstr "Précédent"
+msgstr ""
 
 #: ui/SpendPage.qml
 msgid "Next"
-msgstr "Suivant"
+msgstr ""
 
 #: ui/SpendTimelineChart.qml
 msgid "Cost"
-msgstr "Coût"
+msgstr ""
 
 #: ui/SpendTimelineChart.qml
 msgid "Tokens (log)"
-msgstr "Jetons (log)"
+msgstr ""
 
 #: ui/SpendTimelineChart.qml
 msgid "· no token history"
-msgstr "· aucun historique de jetons"
+msgstr ""
 
 #: ui/SpendTimelineChart.qml
 msgid "· no cost history"
-msgstr "· aucun historique de coût"
+msgstr ""
 
 #: ui/SpendTimelineChart.qml
 msgid "30d"
-msgstr "30j"
+msgstr ""
 
 #: ui/SpendTimelineChart.qml
 msgid "90d"
-msgstr "90j"
+msgstr ""
 
 #: ui/SpendTimelineChart.qml
 msgid "All"
-msgstr "Tout"
+msgstr ""
 
 #: ui/SpendTimelineChart.qml
 msgid "Limited history (%1 days recorded) — dashed line, not a smoothed trend."
 msgstr ""
-"Historique limité (%1 jours enregistrés) — ligne pointillée, pas une "
-"tendance lissée."
 
 #: ui/StatsSection.qml
 msgid "Top repositories"
-msgstr "Principaux dépôts"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Top workspaces"
-msgstr "Espaces de travail principaux"
+msgstr ""
 
 #: ui/StatsSection.qml
 #, no-javascript-format
 msgctxt "duration in days, abbreviated"
 msgid "%1d"
-msgstr "%1j"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgctxt "duration in hours, abbreviated"
 msgid "%1h"
-msgstr "%1h"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgctxt "duration in minutes, abbreviated"
 msgid "%1m"
-msgstr "%1min"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "<1m"
-msgstr "< 1 min"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "No Codex history yet"
-msgstr "Aucun historique Codex pour le moment"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Run a Codex CLI session and stats will appear here."
-msgstr "Lancez une session CLI Codex et les statistiques apparaîtront ici."
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid ""
 "No local activity stats yet.\n"
 "Run the Copilot CLI to fill ~/.copilot/session-store.db"
 msgstr ""
-"Aucune statistique d'activité locale pour le moment.\n"
-"Exécutez Copilot CLI pour remplir ~/.copilot/session-store.db"
 
 #: ui/StatsSection.qml
 msgid ""
 "No Muse sessions yet.\n"
 "Run Muse Code and its own logs will appear here."
 msgstr ""
-"Aucune session Muse pour le moment.\n"
-"Lancez Muse Code : ses journaux apparaîtront ici."
 
 #: ui/StatsSection.qml
 msgid ""
 "No Cursor usage this billing cycle yet.\n"
 "Requests made with Cursor or cursor-agent will appear here."
 msgstr ""
-"Aucune utilisation de Cursor pour ce cycle de facturation pour le moment.\n"
-"Les requêtes effectuées avec Cursor ou cursor-agent apparaîtront ici."
 
 #: ui/StatsSection.qml
 msgid ""
 "No Cline sessions yet.\n"
 "Run the Cline CLI and its session logs in ~/.cline will appear here."
 msgstr ""
-"Aucune session Cline pour le moment.\n"
-"Lancez le CLI Cline : ses journaux de session dans ~/.cline apparaîtront ici."
 
 #: ui/StatsSection.qml
 msgid "No local Junie token usage yet. Run a CLI session to see activity."
 msgstr ""
-"Aucune utilisation locale de jetons Junie pour le moment. Lancez une session "
-"CLI pour voir l’activité."
 
 #: ui/StatsSection.qml
 msgid "No local MiMo Code usage yet. Account quota is unavailable."
 msgstr ""
-"Aucune utilisation locale de MiMo Code pour le moment. Le quota du compte "
-"n'est pas disponible."
 
 #: ui/StatsSection.qml
 msgid ""
@@ -1012,68 +943,63 @@ msgid ""
 "Enable OpenCode and run a local session; usage is read from its SQLite "
 "database."
 msgstr ""
-"Aucune session OpenCode pour le moment.\n"
-"Activez OpenCode et lancez une session locale ; l'utilisation est lue depuis "
-"sa base SQLite."
 
 #: ui/StatsSection.qml
 msgid ""
 "No local activity stats yet.\n"
 "Run Claude Code to generate ~/.claude/stats-cache.json"
 msgstr ""
-"Aucune statistique d'activité locale.\n"
-"Exécutez Claude Code pour générer ~/.claude/stats-cache.json"
 
 #: ui/StatsSection.qml
 msgid "Activity Stats"
-msgstr "Statistiques d'activité"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgctxt "stat label"
 msgid "tokens"
-msgstr "jetons"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Total tokens across all models (this billing cycle)"
-msgstr "Total des jetons pour tous les modèles (ce cycle de facturation)"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Total tokens across all models (all time)"
-msgstr "Total des jetons pour tous les modèles (toute période)"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgctxt "stat label"
 msgid "sessions"
-msgstr "sessions"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "%1 messages total"
-msgstr "%1 messages au total"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "active days"
-msgstr "jours actifs"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Since %1"
-msgstr "Depuis %1"
+msgstr ""
 
 #: ui/StatsSection.qml
 #, no-javascript-format
 msgctxt "streak length in days, abbreviated"
 msgid "%1d"
-msgstr "%1j"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgctxt "stat label"
 msgid "streak"
-msgstr "série"
+msgstr ""
 
 #: ui/StatsSection.qml
 #, no-javascript-format
 msgctxt "longest streak in days, abbreviated"
 msgid "best %1d"
-msgstr "meilleure %1j"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid ""
@@ -1083,732 +1009,720 @@ msgid_plural ""
 "Current consecutive-day streak\n"
 "Longest: %1 days"
 msgstr[0] ""
-"Série actuelle de jours consécutifs\n"
-"Plus longue : %1 jour"
 msgstr[1] ""
-"Série actuelle de jours consécutifs\n"
-"Plus longue : %1 jours"
 
 #: ui/StatsSection.qml
 msgid "longest session"
-msgstr "session la plus longue"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "%1 msg"
 msgid_plural "%1 msgs"
-msgstr[0] "%1 message"
-msgstr[1] "%1 messages"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ui/StatsSection.qml
 msgid "peak hour"
-msgstr "heure de pointe"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Hour of day with the most activity"
-msgstr "Heure de la journée avec le plus d'activité"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "tool calls"
-msgstr "appels d'outils"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Total tool invocations across all sessions"
-msgstr "Total des invocations d'outils dans toutes les sessions"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgctxt "stat label"
 msgid "spend"
-msgstr "dépense"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Total cost across all models (this billing cycle)"
-msgstr "Coût total pour tous les modèles (ce cycle de facturation)"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Total cost across all models (all time)"
-msgstr "Coût total pour tous les modèles (toute période)"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "web searches"
-msgstr "recherches web"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Total web search requests across all models"
-msgstr "Total des requêtes de recherche web pour tous les modèles"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "files touched"
-msgstr "fichiers modifiés"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Distinct files read or edited across all sessions"
-msgstr "Fichiers distincts lus ou modifiés dans toutes les sessions"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "repos"
-msgstr "dépôts"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Repositories the CLI has been run in"
-msgstr "Dépôts dans lesquels le CLI a été exécuté"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Tokens / day"
-msgstr "Jetons / jour"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Requests / day"
-msgstr "Requêtes / jour"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Messages / day"
-msgstr "Messages / jour"
+msgstr ""
 
 #: ui/StatsSection.qml ui/UsageChart.qml
 msgid "%1 tokens"
-msgstr "%1 jetons"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "%1 requests"
-msgstr "%1 requêtes"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "%1 messages"
-msgstr "%1 messages"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "%1 session"
 msgid_plural "%1 sessions"
-msgstr[0] "%1 session"
-msgstr[1] "%1 sessions"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ui/StatsSection.qml
 msgid "Models"
-msgstr "Modèles"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "%1 in"
-msgstr "%1 en entrée"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "%1 out"
-msgstr "%1 en sortie"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgctxt "abbreviated sessions"
 msgid "%1 sess"
-msgstr "%1 sess"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "computed %1"
-msgstr "calculé %1"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Cursor dashboard ↗"
-msgstr "Tableau de bord Cursor ↗"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Codex analytics ↗"
-msgstr "Analyses Codex ↗"
+msgstr ""
 
 #: ui/StatsSection.qml
 msgid "Open the cursor.com usage dashboard in your browser"
 msgstr ""
-"Ouvrir le tableau de bord d'utilisation cursor.com dans votre navigateur"
 
 #: ui/StatsSection.qml
 msgid "Open chatgpt.com Codex usage analytics in your browser"
 msgstr ""
-"Ouvrir les analyses d'utilisation Codex sur chatgpt.com dans votre navigateur"
 
 #: ui/StatusChip.qml
 msgid "Status"
-msgstr "Statut"
+msgstr ""
 
 #: ui/StatusChip.qml
 msgid "Unknown"
-msgstr "Inconnu"
+msgstr ""
 
 #: ui/StatusChip.qml
 msgid "Affected:"
-msgstr "Affecté :"
+msgstr ""
 
 #: ui/StatusChip.qml
 msgid "Incident:"
 msgid_plural "Incidents:"
-msgstr[0] "Incident :"
-msgstr[1] "Incidents :"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ui/StatusChip.qml
 msgid "Latest update:"
-msgstr "Dernière mise à jour :"
+msgstr ""
 
 #: ui/StatusChip.qml
 msgid "Click to open status page"
-msgstr "Cliquer pour ouvrir la page de statut"
+msgstr ""
 
 #: ui/StatusChip.qml
 msgid "Status ↗"
-msgstr "Statut ↗"
+msgstr ""
 
 #: ui/StatusChip.qml
 msgid "Major Outage"
-msgstr "Panne majeure"
+msgstr ""
 
 #: ui/StatusChip.qml
 msgid "Partial Outage"
-msgstr "Panne partielle"
+msgstr ""
 
 #: ui/StatusChip.qml
 msgid "Minor Issues"
-msgstr "Problèmes mineurs"
+msgstr ""
 
 #: ui/StatusChip.qml
 msgid "Operational"
-msgstr "Opérationnel"
+msgstr ""
 
 #: ui/UsageChart.qml
 msgid "Both"
-msgstr "Les deux"
+msgstr ""
 
 #: ui/UsageChart.qml
 msgid "Combined"
-msgstr "Combiné"
+msgstr ""
 
 #: ui/UsageChart.qml
 msgctxt "quota model"
 msgid "Rest"
-msgstr "Reste"
+msgstr ""
 
 #: ui/UsageChart.qml
 msgid "No data in this range"
-msgstr "Aucune donnée dans cette plage"
+msgstr ""
 
 #: ui/UsageChart.qml
 msgctxt "chart reset window"
 msgid "week reset"
-msgstr "réinitialisation hebdomadaire"
+msgstr ""
 
 #: ui/UsageChart.qml
 msgctxt "chart reset window"
 msgid "5h reset"
-msgstr "réinitialisation 5h"
+msgstr ""
 
 #: ui/UsageChart.qml
 #, javascript-format
 msgid "Gemini: %1%"
-msgstr "Gemini : %1%"
+msgstr ""
 
 #: ui/UsageChart.qml
 #, javascript-format
 msgid "Rest: %1%"
-msgstr "Reste : %1%"
+msgstr ""
 
 #: translate/metadata-i18n.js
 msgid "AI Usage Monitor"
-msgstr "Moniteur d'utilisation IA"
+msgstr ""
 
 #: translate/metadata-i18n.js
 msgid ""
 "Multi-service AI quota tracker with cost breakdown (Claude, Antigravity, "
 "OpenAI, Grok, Kiro, OpenRouter & Mistral)"
 msgstr ""
-"Suivi multi-services de quotas IA avec ventilation des coûts (Claude, "
-"Antigravity, OpenAI, Grok, Kiro, OpenRouter & Mistral)"
 
 #: backend/aiusage/contract.py
 msgid "unavailable"
-msgstr "indisponible"
+msgstr ""
 
 #: backend/aiusage/http.py
 msgid "Invalid %1 credential"
-msgstr "Identifiant %1 invalide"
+msgstr ""
 
 #: backend/aiusage/http.py
 msgid "%1 network error"
-msgstr "%1 : erreur réseau"
+msgstr ""
 
 #: backend/aiusage/http.py
 msgid "%1 HTTP %2"
-msgstr "%1 HTTP %2"
+msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
 msgid "Antigravity not configured"
-msgstr "Antigravity n'est pas configuré"
+msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
 msgid "Gemini Models"
-msgstr "Modèles Gemini"
+msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
 msgid "Claude & GPT Models"
-msgstr "Modèles Claude & GPT"
+msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py backend/aiusage/normalize/kiro.py
 msgid "%1 / %2 credits"
-msgstr "%1 / %2 crédits"
+msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
 msgid "Gemini (Google) quota: %1%"
-msgstr "Quota Gemini (Google) : %1%"
+msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py backend/aiusage/normalize/cursor.py
 #: backend/aiusage/normalize/kiro.py
 msgid "Plan: %1"
-msgstr "Forfait : %1"
+msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
 msgid "External models quota: %1%"
-msgstr "Quota de modèles externes : %1%"
+msgstr ""
 
 #: backend/aiusage/normalize/claude.py
 msgid "7-day %1"
-msgstr "%1 sur 7 jours"
+msgstr ""
 
 #: backend/aiusage/normalize/claude.py
 msgid "7-day scoped"
-msgstr "7 jours (ciblé)"
+msgstr ""
 
 #: backend/aiusage/normalize/claude.py
 msgid "OAuth missing — API stats only"
-msgstr "OAuth absent — statistiques API uniquement"
+msgstr ""
 
 #: backend/aiusage/normalize/claude.py
 msgid "Claude not logged in"
-msgstr "Claude n'est pas connecté"
+msgstr ""
 
 #: backend/aiusage/normalize/claude.py
 msgid "Claude usage request failed"
-msgstr "La requête d'utilisation Claude a échoué"
+msgstr ""
 
 #: backend/aiusage/normalize/claude.py backend/aiusage/normalize/zai.py
 msgid "%1 / %2 tokens"
-msgstr "%1 / %2 jetons"
+msgstr ""
 
 #: backend/aiusage/normalize/claude.py
 msgid "5-hour session"
-msgstr "Session de 5 heures"
+msgstr ""
 
 #: backend/aiusage/normalize/claude.py
 msgid "7-day window"
-msgstr "Fenêtre de 7 jours"
+msgstr ""
 
 #: backend/aiusage/normalize/claude.py
 msgid "Claude 5-hour: %1%"
-msgstr "Claude 5 heures : %1%"
+msgstr ""
 
 #: backend/aiusage/normalize/claude.py
 msgid "Claude 7-day: %1%"
-msgstr "Claude 7 jours : %1%"
+msgstr ""
 
 #: backend/aiusage/normalize/cline.py
 msgid "Cline: no sessions yet — run cline once"
-msgstr "Cline : aucune session pour l'instant — lancez cline une fois"
+msgstr ""
 
 #: backend/aiusage/normalize/cline.py
 msgid "last 30 days"
-msgstr "30 derniers jours"
+msgstr ""
 
 #: backend/aiusage/normalize/cline.py
 #: backend/aiusage/normalize/local_activity.py
 msgid "%1: %2"
-msgstr "%1 : %2"
+msgstr ""
 
 #: backend/aiusage/normalize/copilot.py
 msgid "Copilot: no token configured"
-msgstr "Copilot : aucun jeton configuré"
+msgstr ""
 
 #: backend/aiusage/normalize/copilot.py
 msgid "Copilot: %1"
-msgstr "Copilot : %1"
+msgstr ""
 
 #: backend/aiusage/normalize/copilot.py
 msgid "%1 requests · unlimited"
-msgstr "%1 requêtes · illimité"
+msgstr ""
 
 #: backend/aiusage/normalize/copilot.py
 msgid "%1 / %2 requests"
-msgstr "%1 / %2 requêtes"
+msgstr ""
 
 #: backend/aiusage/normalize/copilot.py
 msgid "Personal billing"
-msgstr "Facturation personnelle"
+msgstr ""
 
 #: backend/aiusage/normalize/copilot.py
 msgid "Premium requests"
-msgstr "Requêtes premium"
+msgstr ""
 
 #: backend/aiusage/normalize/copilot.py
 msgid "Copilot premium requests: %1"
-msgstr "Requêtes premium Copilot : %1"
+msgstr ""
 
 #: backend/aiusage/normalize/cursor.py
 msgid "Cursor: not signed in — run cursor-agent login"
-msgstr "Cursor : non connecté — lancez cursor-agent login"
+msgstr ""
 
 #: backend/aiusage/normalize/cursor.py
 msgid "Cursor: %1"
-msgstr "Cursor : %1"
+msgstr ""
 
 #: backend/aiusage/normalize/cursor.py
 msgid "Cursor: usage details are not available for this plan"
-msgstr "Cursor : le détail d'utilisation n'est pas disponible pour cette offre"
+msgstr ""
 
 #: backend/aiusage/normalize/cursor.py
 msgid "%1% of included usage"
-msgstr "%1% de l'utilisation incluse"
+msgstr ""
 
 #: backend/aiusage/normalize/cursor.py
 msgid "Included usage"
-msgstr "Utilisation incluse"
+msgstr ""
 
 #: backend/aiusage/normalize/cursor.py
 msgid "Auto + Composer"
-msgstr "Auto + Composer"
+msgstr ""
 
 #: backend/aiusage/normalize/cursor.py backend/aiusage/normalize/muse.py
 #: backend/aiusage/normalize/ollama.py backend/aiusage/normalize/opencode.py
 #: backend/aiusage/normalize/selfhosted.py
 msgid "%1% used"
-msgstr "%1% utilisé"
+msgstr ""
 
 #: backend/aiusage/normalize/cursor.py
 msgid "API models"
-msgstr "Modèles API"
+msgstr ""
 
 #: backend/aiusage/normalize/cursor.py
 msgid "On-demand"
-msgstr "À la demande"
+msgstr ""
 
 #: backend/aiusage/normalize/cursor.py
 msgid "Included usage: %1%"
-msgstr "Utilisation incluse : %1%"
+msgstr ""
 
 #: backend/aiusage/normalize/deepseek.py
 msgid "DeepSeek: no API key configured"
-msgstr "DeepSeek : aucune clé API configurée"
+msgstr ""
 
 #: backend/aiusage/normalize/deepseek.py
 msgid "DeepSeek: %1"
-msgstr "DeepSeek : %1"
+msgstr ""
 
 #: backend/aiusage/normalize/deepseek.py
 msgid "Available for API calls"
-msgstr "Disponible pour les appels API"
+msgstr ""
 
 #: backend/aiusage/normalize/deepseek.py
 msgid "Low balance"
-msgstr "Solde faible"
+msgstr ""
 
 #: backend/aiusage/normalize/deepseek.py
 msgid "Total balance"
-msgstr "Solde total"
+msgstr ""
 
 #: backend/aiusage/normalize/deepseek.py
 msgid "Granted / topped up"
-msgstr "Offert / rechargé"
+msgstr ""
 
 #: backend/aiusage/normalize/deepseek.py
 msgid "DeepSeek balance: %1"
-msgstr "Solde DeepSeek : %1"
+msgstr ""
 
 #: backend/aiusage/normalize/grok.py
 msgid "Grok: run grok --oauth or configure an xAI key"
-msgstr "Grok : lancez grok --oauth ou configurez une clé xAI"
+msgstr ""
 
 #: backend/aiusage/normalize/grok.py
 msgid "rolling 24h"
-msgstr "24 h glissantes"
+msgstr ""
 
 #: backend/aiusage/normalize/grok.py
 msgid "Grok CLI"
-msgstr "Grok CLI"
+msgstr ""
 
 #: backend/aiusage/normalize/grok.py
 msgid "CLI"
-msgstr "CLI"
+msgstr ""
 
 #: backend/aiusage/normalize/grok.py backend/aiusage/normalize/openrouter.py
 msgid "Credit usage"
-msgstr "Utilisation des crédits"
+msgstr ""
 
 #: backend/aiusage/normalize/grok.py
 msgid "Billing quota"
-msgstr "Quota de facturation"
+msgstr ""
 
 #: backend/aiusage/normalize/grok.py
 msgid "Not exposed for this Grok account"
-msgstr "Non disponible pour ce compte Grok"
+msgstr ""
 
 #: backend/aiusage/normalize/grok.py
 msgid "Local CLI activity"
-msgstr "Activité CLI locale"
+msgstr ""
 
 #: backend/aiusage/normalize/grok.py
 msgid "%1%2%3 tokens · %4 tool calls"
-msgstr "%1%2%3 jetons · %4 appels d'outils"
+msgstr ""
 
 #: backend/aiusage/normalize/grok.py
 msgid "Grok credits: %1% used"
-msgstr "Crédits Grok : %1% utilisé"
+msgstr ""
 
 #: backend/aiusage/normalize/grok.py
 msgid "Grok CLI connected; billing quota is not exposed"
-msgstr "Grok CLI connecté ; le quota de facturation n'est pas exposé"
+msgstr ""
 
 #: backend/aiusage/normalize/junie.py
 msgid ""
 "Junie (untested): no recorded token usage yet. Run a session using /account "
 "or junie --provider google."
 msgstr ""
-"Junie (non testé) : aucune utilisation de jetons enregistrée. Lancez une "
-"session avec /account ou junie --provider google."
 
 #: backend/aiusage/normalize/kiro.py
 msgid "Kiro: no local usage data found"
-msgstr "Kiro : aucune donnée d'utilisation locale trouvée"
+msgstr ""
 
 #: backend/aiusage/normalize/kiro.py
 msgid "Kiro: %1"
-msgstr "Kiro : %1"
+msgstr ""
 
 #: backend/aiusage/normalize/kiro.py
 msgid "Kiro: usage snapshot is empty"
-msgstr "Kiro : l'instantané d'utilisation est vide"
+msgstr ""
 
 #: backend/aiusage/normalize/kiro.py
 msgid "Monthly credits"
-msgstr "Crédits mensuels"
+msgstr ""
 
 #: backend/aiusage/normalize/kiro.py
 msgid "Credits: %1"
-msgstr "Crédits : %1"
+msgstr ""
 
 #: backend/aiusage/normalize/local_activity.py
 msgid "%1 tokens · %2 session · %3"
-msgstr "%1 jetons · %2 session · %3"
+msgstr ""
 
 #: backend/aiusage/normalize/local_activity.py
 msgid "%1 tokens · %2 sessions · %3"
-msgstr "%1 jetons · %2 sessions · %3"
+msgstr ""
 
 #: backend/aiusage/normalize/local_activity.py
 msgid "%1 tokens · %2 session"
-msgstr "%1 jetons · %2 session"
+msgstr ""
 
 #: backend/aiusage/normalize/local_activity.py
 msgid "%1 tokens · %2 sessions"
-msgstr "%1 jetons · %2 sessions"
+msgstr ""
 
 #: backend/aiusage/normalize/local_activity.py
 msgid "%1: no local sessions yet"
-msgstr "%1 : aucune session locale pour l'instant"
+msgstr ""
 
 #: backend/aiusage/normalize/local_activity.py
 msgid "%1 local usage"
-msgstr "%1 — utilisation locale"
+msgstr ""
 
 #: backend/aiusage/normalize/mistral.py
 msgid "Mistral: no API key configured"
-msgstr "Mistral : aucune clé API configurée"
+msgstr ""
 
 #: backend/aiusage/normalize/mistral.py
 msgid "%1 models available"
-msgstr "%1 modèles disponibles"
+msgstr ""
 
 #: backend/aiusage/normalize/mistral.py
 msgid "vibe CLI spend"
-msgstr "Dépenses du CLI vibe"
+msgstr ""
 
 #: backend/aiusage/normalize/mistral.py backend/aiusage/normalize/openrouter.py
 msgid "✓ key"
-msgstr "✓ clé"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "Weekly limit"
-msgstr "Limite hebdomadaire"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "Daily limit"
-msgstr "Limite quotidienne"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "%1-day limit"
-msgstr "Limite sur %1 jours"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "%1-hour limit"
-msgstr "Limite sur %1 heures"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "%1-minute limit"
-msgstr "Limite sur %1 minutes"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "Plan usage"
-msgstr "Utilisation du forfait"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "Kimi: %1"
-msgstr "Kimi : %1"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "Kimi: no Moonshot API key or Kimi Code login"
-msgstr "Kimi : ni clé API Moonshot ni connexion Kimi Code"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "Plan quota used up"
-msgstr "Quota du forfait épuisé"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "Extra usage"
-msgstr "Utilisation supplémentaire"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "%1 left"
-msgstr "%1 restants"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "of %1"
-msgstr "sur %1"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "Available balance"
-msgstr "Solde disponible"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "Voucher / cash"
-msgstr "Bon / espèces"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "Kimi Code"
-msgstr "Kimi Code"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "Moonshot API"
-msgstr "API Moonshot"
+msgstr ""
 
 #: backend/aiusage/normalize/moonshot.py
 msgid "Kimi balance: %1"
-msgstr "Solde Kimi : %1"
+msgstr ""
 
 #: backend/aiusage/normalize/muse.py
 msgid "Tokens"
-msgstr "Jetons"
+msgstr ""
 
 #: backend/aiusage/normalize/muse.py
 msgid "%1 out · %2 calls"
-msgstr "%1 en sortie · %2 appels"
+msgstr ""
 
 #: backend/aiusage/normalize/muse.py
 msgid "Spend (est.)"
-msgstr "Dépenses (est.)"
+msgstr ""
 
 #: backend/aiusage/normalize/muse.py
 msgid "Muse tokens: %1"
-msgstr "Jetons Muse : %1"
+msgstr ""
 
 #: backend/aiusage/normalize/muse.py
 msgid "%1 sessions"
-msgstr "%1 sessions"
+msgstr ""
 
 #: backend/aiusage/normalize/ollama.py
 msgid "Ollama Cloud: no API key found in settings, environment, or OpenCode"
 msgstr ""
-"Ollama Cloud : aucune clé API dans les paramètres, l'environnement ou "
-"OpenCode"
 
 #: backend/aiusage/normalize/ollama.py backend/aiusage/providers/ollama.py
 msgid "Ollama Cloud: invalid usage response"
-msgstr "Ollama Cloud : réponse d'utilisation invalide"
+msgstr ""
 
 #: backend/aiusage/normalize/ollama.py
 msgid "Ollama Cloud: usage response has no limit data"
-msgstr "Ollama Cloud : la réponse d'utilisation ne contient aucune limite"
+msgstr ""
 
 #: backend/aiusage/normalize/ollama.py
 msgid "Ollama Cloud: no recognized usage limits in response"
-msgstr "Ollama Cloud : aucune limite d'utilisation reconnue dans la réponse"
+msgstr ""
 
 #: backend/aiusage/normalize/ollama.py
 msgid "%1: %2%"
-msgstr "%1 : %2 %"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "OpenAI: no API key or Codex login"
-msgstr "OpenAI : ni clé API ni connexion Codex"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "Codex 5-hour"
-msgstr "Codex 5 heures"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "ChatGPT/Codex plan window"
-msgstr "Fenêtre de l'offre ChatGPT/Codex"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "Codex weekly"
-msgstr "Codex hebdomadaire"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "Secondary plan window"
-msgstr "Fenêtre secondaire de l'offre"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "%1 · 5-hour"
-msgstr "%1 · 5 heures"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "Limit reached"
-msgstr "Limite atteinte"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "%1 · weekly"
-msgstr "%1 · hebdomadaire"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "Codex 5h: %1% left"
-msgstr "Codex 5h : %1% restant"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "Codex weekly: %1% left"
-msgstr "Codex hebdomadaire : %1% restant"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "API"
-msgstr "API"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "API key configured"
-msgstr "Clé API configurée"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "API credentials"
-msgstr "Identifiants API"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "Organization usage available"
-msgstr "Utilisation de l'organisation disponible"
+msgstr ""
 
 #: backend/aiusage/normalize/openai.py
 msgid "Codex signed in; no organization API key"
-msgstr "Codex connecté ; aucune clé API d'organisation"
+msgstr ""
 
 #: backend/aiusage/normalize/opencode.py
 msgid "OpenCode Go: %1"
-msgstr "OpenCode Go : %1"
+msgstr ""
 
 #: backend/aiusage/normalize/opencode.py
 msgid "OpenCode Go: no usage data"
-msgstr "OpenCode Go : aucune donnée d'utilisation"
+msgstr ""
 
 #: backend/aiusage/normalize/opencode.py
 msgid "OpenCode Go: malformed usage response"
-msgstr "OpenCode Go : réponse d'utilisation mal formée"
+msgstr ""
 
 #: backend/aiusage/normalize/opencode.py
 msgid "OpenCode Go: no usable quota windows"
-msgstr "OpenCode Go : aucune fenêtre de quota exploitable"
+msgstr ""
 
 #: backend/aiusage/normalize/opencode.py
 msgid ""
@@ -1818,330 +1732,322 @@ msgstr ""
 
 #: backend/aiusage/normalize/openrouter.py
 msgid "OpenRouter: no API key configured"
-msgstr "OpenRouter : aucune clé API configurée"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "All local model servers offline"
-msgstr "Tous les serveurs de modèles locaux sont hors ligne"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "%1 of %2 servers online"
-msgstr "%1 serveurs sur %2 en ligne"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "No local model server"
-msgstr "Aucun serveur de modèles local"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "GPU VRAM"
-msgstr "VRAM GPU"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "%1 / %2 GB"
-msgstr "%1 / %2 Go"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "Model VRAM"
-msgstr "VRAM des modèles"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "%1 GB loaded"
-msgstr "%1 Go chargés"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "KV cache"
-msgstr "Cache KV"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "Requests"
-msgstr "Requêtes"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "%1 running · %2 waiting"
-msgstr "%1 en cours · %2 en attente"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "Active slots"
-msgstr "Emplacements actifs"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "%1 of %2 generating"
-msgstr "%1 sur %2 en génération"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "Server tokens"
-msgstr "Jetons du serveur"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "%1 tokens since server start"
-msgstr "%1 jetons depuis le démarrage du serveur"
+msgstr ""
 
 #: backend/aiusage/normalize/selfhosted.py
 msgid "Loaded models"
-msgstr "Modèles chargés"
+msgstr ""
 
 #: backend/aiusage/normalize/zai.py
 msgid "Today"
-msgstr "Aujourd'hui"
+msgstr ""
 
 #: backend/aiusage/normalize/zai.py
 msgid "Today (%1 %2)"
-msgstr "Aujourd'hui (%2 %1)"
+msgstr ""
 
 #: backend/aiusage/normalize/zai.py
 msgid "%1 calls"
-msgstr "%1 appels"
+msgstr ""
 
 #: backend/aiusage/normalize/zai.py
 msgid "Z.AI: no token configured"
-msgstr "Z.AI : aucun jeton configuré"
+msgstr ""
 
 #: backend/aiusage/normalize/zai.py
 msgid "Z.AI: %1"
-msgstr "Z.AI : %1"
+msgstr ""
 
 #: backend/aiusage/normalize/zai.py
 msgid "%1 remaining"
-msgstr "%1 restants"
+msgstr ""
 
 #: backend/aiusage/normalize/zai.py
 msgid "5-hour tokens"
-msgstr "Jetons sur 5 heures"
+msgstr ""
 
 #: backend/aiusage/normalize/zai.py
 msgid "7-day tokens"
-msgstr "Jetons sur 7 jours"
+msgstr ""
 
 #: backend/aiusage/normalize/zai.py
 msgid "Monthly tools"
-msgstr "Outils mensuels"
+msgstr ""
 
 #: backend/aiusage/normalize/zai.py
 msgid "Z.AI tokens (5h): %1%"
-msgstr "Jetons Z.AI (5 h) : %1 %"
+msgstr ""
 
 #: backend/aiusage/normalize/zai.py
 msgid "Z.AI tokens (7d): %1%"
-msgstr "Jetons Z.AI (7 j) : %1 %"
+msgstr ""
 
 #: backend/aiusage/normalize/zai.py
 msgid "Z.AI tools: %1%"
-msgstr "Outils Z.AI : %1 %"
+msgstr ""
 
 #: backend/aiusage/providers/antigravity.py
 msgid "Antigravity language server found but could not connect to API"
 msgstr ""
-"Serveur de langage Antigravity trouvé, mais connexion à l'API impossible"
 
 #: backend/aiusage/providers/antigravity.py
 msgid ""
 "Finding Antigravity on this platform needs the psutil package (pip install "
 "psutil)"
 msgstr ""
-"Trouver Antigravity sur cette plateforme nécessite le paquet psutil (pip "
-"install psutil)"
 
 #: backend/aiusage/providers/antigravity.py
 msgid "Antigravity is not running. Please open your IDE."
-msgstr "Antigravity n'est pas lancé. Ouvrez votre IDE."
+msgstr ""
 
 #: backend/aiusage/providers/copilot.py
 msgid "Invalid GitHub token"
-msgstr "Jeton GitHub invalide"
+msgstr ""
 
 #: backend/aiusage/providers/copilot.py
 msgid "GitHub username missing"
-msgstr "Nom d'utilisateur GitHub manquant"
+msgstr ""
 
 #: backend/aiusage/providers/copilot.py
 msgid "GitHub token cannot read Copilot premium request usage"
 msgstr ""
-"Le jeton GitHub ne peut pas lire l'utilisation des requêtes premium Copilot"
 
 #: backend/aiusage/providers/copilot.py
 msgid "GitHub Copilot invalid JSON"
-msgstr "GitHub Copilot : JSON invalide"
+msgstr ""
 
 #: backend/aiusage/providers/cursor.py
 msgid "login expired — run cursor-agent login"
-msgstr "connexion expirée — lancez cursor-agent login"
+msgstr ""
 
 #: backend/aiusage/providers/cursor.py
 msgid "login rejected — run cursor-agent login"
-msgstr "connexion refusée — lancez cursor-agent login"
+msgstr ""
 
 #: backend/aiusage/providers/cursor.py
 msgid "usage response could not be parsed"
-msgstr "la réponse d'utilisation n'a pas pu être lue"
+msgstr ""
 
 #: backend/aiusage/providers/cursor_sessions.py
 msgid "Cursor"
-msgstr "Cursor"
+msgstr ""
 
 #: backend/aiusage/providers/deepseek.py
 msgid "Invalid DeepSeek API key"
-msgstr "Clé API DeepSeek invalide"
+msgstr ""
 
 #: backend/aiusage/providers/deepseek.py
 msgid "DeepSeek invalid JSON"
-msgstr "DeepSeek : JSON invalide"
+msgstr ""
 
 #: backend/aiusage/providers/deepseek.py
 msgid "DeepSeek unexpected response"
-msgstr "DeepSeek : réponse inattendue"
+msgstr ""
 
 #: backend/aiusage/providers/grok.py
 msgid "Grok auth expired — run grok --oauth"
-msgstr "Authentification Grok expirée — lancez grok --oauth"
+msgstr ""
 
 #: backend/aiusage/providers/grok.py
 msgid "Billing HTTP %1"
-msgstr "Facturation HTTP %1"
+msgstr ""
 
 #: backend/aiusage/providers/kimi_code.py
 msgid "Kimi Code usage response could not be parsed"
-msgstr "La réponse d'utilisation Kimi Code n'a pas pu être lue"
+msgstr ""
 
 #: backend/aiusage/providers/kimi_code.py
 msgid "Kimi Code login rejected — run kimi once to refresh it"
-msgstr "Connexion Kimi Code refusée — lancez kimi une fois pour la renouveler"
+msgstr ""
 
 #: backend/aiusage/providers/kimi_code.py
 msgid "Kimi Code %1"
-msgstr "Kimi Code %1"
+msgstr ""
 
 #: backend/aiusage/providers/kimi_code.py
 msgid "Kimi Code is not signed in — run kimi and /login"
-msgstr "Kimi Code n'est pas connecté — lancez kimi puis /login"
+msgstr ""
 
 #: backend/aiusage/providers/kimi_code.py
 msgid "Kimi Code login expired — run kimi once to refresh it"
-msgstr "Connexion Kimi Code expirée — lancez kimi une fois pour la renouveler"
+msgstr ""
 
 #: backend/aiusage/providers/kiro.py
 msgid "No Kiro usage snapshot — open Kiro and let it refresh"
 msgstr ""
-"Aucun instantané d'utilisation Kiro — ouvrez Kiro et laissez-le se rafraîchir"
 
 #: backend/aiusage/providers/kiro.py
 msgid "Kiro usage payload could not be parsed"
-msgstr "Les données d'utilisation Kiro n'ont pas pu être lues"
+msgstr ""
 
 #: backend/aiusage/providers/kiro.py
 msgid "Kiro usage response could not be parsed"
-msgstr "La réponse d'utilisation Kiro n'a pas pu être lue"
+msgstr ""
 
 #: backend/aiusage/providers/kiro.py
 msgid "Kiro usage response has no credit breakdown"
-msgstr "La réponse d'utilisation Kiro ne détaille pas les crédits"
+msgstr ""
 
 #: backend/aiusage/providers/kiro.py
 msgid "kiro-cli is not signed in — run kiro-cli login"
-msgstr "kiro-cli n'est pas connecté — lancez kiro-cli login"
+msgstr ""
 
 #: backend/aiusage/providers/kiro.py
 msgid "kiro-cli login expired — run kiro-cli once to refresh it"
 msgstr ""
-"Connexion kiro-cli expirée — lancez kiro-cli une fois pour la renouveler"
 
 #: backend/aiusage/providers/kiro.py
 msgid "kiro-cli login rejected — run kiro-cli once to refresh it"
 msgstr ""
-"Connexion kiro-cli refusée — lancez kiro-cli une fois pour la renouveler"
 
 #: backend/aiusage/providers/kiro.py
 msgid "No Kiro state found — sign in to Kiro IDE or kiro-cli once"
 msgstr ""
-"Aucun état Kiro trouvé — connectez-vous une fois à Kiro IDE ou kiro-cli"
 
 #: backend/aiusage/providers/mistral.py
 msgid "untitled"
-msgstr "sans titre"
+msgstr ""
 
 #: backend/aiusage/providers/mistral.py
 msgid "Mistral invalid JSON"
-msgstr "Mistral : JSON invalide"
+msgstr ""
 
 #: backend/aiusage/providers/mistral.py backend/aiusage/providers/openrouter.py
 msgid "Invalid API key (401)"
-msgstr "Clé API invalide (401)"
+msgstr ""
 
 #: backend/aiusage/providers/mistral.py
 msgid "Rate limited (429)"
-msgstr "Limite de débit atteinte (429)"
+msgstr ""
 
 #: backend/aiusage/providers/mistral.py
 msgid "Mistral network error"
-msgstr "Mistral : erreur réseau"
+msgstr ""
 
 #: backend/aiusage/providers/mistral.py
 msgid "HTTP %1"
-msgstr "HTTP %1"
+msgstr ""
 
 #: backend/aiusage/providers/mistral_sessions.py
 msgid "Mistral Vibe"
-msgstr "Mistral Vibe"
+msgstr ""
 
 #: backend/aiusage/providers/moonshot.py
 msgid "Invalid Moonshot API key"
-msgstr "Clé API Moonshot invalide"
+msgstr ""
 
 #: backend/aiusage/providers/moonshot.py
 msgid "Kimi invalid JSON"
-msgstr "Kimi : JSON invalide"
+msgstr ""
 
 #: backend/aiusage/providers/moonshot.py
 msgid "Kimi unexpected response"
-msgstr "Kimi : réponse inattendue"
+msgstr ""
 
 #: backend/aiusage/providers/ollama.py
 msgid "Ollama Cloud: invalid API key characters"
-msgstr "Ollama Cloud : caractères invalides dans la clé API"
+msgstr ""
 
 #: backend/aiusage/providers/openrouter.py
 msgid "OpenRouter invalid JSON"
-msgstr "OpenRouter : JSON invalide"
+msgstr ""
 
 #: backend/aiusage/providers/selfhosted.py
 msgid "Invalid local server URL"
-msgstr "URL de serveur local invalide"
+msgstr ""
 
 #: backend/aiusage/providers/selfhosted.py
 msgid "Offline or unsupported"
-msgstr "Hors ligne ou non pris en charge"
+msgstr ""
 
 #: backend/aiusage/providers/selfhosted.py
 msgid "Unknown local engine"
-msgstr "Moteur local inconnu"
+msgstr ""
 
 #: backend/aiusage/providers/selfhosted.py
 msgid "Invalid local server key"
-msgstr "Clé de serveur local invalide"
+msgstr ""
 
 #: backend/aiusage/providers/selfhosted.py
 msgid "At most eight local server URLs are supported"
-msgstr "Huit URL de serveurs locaux au maximum sont prises en charge"
+msgstr ""
 
 #: backend/aiusage/providers/selfhosted.py
 msgid "No local server URL configured"
-msgstr "Aucune URL de serveur local configurée"
+msgstr ""
 
 #: backend/aiusage/providers/selfhosted.py
 msgid "Local model servers offline or unsupported"
-msgstr "Serveurs de modèles locaux hors ligne ou non pris en charge"
+msgstr ""
 
 #: backend/aiusage/providers/zai.py
 msgid "Invalid Z.AI token"
-msgstr "Jeton Z.AI invalide"
+msgstr ""
 
 #: backend/aiusage/providers/zai.py
 msgid "Z.AI invalid JSON"
-msgstr "Z.AI : JSON invalide"
+msgstr ""
 
 #: backend/aiusage/providers/zai.py
 msgid "Z.AI API error"
-msgstr "Z.AI : erreur de l'API"
+msgstr ""
 
 #: backend/aiusage/providers/zai.py
 msgid "Z.AI unexpected response"
-msgstr "Z.AI : réponse inattendue"
+msgstr ""

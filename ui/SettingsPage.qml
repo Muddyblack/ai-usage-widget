@@ -499,6 +499,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter
             }
             Text {
+                // TRANSLATORS: the small rounded usage readout floating on the desktop edge
                 text: page.shell.i18n("Pill")
                 font.pixelSize: 11
                 color: "#f8fafc"
@@ -614,6 +615,195 @@ ColumnLayout {
             StyledToggle {
                 checked: page.shell.settings.showChart !== false
                 onToggled: page.shell.setSetting2("showChart", checked)
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+        }
+
+        // ── Pins and rotation ──────────────────────────────────────────
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 1
+            Layout.preferredHeight: 1
+            color: Qt.rgba(1, 1, 1, 0.08)
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Rectangle {
+                Layout.preferredWidth: 7
+                Layout.preferredHeight: 7
+                radius: 3.5
+                color: "#fbbf24"
+                Layout.alignment: Qt.AlignVCenter
+            }
+            Text {
+                text: page.shell.i18n("Panel rotation")
+                font.pixelSize: 11
+                color: "#f8fafc"
+                Layout.preferredWidth: 90
+                elide: Text.ElideRight
+            }
+            SettingCombo {
+                Layout.preferredWidth: 130
+                readonly property var values: [0, 30, 60, 120, 300, 600]
+                model: [page.shell.i18n("Off"), page.shell.i18n("30 seconds"), page.shell.i18n("1 minute"), page.shell.i18n("2 minutes"), page.shell.i18n("5 minutes"), page.shell.i18n("10 minutes")]
+                currentIndex: Math.max(0, values.indexOf(page.shell.panelRotationSec))
+                onActivated: page.shell.setSetting2("panelRotationSec", values[currentIndex])
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+        }
+
+        Text {
+            Layout.fillWidth: true
+            text: page.shell.pinnedTabs.length > 0 ? page.shell.i18np("%1 provider pinned. With several pinned, the panel shows them side by side, or one at a time when rotation is on.", "%1 providers pinned. With several pinned, the panel shows them side by side, or one at a time when rotation is on.", page.shell.pinnedTabs.length) : page.shell.i18n("Pin a provider with the pin on its tab to keep it on the panel whatever the popup shows.")
+            font.pixelSize: 9
+            opacity: 0.45
+            color: "#f8fafc"
+            wrapMode: Text.WordWrap
+        }
+
+        // ── Popup appearance ───────────────────────────────────────────
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 1
+            Layout.preferredHeight: 1
+            color: Qt.rgba(1, 1, 1, 0.08)
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Rectangle {
+                Layout.preferredWidth: 7
+                Layout.preferredHeight: 7
+                radius: 3.5
+                color: page.shell.settings.popupBgColor || "#64748b"
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.3)
+                Layout.alignment: Qt.AlignVCenter
+            }
+            Text {
+                text: page.shell.i18n("Popup tint")
+                font.pixelSize: 11
+                color: "#f8fafc"
+                Layout.preferredWidth: 90
+                elide: Text.ElideRight
+            }
+            Repeater {
+                // A few presets; any #rrggbb can be typed in the field.
+                model: ["#000000", "#1e3a8a", "#4c1d95", "#134e4a", "#831843", "#78350f"]
+                Rectangle {
+                    required property string modelData
+                    readonly property bool chosen: (page.shell.settings.popupBgColor || "#000000").toLowerCase() === modelData
+                    Layout.preferredWidth: 16
+                    Layout.preferredHeight: 16
+                    radius: 8
+                    color: modelData
+                    border.width: chosen ? 2 : 1
+                    border.color: chosen ? "#f8fafc" : Qt.rgba(1, 1, 1, 0.25)
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: page.shell.setSetting2("popupBgColor", parent.modelData)
+                    }
+                }
+            }
+            Rectangle {
+                Layout.preferredWidth: 72
+                Layout.preferredHeight: 22
+                radius: 5
+                color: Qt.rgba(1, 1, 1, 0.06)
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.12)
+                QC.TextField {
+                    anchors.fill: parent
+                    anchors.leftMargin: 6
+                    text: page.shell.settings.popupBgColor || "#000000"
+                    font.pixelSize: 10
+                    color: "#f8fafc"
+                    background: null
+                    verticalAlignment: TextInput.AlignVCenter
+                    selectByMouse: true
+                    validator: RegularExpressionValidator {
+                        regularExpression: /#[0-9A-Fa-f]{0,6}/
+                    }
+                    onEditingFinished: {
+                        if (/^#[0-9A-Fa-f]{6}$/.test(text))
+                            page.shell.setSetting2("popupBgColor", text.toLowerCase());
+                    }
+                }
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Rectangle {
+                Layout.preferredWidth: 7
+                Layout.preferredHeight: 7
+                radius: 3.5
+                color: "#94a3b8"
+                Layout.alignment: Qt.AlignVCenter
+            }
+            Text {
+                text: page.shell.i18n("Tint strength")
+                font.pixelSize: 11
+                color: "#f8fafc"
+                Layout.preferredWidth: 90
+                elide: Text.ElideRight
+            }
+            SettingCombo {
+                Layout.preferredWidth: 130
+                readonly property var values: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8]
+                model: values.map(function (v) {
+                    return v === 0 ? page.shell.i18n("Off") : Math.round(v * 100) + " %";
+                })
+                currentIndex: {
+                    var current = Number(page.shell.settings.popupBgOpacity || 0);
+                    var best = 0;
+                    for (var i = 1; i < values.length; i++)
+                        if (Math.abs(values[i] - current) < Math.abs(values[best] - current))
+                            best = i;
+                    return best;
+                }
+                onActivated: page.shell.setSetting2("popupBgOpacity", values[currentIndex])
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Rectangle {
+                Layout.preferredWidth: 7
+                Layout.preferredHeight: 7
+                radius: 3.5
+                color: page.shell.activeAccent
+                Layout.alignment: Qt.AlignVCenter
+            }
+            Text {
+                // TRANSLATORS: what is drawn faintly behind the popup's content
+                text: page.shell.i18n("Decoration")
+                font.pixelSize: 11
+                color: "#f8fafc"
+                Layout.preferredWidth: 90
+                elide: Text.ElideRight
+            }
+            SettingCombo {
+                Layout.preferredWidth: 130
+                model: [page.shell.i18n("Accent glow"), page.shell.i18n("Provider logo"), page.shell.i18n("None")]
+                currentIndex: Math.max(0, Math.min(2, Number(page.shell.settings.popupDecoration || 0)))
+                onActivated: page.shell.setSetting2("popupDecoration", currentIndex)
             }
             Item {
                 Layout.fillWidth: true

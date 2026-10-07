@@ -125,7 +125,7 @@ ColumnLayout {
                     }
                     Text {
                         visible: ((modelData.summary && modelData.summary.detail) || "") !== ""
-                        text: (modelData.summary && modelData.summary.detail) || ""
+                        text: page.shell.tr(modelData.summary, "detail")
                         font.pixelSize: 10
                         opacity: 0.5
                         color: "#f8fafc"

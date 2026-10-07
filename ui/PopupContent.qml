@@ -129,6 +129,8 @@ ColumnLayout {
                         // Provider/API total: metered spend and plan-inclusive spend
                         var providerRows = FeatureTabs.spendProviderRows(shell.providers, shell.localSpend);
                         var allRows = providerRows.concat(FeatureTabs.localSpendRows(shell.localSpend, providerRows, shell.providers));
+                        // The same timeframe the Spend view below is cut to.
+                        allRows = FeatureTabs.spendRowsForWindow(allRows, Number(shell.settings.spendWindowDays || 0));
                         return FeatureTabs.spendSummaryText(allRows, "USD", shell.i18n);
                     }
                     return "";
@@ -322,6 +324,42 @@ ColumnLayout {
                         color: "#f8fafc"
                         opacity: isActive ? 1.0 : 0.6
                     }
+                    // Pin on the panel: always shown while pinned, on hover
+                    // otherwise. A pushpin drawn as head + needle, so it does
+                    // not depend on an icon theme or an emoji font.
+                    Item {
+                        id: pinButton
+                        readonly property bool pinned: typeof shell.isPinned === "function" && shell.isPinned(modelData.id)
+                        visible: !modelData.feature && typeof shell.togglePin === "function" && (pinned || tabMouse.containsMouse || pinMouse.containsMouse)
+                        Layout.preferredWidth: 10
+                        Layout.preferredHeight: 12
+                        opacity: pinned ? 1.0 : (pinMouse.containsMouse ? 0.9 : 0.4)
+                        Rectangle {
+                            x: 1
+                            y: 0
+                            width: 8
+                            height: 8
+                            radius: 4
+                            color: pinButton.pinned ? modelData.accent : "transparent"
+                            border.width: 1.5
+                            border.color: pinButton.pinned ? modelData.accent : "#f8fafc"
+                        }
+                        Rectangle {
+                            x: 4
+                            y: 8
+                            width: 2
+                            height: 4
+                            color: pinButton.pinned ? modelData.accent : "#f8fafc"
+                        }
+                        MouseArea {
+                            id: pinMouse
+                            anchors.fill: parent
+                            anchors.margins: -4
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: shell.togglePin(modelData.id)
+                        }
+                    }
                 }
             }
         }
@@ -345,7 +383,7 @@ ColumnLayout {
         Layout.fillWidth: true
         text: {
             var p = shell.activeProvider();
-            return p ? p.summary.detail : "";
+            return p ? shell.tr(p.summary, "detail") : "";
         }
         color: "#94a3b8"
         font.pixelSize: 11
@@ -373,7 +411,7 @@ ColumnLayout {
             anchors.margins: 9
             text: {
                 var p = shell.activeProvider();
-                return p ? p.error : "";
+                return p ? shell.tr(p, "error") : "";
             }
             color: "#fecaca"
             font.pixelSize: 12
@@ -404,6 +442,7 @@ ColumnLayout {
                     },
                     {
                         id: "stats",
+                        // TRANSLATORS: sub-tab with activity statistics (tokens, sessions, models)
                         label: shell.i18n("Stats")
                     }
                 ]
@@ -464,10 +503,13 @@ ColumnLayout {
 
         UsageRows {
             Layout.fillWidth: true
+            // The last known values, shown at start until live ones arrive.
+            opacity: shell.replaying ? 0.55 : 1
             provider: shell.activeProvider()
             activeId: shell.activeId
             accent: shell.activeAccent
             countdown: shell.countdownFor
+            translate: shell.tr
         }
 
         // Muse is the only provider whose plan bars cost
@@ -570,7 +612,7 @@ ColumnLayout {
         }
         Text {
             visible: shell.updatedAt > 0 && shell.errorText === ""
-            text: shell.i18n("updated %1", new Date(shell.updatedAt * 1000).toLocaleTimeString(Qt.locale(), Locale.ShortFormat))
+            text: shell.replaying ? shell.i18n("last known %1 · refreshing…", new Date(shell.updatedAt * 1000).toLocaleTimeString(Qt.locale(), Locale.ShortFormat)) : shell.i18n("updated %1", new Date(shell.updatedAt * 1000).toLocaleTimeString(Qt.locale(), Locale.ShortFormat))
             color: "#f8fafc"
             opacity: 0.45
             font.pixelSize: 10

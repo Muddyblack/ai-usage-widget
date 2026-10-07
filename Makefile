@@ -1,4 +1,4 @@
-.PHONY: help view view-h view-hyprland hyprland install pack tag test test-py translations check-translations lint-py run-desktop run-windows macos
+.PHONY: new-language help view view-h view-hyprland hyprland install pack tag test test-py translations check-translations lint-py run-desktop run-windows macos
 .DEFAULT_GOAL := help
 
 help: ## list targets
@@ -59,7 +59,15 @@ translations: ## regenerate template.pot from sources and compile the .mo catalo
 	@./translate/Messages.sh
 	@./translate/build.sh
 
-check-translations: ## fail if a locale catalog has untranslated/fuzzy entries
+new-language: ## start a catalog for a language (make new-language CODE=de); LANG is the shell's locale, so not that
+	@test -n "$(CODE)" || { echo "usage: make new-language CODE=<language code, e.g. de or pt_BR>" >&2; exit 2; }
+	@test ! -e translate/$(CODE).po || { echo "translate/$(CODE).po already exists" >&2; exit 1; }
+	@./translate/Messages.sh >/dev/null
+	@msginit --no-translator --input=translate/template.pot --locale=$(CODE) --output-file=translate/$(CODE).po
+	@sed -i '/^"POT-Creation-Date:/d' translate/$(CODE).po
+	@echo "wrote translate/$(CODE).po: translate it (or on Weblate), then: make translations && make check-translations"
+
+check-translations: ## check every catalog compiles; listed ones (translate/complete-languages) must be complete
 	@./translate/check.sh
 
 lint-py: ## lint + format-check the Python backend, frontends and helpers (dev only, needs ruff)

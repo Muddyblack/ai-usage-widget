@@ -7,6 +7,7 @@ import os
 
 from ..contract import num
 from ..http import as_json, error_json, fetch_json, http_error_json, resolve_key
+from ..messages import tr
 
 
 def get_deepseek_balance():
@@ -25,15 +26,15 @@ def get_deepseek_balance():
         fixture_path=os.environ.get("DEEPSEEK_BALANCE_RESPONSE_FILE"),
     )
     if result.status != 200:
-        return http_error_json("DeepSeek", result.status, "Invalid DeepSeek API key")
+        return http_error_json("DeepSeek", result.status, tr("Invalid DeepSeek API key"))
 
     body = as_json(result.body)
     if body is None:
-        return error_json("DeepSeek invalid JSON")
+        return error_json(tr("DeepSeek invalid JSON"))
 
     balances = body.get("balance_infos")
     if not isinstance(balances, list):
-        return {"hasKey": True, "keyValid": False, "error": "DeepSeek unexpected response"}
+        return {"hasKey": True, "keyValid": False, "error": tr("DeepSeek unexpected response")}
 
     primary = next((b for b in balances if b.get("currency") == "USD"), balances[0] if balances else {})
     return {

@@ -226,6 +226,7 @@ ShellRoot {
                 slots: app.pillSlots
                 stale: app.pillStale
                 hasError: app.pillHasError
+                groups: app.panelGroups
                 onClicked: {
                     if (root.popupOpen && root.popupOwnedBy(panel.screen))
                         root.popupOpen = false;
@@ -360,37 +361,10 @@ ShellRoot {
                     right: root.positionRight ? 12 : 0
                 }
 
-                // Glassmorphism backdrop: tinted gradient, accent glow, top highlight
-                Rectangle {
+                // The shared glass (ui/PopupBackground.qml), with its tint and decoration.
+                PopupBackground {
                     anchors.fill: parent
-                    radius: 12
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0.0
-                            color: Qt.rgba(0.09, 0.10, 0.13, 0.96)
-                        }
-                        GradientStop {
-                            position: 0.5
-                            color: Qt.rgba(0.06, 0.07, 0.09, 0.96)
-                        }
-                        GradientStop {
-                            position: 1.0
-                            color: Qt.rgba(0.04, 0.045, 0.06, 0.97)
-                        }
-                    }
-                    border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.12)
-                    clip: true
-
-                    // crisp inner top highlight line
-                    Rectangle {
-                        anchors.top: parent.top
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.margins: 1
-                        height: 1
-                        color: Qt.rgba(1, 1, 1, 0.18)
-                    }
+                    shell: app
                 }
 
                 // The popup height is capped, but the settings page is far taller than

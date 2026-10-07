@@ -24,6 +24,7 @@ import urllib.request
 from .. import config as _config
 from .. import paths
 from ..http import as_json
+from ..messages import tr
 
 _HAS_PROC = os.path.isdir("/proc/self")
 
@@ -431,7 +432,7 @@ def get_antigravity_usage():
             return usage
 
     if found_any_process:
-        return {"error": "Antigravity language server found but could not connect to API"}
+        return {"error": tr("Antigravity language server found but could not connect to API")}
     if not _HAS_PROC and _psutil() is None:
-        return {"error": "Finding Antigravity on this platform needs the psutil package (pip install psutil)"}
-    return {"error": "Antigravity is not running. Please open your IDE."}
+        return {"error": tr("Finding Antigravity on this platform needs the psutil package (pip install psutil)")}
+    return {"error": tr("Antigravity is not running. Please open your IDE.")}

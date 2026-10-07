@@ -4,6 +4,7 @@ import math
 import re
 
 from ..contract import chart_window, compact_tokens, epoch_of, flat_window, pct_clamp, provider_base, provider_error
+from ..messages import tr
 
 ACCENT = "#38bdf8"
 METRIC = re.compile(r"^([a-zA-Z_:][\w:]*)(?:\{[^}]*\})?\s+([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)$")
@@ -33,12 +34,12 @@ def normalize_selfhosted(raw):
                 "Local Models",
                 ACCENT,
                 now,
-                "All local model servers offline",
+                tr("All local model servers offline"),
                 {"servers": [{"url": instance.get("url", ""), "error": row["error"]} for instance, row in zip(instances, rows)]},
             )
         r = provider_base("selfhosted", "Local Models", ACCENT, now)
         r["summary"] = dict(max(healthy, key=lambda row: row["summary"]["pct"])["summary"])
-        r["summary"]["detail"] = f"{len(healthy)} of {len(rows)} servers online"
+        r["summary"]["detail"] = tr("%1 of %2 servers online", len(healthy), len(rows))
         r["summary"]["status"] = "active" if any(row["summary"].get("status") == "active" for row in healthy) else "ready"
         servers = []
         for index, (instance, row) in enumerate(zip(instances, rows)):
@@ -66,7 +67,7 @@ def normalize_selfhosted(raw):
         return provider_error("selfhosted", "Local Models", ACCENT, now, body["error"], {})
     engine = body.get("engine")
     if not engine:
-        return provider_error("selfhosted", "Local Models", ACCENT, now, "No local model server", {})
+        return provider_error("selfhosted", "Local Models", ACCENT, now, tr("No local model server"), {})
     r = provider_base("selfhosted", "Local Models", ACCENT, now)
     windows, models, slots = [], [], []
     metrics = _metrics(body.get("metrics") or "")
@@ -77,7 +78,16 @@ def normalize_selfhosted(raw):
     if gpu.get("totalMiB", 0) > 0:
         vram_pct = pct_clamp(gpu["usedMiB"] / gpu["totalMiB"] * 100)
         pct = vram_pct
-        windows.append(flat_window("local_vram", "GPU VRAM", vram_pct, 0, f"{gpu['usedMiB'] / 1024:.1f} / {gpu['totalMiB'] / 1024:.1f} GB", True))
+        windows.append(
+            flat_window(
+                "local_vram",
+                tr("GPU VRAM"),
+                vram_pct,
+                0,
+                tr("%1 / %2 GB", format(gpu["usedMiB"] / 1024, ".1f"), format(gpu["totalMiB"] / 1024, ".1f")),
+                True,
+            )
+        )
     if engine == "ollama":
         for model in body.get("models") or []:
             if not isinstance(model, dict):
@@ -97,17 +107,24 @@ def normalize_selfhosted(raw):
             windows[0]["resetAt"] = reset
         if models and not gpu:
             windows.append(
-                flat_window("local_vram", "Model VRAM", 0, reset, f"{sum(m['sizeVram'] for m in models) / 1073741824:.1f} GB loaded", False)
+                flat_window(
+                    "local_vram",
+                    tr("Model VRAM"),
+                    0,
+                    reset,
+                    tr("%1 GB loaded", format(sum(m["sizeVram"] for m in models) / 1073741824, ".1f")),
+                    False,
+                )
             )
     elif engine == "vllm":
         models = [{"name": m.get("id", "Model")} for m in body.get("models") or [] if isinstance(m, dict)]
         fraction = metrics.get("vllm:gpu_cache_usage_factor")
         if fraction is not None:
             pct = pct_clamp(fraction * 100)
-            windows.append(flat_window("local_kv", "KV cache", pct, 0, f"{pct:.1f}% used", True))
+            windows.append(flat_window("local_kv", tr("KV cache"), pct, 0, tr("%1% used", format(pct, ".1f")), True))
         running = int(metrics.get("vllm:num_requests_running", 0))
         waiting = int(metrics.get("vllm:num_requests_waiting", 0))
-        windows.append(flat_window("local_requests", "Requests", 0, 0, f"{running} running · {waiting} waiting", False))
+        windows.append(flat_window("local_requests", tr("Requests"), 0, 0, tr("%1 running · %2 waiting", running, waiting), False))
     else:
         for slot in body.get("slots") or []:
             if not isinstance(slot, dict):
@@ -119,12 +136,12 @@ def normalize_selfhosted(raw):
             )
         if slots:
             pct = pct_clamp(running / len(slots) * 100)
-            windows.append(flat_window("local_slots", "Active slots", pct, 0, f"{running} of {len(slots)} generating", True))
+            windows.append(flat_window("local_slots", tr("Active slots"), pct, 0, tr("%1 of %2 generating", running, len(slots)), True))
     prompt = metrics.get("vllm:prompt_tokens_total", metrics.get("llamacpp:prompt_tokens_total", 0))
     output = metrics.get("vllm:generation_tokens_total", metrics.get("llamacpp:predicted_tokens_total", 0))
     total = int(prompt + output)
     if total:
-        windows.append(flat_window("local_tokens", "Server tokens", 0, 0, f"{compact_tokens(total)} tokens since server start", False))
+        windows.append(flat_window("local_tokens", tr("Server tokens"), 0, 0, tr("%1 tokens since server start", compact_tokens(total)), False))
         r["chartWindows"] = [
             chart_window("local_tokens_24h", "local_tokens", "24H", 86400000, "24h"),
             chart_window("local_tokens_7d", "local_tokens", "7D", 604800000, "7d"),
@@ -135,7 +152,7 @@ def normalize_selfhosted(raw):
     r["summary"] = {
         "pct": pct or 0,
         "text": f"{pct:.0f}%" if pct is not None else (f"{speed:.0f} t/s" if speed is not None else state),
-        "detail": "KV cache" if engine == "vllm" else ("Active slots" if engine == "llama.cpp" else "Loaded models"),
+        "detail": tr("KV cache") if engine == "vllm" else (tr("Active slots") if engine == "llama.cpp" else tr("Loaded models")),
         "hasChart": pct is not None,
         "resetsAt": reset,
         "status": state,

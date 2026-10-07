@@ -8,6 +8,7 @@ from urllib.parse import urlsplit
 
 from .. import config
 from ..http import as_json, fetch_json
+from ..messages import tr
 
 DEFAULTS = {"ollama": "http://127.0.0.1:11434", "vllm": "http://127.0.0.1:8000", "llama.cpp": "http://127.0.0.1:8080"}
 
@@ -44,7 +45,7 @@ def _local_gpu():
 def _probe(base, engine, headers):
     parsed = urlsplit(base)
     if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
-        return {"url": base, "error": "Invalid local server URL"}
+        return {"url": base, "error": tr("Invalid local server URL")}
     for name in DEFAULTS if engine == "auto" else (engine,):
         probe = {"ollama": "/api/version", "vllm": "/v1/models", "llama.cpp": "/slots"}[name]
         result = _request(base, probe, headers)
@@ -68,7 +69,7 @@ def _probe(base, engine, headers):
         if name == "llama.cpp" and isinstance(body, list):
             metrics = _request(base, "/metrics", headers)
             return {"url": base, "engine": name, "gpu": gpu, "slots": body, "metrics": metrics.body if metrics.status == 200 else ""}
-    return {"url": base, "error": "Offline or unsupported"}
+    return {"url": base, "error": tr("Offline or unsupported")}
 
 
 def get_selfhosted_usage():
@@ -76,10 +77,10 @@ def get_selfhosted_usage():
     endpoints = os.environ.get("WIDGET_SELFHOSTED_ENDPOINT") or cfg.get("selfhostedEndpoint") or ""
     engine = (os.environ.get("WIDGET_SELFHOSTED_ENGINE") or cfg.get("selfhostedEngine") or "auto").lower()
     if engine not in ("auto", *DEFAULTS):
-        return {"error": "Unknown local engine"}
+        return {"error": tr("Unknown local engine")}
     key = os.environ.get("WIDGET_SELFHOSTED_KEY") or (cfg.get("keys") or {}).get("selfhosted", "")
     if any(ord(ch) < 32 or ord(ch) == 127 for ch in key):
-        return {"error": "Invalid local server key"}
+        return {"error": tr("Invalid local server key")}
     headers = {"Authorization": f"Bearer {key}"} if key else {}
     urls = (
         list(dict.fromkeys(url.rstrip("/") for url in re.split(r"[,\s]+", endpoints.strip()) if url))
@@ -87,17 +88,17 @@ def get_selfhosted_usage():
         else list(DEFAULTS.values())
     )
     if len(urls) > 8:
-        return {"error": "At most eight local server URLs are supported"}
+        return {"error": tr("At most eight local server URLs are supported")}
     jobs = [(url, engine) for url in urls] if endpoints.strip() else list(zip(DEFAULTS.values(), DEFAULTS.keys()))
     if not jobs:
         # A setting of only separators ("," or whitespace) leaves nothing to probe.
-        return {"error": "No local server URL configured"}
+        return {"error": tr("No local server URL configured")}
     with ThreadPoolExecutor(max_workers=len(jobs)) as pool:
         instances = list(pool.map(lambda job: _probe(job[0], job[1], headers), jobs))
     if not endpoints.strip():
         instances = [instance for instance in instances if not instance.get("error")]
     if not instances:
-        return {"error": "Local model servers offline or unsupported"}
+        return {"error": tr("Local model servers offline or unsupported")}
     if len(instances) == 1:
         return instances[0]
     return {"instances": instances}

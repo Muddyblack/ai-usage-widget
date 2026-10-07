@@ -8,6 +8,8 @@ pay. See plan.md constraint #3.
 
 import os
 
+from .messages import tr
+
 
 class HttpResult:
     __slots__ = ("status", "body")
@@ -92,10 +94,10 @@ def http_error_json(label, status, auth_message=None):
     specific authentication message than "Invalid <label> credential" pass it
     as auth_message."""
     if status in (401, 403):
-        return error_json(auth_message or f"Invalid {label} credential")
+        return error_json(auth_message or tr("Invalid %1 credential", label))
     if status in (0, None, ""):
-        return error_json(f"{label} network error")
-    return error_json(f"{label} HTTP {status}")
+        return error_json(tr("%1 network error", label))
+    return error_json(tr("%1 HTTP %2", label, status))
 
 
 def fetch_json(url, headers=None, timeout=10, fixture_path=None, data=None):

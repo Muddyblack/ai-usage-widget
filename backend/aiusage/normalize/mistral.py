@@ -1,4 +1,5 @@
 from ..contract import flat_window, money, monthly_window, num, provider_base, provider_error
+from ..messages import tr
 
 
 def normalize_mistral(raw):
@@ -11,7 +12,7 @@ def normalize_mistral(raw):
             "Mistral",
             "#ff7000",
             now,
-            "Mistral: no API key configured",
+            tr("Mistral: no API key configured"),
             {"hasKey": False, "keyValid": False},
         )
 
@@ -45,16 +46,16 @@ def normalize_mistral(raw):
     r["summary"] = {
         "pct": pct,
         "text": money(cost, "USD"),
-        "detail": f"{len(models)} models available",
+        "detail": tr("%1 models available", len(models)),
         "hasChart": True,
     }
-    qw = flat_window("mistral", "vibe CLI spend", pct, 0, money(cost, "USD") + " total", True)
+    qw = flat_window("mistral", tr("vibe CLI spend"), pct, 0, money(cost, "USD") + " total", True)
     qw["resetText"] = "$50 soft cap"
     r["quotaWindows"] = [qw]
     if cost > 0:
         text = money(cost, "USD")
     elif valid:
-        text = "✓ key"
+        text = tr("✓ key")
     else:
         text = "—"
     r["slots"] = [

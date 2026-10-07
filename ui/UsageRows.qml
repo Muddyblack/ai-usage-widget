@@ -12,6 +12,11 @@ ColumnLayout {
     property var countdown: function (epoch) {
         return "";
     }
+    // How a backend-worded field is shown; the popup passes shell.tr, which
+    // translates it. The default shows the English text.
+    property var translate: function (obj, key) {
+        return obj[key] || "";
+    }
     readonly property int rowCount: repeater.count
 
     spacing: 12
@@ -25,12 +30,12 @@ ColumnLayout {
         UsageRow {
             required property var modelData
             objectName: "quota-" + modelData.key
-            label: modelData.label || ""
+            label: rows.translate(modelData, "label")
             value: modelData.pct || 0
             resetText: modelData.resetText || ""
             countdownText: rows.countdown(modelData.resetAt || 0)
-            detail: modelData.detail || ""
-            note: modelData.note || ""
+            detail: rows.translate(modelData, "detail")
+            note: rows.translate(modelData, "note")
             barColor: modelData.color || (rows.activeId === "antigravity" && (modelData.key === "external" || modelData.key === "rest" || (modelData.label && modelData.label.indexOf("Claude") !== -1)) ? "#34a853" : rows.accent)
             showMeter: modelData.showMeter !== false
         }

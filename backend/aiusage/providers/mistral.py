@@ -15,6 +15,7 @@ import tempfile
 
 from .. import paths
 from ..http import as_json, fetch_json, resolve_key
+from ..messages import tr
 
 _CACHE_VERSION = 1
 
@@ -116,7 +117,7 @@ def _aggregate(docs):
         wd = (d.get("environment") or {}).get("working_directory") or ""
         recent.append(
             {
-                "title": d.get("title") or "untitled",
+                "title": d.get("title") or tr("untitled"),
                 # vibe records the directory in its own OS's spelling.
                 "project": wd.replace("\\", "/").rstrip("/").split("/")[-1] if wd else "",
                 "branch": d.get("git_branch") or "",
@@ -221,7 +222,7 @@ def get_mistral_usage():
     if result.status == 200:
         body = as_json(result.body)
         if body is None:
-            return {**base, "hasKey": True, "keyValid": False, "error": "Mistral invalid JSON"}
+            return {**base, "hasKey": True, "keyValid": False, "error": tr("Mistral invalid JSON")}
         return {
             **base,
             "hasKey": True,
@@ -229,9 +230,9 @@ def get_mistral_usage():
             "availableModels": [m.get("id") for m in (body.get("data") or []) if m.get("id")],
         }
     if result.status in (401, 403):
-        return {**base, "hasKey": True, "keyValid": False, "error": "Invalid API key (401)"}
+        return {**base, "hasKey": True, "keyValid": False, "error": tr("Invalid API key (401)")}
     if result.status == 429:
-        return {**base, "hasKey": True, "keyValid": True, "error": "Rate limited (429)"}
+        return {**base, "hasKey": True, "keyValid": True, "error": tr("Rate limited (429)")}
     if result.status in (0, None, ""):
-        return {**base, "hasKey": True, "keyValid": False, "error": "Mistral network error"}
-    return {**base, "hasKey": True, "keyValid": False, "error": f"HTTP {result.status}"}
+        return {**base, "hasKey": True, "keyValid": False, "error": tr("Mistral network error")}
+    return {**base, "hasKey": True, "keyValid": False, "error": tr("HTTP %1", result.status)}

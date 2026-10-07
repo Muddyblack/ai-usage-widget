@@ -40,7 +40,7 @@ FROZEN = getattr(sys, "frozen", False)
 ROOT = Path(getattr(sys, "_MEIPASS", "")) if FROZEN else Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT / "backend"))
 
-from aiusage import config, detect, history, historyio, paths  # noqa: E402
+from aiusage import config, detect, history, historyio, paths, widget_state  # noqa: E402
 from aiusage.__main__ import _refresh_pricing, snapshot  # noqa: E402
 from aiusage.sessions import collect_sessions, open_session, refresh_sessions  # noqa: E402
 
@@ -127,7 +127,11 @@ def collect_snapshot():
     with _env_lock:
         saved = dict(os.environ)
         try:
-            return json.dumps(snapshot(), separators=(",", ":"), ensure_ascii=False)
+            envelope = snapshot()
+            # The last good answer, replayed (marked stale) on the next start.
+            with contextlib.suppress(OSError, ValueError):
+                widget_state.save_snapshot(envelope)
+            return json.dumps(envelope, separators=(",", ":"), ensure_ascii=False)
         finally:
             _restore_environ(saved)
 
@@ -414,6 +418,7 @@ class Backend(QObject):
     # Answers to the asynchronous requests ui/AppState.qml makes of every host
     # (ui/CommandBackend.qml is the process-based twin of this class).
     settingsLoaded = Signal(str)
+    lastSnapshotLoaded = Signal(str)
     catalogLoaded = Signal(str)
     languagesLoaded = Signal(str)
     providerDefaultsLoaded = Signal(str)
@@ -645,6 +650,17 @@ class Backend(QObject):
                 return fh.read()
         except OSError:
             return "{}"
+
+    @Slot()
+    def requestLastSnapshot(self):
+        if _DEMO_ENVELOPE is not None:
+            self.lastSnapshotLoaded.emit("{}")
+            return
+        try:
+            text = json.dumps(widget_state.last_snapshot(), separators=(",", ":"), ensure_ascii=False)
+        except (OSError, ValueError):
+            text = "{}"
+        self.lastSnapshotLoaded.emit(text)
 
     @Slot()
     def requestSettings(self):
