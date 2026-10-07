@@ -441,10 +441,10 @@ ColumnLayout {
                     x: Math.max(0, Math.min(anchorX - width / 2, canvas.width - width))
                     y: anchorY - height - 10 < 2 ? Math.min(anchorY + 12, canvas.height - height - 2) : anchorY - height - 10
 
-                    Row {
+                    Column {
                         id: tipRow
                         anchors.centerIn: parent
-                        spacing: 0
+                        spacing: 2
                         Text {
                             text: scrubTip.shown ? scrubTip.point.date : ""
                             font.pixelSize: 11
@@ -453,15 +453,15 @@ ColumnLayout {
                         }
                         Text {
                             visible: chart.drawCost && scrubTip.shown
-                            text: scrubTip.shown ? "  ·  $" + Number(scrubTip.point.usd || 0).toFixed(2) : ""
-                            font.pixelSize: 11
+                            text: scrubTip.shown ? "$" + Number(scrubTip.point.usd || 0).toFixed(2) : ""
+                            font.pixelSize: 12
                             font.bold: true
                             color: chart.costColor
                         }
                         Text {
                             visible: chart.drawTokens && scrubTip.shown
-                            text: scrubTip.shown ? "  ·  " + Number(scrubTip.point.total || 0).toLocaleString(Qt.locale(), "f", 0) + " " + shell.i18n("tok") : ""
-                            font.pixelSize: 11
+                            text: scrubTip.shown ? Number(scrubTip.point.total || 0).toLocaleString(Qt.locale(), "f", 0) + " " + shell.i18n("tok") : ""
+                            font.pixelSize: 12
                             font.bold: true
                             color: chart.tokenColor
                         }
