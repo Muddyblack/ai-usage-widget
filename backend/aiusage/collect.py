@@ -292,5 +292,16 @@ def collect(id_, now):
         return collect_opencode(now)
     if id_ in _SIMPLE:
         usage = _SIMPLE[id_]() or {}
-        return {"id": id_, "now": now, "inputs": {"usage": usage, "status": provider_status(id_)}}
+        inputs = {"usage": usage, "status": provider_status(id_)}
+        if id_ == "antigravity":
+            # Local session history, for the Stats view; read whether or not
+            # the IDE is running.
+            from .providers.antigravity_stats import get_antigravity_stats
+
+            inputs["stats"] = get_antigravity_stats()
+        elif id_ == "kiro":
+            from .providers.kiro_stats import get_kiro_stats
+
+            inputs["stats"] = get_kiro_stats()
+        return {"id": id_, "now": now, "inputs": inputs}
     return {"id": id_, "now": now, "inputs": {}}

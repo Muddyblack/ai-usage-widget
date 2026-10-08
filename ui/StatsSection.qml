@@ -90,6 +90,10 @@ ColumnLayout {
                     return statsSectionRoot.shell.i18n("No local Junie token usage yet. Run a CLI session to see activity.");
                 if (statsSectionRoot.providerId === "mimo")
                     return statsSectionRoot.shell.i18n("No local MiMo Code usage yet. Account quota is unavailable.");
+                if (statsSectionRoot.providerId === "kiro")
+                    return statsSectionRoot.shell.i18n("No Kiro sessions yet.\nRun kiro-cli or the Kiro IDE's agent; finished turns will appear here.");
+                if (statsSectionRoot.providerId === "antigravity")
+                    return statsSectionRoot.shell.i18n("No Antigravity sessions yet.\nRun agy or the Antigravity editor; its logs in ~/.gemini will appear here.");
                 if (statsSectionRoot.providerId === "opencode")
                     return statsSectionRoot.shell.i18n("No OpenCode sessions yet.\nEnable OpenCode and run a local session; usage is read from its SQLite database.");
                 return statsSectionRoot.shell.i18n("No local activity stats yet.\nRun Claude Code to generate ~/.claude/stats-cache.json");
@@ -234,6 +238,27 @@ ColumnLayout {
                 accentColor: statsSectionRoot.accent
             }
 
+            // Credits spent (Kiro bills in credits, not tokens)
+            StatTile {
+                visible: (statsSectionRoot.stats.totalCredits || 0) > 0
+                tileValue: {
+                    var c = statsSectionRoot.stats.totalCredits || 0;
+                    return c >= 100 ? Math.round(c).toString() : c.toFixed(c >= 10 ? 1 : 2);
+                }
+                tileLabel: statsSectionRoot.shell.i18n("credits")
+                tileTip: statsSectionRoot.shell.i18n("Kiro credits used by the recorded sessions")
+                accentColor: statsSectionRoot.accent
+            }
+
+            // Requests (Kiro): more than one per prompt when the agent works
+            StatTile {
+                visible: statsSectionRoot.providerId === "kiro" && (statsSectionRoot.stats.totalRequests || 0) > 0
+                tileValue: statsSectionRoot.formatTokens(statsSectionRoot.stats.totalRequests || 0)
+                tileLabel: statsSectionRoot.shell.i18n("requests")
+                tileTip: statsSectionRoot.shell.i18n("Model requests made, several per prompt while the agent works")
+                accentColor: statsSectionRoot.accent
+            }
+
             // Web Searches (Claude)
             StatTile {
                 visible: (statsSectionRoot.stats.totalWebSearches || 0) > 0
@@ -321,6 +346,20 @@ ColumnLayout {
                         }
                     }
                 }
+            }
+        }
+
+        // ── Activity heatmap: days of the last weeks, hours of the day ────────
+        ActivityHeatmap {
+            Layout.fillWidth: true
+            Layout.topMargin: 4
+            series: statsSectionRoot.dailySeries
+            hours: statsSectionRoot.stats.hourCounts || []
+            accent: statsSectionRoot.accent
+            shell: statsSectionRoot.shell
+            describe: function (v) {
+                var n = statsSectionRoot.formatTokens(v);
+                return statsSectionRoot.dailyUnit === "tokens" ? statsSectionRoot.shell.i18n("%1 tokens", n) : statsSectionRoot.dailyUnit === "requests" ? statsSectionRoot.shell.i18n("%1 requests", n) : statsSectionRoot.shell.i18n("%1 messages", n);
             }
         }
 

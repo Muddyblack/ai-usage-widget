@@ -16,6 +16,7 @@ from ..contract import (
     sections,
 )
 from ..messages import lines, tr
+from ..stats import antigravity_stats
 
 
 def _family(m):
@@ -49,15 +50,17 @@ def _avg(values):
 def normalize_antigravity(raw):
     now = raw["now"]
     res = raw["inputs"].get("usage") or {}
+    # Local history from the transcripts, shown even when the IDE is not running.
+    stats = antigravity_stats(raw["inputs"].get("stats"), now)
 
     if not isinstance(res, dict) or not res:
-        return provider_error("antigravity", "Antigravity", "#4285f4", now, tr("Antigravity not configured"), {})
+        return provider_error("antigravity", "Antigravity", "#4285f4", now, tr("Antigravity not configured"), {"stats": stats})
 
     if res.get("error") is not None:
         first_line = (res["error"] or "").split("\n")[0]
         if "Antigravity is not running" in first_line:
             first_line = "Antigravity is not running in IDE"
-        return provider_error("antigravity", "Antigravity", "#4285f4", now, first_line, {})
+        return provider_error("antigravity", "Antigravity", "#4285f4", now, first_line, {"stats": stats})
 
     models = []
     for m in res.get("models") or []:
@@ -208,5 +211,6 @@ def normalize_antigravity(raw):
             for m in models
         },
         "groups": groups,
+        "stats": stats,
     }
     return r

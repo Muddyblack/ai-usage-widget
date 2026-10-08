@@ -408,9 +408,8 @@ ShellRoot {
                     // already fits, which is the usual case on the usage page.
                     interactive: Math.round(contentHeight) > Math.round(height) + 1
 
-                    QC.ScrollBar.vertical: QC.ScrollBar {
+                    QC.ScrollBar.vertical: PopupScrollBar {
                         policy: contentFlick.interactive ? QC.ScrollBar.AsNeeded : QC.ScrollBar.AlwaysOff
-                        width: 6
                     }
 
                     PopupContent {

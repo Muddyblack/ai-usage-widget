@@ -64,6 +64,23 @@ def peak_hour(counts):
     return best_h
 
 
+def hour_profile(counts):
+    """Activity per hour of day as 24 numbers, hour 0 first, for the frontends'
+    heatmap. Keys outside 0–23 or unreadable are skipped; an hour nothing ran
+    in is 0."""
+    out = [0] * 24
+    if not isinstance(counts, dict):
+        return out
+    for k, v in counts.items():
+        try:
+            h = int(k)
+        except (ValueError, TypeError):
+            continue
+        if 0 <= h < 24:
+            out[h] += num(v)
+    return out
+
+
 def activity_base(s, now, daily_series, unit, tool_calls=None):
     """The half of a stats blob that is identical for every local CLI: what was
     done, when, and how consistently. Each provider adds its own token, model
@@ -91,6 +108,7 @@ def activity_base(s, now, daily_series, unit, tool_calls=None):
         "longestSessionMs": num(longest.get("duration")),
         "longestSessionMessages": num(longest.get("messageCount")),
         "peakHour": peak_hour(s.get("hourCounts") or {}),
+        "hourCounts": hour_profile(s.get("hourCounts") or {}),
         # The frontends draw one per-day sparkline for every provider. The
         # series is named separately from the token totals because a provider
         # can record activity without recording tokens (see copilot_stats).
@@ -426,6 +444,56 @@ def codex_stats(s, now):
             "dailyTokens": daily_tokens,
             "model": s.get("model") or "",
             "effortLevel": s.get("effortLevel") or "",
+        }
+    )
+    return r
+
+
+def antigravity_stats(s, now):
+    """Antigravity's CLI transcripts (providers/antigravity_stats.py). Tokens
+    appear on only some steps, so the per-day series is messages, which every
+    session has; the token tiles show what was recorded."""
+    if not isinstance(s, dict) or num(s.get("totalSessions")) == 0:
+        return {"available": False}
+
+    def series(key):
+        rows = [{"date": a.get("date") or "", "total": num(a.get("total"))} for a in (s.get(key) or []) if isinstance(a, dict)]
+        return sorted(rows, key=lambda a: a["date"])
+
+    r = activity_base(s, now, series("dailyMessages"), "messages")
+    tokens_in = num(s.get("totalInputTokens"))
+    tokens_out = num(s.get("totalOutputTokens"))
+    r.update(
+        {
+            "totalTokens": tokens_in + tokens_out,
+            "totalInputTokens": tokens_in,
+            "totalOutputTokens": tokens_out,
+            "totalCachedTokens": num(s.get("totalCachedTokens")),
+            "totalWebSearches": num(s.get("totalWebSearches")),
+            "dailyTokens": series("dailyTokens"),
+            "models": {},
+        }
+    )
+    return r
+
+
+def kiro_stats(s, now):
+    """Kiro CLI turns and IDE agent runs (providers/kiro_stats.py). Kiro bills
+    in credits and records no tokens, so the per-day series is requests and the
+    headline figure is credits spent."""
+    if not isinstance(s, dict) or num(s.get("totalSessions")) == 0:
+        return {"available": False}
+
+    daily = [{"date": a.get("date") or "", "total": num(a.get("total"))} for a in (s.get("dailyRequests") or []) if isinstance(a, dict)]
+    daily.sort(key=lambda a: a["date"])
+    r = activity_base(s, now, daily, "requests")
+    r.update(
+        {
+            "totalTokens": 0,
+            "totalRequests": num(s.get("totalRequests")),
+            "totalCredits": num(s.get("totalCredits")),
+            "favoriteModel": s.get("favoriteModel") or "",
+            "models": {},
         }
     )
     return r

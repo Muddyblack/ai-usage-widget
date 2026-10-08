@@ -577,7 +577,8 @@ empty: paying for a window and then discarding it would be the worst of both.
 `totalMessages`, `totalSessions`, `totalTokens`, `totalToolCalls`,
 `favoriteModel`, `firstDate`, `computedDate`, `activeDays`, `spanDays`,
 `currentStreak`, `longestStreak`, `longestSessionMs`,
-`longestSessionMessages`, `peakHour`, `models`, `dailyTokens[]` (`date`,
+`longestSessionMessages`, `peakHour`, `hourCounts[24]` (activity per hour of
+day, hour 0 first, for the heatmap), `models`, `dailyTokens[]` (`date`,
 `total`), plus `dailySeries[]` and `dailyUnit` — the per-day series the
 frontends draw, named separately because not every CLI counts tokens. Claude
 adds `version`, `totalCostUSD` and `totalWebSearches`; Codex adds `model` and

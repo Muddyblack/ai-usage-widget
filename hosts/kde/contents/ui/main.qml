@@ -179,7 +179,8 @@ PlasmoidItem {
             boundsBehavior: Flickable.StopAtBounds
             interactive: Math.round(contentHeight) > Math.round(height) + 1
 
-            QQC2.ScrollBar.vertical: QQC2.ScrollBar {
+            // Thin and faint (ui/PopupScrollBar.qml), not Plasma's accent bar.
+            QQC2.ScrollBar.vertical: PopupScrollBar {
                 policy: contentFlick.interactive ? QQC2.ScrollBar.AsNeeded : QQC2.ScrollBar.AlwaysOff
             }
 

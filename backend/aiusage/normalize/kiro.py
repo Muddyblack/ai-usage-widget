@@ -15,6 +15,7 @@ from ..contract import (
     sections,
 )
 from ..messages import lines, tr
+from ..stats import kiro_stats
 
 
 def _sign_in_note():
@@ -32,13 +33,15 @@ def _level(pct):
 def normalize_kiro(raw):
     now = raw["now"]
     res = raw["inputs"].get("usage") or {}
+    # Local history from kiro-cli and the IDE, shown even without a login.
+    stats = kiro_stats(raw["inputs"].get("stats"), now)
 
     if not isinstance(res, dict) or not res:
-        r = provider_error("kiro", "Kiro", "#8b5cf6", now, tr("Kiro: no local usage data found"), {"available": False})
+        r = provider_error("kiro", "Kiro", "#8b5cf6", now, tr("Kiro: no local usage data found"), {"available": False, "stats": stats})
         r["sections"] = sections(_sign_in_note())
         return r
     if res.get("error") is not None:
-        r = provider_error("kiro", "Kiro", "#8b5cf6", now, tr("Kiro: %1", res["error"]), {"available": False})
+        r = provider_error("kiro", "Kiro", "#8b5cf6", now, tr("Kiro: %1", res["error"]), {"available": False, "stats": stats})
         r["sections"] = sections(_sign_in_note())
         return r
 
@@ -106,5 +109,6 @@ def normalize_kiro(raw):
         "resetAt": reset_at,
         # "cli" = live from kiro-cli's login, "ide" = the Kiro IDE's snapshot.
         "source": res.get("source") if res.get("source") in ("cli", "ide") else "ide",
+        "stats": stats,
     }
     return r

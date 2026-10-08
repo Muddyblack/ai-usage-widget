@@ -309,7 +309,7 @@ Item {
         if (root.activeIsFeature)
             return false;
         var p = activeProvider();
-        return p && (p.id === "claude" || p.id === "openai" || p.id === "copilot" || p.id === "muse" || p.id === "cursor" || p.id === "cline" || p.id === "opencode" || p.id === "mimo" || p.id === "junie");
+        return p && (p.id === "claude" || p.id === "antigravity" || p.id === "kiro" || p.id === "openai" || p.id === "copilot" || p.id === "muse" || p.id === "cursor" || p.id === "cline" || p.id === "opencode" || p.id === "mimo" || p.id === "junie");
     }
 
     function providerById(id) {
