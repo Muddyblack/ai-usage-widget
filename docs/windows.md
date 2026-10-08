@@ -118,6 +118,16 @@ Windows** and **Quit**. Three tray styles (also under *Settings → Display*):
 
 **Floating pill** adds the panel's own pill as a small always-on-top window —
 drag it anywhere, it stays where it was left; a click opens the popup beside it.
+Enable **Dock pill to taskbar** in the tray menu to place it beside the primary
+taskbar's notification area, using the taskbar's light or dark text colour and
+the KDE panel's unframed appearance. Dragging detaches it. This is an optional
+overlay: Explorer does not reserve space for it, so it can cover task buttons.
+Vertical and auto-hide taskbars keep the floating placement.
+
+On Windows 11 22H2 or newer the popup requests Windows' Desktop Acrylic
+backdrop and rounded corners, following its Theme setting. Earlier Windows
+versions keep the QML glass background. Windows controls whether Acrylic is
+visible (including the system transparency setting).
 
 Windows 11 puts new tray icons in the `^` overflow at first — which is why the
 very first start opens the popup by itself: drag the icon onto the taskbar
@@ -257,6 +267,15 @@ and on demand from any branch (*Actions → Windows → Run workflow*). A tag ru
 the same workflow from `release.yml`, which attaches the installer and the zip
 to the release once they have passed — after the `.plasmoid`, which a failing
 Windows build does not hold back.
+
+Windows PRs also upload demo PNGs of every popup tab and settings section, plus
+a best-effort full-screen capture of the running app with its tray and docked
+pill. The screenshot job updates a PR comment for branches in this repository;
+fork PRs retain downloadable artifacts. The live capture may be unavailable on
+a runner without an interactive desktop, and the runner's Windows version may
+not support Acrylic. Both platforms share `pr-screenshots.yml`, storing images
+in separate platform folders so Windows and macOS cannot replace each other's
+screenshots.
 
 ## Testing on real Windows
 

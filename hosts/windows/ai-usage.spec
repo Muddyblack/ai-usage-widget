@@ -37,8 +37,8 @@ for path in glob.glob(os.path.join(ROOT, "ui", "*.qml")) + glob.glob(os.path.joi
 
 a = Analysis(  # noqa: F821
     [os.path.join(ROOT, "hosts", "desktop", "app.py")],
-    pathex=[TOOLS],
-    hiddenimports=collect_submodules("aiusage") + ["psutil"],
+    pathex=[TOOLS, os.path.join(ROOT, "hosts", "windows")],
+    hiddenimports=collect_submodules("aiusage") + ["psutil", "backdrop", "taskbar"],
     datas=datas,
     excludes=["tkinter"],
 )

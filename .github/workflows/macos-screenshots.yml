@@ -1,6 +1,6 @@
-name: macOS screenshots cleanup
+name: PR screenshots cleanup
 
-# macos.yml's screenshots-comment job puts every pull request's macOS
+# macOS and Windows screenshots-comment jobs put every pull request's
 # screenshots on the orphan branch `ci-screenshots`, one pr-<n>/ folder per
 # PR. This takes a PR's folder off again when the PR closes. The PR comments
 # link the commits, not the branch, so their images keep working.
@@ -47,7 +47,7 @@ jobs:
               }
               const { data: snapshot } = await github.rest.git.createTree({ ...repo, base_tree: tip.tree.sha, tree: gone });
               const { data: commit } = await github.rest.git.createCommit({
-                ...repo, message: `Remove macOS screenshots of closed PR #${number}`, tree: snapshot.sha, parents: [parent]
+                ...repo, message: `Remove screenshots of closed PR #${number}`, tree: snapshot.sha, parents: [parent]
               });
               try {
                 await github.rest.git.updateRef({ ...repo, ref: `heads/${process.env.BRANCH}`, sha: commit.sha, force: false });

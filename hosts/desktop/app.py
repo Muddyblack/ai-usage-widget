@@ -61,7 +61,14 @@ if paths.IS_MACOS:
 # (hosts/macos/loginitem.py, SMAppService); None where unavailable, and the
 # QML glass or the LaunchAgent stand in.
 vibrancy = None
+backdrop = None
+taskbar = None
 loginitem = None
+if paths.IS_WINDOWS:
+    sys.path.insert(0, str(ROOT / "hosts" / "windows"))
+    import backdrop  # noqa: E402
+    import taskbar  # noqa: E402
+
 if paths.IS_MACOS:
     try:
         import vibrancy  # noqa: E402
@@ -1091,6 +1098,13 @@ class TrayApp:
         self.pill_action.setCheckable(True)
         self.pill_action.toggled.connect(lambda on: request("floatingPill", on))
         self.tail_actions = [self.pill_action]
+        self.taskbar_action = None
+        if taskbar is not None:
+            self.taskbar_action = worded("dockToTaskbar", "Dock pill to taskbar")
+            self.taskbar_action.setCheckable(True)
+            self.taskbar_action.setChecked(json.loads(backend.loadSettings()).get("windowsTaskbar") is True)
+            self.taskbar_action.toggled.connect(lambda on: request("windowsTaskbar", on))
+            self.tail_actions.append(self.taskbar_action)
         if backend.autostartAvailable:
             autostart = worded("startWithWindows", "Start with Windows") if paths.IS_WINDOWS else worded("startAtLogin", "Start at login")
             autostart.setCheckable(True)
@@ -1117,6 +1131,10 @@ class TrayApp:
         # where the screens' taskbar-free areas are known.
         self.pill = self.window.findChild(QQuickWindow, "floatingPill")
         self._pill_placed = False
+        self._taskbar_timer = QTimer(app)
+        self._taskbar_timer.timeout.connect(self._dock_pill)
+        if taskbar is not None:
+            self._taskbar_timer.start(1000)
         if self.pill is not None:
             self.pill.visibleChanged.connect(self._on_pill_visible)
             self.pill.widthChanged.connect(self._keep_pill_on_screen)
@@ -1215,6 +1233,39 @@ class TrayApp:
         self.pill_action.blockSignals(False)
 
     # ── Floating pill ──
+    def _dock_pill(self):
+        """Optional taskbar overlay, using physical Win32 coordinates at the
+        primary screen's scale. Explorer owns layout; this reserves no space."""
+        if taskbar is None or self.pill is None:
+            return False
+        enabled = json.loads(self.backend.loadSettings()).get("windowsTaskbar") is True
+        self.taskbar_action.blockSignals(True)
+        self.taskbar_action.setChecked(enabled)
+        self.taskbar_action.blockSignals(False)
+        was_docked = self.pill.property("taskbarDocked")
+        position = taskbar.place() if enabled and self.pill.isVisible() else None
+        screen = QGuiApplication.primaryScreen()
+        scale = screen.devicePixelRatio()
+        width, height = self.pill.width(), self.pill.height()
+        if position is not None:
+            (left, top, _right, bottom), tray_left = position
+            if (bottom - top) / scale < height or tray_left - left < (width + 8) * scale:
+                position = None
+        if position is None:
+            self.pill.setProperty("taskbarDocked", False)
+            if was_docked:
+                self._pill_placed = False
+                self._place_floating_pill()
+            return False
+        (left, top, _right, bottom), tray_left = position
+        full = screen.geometry()
+        # Windows uses physical screen origins, Qt uses logical origins.
+        self.pill.setProperty("taskbarDocked", True)
+        self.pill.setProperty("taskbarLight", neutral_text_colour() != "#f8fafc")
+        self.pill.setPosition(round(full.x() + tray_left / scale - width - 6), round(full.y() + top / scale + ((bottom - top) / scale - height) / 2))
+        taskbar.keep_on_top(self.pill)
+        return True
+
     def _saved_pill_position(self):
         try:
             saved = json.loads(self.backend.loadSettings()).get("pillPosition")
@@ -1223,6 +1274,10 @@ class TrayApp:
             return None
 
     def _on_pill_visible(self):
+        if not self._dock_pill():
+            self._place_floating_pill()
+
+    def _place_floating_pill(self):
         """Put the pill back where it was left, the first time it shows — or,
         when that spot is on no screen any more, just above the taskbar at the
         bottom right of the main screen."""
@@ -1240,7 +1295,7 @@ class TrayApp:
     def _keep_pill_on_screen(self):
         """The pill widens with the number of values; it must not grow off the
         edge it was dragged against."""
-        if not self.pill.isVisible():
+        if self._dock_pill() or not self.pill.isVisible():
             return
         screen = QGuiApplication.screenAt(self.pill.geometry().center()) or QGuiApplication.primaryScreen()
         right = screen.availableGeometry().right()
@@ -1272,8 +1327,16 @@ class TrayApp:
         self.window.requestActivate()
 
     def _apply_vibrancy(self):
-        """macOS: the system blur behind the popup, once its window exists,
+        """The system blur behind the popup, once its window exists,
         in the popup's light or dark."""
+        if backdrop is not None:
+            try:
+                applied = backdrop.apply(self.window, bool(self.window.property("light")))
+                self.window.setProperty("nativeBlur", applied)
+            except (OSError, AttributeError) as exc:
+                self.window.setProperty("nativeBlur", False)
+                print(f"AI Usage: system backdrop failed: {exc}", file=sys.stderr)
+            return
         if vibrancy is None:
             return
         try:
@@ -1316,6 +1379,8 @@ class TrayApp:
 
     def _on_panel_moved(self):
         """The user dragged the popup: the pill keeps its place beside it."""
+        if self.pill is not None and self.pill.property("taskbarDocked"):
+            return
         if self._syncing or self._pill_offset is None or not self.window.isVisible():
             return
         if self._anchor is not self.pill or not self.pill.isVisible():
@@ -1753,7 +1818,7 @@ def main(argv):
         return _run_headless(app, engine, backend, warnings, screenshot, "--settings" in argv)
 
     tray = TrayApp(app, engine, backend)
-    if first_run:
+    if first_run or "--demo" in argv:
         # Windows 11 puts a new tray icon out of sight, behind the ^ overflow:
         # the popup opening by itself shows the app is there, the first time.
         QTimer.singleShot(1500, tray.show)

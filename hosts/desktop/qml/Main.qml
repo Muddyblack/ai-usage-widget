@@ -21,8 +21,7 @@ Window {
     // Matched by the KWin script in app.py (POPUP_TITLE) on Plasma Wayland.
     title: "AI Usage"
 
-    // Set by app.py once macOS's own blur is behind this window
-    // (hosts/macos/vibrancy.py): the QML glass thins out so it shows.
+    // Set by app.py when the macOS or Windows system backdrop succeeds.
     property bool nativeBlur: false
     // The popup's light or dark, for ui/js/Tone.js (every item inherits the
     // window's palette) and for app.py, which matches the macOS blur to it.
@@ -68,6 +67,8 @@ Window {
         id: pillWindow
 
         objectName: "floatingPill"
+        property bool taskbarDocked: false
+        property bool taskbarLight: false
         // Declared inside the popup, a Window would be its transient child, and
         // Qt shows a transient child only while its parent is shown — the popup
         // is hidden most of the time. Without a parent it stands on its own.
@@ -87,7 +88,7 @@ Window {
             id: pillSave
             interval: 800
             onTriggered: {
-                if (pillWindow.visible)
+                if (pillWindow.visible && !pillWindow.taskbarDocked)
                     app.setSetting2("pillPosition", {
                         x: pillWindow.x,
                         y: pillWindow.y
@@ -107,6 +108,8 @@ Window {
             stale: app.pillStale
             hasError: app.pillHasError
             groups: app.panelGroups
+            framed: !pillWindow.taskbarDocked
+            textColor: pillWindow.taskbarDocked && pillWindow.taskbarLight ? "#172033" : "#f8fafc"
         }
 
         // A press that moves drags the window; one that does not is a click.
@@ -126,6 +129,10 @@ Window {
             onPositionChanged: mouse => {
                 if (pressed && !dragged && Math.abs(mouse.x - pressedAt.x) + Math.abs(mouse.y - pressedAt.y) > 4) {
                     dragged = true;
+                    if (pillWindow.taskbarDocked) {
+                        pillWindow.taskbarDocked = false;
+                        app.setSetting2("windowsTaskbar", false);
+                    }
                     pillWindow.startSystemMove();
                 }
             }
