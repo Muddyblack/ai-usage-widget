@@ -128,6 +128,33 @@ var providers = [
     }
 ];
 
+// Mirrors PROVIDER_ICONS in aiusage/contract.py, so the settings page can show
+// every provider's logo — including ones switched off, which the backend has
+// sent no snapshot (and so no icon) for.
+var ICONS = {
+    antigravity: "antigravity-color.svg",
+    claude: "claude-color.svg",
+    cline: "cline.svg",
+    copilot: "githubcopilot.svg",
+    cursor: "cursor.svg",
+    deepseek: "deepseek-color.svg",
+    grok: "grok.svg",
+    kimi: "kimi.svg",
+    kiro: "kiro.svg",
+    mistral: "mistral-color.svg",
+    muse: "muse-color.svg",
+    openai: "openai.svg",
+    ollama: "ollama.svg",
+    opencode: "opencode-color.svg",
+    mimo: "mimo.svg",
+    junie: "junie.svg",
+    selfhosted: "local-models.svg",
+    openrouter: "openrouter.svg",
+    zai: "zai.svg"
+};
+for (var _i = 0; _i < providers.length; _i++)
+    providers[_i].icon = providers[_i].icon || ICONS[providers[_i].id] || "";
+
 // Mirrors OPT_IN_PROVIDERS in aiusage/config.py: what a missing toggle means
 // until providerDefaultsApplied is set (or when applying the defaults failed).
 var OPT_IN = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo", "junie", "ollama", "selfhosted"];

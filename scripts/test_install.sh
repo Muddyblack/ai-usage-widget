@@ -49,6 +49,29 @@ trap 'rm -rf -- "$TEMP_DIR"' EXIT
 # .mo catalogs compiled) straight into the temporary copy.
 "$HERE/scripts/build-kde-package.sh" "$TEMP_DIR"
 
+# On NixOS only: plasmashell runs with the session's PATH, which there has no
+# Python, so the test copy would show "python3 missing" everywhere. Pin a store
+# interpreter the way flake.nix does for the real package — this shell's
+# python3 if it is a Nix one, else the flake's pinned nixpkgs python3. Every
+# other system keeps the plain `python3` lookup: its session PATH has one, and
+# a pinned /usr/bin/python3.x would break on the next distro upgrade.
+# $PYTHON3 and Settings → Advanced → Python still win at runtime either way.
+if [ -e /etc/NIXOS ] || [ -d /nix/store ]; then
+    PY_PIN="$(command -v python3 2>/dev/null || true)"
+    [ -n "$PY_PIN" ] && PY_PIN="$(readlink -f "$PY_PIN")"
+    case "$PY_PIN" in /nix/store/*) ;; *) PY_PIN="" ;; esac
+    if [ -z "$PY_PIN" ] && command -v nix >/dev/null 2>&1; then
+        PY_OUT="$(nix build --no-link --print-out-paths --inputs-from "$HERE" nixpkgs#python3 2>/dev/null | head -1 || true)"
+        [ -n "$PY_OUT" ] && [ -x "$PY_OUT/bin/python3" ] && PY_PIN="$PY_OUT/bin/python3"
+    fi
+    if [ -n "$PY_PIN" ]; then
+        sed -i "s|^PY_DEFAULT=\"python3\"|PY_DEFAULT=\"$PY_PIN\"|" "$TEMP_DIR/contents/backend/sh/python-interp.sh"
+        echo "Python for the test copy (Nix): $PY_PIN"
+    else
+        echo "warning: no Nix python3 found; set Settings → Advanced → Python in the widget" >&2
+    fi
+fi
+
 sed -i "s/$ID/$TEST_ID/g" "$TEMP_DIR/metadata.json"
 sed -i "s/\"Name\": \"$NAME\"/\"Name\": \"$NAME (Test)\"/g" "$TEMP_DIR/metadata.json"
 # Keep the localized display names distinguishable in the widget list too.
