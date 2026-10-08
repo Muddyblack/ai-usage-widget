@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "js/Tone.js" as Tone
 
 // A labelled usage row, ported from the Plasma PopupRow: title + "· reset" +
 // live countdown chip + animated %, a 20-segment bar with gradient partial
@@ -43,7 +44,7 @@ ColumnLayout {
             text: row.label
             font.bold: true
             font.pixelSize: 13
-            color: "#f8fafc"
+            color: Tone.c(palette, "#f8fafc")
         }
 
         Text {
@@ -51,7 +52,7 @@ ColumnLayout {
             text: "· " + row.resetText
             font.pixelSize: 11
             opacity: 0.5
-            color: "#f8fafc"
+            color: Tone.c(palette, "#f8fafc")
         }
 
         Item {
@@ -63,9 +64,9 @@ ColumnLayout {
             Layout.preferredHeight: 20
             Layout.preferredWidth: cdLabel.implicitWidth + 14
             radius: 4
-            color: Qt.rgba(1, 1, 1, 0.06)
+            color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.12)
+            border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
             Layout.alignment: Qt.AlignVCenter
 
             Text {
@@ -73,7 +74,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 text: row.countdownText
                 font.pixelSize: 11
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
                 opacity: 0.8
             }
         }
@@ -117,9 +118,9 @@ ColumnLayout {
                             return 0.0;
                         return (row.value - prevThresh) / (100 / row.segmentCount);
                     }
-                    color: Qt.rgba(1, 1, 1, 0.06)
+                    color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
                     border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.10)
+                    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.10))
 
                     Rectangle {
                         anchors {
@@ -157,7 +158,7 @@ ColumnLayout {
         visible: row.detail !== ""
         Layout.fillWidth: true
         text: row.detail
-        color: "#94a3b8"
+        color: Tone.c(palette, "#94a3b8")
         font.pixelSize: 11
         wrapMode: Text.WordWrap
     }
@@ -166,7 +167,7 @@ ColumnLayout {
         visible: row.note !== ""
         Layout.fillWidth: true
         text: row.note
-        color: "#94a3b8"
+        color: Tone.c(palette, "#94a3b8")
         font.pixelSize: 10
         wrapMode: Text.WordWrap
     }
@@ -210,15 +211,15 @@ ColumnLayout {
             width: tipText.implicitWidth + 18
             height: tipText.implicitHeight + 12
             radius: 6
-            color: Qt.rgba(0.04, 0.045, 0.06, 0.96)
+            color: Tone.c(palette, Qt.rgba(0.04, 0.045, 0.06, 0.96))
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.14)
+            border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.14))
             Text {
                 id: tipText
                 anchors.centerIn: parent
                 text: row.tooltipText
                 font.pixelSize: 11
-                color: "#e2e8f0"
+                color: Tone.c(palette, "#e2e8f0")
             }
         }
     }

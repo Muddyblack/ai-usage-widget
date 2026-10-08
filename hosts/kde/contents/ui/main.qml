@@ -51,6 +51,10 @@ PlasmoidItem {
         backgroundStyleAvailable: true
         backgroundStyleApplies: Plasmoid.formFactor === PlasmaCore.Types.Planar
         themeAccentColor: Kirigami.Theme.highlightColor
+        // The popup's background is Plasma's dialog, drawn by the Plasma
+        // theme: the content follows that theme's light or dark.
+        appearanceFollowsHost: true
+        systemLight: Kirigami.Theme.backgroundColor.hslLightness > 0.5
         cliPath: root.contentsDir + "/backend/sh/ai-usage-cli"
         // Each widget keeps its own pins and rotation (one per panel or
         // screen), in its own KConfig rather than the shared file.
@@ -130,6 +134,10 @@ PlasmoidItem {
     // ── Popup ────────────────────────────────────────────────────────────────
     fullRepresentation: Item {
         id: popupRoot
+
+        // The popup's light or dark for ui/js/Tone.js: every item below
+        // inherits this palette.
+        palette.window: app.windowColor
 
         // Plasma's own dialog frame already pads this item, so only a little more.
         readonly property int margin: 6

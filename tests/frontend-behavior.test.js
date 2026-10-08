@@ -604,7 +604,7 @@ test("upstream provider labels cover every OpenCode-routed provider", () => {
 test("spend views identify provider totals and constrain local metadata", () => {
     // The grand total sits in each frontend's popup header, not in the Spend
     // view itself, so the figure stays visible while the view scrolls.
-    for (const file of ["ui/PopupContent.qml"]) {
+    for (const file of ["ui/PopupHeader.qml"]) {
         assert.match(fs.readFileSync(path.join(rootDir, file), "utf8"), /Provider\/API total/);
     }
     for (const file of ["ui/SpendPage.qml"]) {

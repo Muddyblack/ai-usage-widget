@@ -12,6 +12,25 @@ on:
       - 'macos/**'
   workflow_dispatch:
   workflow_call:
+    inputs:
+      # Developer ID signing and notarization (release.yml sets it). Skipped
+      # anyway while the Apple Developer secrets are not set.
+      notarize:
+        type: boolean
+        default: false
+    secrets:
+      MACOS_CERT_P12:
+        required: false
+      MACOS_CERT_PASSWORD:
+        required: false
+      MACOS_SIGN_IDENTITY:
+        required: false
+      APPLE_ID:
+        required: false
+      APPLE_TEAM_ID:
+        required: false
+      APPLE_APP_PASSWORD:
+        required: false
 
 permissions:
   contents: read
@@ -47,8 +66,24 @@ jobs:
               print(f\"  {provider['id']:12} ok={provider['ok']!s:5} {provider['error'] or provider['summary']['text']}\")
           "
 
+  # One build per CPU: psutil ships no universal wheel, so a universal app
+  # would mean stitching two builds together. Apple Silicon on macos-14,
+  # Intel on macos-15-intel (GitHub's last Intel image).
   app:
-    runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: apple-silicon
+            runner: macos-14
+          - arch: intel
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner }}
+    env:
+      # Signing and notarization (hosts/macos/notarize.sh): only for a
+      # release, and only once the Apple Developer secrets exist. Without
+      # them the app stays ad-hoc signed, as before.
+      NOTARIZE: ${{ inputs.notarize == true && secrets.MACOS_CERT_P12 != '' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -72,11 +107,24 @@ jobs:
           python3 hosts/desktop/app.py --screenshot "$RUNNER_TEMP/screens" --demo
           ls -la "$RUNNER_TEMP/screens"
 
-      - name: The native menu bar item imports
-        run: python3 -c "import sys; sys.path.insert(0, 'hosts/macos'); import statusitem; print('statusitem ok')"
+      - name: The native macOS modules import
+        run: |
+          python3 -c "
+          import sys; sys.path.insert(0, 'hosts/macos')
+          import statusitem, vibrancy, loginitem
+          print('statusitem, vibrancy, loginitem ok')
+          "
 
       - name: Build the app bundle
         run: hosts/macos/build-app.sh
+
+      - name: The bundle is built for this CPU
+        run: |
+          file "dist/AI Usage.app/Contents/MacOS/AI Usage"
+          case "${{ matrix.arch }}" in
+            apple-silicon) file "dist/AI Usage.app/Contents/MacOS/AI Usage" | grep -q arm64 ;;
+            intel) file "dist/AI Usage.app/Contents/MacOS/AI Usage" | grep -q x86_64 ;;
+          esac
 
       - name: Self-test the bundled app
         env:
@@ -84,7 +132,31 @@ jobs:
           AI_USAGE_CONFIG: ${{ runner.temp }}/bundle-settings.json
         run: '"dist/AI Usage.app/Contents/MacOS/AI Usage" --selftest'
 
+      - name: Import the signing certificate
+        if: env.NOTARIZE == 'true'
+        env:
+          MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
+          echo "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -P "$MACOS_CERT_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" login.keychain-db
+          rm "$RUNNER_TEMP/cert.p12"
+
+      - name: Sign the app (Developer ID)
+        if: env.NOTARIZE == 'true'
+        env:
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+        run: hosts/macos/notarize.sh app
+
       - uses: actions/upload-artifact@v7
+        if: matrix.arch == 'apple-silicon'
         id: screenshots-upload
         continue-on-error: true
         with:
@@ -94,11 +166,11 @@ jobs:
 
       # Artifact finalization can intermittently return an intermediary 403.
       - name: Wait before retrying screenshot upload
-        if: steps.screenshots-upload.outcome == 'failure'
+        if: matrix.arch == 'apple-silicon' && steps.screenshots-upload.outcome == 'failure'
         run: sleep 10
 
       - name: Retry screenshot upload
-        if: steps.screenshots-upload.outcome == 'failure'
+        if: matrix.arch == 'apple-silicon' && steps.screenshots-upload.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
           name: screenshots
@@ -106,21 +178,30 @@ jobs:
           if-no-files-found: error
           overwrite: true
 
-      # ditto, not zip: it preserves the app bundle's extended attributes
-      # (the codesign signature) the way Finder's own "Compress" does.
       - name: Create DMG
         run: bash hosts/macos/package-dmg.sh
 
+      - name: Notarize the DMG
+        if: env.NOTARIZE == 'true'
+        env:
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: hosts/macos/notarize.sh dmg ai-usage-macos-*.dmg
+
+      # ditto, not zip: it preserves the app bundle's extended attributes
+      # (the codesign signature) the way Finder's own "Compress" does.
       - name: zip
         run: |
           VERSION="$(grep -oE '"Version":[[:space:]]*"[^"]+"' hosts/kde/metadata.json | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
-          ditto -c -k --keepParent "dist/AI Usage.app" "ai-usage-macos-$VERSION.zip"
+          ditto -c -k --keepParent "dist/AI Usage.app" "ai-usage-macos-$VERSION-${{ matrix.arch }}.zip"
 
       - uses: actions/upload-artifact@v7
         id: app-upload
         continue-on-error: true
         with:
-          name: ai-usage-macos
+          name: ai-usage-macos-${{ matrix.arch }}
           path: |
             ai-usage-macos-*.zip
             ai-usage-macos-*.dmg
@@ -137,7 +218,7 @@ jobs:
         if: steps.app-upload.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
-          name: ai-usage-macos
+          name: ai-usage-macos-${{ matrix.arch }}
           path: |
             ai-usage-macos-*.zip
             ai-usage-macos-*.dmg

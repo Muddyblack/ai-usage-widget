@@ -1,5 +1,6 @@
 import QtQuick
 import "Theme.js" as Theme
+import "../js/Tone.js" as Tone
 
 // One setting (the studios' `.row`): label and description on the left, the
 // control on the right. A `full` row, or one too narrow for both, puts the
@@ -23,7 +24,7 @@ Item {
     Rectangle {
         width: parent.width
         height: 1
-        color: Theme.line
+        color: Tone.c(palette, Theme.line)
         visible: row.y > 0
     }
 
@@ -56,7 +57,7 @@ Item {
                 Text {
                     width: parent.width
                     text: row.label
-                    color: Theme.text
+                    color: Tone.c(palette, Theme.text)
                     font.pixelSize: 12
                     font.weight: Font.Medium
                     wrapMode: Text.WordWrap
@@ -65,7 +66,7 @@ Item {
                     width: parent.width
                     visible: row.desc !== ""
                     text: row.desc
-                    color: Theme.muted
+                    color: Tone.c(palette, Theme.muted)
                     font.pixelSize: 10
                     lineHeight: 1.2
                     wrapMode: Text.WordWrap

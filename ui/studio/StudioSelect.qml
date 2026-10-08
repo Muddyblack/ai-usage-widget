@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic as Controls
 import "Theme.js" as Theme
+import "../js/Tone.js" as Tone
 
 // Dropdown over [[value, label], …]; `chosen(value)` fires on a user pick.
 Controls.ComboBox {
@@ -20,15 +21,15 @@ Controls.ComboBox {
 
     background: Rectangle {
         radius: 8
-        color: Theme.sunk
+        color: Tone.c(palette, Theme.sunk)
         border.width: 1
-        border.color: control.hovered || control.popup.visible ? "#40ffffff" : Theme.line2
+        border.color: control.hovered || control.popup.visible ? Tone.c(palette, "#40ffffff") : Tone.c(palette, Theme.line2)
     }
     contentItem: Text {
         leftPadding: 10
         rightPadding: 24
         text: control.displayText
-        color: Theme.text
+        color: Tone.c(palette, Theme.text)
         font: control.font
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
@@ -37,7 +38,7 @@ Controls.ComboBox {
         x: control.width - width - 10
         anchors.verticalCenter: parent.verticalCenter
         text: "▾"
-        color: Theme.muted
+        color: Tone.c(palette, Theme.muted)
         font.pixelSize: 11
     }
     delegate: Controls.ItemDelegate {
@@ -48,17 +49,19 @@ Controls.ComboBox {
         height: 28
         contentItem: Text {
             text: item.modelData[1]
-            color: item.index === control.currentIndex ? Theme.brandTop : Theme.text
+            color: item.index === control.currentIndex ? Theme.brandTop : Tone.c(palette, Theme.text)
             font: control.font
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
         }
         background: Rectangle {
             radius: 6
-            color: item.hovered ? "#1affffff" : "transparent"
+            color: item.hovered ? Tone.c(palette, "#1affffff") : "transparent"
         }
     }
     popup: Controls.Popup {
+        // A popup starts a palette of its own; carry the popup's light or dark in.
+        palette.window: control.palette.window
         y: control.height + 4
         width: control.width
         padding: 4
@@ -70,9 +73,9 @@ Controls.ComboBox {
         }
         background: Rectangle {
             radius: 10
-            color: "#15181d"
+            color: Tone.c(palette, "#15181d")
             border.width: 1
-            border.color: Theme.line2
+            border.color: Tone.c(palette, Theme.line2)
         }
     }
 }

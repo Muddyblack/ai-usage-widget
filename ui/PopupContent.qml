@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Effects
 import QtQuick.Controls.Basic as QC
 import "js/FeatureTabs.js" as FeatureTabs
+import "js/Tone.js" as Tone
 
 // The popup's content — header, tabs, usage rows, stats, chart and footer —
 // shared by every frontend that draws the popup itself: the Quickshell panel
@@ -80,9 +81,9 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: 26
         radius: 6
-        color: Qt.rgba(1, 1, 1, 0.04)
+        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
         border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.07)
+        border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.07))
 
         RowLayout {
             anchors.fill: parent
@@ -117,7 +118,7 @@ ColumnLayout {
                         text: modelData.label
                         font.pixelSize: 11
                         font.bold: parent.active
-                        color: parent.active ? shell.activeAccent : "#f8fafc"
+                        color: parent.active ? shell.activeAccent : Tone.c(palette, "#f8fafc")
                         opacity: parent.active ? 1.0 : 0.6
                     }
 
@@ -171,7 +172,11 @@ ColumnLayout {
                 var parts = [shell.tr(w, "label")];
                 if (w.showMeter !== false) {
                     var used = Math.round(w.pct || 0);
-                    parts.push(shell.i18n("Used: %1%", used) + "  ·  " + shell.i18n("%1% left", 100 - used));
+                    // xgettext:no-javascript-format — "%1%" is a Qt placeholder and a percent sign, not printf
+                    var usedText = shell.i18n("Used: %1%", used);
+                    // xgettext:no-javascript-format — as above
+                    var leftText = shell.i18n("%1% left", 100 - used);
+                    parts.push(usedText + "  ·  " + leftText);
                 }
                 var detail = shell.tr(w, "detail");
                 if (detail !== "")
@@ -220,7 +225,7 @@ ColumnLayout {
                 return "";
             }
             font.pixelSize: 9
-            color: "#94a3b8"
+            color: Tone.c(palette, "#94a3b8")
             opacity: 0.8
             wrapMode: Text.WordWrap
         }
@@ -230,7 +235,7 @@ ColumnLayout {
             visible: shell.activeId === "muse" && shell.activeProvider() && (shell.activeProvider().details.quotaError || "") === "" && !(shell.activeProvider().details.current || {}).available && !(shell.activeProvider().details.weekly || {}).available
             text: shell.i18n("No plan windows on this account — pay-as-you-go has none.")
             font.pixelSize: 9
-            color: "#94a3b8"
+            color: Tone.c(palette, "#94a3b8")
             opacity: 0.8
             wrapMode: Text.WordWrap
         }
@@ -307,7 +312,7 @@ ColumnLayout {
         Text {
             visible: shell.updatedAt > 0 && shell.errorText === ""
             text: shell.replaying ? shell.i18n("last known %1 · refreshing…", new Date(shell.updatedAt * 1000).toLocaleTimeString(Qt.locale(), Locale.ShortFormat)) : shell.i18n("updated %1", new Date(shell.updatedAt * 1000).toLocaleTimeString(Qt.locale(), Locale.ShortFormat))
-            color: "#f8fafc"
+            color: Tone.c(palette, "#f8fafc")
             opacity: 0.45
             font.pixelSize: 10
         }
@@ -330,7 +335,7 @@ ColumnLayout {
             width: content.width
             height: exportBackdrop.y + exportBackdrop.height
             radius: 12
-            color: "#0d0f14"
+            color: Tone.c(palette, "#0d0f14")
         }
     }
 }

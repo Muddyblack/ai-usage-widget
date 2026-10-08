@@ -3,6 +3,7 @@ import QtQuick.Window
 import QtQuick.Layouts
 import "js/UsageHistory.js" as UsageHistory
 import "js/OpenCodeUsage.js" as OpenCodeUsage
+import "js/Tone.js" as Tone
 
 // Usage-history chart, ported from the Plasma UsageChart. Self-contained:
 // feed it the unified history array plus the window list for the active tab.
@@ -210,9 +211,9 @@ Rectangle {
     Layout.preferredHeight: implicitHeight
     implicitHeight: hasModelFilter ? 208 : 184
     radius: 10
-    color: shell ? shell.cardColor : Qt.rgba(1, 1, 1, 0.045)
+    color: shell ? shell.cardColor : Tone.c(palette, Qt.rgba(1, 1, 1, 0.045))
     border.width: 1
-    border.color: Qt.rgba(1, 1, 1, 0.08)
+    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
     clip: true
 
     // subtle inner top highlight
@@ -221,7 +222,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.10)
+        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.10))
         radius: 10
     }
 
@@ -238,7 +239,7 @@ Rectangle {
             radius: 4
             implicitHeight: 16
             implicitWidth: 16
-            color: leftNavMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
+            color: leftNavMouse.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.12)) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
             opacity: enabled ? 1.0 : 0.3
             enabled: {
                 var oldestT = 0;
@@ -261,7 +262,7 @@ Rectangle {
                 text: "<"
                 font.pixelSize: 9
                 font.bold: true
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
             }
             MouseArea {
                 id: leftNavMouse
@@ -279,14 +280,14 @@ Rectangle {
             font.pixelSize: 9
             font.bold: true
             opacity: 0.6
-            color: "#f8fafc"
+            color: Tone.c(palette, "#f8fafc")
         }
 
         Rectangle {
             radius: 4
             implicitHeight: 16
             implicitWidth: 16
-            color: rightNavMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
+            color: rightNavMouse.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.12)) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
             opacity: enabled ? 1.0 : 0.3
             enabled: chart.chartTimeOffset > 0
             Text {
@@ -294,7 +295,7 @@ Rectangle {
                 text: ">"
                 font.pixelSize: 9
                 font.bold: true
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
             }
             MouseArea {
                 id: rightNavMouse
@@ -324,7 +325,7 @@ Rectangle {
                 radius: 4
                 implicitHeight: 16
                 implicitWidth: winLabel.implicitWidth + 12
-                color: chart.chartWindow === modelData.id ? chart.accent : Qt.rgba(1, 1, 1, 0.06)
+                color: chart.chartWindow === modelData.id ? chart.accent : Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
                 opacity: chart.chartWindow === modelData.id ? 0.9 : 1.0
                 Behavior on color {
                     ColorAnimation {
@@ -338,7 +339,7 @@ Rectangle {
                     font.pixelSize: 9
                     font.bold: chart.chartWindow === modelData.id
                     // Near-white accents (Grok, Cursor) would swallow white text.
-                    color: chart.chartWindow === modelData.id ? ((0.299 * chart.accent.r + 0.587 * chart.accent.g + 0.114 * chart.accent.b) > 0.6 ? "#1a1a1a" : "#ffffff") : "#f8fafc"
+                    color: chart.chartWindow === modelData.id ? ((0.299 * chart.accent.r + 0.587 * chart.accent.g + 0.114 * chart.accent.b) > 0.6 ? Tone.c(palette, "#1a1a1a") : Tone.c(palette, "#ffffff")) : Tone.c(palette, "#f8fafc")
                     opacity: chart.chartWindow === modelData.id ? 1.0 : 0.6
                 }
                 MouseArea {
@@ -390,7 +391,7 @@ Rectangle {
                 radius: 4
                 implicitHeight: 16
                 implicitWidth: filterPillContent.implicitWidth + 12
-                color: chart.antigravityFilter === modelData.id ? chart.accent : Qt.rgba(1, 1, 1, 0.06)
+                color: chart.antigravityFilter === modelData.id ? chart.accent : Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
                 opacity: chart.antigravityFilter === modelData.id ? 0.9 : 1.0
                 Behavior on color {
                     ColorAnimation {
@@ -415,7 +416,7 @@ Rectangle {
                         text: modelData.label
                         font.pixelSize: 9
                         font.bold: chart.antigravityFilter === modelData.id
-                        color: chart.antigravityFilter === modelData.id ? "#ffffff" : "#f8fafc"
+                        color: chart.antigravityFilter === modelData.id ? Tone.c(palette, "#ffffff") : Tone.c(palette, "#f8fafc")
                         opacity: chart.antigravityFilter === modelData.id ? 1.0 : 0.65
                     }
                 }
@@ -439,7 +440,7 @@ Rectangle {
         text: chart.chartYLabel(1.0)
         font.pixelSize: 9
         opacity: 0.35
-        color: "#f8fafc"
+        color: Tone.c(palette, "#f8fafc")
     }
     Text {
         anchors.right: chartCanvas.left
@@ -448,7 +449,7 @@ Rectangle {
         text: chart.chartYLabel(0.5)
         font.pixelSize: 9
         opacity: 0.35
-        color: "#f8fafc"
+        color: Tone.c(palette, "#f8fafc")
     }
     Text {
         anchors.right: chartCanvas.left
@@ -457,7 +458,7 @@ Rectangle {
         text: chart.chartYLabel(0.0)
         font.pixelSize: 9
         opacity: 0.35
-        color: "#f8fafc"
+        color: Tone.c(palette, "#f8fafc")
     }
 
     Canvas {
@@ -494,6 +495,9 @@ Rectangle {
         onAccentColorChanged: requestPaint()
         onPulseChanged: requestPaint()
         onScrubIndexChanged: requestPaint()
+        // Tone.css colours flip with the popup's light or dark (ui/js/Tone.js).
+        readonly property bool lightTone: Tone.isLight(palette)
+        onLightToneChanged: requestPaint()
         // Both mode keeps scrubIndex at 0 while the selected points move.
         onScrubGeminiPtChanged: requestPaint()
         onScrubRestPtChanged: requestPaint()
@@ -534,7 +538,7 @@ Rectangle {
             anchors.centerIn: parent
             visible: (!chartCanvas.isBoth && (!chartCanvas.history || chartCanvas.history.length === 0)) || (chartCanvas.isBoth && (!chartCanvas.geminiHistory || chartCanvas.geminiHistory.length === 0) && (!chartCanvas.restHistory || chartCanvas.restHistory.length === 0))
             text: chart.shell.i18n("No data in this range")
-            color: "#94a3b8"
+            color: Tone.c(palette, "#94a3b8")
             font.pixelSize: 11
             opacity: 0.7
         }
@@ -552,7 +556,7 @@ Rectangle {
             // dashed grid lines at 25 / 50 / 75 / 100%
             ctx.save();
             ctx.setLineDash([3, 5]);
-            ctx.strokeStyle = "rgba(255,255,255,0.08)";
+            ctx.strokeStyle = Tone.css(palette, Qt.rgba(1, 1, 1, 0.08));
             ctx.lineWidth = 1;
             [25, 50, 75, 100].forEach(function (pct) {
                 var y = h - (pct / 100) * h * 0.88 - h * 0.04;
@@ -593,7 +597,7 @@ Rectangle {
                     ctx.fill();
                     ctx.beginPath();
                     ctx.arc(sx, sy, 1.8, 0, Math.PI * 2);
-                    ctx.fillStyle = "rgba(255,255,255,0.9)";
+                    ctx.fillStyle = Tone.css(palette, Qt.rgba(1, 1, 1, 0.9));
                     ctx.fill();
                     return;
                 }
@@ -668,7 +672,7 @@ Rectangle {
                 ctx.fill();
                 ctx.beginPath();
                 ctx.arc(lx, ly, 1.8, 0, Math.PI * 2);
-                ctx.fillStyle = "rgba(255,255,255,0.9)";
+                ctx.fillStyle = Tone.css(palette, Qt.rgba(1, 1, 1, 0.9));
                 ctx.fill();
             }
 
@@ -684,7 +688,7 @@ Rectangle {
                 var rx = ((resetMs - minT) / tRange) * w;
                 ctx.save();
                 ctx.setLineDash([2, 4]);
-                ctx.strokeStyle = "rgba(255,255,255,0.22)";
+                ctx.strokeStyle = Tone.css(palette, Qt.rgba(1, 1, 1, 0.22));
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo(rx, 12);
@@ -694,7 +698,7 @@ Rectangle {
                 if (drawLabel) {
                     ctx.save();
                     ctx.font = "9px sans-serif";
-                    ctx.fillStyle = "rgba(255,255,255,0.45)";
+                    ctx.fillStyle = Tone.css(palette, Qt.rgba(1, 1, 1, 0.45));
                     var tw = ctx.measureText(label).width;
                     var tx = Math.min(Math.max(rx + 3, 0), w - tw);
                     ctx.fillText(label, tx, 9);
@@ -735,7 +739,7 @@ Rectangle {
                     ctx.fill();
                     ctx.beginPath();
                     ctx.arc(hx, hy, 2, 0, Math.PI * 2);
-                    ctx.fillStyle = "#ffffff";
+                    ctx.fillStyle = Tone.css(palette, "#ffffff");
                     ctx.fill();
                 }
 
@@ -747,7 +751,7 @@ Rectangle {
                     var acR = Math.round(accentColor.r * 255);
                     var acG = Math.round(accentColor.g * 255);
                     var acB = Math.round(accentColor.b * 255);
-                    ctx.strokeStyle = chartCanvas.isBoth ? "rgba(255,255,255,0.4)" : "rgba(" + acR + "," + acG + "," + acB + ",0.5)";
+                    ctx.strokeStyle = chartCanvas.isBoth ? Tone.css(palette, Qt.rgba(1, 1, 1, 0.4)) : "rgba(" + acR + "," + acG + "," + acB + ",0.5)";
                     ctx.lineWidth = 1;
                     ctx.beginPath();
                     ctx.moveTo(hx, 0);
@@ -832,8 +836,8 @@ Rectangle {
                 id: scrubTooltip
                 objectName: "usageChartTooltip"
                 visible: chartCanvas.scrubIndex >= 0
-                color: Qt.rgba(0, 0, 0, 0.72)
-                border.color: Qt.rgba(1, 1, 1, 0.10)
+                color: Tone.c(palette, Qt.rgba(0, 0, 0, 0.72))
+                border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.10))
                 border.width: 1
                 radius: 6
                 width: (chartCanvas.isBoth ? bothTooltipRow.implicitWidth : tooltipRow.implicitWidth) + 14
@@ -908,7 +912,7 @@ Rectangle {
                             return "  ·  " + Qt.formatDateTime(new Date(point.t), "MMM d, hh:mm");
                         }
                         font.pixelSize: 11
-                        color: "#f8fafc"
+                        color: Tone.c(palette, "#f8fafc")
                         opacity: 0.75
                     }
                 }
@@ -932,6 +936,7 @@ Rectangle {
                             Layout.alignment: Qt.AlignVCenter
                         }
                         Text {
+                            // xgettext:no-javascript-format — "%1%" is a Qt placeholder and a percent sign, not printf
                             text: chartCanvas.scrubGeminiPt ? chart.shell.i18n("Gemini: %1%", Math.round(chartCanvas.scrubGeminiPt.v)) : ""
                             font.pixelSize: 11
                             font.bold: true
@@ -943,7 +948,7 @@ Rectangle {
                         visible: chartCanvas.scrubGeminiPt !== null && chartCanvas.scrubRestPt !== null
                         text: "·"
                         font.pixelSize: 11
-                        color: "#f8fafc"
+                        color: Tone.c(palette, "#f8fafc")
                         opacity: 0.4
                     }
 
@@ -960,6 +965,7 @@ Rectangle {
                             Layout.alignment: Qt.AlignVCenter
                         }
                         Text {
+                            // xgettext:no-javascript-format — "%1%" is a Qt placeholder and a percent sign, not printf
                             text: chartCanvas.scrubRestPt ? chart.shell.i18n("Rest: %1%", Math.round(chartCanvas.scrubRestPt.v)) : ""
                             font.pixelSize: 11
                             font.bold: true
@@ -970,7 +976,7 @@ Rectangle {
                     Text {
                         text: chartCanvas.scrubTimestamp > 0 ? "  ·  " + Qt.formatDateTime(new Date(chartCanvas.scrubTimestamp), "MMM d, hh:mm") : ""
                         font.pixelSize: 11
-                        color: "#f8fafc"
+                        color: Tone.c(palette, "#f8fafc")
                         opacity: 0.75
                     }
                 }
@@ -1034,7 +1040,7 @@ Rectangle {
                     opacity: 0.40
                     horizontalAlignment: Text.AlignHCenter
                     lineHeight: 0.9
-                    color: "#f8fafc"
+                    color: Tone.c(palette, "#f8fafc")
                 }
             }
         }

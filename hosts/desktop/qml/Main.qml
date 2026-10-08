@@ -21,6 +21,15 @@ Window {
     // Matched by the KWin script in app.py (POPUP_TITLE) on Plasma Wayland.
     title: "AI Usage"
 
+    // Set by app.py once macOS's own blur is behind this window
+    // (hosts/macos/vibrancy.py): the QML glass thins out so it shows.
+    property bool nativeBlur: false
+    // The popup's light or dark, for ui/js/Tone.js (every item inherits the
+    // window's palette) and for app.py, which matches the macOS blur to it.
+    palette.window: app.windowColor
+    readonly property bool light: app.light
+    onLightChanged: backend.setPopupLight(light)
+
     // Read by app.py (the tray menu's "Settings" and the self-test).
     property alias showSettings: app.showSettings
     readonly property alias settings: app.settings
@@ -38,6 +47,8 @@ Window {
     AppState {
         id: app
         backend: root.hostBackend
+        // Settings → Appearance → Theme "auto": the system's light or dark.
+        systemLight: Qt.styleHints.colorScheme === Qt.ColorScheme.Light
         popupVisible: root.visible
         trayOptions: true
     }
@@ -155,6 +166,7 @@ Window {
     PopupBackground {
         anchors.fill: parent
         shell: app
+        blurred: root.nativeBlur
     }
 
     // Capped height, so the settings page scrolls rather than running off the

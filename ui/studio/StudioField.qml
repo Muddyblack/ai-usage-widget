@@ -1,5 +1,6 @@
 import QtQuick
 import "Theme.js" as Theme
+import "../js/Tone.js" as Tone
 
 // Sunk single-line field. Commits on Enter and when focus leaves, so a
 // half-typed value never reaches the backend; `live` commits per keystroke
@@ -31,9 +32,9 @@ Rectangle {
     width: implicitWidth
     height: implicitHeight
     radius: 8
-    color: Theme.sunk
+    color: Tone.c(palette, Theme.sunk)
     border.width: 1
-    border.color: input.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.8) : area.containsMouse ? "#40ffffff" : Theme.line2
+    border.color: input.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.8) : area.containsMouse ? Tone.c(palette, "#40ffffff") : Tone.c(palette, Theme.line2)
 
     function commit() {
         var t = input.text.trim();
@@ -63,7 +64,7 @@ Rectangle {
         x: 10
         width: parent.width - 20 - (control.secret ? 22 : 0)
         anchors.verticalCenter: parent.verticalCenter
-        color: Theme.text
+        color: Tone.c(palette, Theme.text)
         selectionColor: Qt.rgba(0.31, 0.62, 0.87, 0.45)
         font.pixelSize: 11
         font.family: control.mono ? "monospace" : defaultFont.font.family
@@ -96,7 +97,7 @@ Rectangle {
         verticalAlignment: Text.AlignVCenter
         visible: input.text === "" && !input.activeFocus
         text: control.placeholder
-        color: Theme.dim
+        color: Tone.c(palette, Theme.dim)
         font: input.font
         elide: Text.ElideRight
     }

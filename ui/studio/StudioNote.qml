@@ -1,12 +1,13 @@
 import QtQuick
 import "Theme.js" as Theme
+import "../js/Tone.js" as Tone
 
 // Tinted aside (the studios' `.note`), also used for status messages.
 Rectangle {
     id: note
 
     property string text: ""
-    property color tone: Theme.noteText
+    property color tone: Tone.c(palette, Theme.noteText)
 
     width: parent ? parent.width : implicitWidth
     implicitHeight: body.implicitHeight + 22

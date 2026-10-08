@@ -1,5 +1,6 @@
 import QtQuick
 import "Theme.js" as Theme
+import "../js/Tone.js" as Tone
 
 // 36 x 21 pill switch with a springy knob. Emits `toggled(checked)` with the
 // value it would take; the owner decides and sets `checked`.
@@ -18,7 +19,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: height / 2
-        color: Theme.switchOff
+        color: Tone.c(palette, Theme.switchOff)
         gradient: control.checked ? onGradient : null
         Gradient {
             id: onGradient
@@ -38,7 +39,7 @@ Item {
         radius: 7.5
         y: 3
         x: control.checked ? 18 : 3
-        color: control.checked ? "#ffffff" : Theme.knob
+        color: control.checked ? Tone.c(palette, "#ffffff") : Tone.c(palette, Theme.knob)
         Behavior on x {
             NumberAnimation {
                 duration: 200

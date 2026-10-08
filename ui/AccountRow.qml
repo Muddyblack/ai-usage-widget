@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "js/Tone.js" as Tone
 
 // The line under the provider tabs: who is signed in, a few chips (plan, model,
 // effort, …) and the service status. Everything comes from the provider's
@@ -55,7 +56,7 @@ RowLayout {
         text: row.shell ? row.shell.tr(row.account, "name") : ""
         font.pixelSize: 10
         opacity: 0.6
-        color: "#f8fafc"
+        color: Tone.c(palette, "#f8fafc")
         elide: Text.ElideRight
         Layout.fillWidth: true
     }
@@ -87,9 +88,9 @@ RowLayout {
                 case "danger":
                     return "#f87171";
                 case "off":
-                    return Qt.rgba(1, 1, 1, 0.38);
+                    return Tone.c(palette, Qt.rgba(1, 1, 1, 0.38));
                 default:
-                    return Qt.rgba(1, 1, 1, 0.62);
+                    return Tone.c(palette, Qt.rgba(1, 1, 1, 0.62));
                 }
             }
             readonly property string text: row.shell ? row.shell.tr(modelData, "text") : (modelData.text || "")
@@ -129,15 +130,15 @@ RowLayout {
                 width: tipText.implicitWidth + 16
                 height: tipText.implicitHeight + 10
                 radius: 5
-                color: Qt.rgba(0.04, 0.045, 0.06, 0.96)
+                color: Tone.c(palette, Qt.rgba(0.04, 0.045, 0.06, 0.96))
                 border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.14)
+                border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.14))
                 Text {
                     id: tipText
                     anchors.centerIn: parent
                     text: chipItem.tip
                     font.pixelSize: 11
-                    color: "#e2e8f0"
+                    color: Tone.c(palette, "#e2e8f0")
                 }
             }
         }

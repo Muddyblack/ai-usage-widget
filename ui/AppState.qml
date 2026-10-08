@@ -9,6 +9,7 @@ import "js/SessionRefreshPolicy.js" as SessionRefreshPolicy
 import "js/UsageHistory.js" as UsageHistory
 import "js/I18n.js" as I18n
 import "js/PanelRotation.js" as PanelRotation
+import "js/Tone.js" as Tone
 
 // The one application state every host shares: providers, settings, tabs,
 // sessions, pricing, history and translations. PopupContent.qml and every page
@@ -166,6 +167,7 @@ Item {
         delete s.trayNumbers;
         s.floatingPill = d.floatingPill === true;
         s.language = d.language || "";
+        s.appearance = d.appearance || "auto";
         return s;
     }
 
@@ -434,11 +436,26 @@ Item {
     property bool themeAccentAvailable: false
     property color themeAccentColor: "#3daee9"
 
+    // Settings → Appearance → Theme (settings.appearance): "auto" follows the
+    // desktop's light or dark, which the host reports in systemLight; "light"
+    // and "dark" pin it.
+    property bool systemLight: false
+    // A host whose popup background is the desktop's own (Plasma's dialog,
+    // which the widget cannot recolour) always follows it: no setting there.
+    property bool appearanceFollowsHost: false
+    readonly property bool light: root.appearanceFollowsHost ? root.systemLight : (root.settings.appearance === "light" || (root.settings.appearance !== "dark" && root.systemLight))
+    // What a host sets as its popup's palette.window. ui/js/Tone.js reads the
+    // light or dark of every shared colour off it.
+    readonly property color windowColor: root.light ? "#f4f6fa" : "#10141c"
+
     // Fill of the chart card.
     readonly property color cardColor: {
         var c = Qt.color(root.settings.cardBgColor || "#100a1a");
         var a = root.settings.cardBgOpacity === undefined ? 0.9 : Number(root.settings.cardBgOpacity);
-        return Qt.rgba(c.r, c.g, c.b, Math.max(0, Math.min(1, a)));
+        // Light under the light theme, like every other neutral (Tone.js).
+        return Tone.c({
+            window: root.windowColor
+        }, Qt.rgba(c.r, c.g, c.b, Math.max(0, Math.min(1, a))));
     }
 
     // A host whose popup frame has a style to choose (Plasma's background hints).

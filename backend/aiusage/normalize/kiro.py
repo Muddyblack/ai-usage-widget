@@ -21,7 +21,8 @@ from ..stats import kiro_stats
 def _sign_in_note():
     return note_section(
         tr(
-            "Sign in to kiro-cli (kiro-cli login), or open the Kiro IDE and sign in once so the widget can read its usage snapshot. A kiro-cli login expires about an hour after the CLI last ran — start kiro-cli to renew it."
+            "Sign in to kiro-cli (kiro-cli login), or open the Kiro IDE and sign in once so the widget can read its usage snapshot."
+            " A kiro-cli login expires about an hour after the CLI last ran — start kiro-cli to renew it."
         )
     )
 

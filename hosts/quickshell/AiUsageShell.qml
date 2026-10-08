@@ -91,6 +91,8 @@ ShellRoot {
         pillControls: true
         interpreterControls: true
         compositorGlassAvailable: true
+        // Settings → Appearance → Theme "auto": the desktop's light or dark.
+        systemLight: Qt.styleHints.colorScheme === Qt.ColorScheme.Light
         cliPath: root.repoDir + "/backend/sh/ai-usage-cli"
         // Connected outputs by name, for the settings page's monitor picker.
         screenNames: {
@@ -410,6 +412,9 @@ ShellRoot {
                 Item {
                     id: popupBody
                     anchors.fill: parent
+                    // The popup's light or dark for ui/js/Tone.js: every item
+                    // below inherits this palette.
+                    palette.window: app.windowColor
 
                     // The shared glass (ui/PopupBackground.qml), with its tint and decoration.
                     PopupBackground {

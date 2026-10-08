@@ -1,4 +1,5 @@
 import QtQuick
+import "js/Tone.js" as Tone
 
 // A soft fade over the bottom edge of a scrolling area while more content is
 // below it, so a cut-off chart reads as "scroll for more" rather than as
@@ -9,7 +10,7 @@ Rectangle {
 
     property Flickable flick: null
     // The colour the content fades into: the popup's own glass, roughly.
-    property color base: Qt.rgba(0.05, 0.07, 0.13, 1)
+    property color base: Tone.c(palette, Qt.rgba(0.05, 0.07, 0.13, 1))
 
     readonly property bool more: !!flick && flick.contentHeight - flick.contentY - flick.height > 2
 

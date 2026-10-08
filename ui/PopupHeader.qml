@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Effects
 import QtQuick.Controls.Basic as QC
 import "js/FeatureTabs.js" as FeatureTabs
+import "js/Tone.js" as Tone
 
 // The popup's top: title bar and provider tabs. Split from PopupContent so a host
 // can keep it fixed above the scrolling body (see hosts/*). `shell` is the same
@@ -94,7 +95,7 @@ ColumnLayout {
                 }
                 font.bold: true
                 font.pixelSize: 15
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
             }
             Text {
                 visible: shell.showSettings || shell.activeIsFeature
@@ -138,7 +139,7 @@ ColumnLayout {
                 }
                 font.pixelSize: 10
                 opacity: 0.5
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
             }
         }
 
@@ -153,7 +154,7 @@ ColumnLayout {
             Layout.preferredWidth: 32
             Layout.preferredHeight: 32
             radius: 6
-            color: saveMouse.containsMouse || saveMenu.visible ? Qt.rgba(1, 1, 1, 0.11) : "transparent"
+            color: saveMouse.containsMouse || saveMenu.visible ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.11)) : "transparent"
 
             Image {
                 anchors.centerIn: parent
@@ -162,6 +163,11 @@ ColumnLayout {
                 sourceSize.width: 40
                 sourceSize.height: 40
                 source: shell.iconDir + "header-save.svg"
+                // Light-grey line icons: darkened under the light theme.
+                layer.enabled: Tone.isLight(palette)
+                layer.effect: MultiEffect {
+                    brightness: -0.8
+                }
                 opacity: saveMouse.containsMouse || saveMenu.visible ? 1.0 : 0.7
             }
             MouseArea {
@@ -181,29 +187,31 @@ ColumnLayout {
                 height: saveTip.implicitHeight + 10
                 radius: 5
                 z: 10
-                color: Qt.rgba(0.04, 0.045, 0.06, 0.96)
+                color: Tone.c(palette, Qt.rgba(0.04, 0.045, 0.06, 0.96))
                 border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.14)
+                border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.14))
                 Text {
                     id: saveTip
                     anchors.centerIn: parent
                     text: shell.i18n("Save this view as a picture")
                     font.pixelSize: 11
-                    color: "#e2e8f0"
+                    color: Tone.c(palette, "#e2e8f0")
                 }
             }
 
             QC.Popup {
                 id: saveMenu
+                // A popup starts a palette of its own; carry the popup's light or dark in.
+                palette.window: saveMenu.parent ? saveMenu.parent.palette.window : "#10141c"
                 y: parent.height + 4
                 x: parent.width - width
                 padding: 4
                 closePolicy: QC.Popup.CloseOnEscape | QC.Popup.CloseOnPressOutside
                 background: Rectangle {
                     radius: 6
-                    color: "#12141a"
+                    color: Tone.c(palette, "#12141a")
                     border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.14)
+                    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.14))
                 }
                 contentItem: Column {
                     spacing: 2
@@ -223,7 +231,7 @@ ColumnLayout {
                             width: Math.max(menuLabel.implicitWidth + 24, 120)
                             height: 26
                             radius: 4
-                            color: menuMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.10) : "transparent"
+                            color: menuMouse.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.10)) : "transparent"
                             Text {
                                 id: menuLabel
                                 anchors.verticalCenter: parent.verticalCenter
@@ -231,7 +239,7 @@ ColumnLayout {
                                 anchors.leftMargin: 10
                                 text: parent.modelData.label
                                 font.pixelSize: 11
-                                color: "#f8fafc"
+                                color: Tone.c(palette, "#f8fafc")
                             }
                             MouseArea {
                                 id: menuMouse
@@ -254,7 +262,7 @@ ColumnLayout {
             Layout.preferredWidth: 32
             Layout.preferredHeight: 32
             radius: 6
-            color: gearMouse.containsMouse || shell.showSettings ? Qt.rgba(1, 1, 1, 0.11) : "transparent"
+            color: gearMouse.containsMouse || shell.showSettings ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.11)) : "transparent"
 
             Image {
                 anchors.centerIn: parent
@@ -263,6 +271,11 @@ ColumnLayout {
                 sourceSize.width: 40
                 sourceSize.height: 40
                 source: shell.iconDir + (shell.showSettings ? "header-back.svg" : "header-settings.svg")
+                // Light-grey line icons: darkened under the light theme.
+                layer.enabled: Tone.isLight(palette)
+                layer.effect: MultiEffect {
+                    brightness: -0.8
+                }
                 opacity: gearMouse.containsMouse || shell.showSettings ? 1.0 : 0.7
             }
             MouseArea {
@@ -279,7 +292,7 @@ ColumnLayout {
             Layout.preferredWidth: 32
             Layout.preferredHeight: 32
             radius: 6
-            color: refreshMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.11) : "transparent"
+            color: refreshMouse.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.11)) : "transparent"
 
             Image {
                 anchors.centerIn: parent
@@ -288,6 +301,11 @@ ColumnLayout {
                 sourceSize.width: 40
                 sourceSize.height: 40
                 source: shell.iconDir + "header-refresh.svg"
+                // Light-grey line icons: darkened under the light theme.
+                layer.enabled: Tone.isLight(palette)
+                layer.effect: MultiEffect {
+                    brightness: -0.8
+                }
                 opacity: refreshMouse.containsMouse ? 1.0 : 0.7
                 rotation: shell.loading ? refreshSpin.value : 0
             }
@@ -355,9 +373,9 @@ ColumnLayout {
                     anchors.fill: parent
                     radius: 6
                     clip: true
-                    color: tabCell.isActive ? Qt.rgba(1, 1, 1, 0.10) : "transparent"
+                    color: tabCell.isActive ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.10)) : "transparent"
                     border.width: 1
-                    border.color: tabCell.isActive ? Qt.rgba(1, 1, 1, 0.20) : Qt.rgba(1, 1, 1, 0.08)
+                    border.color: tabCell.isActive ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.20)) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
                     Behavior on color {
                         ColorAnimation {
                             duration: 150
@@ -397,7 +415,7 @@ ColumnLayout {
                         Rectangle {
                             anchors.fill: parent
                             radius: 6
-                            color: parent.containsMouse && !tabCell.isActive ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
+                            color: parent.containsMouse && !tabCell.isActive ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.05)) : "transparent"
                         }
                     }
 
@@ -441,7 +459,7 @@ ColumnLayout {
                             horizontalAlignment: Text.AlignHCenter
                             font.pixelSize: 12
                             font.bold: tabCell.isActive
-                            color: "#f8fafc"
+                            color: Tone.c(palette, "#f8fafc")
                             opacity: tabCell.isActive ? 1.0 : 0.6
                         }
                     }
@@ -466,14 +484,14 @@ ColumnLayout {
                             radius: 4
                             color: tabCell.pinned ? tabCell.modelData.accent : "transparent"
                             border.width: 1.5
-                            border.color: tabCell.pinned ? tabCell.modelData.accent : "#f8fafc"
+                            border.color: tabCell.pinned ? tabCell.modelData.accent : Tone.c(palette, "#f8fafc")
                         }
                         Rectangle {
                             x: 4
                             y: 8
                             width: 2
                             height: 4
-                            color: tabCell.pinned ? tabCell.modelData.accent : "#f8fafc"
+                            color: tabCell.pinned ? tabCell.modelData.accent : Tone.c(palette, "#f8fafc")
                         }
                         MouseArea {
                             id: pinMouse
@@ -496,15 +514,15 @@ ColumnLayout {
                     width: tipLabel.implicitWidth + 16
                     height: tipLabel.implicitHeight + 10
                     radius: 5
-                    color: Qt.rgba(0.04, 0.045, 0.06, 0.96)
+                    color: Tone.c(palette, Qt.rgba(0.04, 0.045, 0.06, 0.96))
                     border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.14)
+                    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.14))
                     Text {
                         id: tipLabel
                         anchors.centerIn: parent
                         text: (tabCell.modelData.label || "") + (tabCell.pinned ? "  ·  " + shell.i18n("Pinned on panel") : "")
                         font.pixelSize: 11
-                        color: "#e2e8f0"
+                        color: Tone.c(palette, "#e2e8f0")
                     }
                 }
             }
@@ -515,6 +533,6 @@ ColumnLayout {
         visible: !shell.showSettings
         Layout.fillWidth: true
         Layout.preferredHeight: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
     }
 }

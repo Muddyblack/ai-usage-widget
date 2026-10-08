@@ -6,7 +6,13 @@ MACOS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$MACOS_DIR/../.." && pwd)"
 APP="$ROOT/dist/AI Usage.app"
 VERSION="$(sed -nE 's/.*"Version":[[:space:]]*"([^"]+)".*/\1/p' "$ROOT/hosts/kde/metadata.json")"
-OUT="$ROOT/ai-usage-macos-$VERSION.dmg"
+# The build runs on and for one CPU (psutil has no universal wheel), so the
+# name says which: Apple Silicon (arm64) or Intel (x86_64).
+case "$(uname -m)" in
+    arm64) ARCH=apple-silicon ;;
+    *) ARCH=intel ;;
+esac
+OUT="$ROOT/ai-usage-macos-$VERSION-$ARCH.dmg"
 
 if [ ! -d "$APP" ]; then
     echo "Build AI Usage.app with hosts/macos/build-app.sh first." >&2

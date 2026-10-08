@@ -1,6 +1,7 @@
 import QtQuick
 import "studio"
 import "studio/Theme.js" as Theme
+import "js/Tone.js" as Tone
 
 // One provider's settings, whole: the on/off control plus — folded away until
 // asked for — its API key and any provider-specific extra. Mirrors the Plasma
@@ -34,7 +35,7 @@ Item {
     Rectangle {
         width: parent.width
         height: 1
-        color: Theme.line
+        color: Tone.c(palette, Theme.line)
         visible: prow.y > 0
     }
 
@@ -93,7 +94,7 @@ Item {
             spacing: 8
             Text {
                 text: prow.provider ? prow.provider.label : ""
-                color: Theme.text
+                color: Tone.c(palette, Theme.text)
                 opacity: prow.serviceOn ? 1 : 0.65
                 font.pixelSize: 12
                 font.weight: Font.Medium
@@ -151,7 +152,7 @@ Item {
                     anchors.centerIn: parent
                     visible: prow.foldable
                     text: prow.expanded ? "▴" : "▾"
-                    color: Theme.muted
+                    color: Tone.c(palette, Theme.muted)
                     font.pixelSize: 12
                 }
             }
@@ -172,7 +173,7 @@ Item {
             visible: prow.keySetting !== ""
             Text {
                 text: prow.shell.i18n("API key")
-                color: Theme.muted
+                color: Tone.c(palette, Theme.muted)
                 font.pixelSize: 10
             }
             StudioField {
@@ -198,7 +199,7 @@ Item {
             visible: prow.providerId === "selfhosted"
             Text {
                 text: prow.shell.i18n("Server URL")
-                color: Theme.muted
+                color: Tone.c(palette, Theme.muted)
                 font.pixelSize: 10
             }
             StudioField {
@@ -218,7 +219,7 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: prow.shell.i18n("Engine")
-                color: Theme.muted
+                color: Tone.c(palette, Theme.muted)
                 font.pixelSize: 10
             }
             StudioSelect {
@@ -238,7 +239,7 @@ Item {
             width: parent.width
             visible: prow.tristate
             text: prow.shell.settings.museQuota === true ? prow.shell.i18n("Live: plan windows come from a billed model call (~130 tokens per refresh, cached 30 min).") : prow.shell.i18n("Local: read from Muse's own files, free. Meta reports plan windows only on a billed call — that is what Live buys.")
-            color: Theme.muted
+            color: Tone.c(palette, Theme.muted)
             font.pixelSize: 10
             wrapMode: Text.WordWrap
         }
@@ -249,7 +250,7 @@ Item {
             visible: prow.providerId === "copilot"
             Text {
                 text: prow.shell.i18n("Quota")
-                color: Theme.muted
+                color: Tone.c(palette, Theme.muted)
                 font.pixelSize: 10
             }
             StudioField {

@@ -57,6 +57,23 @@ if paths.IS_MACOS:
         print(f"AI Usage: native menu bar item unavailable ({exc}); using Qt's", file=sys.stderr)
         statusitem = None
 
+# The popup's system blur (hosts/macos/vibrancy.py) and the login item
+# (hosts/macos/loginitem.py, SMAppService); None where unavailable, and the
+# QML glass or the LaunchAgent stand in.
+vibrancy = None
+loginitem = None
+if paths.IS_MACOS:
+    try:
+        import vibrancy  # noqa: E402
+    except ImportError as exc:
+        print(f"AI Usage: system blur unavailable ({exc})", file=sys.stderr)
+    # SMAppService registers an app bundle; run from a checkout, there is none.
+    if getattr(sys, "frozen", False) and ".app/Contents/MacOS/" in sys.executable:
+        try:
+            import loginitem  # noqa: E402
+        except ImportError as exc:
+            print(f"AI Usage: login item API unavailable ({exc}); using a LaunchAgent", file=sys.stderr)
+
 
 def _server_name():
     """The single-instance socket's name, one per user. On Windows it is a
@@ -189,6 +206,20 @@ def _launch_agent_plist():
     )
 
 
+def migrate_autostart():
+    """Earlier macOS builds started at login through a LaunchAgent plist; the
+    bundled app now uses a login item, so a plist left over becomes one."""
+    if loginitem is None or not _LAUNCH_AGENT.is_file():
+        return
+    try:
+        loginitem.set_enabled(True)
+    except OSError as exc:
+        print(f"AI Usage: could not move start-at-login to a login item: {exc}", file=sys.stderr)
+        return
+    with contextlib.suppress(OSError):
+        _LAUNCH_AGENT.unlink()
+
+
 def _launch_command():
     if FROZEN:
         return f'"{sys.executable}"'
@@ -199,6 +230,8 @@ def _launch_command():
 
 
 def autostart_enabled():
+    if loginitem is not None:
+        return loginitem.enabled()
     if paths.IS_MACOS:
         return _LAUNCH_AGENT.is_file()
     if not paths.IS_WINDOWS:
@@ -214,6 +247,9 @@ def autostart_enabled():
 
 
 def set_autostart(enabled):
+    if loginitem is not None:
+        loginitem.set_enabled(enabled)
+        return
     if paths.IS_MACOS:
         if enabled:
             _LAUNCH_AGENT.parent.mkdir(parents=True, exist_ok=True)
@@ -410,6 +446,7 @@ class Backend(QObject):
     # A setting changed from the tray menu: key, JSON-encoded value.
     settingRequested = Signal(str, str)
     popupToggleRequested = Signal()
+    popupLightChanged = Signal(bool)
     trayLabelsChanged = Signal()
     pricingRefreshFinished = Signal(str)
     pricingRefreshFailed = Signal(str)
@@ -798,6 +835,11 @@ class Backend(QObject):
         """The floating pill was clicked; the popup opens next to it."""
         self.popupToggleRequested.emit()
 
+    @Slot(bool)
+    def setPopupLight(self, light):
+        """The popup turned light or dark (Settings → Appearance → Theme)."""
+        self.popupLightChanged.emit(light)
+
 
 _ICON_SIZE = 64
 
@@ -998,6 +1040,8 @@ class TrayApp:
         # the user's.
         self._pill_offset = None
         self._syncing = False
+        # macOS: the system blur follows the popup's Theme (light or dark).
+        backend.popupLightChanged.connect(lambda _light: self.window.isVisible() and self._apply_vibrancy())
 
         # The logo and one icon per value in numbers mode, one ring icon
         # otherwise; every one of them opens the popup and has the menu.
@@ -1223,8 +1267,22 @@ class TrayApp:
             self.status.activate()
         self._place()
         self.window.show()
+        self._apply_vibrancy()
         self.window.raise_()
         self.window.requestActivate()
+
+    def _apply_vibrancy(self):
+        """macOS: the system blur behind the popup, once its window exists,
+        in the popup's light or dark."""
+        if vibrancy is None:
+            return
+        try:
+            if not self.window.property("nativeBlur") and vibrancy.apply(self.window):
+                self.window.setProperty("nativeBlur", True)
+            if self.window.property("nativeBlur"):
+                vibrancy.set_light(self.window, bool(self.window.property("light")))
+        except Exception as exc:  # PyObjC raises its own error types
+            print(f"AI Usage: system blur failed: {exc}", file=sys.stderr)
 
     def hide(self):
         self._hidden_at = time.monotonic()
@@ -1680,6 +1738,7 @@ def main(argv):
             config.initialize_provider_defaults()
         except OSError as e:
             print(f"AI Usage: could not initialize provider defaults: {e}", file=sys.stderr)
+        migrate_autostart()
     backend = Backend(first_run)
     engine = QQmlApplicationEngine()
     warnings = []

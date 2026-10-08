@@ -1,5 +1,6 @@
 import QtQuick
 import "Theme.js" as Theme
+import "../js/Tone.js" as Tone
 
 // A percentage of any value: drag the slider or type a number. `value` is a
 // fraction (0.35 is 35 %); `chosen(fraction)` fires when a drag is released or
@@ -42,7 +43,7 @@ Item {
             height: 4
             radius: 2
             anchors.verticalCenter: parent.verticalCenter
-            color: "#1affffff"
+            color: Tone.c(palette, "#1affffff")
             Rectangle {
                 width: parent.width * control.fraction()
                 height: parent.height
@@ -56,7 +57,7 @@ Item {
             width: 14
             height: 14
             radius: 7
-            color: "#f4f6f6"
+            color: Tone.c(palette, "#f4f6f6")
             border.width: dragArea.pressed ? 4 : 0
             border.color: "#554f9dde"
         }
@@ -83,16 +84,16 @@ Item {
         width: 66
         height: parent.height
         radius: 8
-        color: Theme.sunk
+        color: Tone.c(palette, Theme.sunk)
         border.width: 1
-        border.color: input.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.8) : Theme.line2
+        border.color: input.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.8) : Tone.c(palette, Theme.line2)
 
         TextInput {
             id: input
             x: 10
             width: parent.width - 30
             anchors.verticalCenter: parent.verticalCenter
-            color: Theme.text
+            color: Tone.c(palette, Theme.text)
             selectionColor: Qt.rgba(0.31, 0.62, 0.87, 0.45)
             font.pixelSize: 11
             horizontalAlignment: TextInput.AlignRight
@@ -136,7 +137,7 @@ Item {
             anchors.rightMargin: 9
             anchors.verticalCenter: parent.verticalCenter
             text: "%"
-            color: Theme.muted
+            color: Tone.c(palette, Theme.muted)
             font.pixelSize: 11
         }
     }

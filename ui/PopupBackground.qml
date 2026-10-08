@@ -1,8 +1,10 @@
 import QtQuick
+import "js/Tone.js" as Tone
 
-// The popup's glass, drawn the same by every host: a dark translucent
-// gradient (the compositor's blur shows through where it has one), an
-// optional tint, one decoration, and a crisp top highlight.
+// The popup's glass, drawn the same by every host: a translucent gradient,
+// dark or (under the light theme) milky light, which the compositor's blur
+// shows through where it has one; an optional tint, one decoration, and a
+// crisp top highlight.
 //
 // Settings (Settings → Appearance):
 //   popupBgColor     tint colour, "#rrggbb"           (default black)
@@ -26,8 +28,14 @@ Rectangle {
     // `translucent` host, whose frame is the background (see the tint below).
     readonly property real glassOpacity: Math.max(0.2, Math.min(1, settings.popupGlassOpacity === undefined ? 1 : Number(settings.popupGlassOpacity)))
     readonly property real fillScale: (blurred ? 0.62 : 1) * glassOpacity
-    // The glass colour at gradient stop 0, 1 or 2, for opacity scale `s`.
+    // Settings → Appearance → Theme, as the host set it on the palette
+    // (AppState.light; ui/js/Tone.js).
+    readonly property bool light: Tone.isLight(palette)
+    // The glass colour at gradient stop 0, 1 or 2, for opacity scale `s`:
+    // blue-tinged and dark, or milky and light.
     function glassStop(i, s) {
+        if (glass.light)
+            return [Qt.rgba(0.99, 0.995, 1.0, 0.78 * s), Qt.rgba(0.95, 0.96, 0.98, 0.82 * s), Qt.rgba(0.91, 0.93, 0.96, 0.86 * s)][i];
         return [Qt.rgba(0.24, 0.31, 0.45, 0.66 * s), Qt.rgba(0.12, 0.17, 0.29, 0.70 * s), Qt.rgba(0.06, 0.09, 0.19, 0.76 * s)][i];
     }
     // A host whose window frame already rounds the corners (KDE's popup
@@ -71,7 +79,7 @@ Rectangle {
     // The KDE dialog frame already draws an edge; a second one reads as a
     // double layer.
     border.width: glass.translucent ? 0 : 1
-    border.color: Qt.rgba(1, 1, 1, 0.12)
+    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
     clip: true
 
     // Frost (Settings → Appearance → Frost, popupFrost 0–1): a milky wash,

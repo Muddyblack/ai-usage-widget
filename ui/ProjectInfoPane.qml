@@ -3,6 +3,7 @@ import QtQuick.Window
 import QtQuick.Layouts
 import "js/ProjectInfo.js" as Project
 import "js/ProjectInfoRequests.js" as InfoRequests
+import "js/Tone.js" as Tone
 
 Column {
     id: info
@@ -83,7 +84,7 @@ Column {
                 width: parent.width
                 text: Project.name
                 wrapMode: Text.WordWrap
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
                 font.pixelSize: 17
                 font.weight: Font.DemiBold
             }
@@ -95,7 +96,7 @@ Column {
                     width: 24
                     height: 24
                     radius: 12
-                    color: Qt.rgba(0, 0, 0, 0.3)
+                    color: Tone.c(palette, Qt.rgba(0, 0, 0, 0.3))
 
                     Text {
                         anchors.centerIn: parent
@@ -128,7 +129,7 @@ Column {
         width: parent.width
         text: "An open-source AI quota & usage monitor for Plasma, Hyprland, macOS and Windows. Explore the project, get updates, or help improve it."
         wrapMode: Text.WordWrap
-        color: Qt.rgba(1, 1, 1, 0.55)
+        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.55))
         font.pixelSize: 11
         lineHeight: 1.25
     }
@@ -139,8 +140,8 @@ Column {
         width: parent.width
         height: versionContent.implicitHeight + 24
         radius: 8
-        color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: Qt.rgba(1, 1, 1, 0.12)
+        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
+        border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
         border.width: 1
 
         Column {
@@ -152,7 +153,7 @@ Column {
 
             Text {
                 text: "Installed version · " + info.currentVersion
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
                 font.pixelSize: 11
                 font.weight: Font.DemiBold
             }
@@ -160,7 +161,7 @@ Column {
             Text {
                 objectName: "latestVersionLabel"
                 text: "Latest stable release · " + (info.latestVersion || "—")
-                color: Qt.rgba(1, 1, 1, 0.5)
+                color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.5))
                 font.pixelSize: 11
             }
 
@@ -169,7 +170,7 @@ Column {
                 width: parent.width
                 text: info.versionStatus
                 wrapMode: Text.WordWrap
-                color: text === "Update available" ? info.accent : Qt.rgba(1, 1, 1, 0.5)
+                color: text === "Update available" ? info.accent : Tone.c(palette, Qt.rgba(1, 1, 1, 0.5))
                 font.pixelSize: 11
             }
 
@@ -205,9 +206,9 @@ Column {
                 width: info.width >= 570 ? (info.width - 16) / 3 : info.width >= 360 ? (info.width - 8) / 2 : info.width
                 height: 72
                 radius: 8
-                color: statArea.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04)
+                color: statArea.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.08)) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
                 border.width: 1
-                border.color: statArea.containsMouse ? info.accent : Qt.rgba(1, 1, 1, 0.12)
+                border.color: statArea.containsMouse ? info.accent : Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
 
                 Image {
                     objectName: "statIcon_" + parent.modelData.id
@@ -224,7 +225,7 @@ Column {
                     x: 40
                     y: 8
                     text: info.counts[parent.modelData.id] || "—"
-                    color: "#f8fafc"
+                    color: Tone.c(palette, "#f8fafc")
                     font.pixelSize: 18
                     font.weight: Font.DemiBold
                 }
@@ -234,7 +235,7 @@ Column {
                     y: 42
                     width: parent.width - 24
                     text: parent.modelData.label + " ↗"
-                    color: Qt.rgba(1, 1, 1, 0.5)
+                    color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.5))
                     font.pixelSize: 10
                     elide: Text.ElideRight
                 }
@@ -257,8 +258,8 @@ Column {
         width: parent.width
         height: 56
         radius: 8
-        color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: Qt.rgba(1, 1, 1, 0.12)
+        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
+        border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
         border.width: 1
 
         Column {
@@ -268,14 +269,14 @@ Column {
 
             Text {
                 text: "License · " + Project.license
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
                 font.pixelSize: 11
                 font.weight: Font.DemiBold
             }
 
             Text {
                 text: Project.licenseId + " · From the bundled LICENSE file"
-                color: Qt.rgba(1, 1, 1, 0.45)
+                color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.45))
                 font.pixelSize: 9
             }
         }
@@ -294,7 +295,7 @@ Column {
 
             Text {
                 text: "Contributors"
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
                 font.pixelSize: 13
                 font.weight: Font.DemiBold
                 anchors.verticalCenter: parent.verticalCenter
@@ -321,8 +322,8 @@ Column {
                     width: info.width >= 570 ? (info.width - 16) / 3 : info.width >= 360 ? (info.width - 8) / 2 : info.width
                     height: 52
                     radius: 8
-                    color: contributorArea.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04)
-                    border.color: contributorArea.containsMouse ? info.accent : Qt.rgba(1, 1, 1, 0.12)
+                    color: contributorArea.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.08)) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
+                    border.color: contributorArea.containsMouse ? info.accent : Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
                     border.width: 1
 
                     Rectangle {
@@ -331,7 +332,7 @@ Column {
                         width: 32
                         height: 32
                         radius: 16
-                        color: Qt.rgba(0, 0, 0, 0.3)
+                        color: Tone.c(palette, Qt.rgba(0, 0, 0, 0.3))
 
                         Text {
                             anchors.centerIn: parent
@@ -361,14 +362,14 @@ Column {
                             width: parent.width
                             text: contributorCard.modelData.login
                             elide: Text.ElideRight
-                            color: "#f8fafc"
+                            color: Tone.c(palette, "#f8fafc")
                             font.pixelSize: 11
                             font.weight: Font.DemiBold
                         }
 
                         Text {
                             text: contributorCard.modelData.commits + (contributorCard.modelData.commits === 1 ? " commit" : " commits")
-                            color: Qt.rgba(1, 1, 1, 0.5)
+                            color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.5))
                             font.pixelSize: 9
                         }
                     }
@@ -393,7 +394,7 @@ Column {
 
         Text {
             text: "Support the project"
-            color: "#f8fafc"
+            color: Tone.c(palette, "#f8fafc")
             font.pixelSize: 13
             font.weight: Font.DemiBold
         }
@@ -411,9 +412,9 @@ Column {
                     width: info.width >= 570 ? (info.width - 16) / 3 : info.width >= 360 ? (info.width - 8) / 2 : info.width
                     height: 56
                     radius: 8
-                    color: linkArea.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04)
+                    color: linkArea.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.08)) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
                     border.width: 1
-                    border.color: linkArea.containsMouse ? info.accent : Qt.rgba(1, 1, 1, 0.12)
+                    border.color: linkArea.containsMouse ? info.accent : Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
 
                     Image {
                         objectName: "fundingIcon_" + parent.modelData.id
@@ -434,7 +435,7 @@ Column {
                         wrapMode: Text.WordWrap
                         maximumLineCount: 2
                         elide: Text.ElideRight
-                        color: "#f8fafc"
+                        color: Tone.c(palette, "#f8fafc")
                         font.pixelSize: 11
                         font.weight: Font.DemiBold
                     }

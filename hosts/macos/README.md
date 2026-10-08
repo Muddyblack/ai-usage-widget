@@ -7,10 +7,14 @@ directory holds only what is macOS's own:
 ```
 statusitem.py        NSStatusItem through PyObjC: the values as menu bar text,
                      the provider logo as a template image, click / right-click
+vibrancy.py          the system blur (NSVisualEffectView) behind the popup
+loginitem.py         start at login as an SMAppService login item (the bundled app)
 ai-usage.spec        PyInstaller spec -> dist/AI Usage.app (LSUIElement, no Dock icon)
 build-app.sh         Finder icon + PyInstaller
-package-dmg.sh       dist/AI Usage.app -> ai-usage-macos-<version>.dmg
-requirements.txt     runtime: the desktop app's needs + pyobjc-framework-Cocoa
+package-dmg.sh       dist/AI Usage.app -> ai-usage-macos-<version>-<apple-silicon|intel>.dmg
+notarize.sh          Developer ID signing + notarization (releases, with Apple secrets)
+entitlements.plist   the hardened-runtime exceptions notarize.sh signs with
+requirements.txt     runtime: the desktop app's needs + PyObjC (Cocoa, ServiceManagement)
 build-requirements.txt  pinned versions for release builds
 ```
 
@@ -31,5 +35,5 @@ Without PyObjC the app still runs, with Qt's plain tray icon in the menu bar.
 ```bash
 pip install -r hosts/macos/build-requirements.txt
 hosts/macos/build-app.sh            # dist/AI Usage.app
-hosts/macos/package-dmg.sh          # ai-usage-macos-<version>.dmg
+hosts/macos/package-dmg.sh          # ai-usage-macos-<version>-<apple-silicon|intel>.dmg
 ```

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Window
 import QtQuick.Layouts
+import "js/Tone.js" as Tone
 
 // Service-status chip for the popup header: the Quickshell twin of the Plasma
 // widget's StatusChip.qml, fed by the same details.status block. QQC2.ToolTip
@@ -26,7 +27,7 @@ Rectangle {
 
     readonly property color statusColor: {
         if (linkOnly)
-            return Qt.rgba(1, 1, 1, 0.5);
+            return Tone.c(palette, Qt.rgba(1, 1, 1, 0.5));
         if (indicator === "critical")
             return Qt.rgba(1.0, 0.3, 0.3, 0.95);
         if (indicator === "major")
@@ -146,9 +147,9 @@ Rectangle {
         width: 280
         height: tipText.implicitHeight + 16
         radius: 6
-        color: Qt.rgba(0.04, 0.045, 0.06, 0.97)
+        color: Tone.c(palette, Qt.rgba(0.04, 0.045, 0.06, 0.97))
         border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.14)
+        border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.14))
 
         Text {
             id: tipText
@@ -156,7 +157,7 @@ Rectangle {
             y: 8
             width: parent.width - 20
             text: chip.tooltipText
-            color: "#e2e8f0"
+            color: Tone.c(palette, "#e2e8f0")
             font.pixelSize: 11
             wrapMode: Text.Wrap
         }

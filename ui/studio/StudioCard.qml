@@ -1,5 +1,6 @@
 import QtQuick
 import "Theme.js" as Theme
+import "../js/Tone.js" as Tone
 
 // A titled group of rows (the studios' `.sec`): small uppercase title, then a
 // rounded card holding the rows, separated by hairlines.
@@ -17,7 +18,7 @@ Column {
         visible: group.title !== ""
         width: parent.width
         text: group.title.toUpperCase()
-        color: Theme.sectionTitle
+        color: Tone.c(palette, Theme.sectionTitle)
         font.pixelSize: 10
         font.weight: Font.DemiBold
         font.letterSpacing: 1.2
@@ -29,9 +30,9 @@ Column {
         width: parent.width
         height: body.height + 4
         radius: 12
-        color: Theme.card
+        color: Tone.c(palette, Theme.card)
         border.width: 1
-        border.color: Theme.line
+        border.color: Tone.c(palette, Theme.line)
 
         Column {
             id: body
@@ -45,7 +46,7 @@ Column {
         visible: group.caption !== ""
         width: parent.width
         text: group.caption
-        color: Theme.dim
+        color: Tone.c(palette, Theme.dim)
         font.pixelSize: 10
         wrapMode: Text.WordWrap
         leftPadding: 2

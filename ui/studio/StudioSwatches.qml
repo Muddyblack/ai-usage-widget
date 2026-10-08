@@ -1,5 +1,6 @@
 import QtQuick
 import "Theme.js" as Theme
+import "../js/Tone.js" as Tone
 
 // Round colour swatches. Any #rrggbb can be typed in a StudioField beside it.
 Flow {
@@ -27,14 +28,14 @@ Flow {
                 visible: swatch.chosen
                 color: "transparent"
                 border.width: 2
-                border.color: Theme.text
+                border.color: Tone.c(palette, Theme.text)
             }
             Rectangle {
                 anchors.fill: parent
                 radius: 10
                 color: swatch.modelData
                 border.width: 1
-                border.color: "#33ffffff"
+                border.color: Tone.c(palette, "#33ffffff")
             }
             MouseArea {
                 anchors.fill: parent

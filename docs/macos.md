@@ -19,11 +19,19 @@ created through PyObjC:
 - a click opens the popup under the item, a right- or control-click opens the
   menu (refresh, settings, tray style, start at login, quit).
 
-The app has no Dock icon (`LSUIElement`), and "Start at login" writes a
-per-user LaunchAgent (`~/Library/LaunchAgents/org.muddyblack.aiUsageWidget.plist`).
+The app has no Dock icon (`LSUIElement`). "Start at login" registers the app
+as a login item through `SMAppService` (`hosts/macos/loginitem.py`), so it
+shows by name under **System Settings → General → Login Items**; an older
+build's LaunchAgent plist is moved over on the first start. Run from a
+checkout, which has no app bundle to register, it still writes a per-user
+LaunchAgent (`~/Library/LaunchAgents/org.muddyblack.aiUsageWidget.plist`).
 
 The popup is the shared glass panel rather than an `NSPopover`: that is the
-trade for one UI that cannot drift between platforms.
+trade for one UI that cannot drift between platforms. It does get the
+system's own blur: `hosts/macos/vibrancy.py` puts an `NSVisualEffectView`
+(the popover material) behind it, set to the popup's light or dark, and the
+QML glass thins out over it. Settings → Appearance → Theme picks light, dark,
+or Auto, which follows the system appearance.
 
 ## Python on macOS
 
@@ -99,7 +107,7 @@ On a Mac:
 ```bash
 pip install -r hosts/macos/build-requirements.txt
 hosts/macos/build-app.sh       # dist/AI Usage.app
-hosts/macos/package-dmg.sh     # ai-usage-macos-<version>.dmg
+hosts/macos/package-dmg.sh     # ai-usage-macos-<version>-<apple-silicon|intel>.dmg
 ```
 
 `rsvg-convert` (`brew install librsvg`) is needed for the Finder icon; without
@@ -111,10 +119,11 @@ The popup is the shared QML, so `python3 hosts/desktop/app.py --screenshot DIR
 --demo` on Linux renders exactly what the Mac shows inside the popup. Only the
 menu bar item itself (`statusitem.py`) needs a Mac to try.
 
-On a pull request, a maintainer can comment `/macos` to have a Mac runner
-render every popup tab and settings section into a comment on the PR
-(`.github/workflows/macos-screenshots.yml`). Every macOS CI run also keeps
-the same PNGs as its `screenshots` artifact.
+Every macOS CI run renders every popup tab and settings section on a Mac
+and keeps the PNGs as its `screenshots` artifact. On a pull request, a
+maintainer can comment `/macos` to have them posted into a comment on the PR;
+that labels the PR `macos-screenshots`, and the comment then updates with
+every new commit (`.github/workflows/macos-screenshots.yml`).
 
 ## Translations
 
@@ -123,11 +132,15 @@ host (`ui/js/I18n.js`); there is no separate macOS catalog.
 
 ## Signing and distribution
 
-Download the release DMG, open it, and drag **AI Usage.app** onto
+Each release has two builds: `ai-usage-macos-<version>-apple-silicon.dmg`
+for M1 and later, and `ai-usage-macos-<version>-intel.dmg` for Intel Macs
+(Apple menu → **About This Mac** says which). psutil ships no universal
+wheel, so CI builds each on its own runner (`macos-14`, `macos-15-intel`).
+Download the right DMG, open it, and drag **AI Usage.app** onto
 **Applications**. Eject the disk image and open the app from Applications.
 
-The app is not notarized by Apple. If macOS blocks the first launch and you
-trust the download:
+Until the repository has an Apple Developer ID, the app is ad-hoc signed and
+not notarized. If macOS blocks the first launch and you trust the download:
 
 1. Try opening the app from Applications.
 2. Open **System Settings → Privacy & Security** and scroll to **Security**.
@@ -135,3 +148,20 @@ trust the download:
 
 See [Apple's instructions for opening an app from an unknown developer](https://support.apple.com/guide/mac-help/mh40616/mac).
 Users do **not** need an Apple developer account to install or use the app.
+
+### Notarizing releases
+
+With a paid Apple Developer account, releases are signed with a Developer
+ID and notarized by Apple, so they open with no "Open Anyway" step. The
+release workflow does it by itself (`hosts/macos/notarize.sh`, the
+hardened-runtime exceptions in `hosts/macos/entitlements.plist`) once these
+repository secrets exist; without them it builds ad-hoc signed as before.
+
+| Secret | What it holds |
+| --- | --- |
+| `MACOS_CERT_P12` | the "Developer ID Application" certificate and key, exported as .p12, base64-encoded |
+| `MACOS_CERT_PASSWORD` | that .p12's password |
+| `MACOS_SIGN_IDENTITY` | the identity name, e.g. `Developer ID Application: Name (TEAMID)` |
+| `APPLE_ID` | the Apple Account email notarytool signs in with |
+| `APPLE_TEAM_ID` | the 10-character team ID |
+| `APPLE_APP_PASSWORD` | an app-specific password for that account (account.apple.com) |

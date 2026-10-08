@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "js/Tone.js" as Tone
 
 // A pill of mutually exclusive segments, drawn like the popup's Usage/Stats
 // switch. Used for the settings sections and for Muse's Off/Local/Live choice,
@@ -17,9 +18,9 @@ Rectangle {
     Layout.fillWidth: true
     Layout.preferredHeight: 26
     radius: 6
-    color: Qt.rgba(1, 1, 1, 0.04)
+    color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
     border.width: 1
-    border.color: Qt.rgba(1, 1, 1, 0.07)
+    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.07))
 
     RowLayout {
         anchors.fill: parent
@@ -47,7 +48,7 @@ Rectangle {
                     text: parent.modelData.label
                     font.pixelSize: 10
                     font.bold: parent.active
-                    color: parent.active ? bar.accent : "#f8fafc"
+                    color: parent.active ? bar.accent : Tone.c(palette, "#f8fafc")
                     opacity: parent.active ? 1.0 : 0.6
                     elide: Text.ElideRight
                 }

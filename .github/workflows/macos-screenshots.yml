@@ -1,9 +1,16 @@
 name: macOS screenshots
 
-# On request, not on every pull request: a maintainer comments `/macos` on a
-# PR (or runs this from the Actions tab with the PR number), and the shared
-# popup is rendered on a Mac, every tab and settings section, into one
-# comment on that PR.
+# Puts the macOS screenshots of a pull request into a comment on it, on
+# request: a maintainer comments `/macos` (or runs this from the Actions tab
+# with the PR number). That labels the PR `macos-screenshots`, and from then
+# on every new commit's screenshots replace the comment's by themselves.
+#
+# Nothing of the PR runs here. The pictures are taken by macos.yml's app job,
+# which runs on every pull request in that PR's own, unprivileged context and
+# keeps them as its `screenshots` artifact; this workflow only downloads that
+# artifact (checked: PNGs only) and publishes it. Running the PR's code in
+# this privileged context instead would let it poison the default branch's
+# caches (CodeQL: actions/cache-poisoning).
 #
 # Where the PNGs live: GitHub has no API for attaching an image to a comment,
 # so a comment can only embed an image some URL already serves. They go to a
@@ -12,11 +19,14 @@ name: macOS screenshots
 # commit, not the branch, so its images keep working after that.
 #
 # This file only takes effect from the default branch: GitHub reads
-# issue_comment and pull_request_target workflows from there.
+# issue_comment, workflow_run and pull_request_target workflows from there.
 
 on:
   issue_comment:
     types: [created]
+  workflow_run:
+    workflows: [macOS]
+    types: [completed]
   pull_request_target:
     types: [closed]
   workflow_dispatch:
@@ -30,97 +40,100 @@ permissions: {}
 
 env:
   BRANCH: ci-screenshots
+  LABEL: macos-screenshots
 
 jobs:
-  # Who asked, and for which commit. Only maintainers: the screenshots run the
-  # PR's own code on a Mac, and a fork's PR could be anyone's.
+  # Which PR, which commit, and which macOS run has its screenshots.
   resolve:
     if: >-
       github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.event == 'pull_request' &&
+       github.event.workflow_run.conclusion == 'success') ||
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request &&
        startsWith(github.event.comment.body, '/macos') &&
        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association))
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: read
+      actions: read
+      pull-requests: write
       issues: write
     outputs:
-      pr: ${{ steps.pr.outputs.pr }}
-      sha: ${{ steps.pr.outputs.sha }}
+      pr: ${{ steps.pick.outputs.pr }}
+      sha: ${{ steps.pick.outputs.sha }}
+      run: ${{ steps.pick.outputs.run }}
     steps:
-      - id: pr
+      - id: pick
         uses: actions/github-script@v8
         with:
           script: |
-            const number = context.eventName === 'workflow_dispatch' ? Number(context.payload.inputs.pr) : context.issue.number;
-            const { data: pr } = await github.rest.pulls.get({ ...context.repo, pull_number: number });
-            if (pr.state !== 'open') {
-              core.setFailed(`PR #${number} is not open.`);
+            const repo = context.repo;
+            const label = process.env.LABEL;
+            let pr;
+            if (context.eventName === 'workflow_run') {
+              // A fork's run lists no pull request, so look it up by head commit.
+              const run = context.payload.workflow_run;
+              const open = await github.paginate(github.rest.pulls.list, { ...repo, state: 'open', per_page: 100 });
+              pr = open.find(p => p.head.sha === run.head_sha);
+              if (!pr || !pr.labels.some(l => l.name === label)) {
+                core.info('Not a pull request that asked for screenshots.');
+                return;
+              }
+            } else {
+              const number = context.eventName === 'workflow_dispatch' ? Number(context.payload.inputs.pr) : context.issue.number;
+              ({ data: pr } = await github.rest.pulls.get({ ...repo, pull_number: number }));
+              if (pr.state !== 'open') {
+                core.setFailed(`PR #${number} is not open.`);
+                return;
+              }
+              if (context.eventName === 'issue_comment')
+                await github.rest.reactions.createForIssueComment({ ...repo, comment_id: context.payload.comment.id, content: 'eyes' });
+              // From now on every finished macOS run of this PR publishes.
+              await github.rest.issues.addLabels({ ...repo, issue_number: pr.number, labels: [label] });
+            }
+            const sha = pr.head.sha;
+            // The newest macOS run of the PR's head commit.
+            const { data: runs } = await github.rest.actions.listWorkflowRuns({ ...repo, workflow_id: 'macos.yml', head_sha: sha, event: 'pull_request', per_page: 20 });
+            const run = runs.workflow_runs[0];
+            if (!run) {
+              core.setFailed(`No macOS run for ${sha.slice(0, 7)} yet.`);
               return;
             }
-            if (context.eventName === 'issue_comment') {
-              await github.rest.reactions.createForIssueComment({ ...context.repo, comment_id: context.payload.comment.id, content: 'eyes' });
+            if (run.status !== 'completed') {
+              // Its completion triggers this workflow again (workflow_run).
+              core.notice(`macOS run ${run.id} is still going; its screenshots are published when it finishes.`);
+              return;
             }
-            core.setOutput('pr', String(number));
-            core.setOutput('sha', pr.head.sha);
-
-  # The PR's code runs here, so this job gets a read-only token and does not
-  # keep it in the checkout.
-  shoot:
-    needs: resolve
-    runs-on: macos-14
-    # A newer /macos on the same PR cancels an older run still shooting, so
-    # an older commit's pictures never land on top of a newer one's. (Here,
-    # not on the workflow: every comment on any PR starts this workflow.)
-    concurrency:
-      group: macos-screenshots-pr-${{ needs.resolve.outputs.pr }}
-      cancel-in-progress: true
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ needs.resolve.outputs.sha }}
-          persist-credentials: false
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        run: python3 -m pip install -r hosts/macos/build-requirements.txt
-
-      - name: Screenshots
-        env:
-          QT_QPA_PLATFORM: offscreen
-          # A throwaway settings file, so the run cannot read or write
-          # anything of the runner's.
-          AI_USAGE_CONFIG: ${{ runner.temp }}/settings.json
-        run: |
-          # Demo data: a CI runner has no AI subscriptions, and the
-          # screenshots have to be reproducible.
-          python3 hosts/desktop/app.py --screenshot "$RUNNER_TEMP/screens" --demo
-          ls -la "$RUNNER_TEMP/screens"
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: macos-screenshots
-          path: ${{ runner.temp }}/screens/*.png
-          if-no-files-found: error
+            if (run.conclusion !== 'success') {
+              core.setFailed(`macOS run ${run.id} did not pass (${run.conclusion}).`);
+              return;
+            }
+            core.setOutput('pr', String(pr.number));
+            core.setOutput('sha', sha);
+            core.setOutput('run', String(run.id));
 
   publish:
-    needs: [resolve, shoot]
+    needs: resolve
+    if: needs.resolve.outputs.run != ''
     runs-on: ubuntu-latest
+    # One publish per PR at a time; the script also skips a superseded commit.
+    concurrency:
+      group: macos-screenshots-pr-${{ needs.resolve.outputs.pr }}
+      cancel-in-progress: false
     permissions:
+      actions: read
       contents: write
       pull-requests: write
       issues: write
     steps:
-      # No checkout or execution of app code in this publishing job.
+      # The macOS run's artifact. No checkout, and nothing in it is executed:
+      # the script below only reads PNG bytes.
       - uses: actions/download-artifact@v8
         with:
-          name: macos-screenshots
+          name: screenshots
+          run-id: ${{ needs.resolve.outputs.run }}
+          github-token: ${{ github.token }}
           path: ${{ runner.temp }}/screens
 
       - name: Commit the PNGs and update the PR conversation
@@ -129,6 +142,7 @@ jobs:
           SCREENSHOT_DIR: ${{ runner.temp }}/screens
           PR: ${{ needs.resolve.outputs.pr }}
           SHA: ${{ needs.resolve.outputs.sha }}
+          RUN: ${{ needs.resolve.outputs.run }}
         with:
           script: |
             const fs = require('fs');
@@ -137,6 +151,12 @@ jobs:
             const number = Number(process.env.PR);
             const sha = process.env.SHA;
             const folder = `pr-${number}/`;
+
+            const { data: current } = await github.rest.pulls.get({ ...repo, pull_number: number });
+            if (current.state !== 'open' || current.head.sha !== sha) {
+              core.info('Skipping screenshots of a superseded commit or a closed PR.');
+              return;
+            }
 
             const dir = process.env.SCREENSHOT_DIR;
             const names = fs.readdirSync(dir).filter(name => /^[a-z0-9-]+\.png$/.test(name)).sort();
@@ -199,9 +219,10 @@ jobs:
             }
 
             const marker = '<!-- macos-screenshots -->';
-            const runUrl = `${context.serverUrl}/${repo.owner}/${repo.repo}/actions/runs/${context.runId}`;
+            const runUrl = `${context.serverUrl}/${repo.owner}/${repo.repo}/actions/runs/${process.env.RUN}`;
             const imageRoot = `${context.serverUrl}/${repo.owner}/${repo.repo}/blob/${commit.sha}/${folder}`;
-            let body = `${marker}\n### macOS screenshots (${sha.slice(0, 7)})\n\n[Run and downloadable PNGs](${runUrl}) · comment \`/macos\` to take them again\n\n`;
+            let body = `${marker}\n### macOS screenshots (${sha.slice(0, 7)})\n\n`;
+            body += `[Build and downloadable PNGs](${runUrl}) · updates with every new commit while the PR has the \`${process.env.LABEL}\` label\n\n`;
             body += `<details>\n<summary>View screenshots (${names.length})</summary>\n\n`;
             for (const name of names) {
               body += `**${name}**\n\n![${name}](${imageRoot}${name}?raw=true)\n\n`;
@@ -218,10 +239,10 @@ jobs:
               await github.rest.reactions.createForIssueComment({ ...repo, comment_id: context.payload.comment.id, content: 'rocket' });
             }
 
-  # A failed run answers the request rather than failing silently.
+  # A failed request answers the comment rather than failing silently.
   report-failure:
-    needs: [resolve, shoot, publish]
-    if: failure() && github.event_name == 'issue_comment' && needs.resolve.result == 'success'
+    needs: [resolve, publish]
+    if: failure() && github.event_name == 'issue_comment'
     runs-on: ubuntu-latest
     permissions:
       issues: write

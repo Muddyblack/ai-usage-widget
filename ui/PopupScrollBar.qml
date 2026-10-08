@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic as QC
+import "js/Tone.js" as Tone
 
 // The popup's scrollbar: a thin, faint thumb that shows only while the body
 // scrolls or the pointer is on it, and fades out after. Basic style on
@@ -15,7 +16,7 @@ QC.ScrollBar {
     contentItem: Rectangle {
         implicitWidth: bar.hovered || bar.pressed ? 6 : 3
         radius: width / 2
-        color: Qt.rgba(1, 1, 1, bar.pressed ? 0.45 : bar.hovered ? 0.32 : 0.2)
+        color: Tone.c(palette, Qt.rgba(1, 1, 1, bar.pressed ? 0.45 : bar.hovered ? 0.32 : 0.2))
         opacity: bar.active || bar.hovered ? 1 : 0
         Behavior on opacity {
             NumberAnimation {

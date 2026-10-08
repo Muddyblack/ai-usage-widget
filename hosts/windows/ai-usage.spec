@@ -26,6 +26,7 @@ def tree(src, dest):
 datas = []
 datas += tree(os.path.join(ROOT, "hosts", "desktop", "qml"), os.path.join("hosts", "desktop", "qml"))
 datas += tree(os.path.join(ROOT, "ui", "js"), os.path.join("ui", "js"))
+datas += tree(os.path.join(ROOT, "ui", "studio"), os.path.join("ui", "studio"))
 datas += tree(os.path.join(ROOT, "assets", "icons"), os.path.join("assets", "icons"))
 datas += [(os.path.join(ROOT, "assets", "icon.png"), "assets")]
 # The translation catalogs: app.py picks one, Main.qml parses it with I18n.js.

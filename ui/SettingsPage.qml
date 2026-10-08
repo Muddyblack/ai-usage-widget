@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import "studio"
 import "studio/Theme.js" as Theme
+import "js/Tone.js" as Tone
 
 // Settings, in the studio design of the Glassy System Monitor and Audio
 // Visualizer: a sidebar of sections beside glass cards of described rows. Where
@@ -113,7 +114,7 @@ ColumnLayout {
             return Theme.warn;
         if (status === "refreshed")
             return Theme.ok;
-        return Theme.text;
+        return Tone.c(palette, Theme.text);
     }
 
     // Narrow: the sections as a row of tabs above the cards.
@@ -166,7 +167,7 @@ ColumnLayout {
                         width: Math.min(implicitWidth, 320)
                         visible: page.shell.providerDetectStatus !== ""
                         text: page.shell.providerDetectStatus
-                        color: Theme.muted
+                        color: Tone.c(palette, Theme.muted)
                         font.pixelSize: 10
                         elide: Text.ElideRight
                     }
@@ -230,7 +231,7 @@ ColumnLayout {
                             x: colA.width + providerGrid.gap / 2
                             width: 1
                             height: parent.height
-                            color: Theme.line
+                            color: Tone.c(palette, Theme.line)
                         }
                     }
                 }
@@ -395,7 +396,7 @@ ColumnLayout {
                     StudioRow {
                         // TRANSLATORS: the small rounded usage readout floating on the desktop edge
                         label: page.shell.i18n("Pill")
-                        dot: "#e2e8f0"
+                        dot: Tone.c(palette, "#e2e8f0")
                         StudioSelect {
                             options: page.zip(["always", "hover", "tray"], [page.shell.i18n("Always"), page.shell.i18n("Edge hover"), page.shell.i18n("Tray only")])
                             value: page.shell.settings.pillMode || "always"
@@ -485,6 +486,21 @@ ColumnLayout {
                 StudioCard {
                     title: page.shell.i18n("Popup glass")
 
+                    // Light or dark popup (AppState.light, ui/js/Tone.js). Not on
+                    // Plasma, where the popup follows the Plasma theme's dialog.
+                    StudioRow {
+                        // TRANSLATORS: light or dark look of the popup
+                        label: page.shell.i18n("Theme")
+                        desc: page.shell.i18n("Auto follows the system's light or dark appearance.")
+                        dot: "#cbd5e1"
+                        visible: !page.shell.appearanceFollowsHost
+                        StudioSeg {
+                            options: [["auto", page.shell.i18n("Auto")], ["light", page.shell.i18n("Light")], ["dark", page.shell.i18n("Dark")]]
+                            value: page.shell.settings.appearance || "auto"
+                            onChosen: v => page.shell.setSetting2("appearance", v)
+                        }
+                    }
+
                     // Tint and glass are this popup's own fill. On Plasma the
                     // frame is the background and a fill shows as an inner
                     // border (see PopupBackground.qml), so they are not offered.
@@ -514,7 +530,7 @@ ColumnLayout {
                     StudioRow {
                         label: page.shell.i18n("Glass opacity")
                         desc: page.shell.i18n("How solid the popup's glass is: lower lets the desktop (and the blur, if on) show through.")
-                        dot: "#cbd5e1"
+                        dot: Tone.c(palette, "#cbd5e1")
                         visible: !page.shell.backgroundStyleAvailable
                         StudioPercent {
                             from: 0.2
@@ -525,7 +541,7 @@ ColumnLayout {
                     StudioRow {
                         label: page.shell.i18n("Tint strength")
                         desc: page.shell.i18n("How much of the tint colour is laid over the glass.")
-                        dot: "#94a3b8"
+                        dot: Tone.c(palette, "#94a3b8")
                         visible: !page.shell.backgroundStyleAvailable
                         StudioPercent {
                             value: Number(page.shell.settings.popupBgOpacity || 0)
@@ -535,7 +551,7 @@ ColumnLayout {
                     StudioRow {
                         label: page.shell.i18n("Frost")
                         desc: page.shell.i18n("A milky, grainy frosted look over the glass; keeps text readable over a busy desktop. Pairs well with Blur.")
-                        dot: "#e2e8f0"
+                        dot: Tone.c(palette, "#e2e8f0")
                         visible: !page.shell.backgroundStyleAvailable
                         StudioPercent {
                             value: Number(page.shell.settings.popupFrost || 0)
@@ -621,7 +637,7 @@ ColumnLayout {
 
                     StudioRow {
                         label: page.shell.i18n("Refresh")
-                        dot: Theme.dim
+                        dot: Tone.c(palette, Theme.dim)
                         StudioSelect {
                             width: 130
                             options: page.zip([60, 120, 300, 600, 900, 1800], [page.shell.i18n("1 min"), page.shell.i18n("2 min"), page.shell.i18n("5 min"), page.shell.i18n("10 min"), page.shell.i18n("15 min"), page.shell.i18n("30 min")])
@@ -637,7 +653,7 @@ ColumnLayout {
                     StudioRow {
                         label: page.shell.i18n("Pricing")
                         desc: page.shell.pricingLoading || page.shell.pricingStatus !== "" || page.shell.pricingError !== "" ? page.pricingMessage() : ""
-                        dot: page.shell.pricingLoading ? Theme.warn : page.shell.pricingStatus === "" ? Theme.dim : page.shell.pricingStatus === "stale-good" ? Theme.warn : page.shell.pricingStatus === "no-cache" ? Theme.bad : Theme.ok
+                        dot: page.shell.pricingLoading ? Theme.warn : page.shell.pricingStatus === "" ? Tone.c(palette, Theme.dim) : page.shell.pricingStatus === "stale-good" ? Theme.warn : page.shell.pricingStatus === "no-cache" ? Theme.bad : Theme.ok
                         StudioButton {
                             text: page.shell.pricingLoading ? page.shell.i18n("Refreshing…") : page.shell.i18n("Refresh pricing")
                             enabled: !page.shell.pricingLoading
@@ -679,7 +695,7 @@ ColumnLayout {
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: page.shell.i18n("days")
-                                color: Theme.muted
+                                color: Tone.c(palette, Theme.muted)
                                 font.pixelSize: 11
                             }
                             StudioButton {
@@ -691,7 +707,7 @@ ColumnLayout {
                     StudioRow {
                         label: page.shell.i18n("Auto-delete")
                         desc: page.shell.i18n("On every start, delete history older than this many days. 0 keeps everything.")
-                        dot: Theme.dim
+                        dot: Tone.c(palette, Theme.dim)
                         Row {
                             spacing: 8
                             StudioField {
@@ -708,7 +724,7 @@ ColumnLayout {
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: page.shell.i18n("days")
-                                color: Theme.muted
+                                color: Tone.c(palette, Theme.muted)
                                 font.pixelSize: 11
                             }
                         }

@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls.Basic as QC
 import "js/FeatureTabs.js" as FeatureTabs
 import "js/SessionSources.js" as SessionSources
+import "js/Tone.js" as Tone
 
 ColumnLayout {
     id: page
@@ -173,10 +174,10 @@ ColumnLayout {
             "cline": "#007acc",
             "muse": "#0064e0",
             "grok": "#ef4444",
-            "opencode": "#B7B1B1",
-            "mimo": "#E8E8E8",
+            "opencode": Tone.c(palette, "#B7B1B1"),
+            "mimo": Tone.c(palette, "#E8E8E8"),
             "junie": "#48e054",
-            "cursor": "#e6e6e6",
+            "cursor": Tone.c(palette, "#e6e6e6"),
             "copilot": "#8b5cf6",
             "kimi": "#1e3a8a",
             "kiro": "#8b5cf6",
@@ -239,9 +240,9 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: 28
             radius: 6
-            color: Qt.rgba(1, 1, 1, 0.06)
+            color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
             border.width: 1
-            border.color: searchField.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.6) : Qt.rgba(1, 1, 1, 0.12)
+            border.color: searchField.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.6) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
 
             QC.TextField {
                 id: searchField
@@ -250,9 +251,9 @@ ColumnLayout {
                 anchors.rightMargin: 8
                 text: page.filterText
                 font.pixelSize: 11
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
                 placeholderText: page.shell.i18n("Search sessions…")
-                placeholderTextColor: Qt.rgba(1, 1, 1, 0.35)
+                placeholderTextColor: Tone.c(palette, Qt.rgba(1, 1, 1, 0.35))
                 verticalAlignment: TextInput.AlignVCenter
                 background: null
                 selectByMouse: true
@@ -278,6 +279,8 @@ ColumnLayout {
 
             QC.Popup {
                 id: sourcePopup
+                // A popup starts a palette of its own; carry the popup's light or dark in.
+                palette.window: sourceSelectorButton.palette.window
                 x: Math.max(-sourceSelectorButton.x, sourceSelectorButton.width - sourcePopup.width)
                 y: sourceSelectorButton.height + 4
                 width: 204
@@ -291,9 +294,9 @@ ColumnLayout {
 
                 background: Rectangle {
                     radius: 10
-                    color: Qt.rgba(0.08, 0.09, 0.12, 0.98)
+                    color: Tone.c(palette, Qt.rgba(0.08, 0.09, 0.12, 0.98))
                     border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.14)
+                    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.14))
 
                     Rectangle {
                         anchors.top: parent.top
@@ -301,7 +304,7 @@ ColumnLayout {
                         anchors.right: parent.right
                         anchors.margins: 1
                         height: 1
-                        color: Qt.rgba(1, 1, 1, 0.12)
+                        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
                         radius: 10
                     }
                 }
@@ -334,7 +337,7 @@ ColumnLayout {
                                     implicitHeight: 30
                                     Layout.preferredHeight: 30
                                     radius: 6
-                                    color: itemMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
+                                    color: itemMouse.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.08)) : "transparent"
 
                                     readonly property bool isChecked: modelData.isAll ? page.pendingSourceSelectionIsAll : (page.pendingSourceSelectionIsAll || page.pendingSourceIds.indexOf(modelData.id) >= 0)
                                     readonly property color accent: page.sourceColor(modelData.id)
@@ -366,7 +369,7 @@ ColumnLayout {
                                             radius: 4
                                             color: itemRow.isChecked ? Qt.rgba(itemRow.accent.r, itemRow.accent.g, itemRow.accent.b, 0.22) : "transparent"
                                             border.width: itemRow.isChecked ? 1.5 : 1
-                                            border.color: itemRow.isChecked ? itemRow.accent : Qt.rgba(1, 1, 1, 0.25)
+                                            border.color: itemRow.isChecked ? itemRow.accent : Tone.c(palette, Qt.rgba(1, 1, 1, 0.25))
 
                                             Text {
                                                 anchors.centerIn: parent
@@ -407,7 +410,7 @@ ColumnLayout {
                                             text: modelData.label
                                             font.pixelSize: 11
                                             font.bold: modelData.isAll && itemRow.isChecked
-                                            color: itemRow.isChecked ? "#f8fafc" : Qt.rgba(1, 1, 1, 0.65)
+                                            color: itemRow.isChecked ? Tone.c(palette, "#f8fafc") : Tone.c(palette, Qt.rgba(1, 1, 1, 0.65))
                                             elide: Text.ElideRight
                                             verticalAlignment: Text.AlignVCenter
                                         }
@@ -422,7 +425,7 @@ ColumnLayout {
                                     Layout.bottomMargin: 4
                                     implicitHeight: 1
                                     Layout.preferredHeight: 1
-                                    color: Qt.rgba(1, 1, 1, 0.08)
+                                    color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
                                 }
                             }
                         }
@@ -450,7 +453,7 @@ ColumnLayout {
         }
         wrapMode: Text.WordWrap
         opacity: 0.65
-        color: "#f8fafc"
+        color: Tone.c(palette, "#f8fafc")
         font.pixelSize: 10
     }
 
@@ -469,7 +472,7 @@ ColumnLayout {
         text: page.notice
         wrapMode: Text.WordWrap
         opacity: 0.7
-        color: "#f8fafc"
+        color: Tone.c(palette, "#f8fafc")
         font.pixelSize: 11
     }
 
@@ -479,7 +482,7 @@ ColumnLayout {
         text: shell.i18n("No local agent sessions found. They appear after Claude Code, Codex, Muse, Cline or Grok CLI records activity.")
         wrapMode: Text.WordWrap
         opacity: 0.55
-        color: "#f8fafc"
+        color: Tone.c(palette, "#f8fafc")
         font.pixelSize: 11
     }
 
@@ -489,7 +492,7 @@ ColumnLayout {
         text: shell.i18n("No sessions match your search.")
         wrapMode: Text.WordWrap
         opacity: 0.55
-        color: "#f8fafc"
+        color: Tone.c(palette, "#f8fafc")
         font.pixelSize: 11
     }
 
@@ -516,7 +519,7 @@ ColumnLayout {
                 implicitWidth: 6
                 implicitHeight: 32
                 radius: 3
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
                 opacity: verticalScrollBar.pressed ? 0.6 : (verticalScrollBar.hovered ? 0.45 : 0.25)
                 Behavior on opacity {
                     NumberAnimation {
@@ -526,7 +529,7 @@ ColumnLayout {
             }
             background: Rectangle {
                 implicitWidth: 12
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
                 opacity: verticalScrollBar.hovered ? 0.08 : 0.04
                 radius: 6
             }
@@ -545,9 +548,9 @@ ColumnLayout {
                     Layout.fillWidth: true
                     implicitHeight: body.implicitHeight + 14
                     radius: 8
-                    color: Qt.rgba(1, 1, 1, 0.04)
+                    color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
                     border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.08)
+                    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
 
                     readonly property bool activeSession: modelData.state === "active" || modelData.state === "running"
                     readonly property color accent: {
@@ -590,7 +593,7 @@ ColumnLayout {
                                 textFormat: Text.PlainText
                                 font.bold: true
                                 font.pixelSize: 12
-                                color: "#f8fafc"
+                                color: Tone.c(palette, "#f8fafc")
                                 elide: Text.ElideRight
                                 wrapMode: Text.NoWrap
                                 Layout.fillWidth: true
@@ -601,7 +604,7 @@ ColumnLayout {
                                 textFormat: Text.PlainText
                                 font.pixelSize: 10
                                 opacity: 0.55
-                                color: "#f8fafc"
+                                color: Tone.c(palette, "#f8fafc")
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
@@ -611,7 +614,7 @@ ColumnLayout {
                                 textFormat: Text.PlainText
                                 font.pixelSize: 10
                                 opacity: 0.45
-                                color: "#f8fafc"
+                                color: Tone.c(palette, "#f8fafc")
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
@@ -632,7 +635,7 @@ ColumnLayout {
                                 text: activeSession ? shell.i18n("Active") : shell.i18n("Idle")
                                 font.bold: true
                                 font.pixelSize: 11
-                                color: activeSession ? accent : "#f8fafc"
+                                color: activeSession ? accent : Tone.c(palette, "#f8fafc")
                                 horizontalAlignment: Text.AlignRight
                                 Layout.alignment: Qt.AlignRight
                             }
@@ -640,7 +643,7 @@ ColumnLayout {
                                 text: page.ageText(modelData.lastActivityAt)
                                 font.pixelSize: 10
                                 opacity: 0.45
-                                color: "#f8fafc"
+                                color: Tone.c(palette, "#f8fafc")
                                 horizontalAlignment: Text.AlignRight
                                 Layout.alignment: Qt.AlignRight
                             }
@@ -652,7 +655,7 @@ ColumnLayout {
                             Layout.preferredHeight: 24
                             Layout.alignment: Qt.AlignTop
                             radius: 6
-                            color: resumeMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.11) : "transparent"
+                            color: resumeMouse.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.11)) : "transparent"
                             Rectangle {
                                 anchors.centerIn: parent
                                 width: 15
@@ -660,7 +663,7 @@ ColumnLayout {
                                 radius: 2
                                 color: "transparent"
                                 border.width: 1
-                                border.color: "#e2e8f0"
+                                border.color: Tone.c(palette, "#e2e8f0")
                                 opacity: resumeMouse.containsMouse ? 1 : 0.6
                                 Text {
                                     anchors.centerIn: parent
@@ -668,7 +671,7 @@ ColumnLayout {
                                     font.family: "monospace"
                                     font.pixelSize: 9
                                     font.bold: true
-                                    color: "#e2e8f0"
+                                    color: Tone.c(palette, "#e2e8f0")
                                 }
                             }
                             MouseArea {
@@ -708,9 +711,9 @@ ColumnLayout {
             implicitHeight: 26
             radius: 6
             readonly property bool active: !page.loading && page.currentPage > 1
-            color: prevMouse.containsMouse && active ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.04)
+            color: prevMouse.containsMouse && active ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.12)) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.08)
+            border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
             opacity: active ? 1.0 : 0.35
 
             Text {
@@ -718,7 +721,7 @@ ColumnLayout {
                 text: "‹"
                 font.pixelSize: 14
                 font.bold: true
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
             }
 
             MouseArea {
@@ -744,16 +747,16 @@ ColumnLayout {
                 implicitWidth: isEllipsis ? 18 : 26
                 implicitHeight: 26
                 radius: 6
-                color: isCurrent ? "#38bdf8" : ((pageMouse.containsMouse && !isEllipsis && !page.loading) ? Qt.rgba(1, 1, 1, 0.12) : (isEllipsis ? "transparent" : Qt.rgba(1, 1, 1, 0.04)))
+                color: isCurrent ? "#38bdf8" : ((pageMouse.containsMouse && !isEllipsis && !page.loading) ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.12)) : (isEllipsis ? "transparent" : Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))))
                 border.width: isEllipsis ? 0 : 1
-                border.color: isCurrent ? "transparent" : Qt.rgba(1, 1, 1, 0.08)
+                border.color: isCurrent ? "transparent" : Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
 
                 Text {
                     anchors.centerIn: parent
                     text: pageBtn.modelData
                     font.bold: pageBtn.isCurrent
                     font.pixelSize: pageBtn.isEllipsis ? 12 : 11
-                    color: pageBtn.isCurrent ? "#0b1220" : "#f8fafc"
+                    color: pageBtn.isCurrent ? Tone.c(palette, "#0b1220") : Tone.c(palette, "#f8fafc")
                     opacity: pageBtn.isEllipsis ? 0.45 : (page.loading ? 0.5 : 1.0)
                 }
 
@@ -776,9 +779,9 @@ ColumnLayout {
             implicitHeight: 26
             radius: 6
             readonly property bool active: !page.loading && page.currentPage < page.totalPages
-            color: nextMouse.containsMouse && active ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.04)
+            color: nextMouse.containsMouse && active ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.12)) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.08)
+            border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
             opacity: active ? 1.0 : 0.35
 
             Text {
@@ -786,7 +789,7 @@ ColumnLayout {
                 text: "›"
                 font.pixelSize: 14
                 font.bold: true
-                color: "#f8fafc"
+                color: Tone.c(palette, "#f8fafc")
             }
 
             MouseArea {
@@ -841,9 +844,9 @@ ColumnLayout {
     function sessionCostColor(entry) {
         var info = FeatureTabs.sessionCostInfo(entry);
         if (!info.available)
-            return "#f8fafc";
+            return Tone.c(palette, "#f8fafc");
         if (info.billing === "subscription")
-            return "#f8fafc";
+            return Tone.c(palette, "#f8fafc");
         if (info.status === "partial" || info.provenance === "mixed")
             return "#f5a623";
         if (info.provenance === "estimated")
@@ -852,6 +855,6 @@ ColumnLayout {
             var provider = shell.providerById ? shell.providerById(entry.provider) : null;
             return provider && provider.accent ? provider.accent : "#34d399";
         }
-        return "#f8fafc";
+        return Tone.c(palette, "#f8fafc");
     }
 }
