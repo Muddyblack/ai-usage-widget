@@ -111,6 +111,11 @@ The popup is the shared QML, so `python3 hosts/desktop/app.py --screenshot DIR
 --demo` on Linux renders exactly what the Mac shows inside the popup. Only the
 menu bar item itself (`statusitem.py`) needs a Mac to try.
 
+On a pull request, a maintainer can comment `/macos` to have a Mac runner
+render every popup tab and settings section into a comment on the PR
+(`.github/workflows/macos-screenshots.yml`). Every macOS CI run also keeps
+the same PNGs as its `screenshots` artifact.
+
 ## Translations
 
 The popup and the menu read `translate/<lang>.po` at runtime, like every other
