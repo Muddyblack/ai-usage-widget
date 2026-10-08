@@ -28,13 +28,8 @@ Rectangle {
     // this popup's own solid glass over it.
     readonly property real glassOpacity: translucent ? Math.max(0, Math.min(1, Number(settings.popupGlassOpacity || 0))) : Math.max(0.2, Math.min(1, settings.popupGlassOpacity === undefined ? 1 : Number(settings.popupGlassOpacity)))
     readonly property real fillScale: (blurred ? 0.62 : 1) * glassOpacity
-    // Settings → Appearance → Glass look (popupGlassStyle): "dark" is the deep
-    // blue glass, "milky" a frosted white one that reads best over a blur.
-    readonly property bool milky: settings.popupGlassStyle === "milky"
     // The glass colour at gradient stop 0, 1 or 2, for opacity scale `s`.
     function glassStop(i, s) {
-        if (milky)
-            return [Qt.rgba(0.93, 0.95, 1.0, 0.34 * s), Qt.rgba(0.86, 0.9, 0.98, 0.26 * s), Qt.rgba(0.8, 0.85, 0.95, 0.22 * s)][i];
         return [Qt.rgba(0.24, 0.31, 0.45, 0.66 * s), Qt.rgba(0.12, 0.17, 0.29, 0.70 * s), Qt.rgba(0.06, 0.09, 0.19, 0.76 * s)][i];
     }
     // A host whose window frame already rounds the corners (KDE's popup

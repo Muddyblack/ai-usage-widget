@@ -508,22 +508,6 @@ ColumnLayout {
                         }
                     }
                     StudioRow {
-                        label: page.shell.i18n("Glass look")
-                        desc: page.shell.i18n("Dark is deep blue glass; Milky is frosted white, best over a blur.")
-                        dot: "#e2e8f0"
-                        StudioSeg {
-                            options: [["dark", page.shell.i18n("Dark")], ["milky", page.shell.i18n("Milky")]]
-                            value: page.shell.settings.popupGlassStyle === "milky" ? "milky" : "dark"
-                            onChosen: v => {
-                                page.shell.setSetting2("popupGlassStyle", v);
-                                // On Plasma the glass layer is off at 0 %, which
-                                // would make the two looks identical: show it.
-                                if (page.shell.backgroundStyleAvailable && !(Number(page.shell.settings.popupGlassOpacity || 0) > 0))
-                                    page.shell.setSetting2("popupGlassOpacity", 0.5);
-                            }
-                        }
-                    }
-                    StudioRow {
                         label: page.shell.i18n("Glass opacity")
                         desc: page.shell.backgroundStyleAvailable ? page.shell.i18n("0 % shows Plasma's own backdrop; raise it to lay this popup's solid glass over it.") : page.shell.i18n("How solid the popup's glass is: lower lets the desktop (and the blur, if on) show through.")
                         dot: "#cbd5e1"
