@@ -70,6 +70,12 @@ jobs:
   shoot:
     needs: resolve
     runs-on: macos-14
+    # A newer /macos on the same PR cancels an older run still shooting, so
+    # an older commit's pictures never land on top of a newer one's. (Here,
+    # not on the workflow: every comment on any PR starts this workflow.)
+    concurrency:
+      group: macos-screenshots-pr-${{ needs.resolve.outputs.pr }}
+      cancel-in-progress: true
     permissions:
       contents: read
     steps:
