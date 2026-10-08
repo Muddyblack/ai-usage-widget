@@ -129,9 +129,11 @@ PlasmoidItem {
     fullRepresentation: Item {
         id: popupRoot
 
-        readonly property int margin: 20
-        implicitWidth: 460
-        implicitHeight: Math.min(740, mainColumn.implicitHeight + margin * 2)
+        // Plasma's own dialog frame already pads this item, so only a little more.
+        readonly property int margin: 6
+        // Wider while the settings studio is open: it has a sidebar.
+        implicitWidth: app.popupWidth
+        implicitHeight: Math.min(740, popupHeader.implicitHeight + 12 + mainColumn.implicitHeight + margin * 2)
         Layout.minimumWidth: implicitWidth
         Layout.preferredWidth: implicitWidth
         Layout.minimumHeight: implicitHeight
@@ -150,10 +152,27 @@ PlasmoidItem {
             shell: app
         }
 
+        // Title bar and tabs stay put while the body below scrolls.
+        PopupHeader {
+            id: popupHeader
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: popupRoot.margin
+            // Over the body, which the status chip's hover card overlaps.
+            z: 2
+            shell: app
+            snapshotTarget: popupRoot
+        }
+
         Flickable {
             id: contentFlick
-            anchors.fill: parent
+            anchors.top: popupHeader.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
             anchors.margins: popupRoot.margin
+            anchors.topMargin: 12
             clip: true
             contentWidth: width
             contentHeight: mainColumn.implicitHeight

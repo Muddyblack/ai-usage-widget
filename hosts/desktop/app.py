@@ -1086,6 +1086,8 @@ class TrayApp:
         self.window.activeChanged.connect(self._on_active_changed)
         # The popup grows and shrinks with its content; keep it on the taskbar.
         self.window.heightChanged.connect(self._reposition)
+        # And wider while the settings studio (with its sidebar) is open.
+        self.window.widthChanged.connect(self._reposition)
         # The user dragging the popup brings the pill along.
         self.window.xChanged.connect(self._on_panel_moved)
         self.window.yChanged.connect(self._on_panel_moved)
@@ -1549,7 +1551,7 @@ def _run_headless(app, engine, backend, warnings, screenshot, settings):
         # Every section once, so a binding that only breaks on a hidden page
         # still shows up as a warning.
         steps.append(lambda: window.setProperty("showSettings", True))
-        for section in ("providers", "panel", "data", "advanced", "info"):
+        for section in ("providers", "local", "panel", "appearance", "data", "advanced", "info"):
             steps.append(lambda s=section: page.setProperty("section", s))
         steps.append(lambda: window.setProperty("showSettings", False))
     # The first step waits for the first refresh and history load to answer.

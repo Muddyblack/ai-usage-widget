@@ -10,8 +10,9 @@ import "../../../ui"
 Window {
     id: root
 
-    width: 460
-    height: Math.min(720, popupContent.height + 40)
+    // Wider while the settings studio is open: it has a sidebar.
+    width: app.popupWidth
+    height: Math.min(720, popupHeader.implicitHeight + 12 + popupContent.height + 28)
     visible: false
     color: "transparent"
     flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
@@ -150,10 +151,26 @@ Window {
 
     // Capped height, so the settings page scrolls rather than running off the
     // screen — see the same Flickable in AiUsageShell.qml.
+    // Title bar and tabs stay put while the body below scrolls.
+    PopupHeader {
+        id: popupHeader
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: 14
+        z: 2
+        shell: app
+        snapshotTarget: root.contentItem
+    }
+
     Flickable {
         id: contentFlick
-        anchors.fill: parent
-        anchors.margins: 20
+        anchors.top: popupHeader.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: 14
+        anchors.topMargin: 12
         clip: true
         contentWidth: width
         contentHeight: popupContent.height

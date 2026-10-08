@@ -10,6 +10,8 @@ degraded paths for a machine with no Python at all.
   python -m aiusage.historyio autoload            the file for startup restore; drop it if corrupt
   python -m aiusage.historyio export              copy the file to a timestamped snapshot
   python -m aiusage.historyio import              the newest readable copy
+  python -m aiusage.historyio clear               delete the history (snapshots stay)
+  python -m aiusage.historyio prune               keep the last $WIDGET_HISTORY_JSON days
 
 The payload is $WIDGET_HISTORY_JSON, or stdin with --stdin — Windows caps one
 environment variable at 32767 characters, which a large batch passes.
@@ -254,6 +256,60 @@ def export(directory):
     return _dumps({"ok": True, "path": out})
 
 
+def clear(directory):
+    """Delete the shared history. Exported snapshots are the user's own copies
+    and stay."""
+    lock_path = os.path.join(directory, LOCK_NAME)
+    lock = _acquire(lock_path, _lock_wait())
+    if lock is None:
+        return _error(f"could not lock {lock_path}")
+    try:
+        latest = _latest(directory)
+        removed = 0
+        try:
+            removed = len(history.normalize(history._read(latest) or []))
+            os.unlink(latest)
+        except FileNotFoundError:
+            pass
+        except OSError as exc:
+            return _error(f"could not delete {latest}: {exc}")
+        return _dumps({"ok": True, "removed": removed, "data": []})
+    finally:
+        _release(lock)
+
+
+def prune(directory, days):
+    """Keep only the last `days` days of history and drop the rest. Points are
+    timestamped in epoch milliseconds, as the frontends write them."""
+    try:
+        days = float(str(days).strip())
+    except ValueError:
+        return _error("keep-days was not a number")
+    if not days > 0:
+        return _error("keep-days must be above zero")
+
+    lock_path = os.path.join(directory, LOCK_NAME)
+    lock = _acquire(lock_path, _lock_wait())
+    if lock is None:
+        return _error(f"could not lock {lock_path}")
+    try:
+        latest = _latest(directory)
+        try:
+            stored = history.normalize(history._read(latest) or [])
+        except OSError as exc:
+            return _error(f"could not read {latest}: {exc}")
+        cutoff = (time.time() - days * 86400) * 1000
+        kept = [p for p in stored if history.point_time(p) >= cutoff]
+        if len(kept) != len(stored):
+            try:
+                history.write(latest, kept)
+            except OSError as exc:
+                return _error(f"could not update {latest}: {exc}")
+        return _dumps({"ok": True, "removed": len(stored) - len(kept), "data": kept})
+    finally:
+        _release(lock)
+
+
 def run(command, payload="", directory=None):
     """One command's output line. `payload` is only read by autosave/seed."""
     directory = directory or paths.history_dir()
@@ -270,13 +326,19 @@ def run(command, payload="", directory=None):
         return export(directory)
     if command == "import":
         return import_(directory)
+    if command == "clear":
+        return clear(directory)
+    if command == "prune":
+        return prune(directory, payload)
     return _error("unknown command")
 
 
 def main(argv):
     command = argv[0] if argv else ""
     payload = ""
-    if command in ("autosave", "seed"):
+    if command == "prune":
+        payload = os.environ.get("WIDGET_HISTORY_JSON", "")
+    elif command in ("autosave", "seed"):
         if "--stdin" in argv[1:]:
             payload = sys.stdin.read()
         else:

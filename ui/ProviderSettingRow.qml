@@ -1,12 +1,13 @@
 import QtQuick
-import QtQuick.Layouts
-import QtQuick.Controls.Basic as QC
+import "studio"
+import "studio/Theme.js" as Theme
 
 // One provider's settings, whole: the on/off control plus — folded away until
 // asked for — its API key and any provider-specific extra. Mirrors the Plasma
 // frontend's ProviderSettingRow, so a key sits under the provider it belongs to
 // instead of in a separate list that has to be matched back up by name.
-ColumnLayout {
+// Drawn as a row of a StudioCard.
+Item {
     id: prow
 
     // An entry from shell.allProviders: { id, label, accent, keySetting?, keyPlaceholder? }.
@@ -21,154 +22,211 @@ ColumnLayout {
     // quota. A switch cannot say that; three segments can.
     readonly property bool tristate: providerId === "muse"
     readonly property bool hasDetails: keySetting !== "" || providerId === "copilot"
-    readonly property bool keySet: keySetting !== "" && String(shell.settings.keys[keySetting] || "") !== ""
+    readonly property bool keySet: keySetting !== "" && String((shell.settings.keys || {})[keySetting] || "") !== ""
+    readonly property bool foldable: (serviceOn || providerId === "selfhosted") && (hasDetails || tristate)
+    readonly property color accent: provider ? provider.accent : Theme.brand
 
     property bool expanded: false
 
-    Layout.fillWidth: true
-    spacing: 2
+    width: parent ? parent.width : implicitWidth
+    height: head.height + (details.visible ? details.height + 14 : 0)
 
-    RowLayout {
-        Layout.fillWidth: true
-        spacing: 6
+    Rectangle {
+        width: parent.width
+        height: 1
+        color: Theme.line
+        visible: prow.y > 0
+    }
+
+    Item {
+        id: head
+        width: parent.width
+        height: 38
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: prow.foldable
+            cursorShape: prow.foldable ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: prow.expanded = !prow.expanded
+        }
 
         Rectangle {
-            Layout.preferredWidth: 7
-            Layout.preferredHeight: 7
-            radius: 3.5
-            color: prow.provider ? prow.provider.accent : "transparent"
-            opacity: prow.serviceOn ? 1 : 0.35
-            Layout.alignment: Qt.AlignVCenter
+            id: badge
+            x: 0
+            anchors.verticalCenter: parent.verticalCenter
+            width: 24
+            height: 24
+            radius: 7
+            color: Qt.rgba(prow.accent.r, prow.accent.g, prow.accent.b, prow.serviceOn ? 0.2 : 0.08)
+            // The provider's own logo, as on its tab; a colour dot where a
+            // provider ships none.
+            Image {
+                id: logo
+                anchors.centerIn: parent
+                width: 16
+                height: 16
+                source: prow.shell.providerIcon(prow.provider)
+                sourceSize.width: 32
+                sourceSize.height: 32
+                fillMode: Image.PreserveAspectFit
+                opacity: prow.serviceOn ? 1 : 0.45
+                visible: source.toString() !== "" && status !== Image.Error
+            }
+            Rectangle {
+                anchors.centerIn: parent
+                width: 8
+                height: 8
+                radius: 4
+                color: prow.accent
+                opacity: prow.serviceOn ? 1 : 0.4
+                visible: !logo.visible
+            }
         }
 
-        Text {
-            text: prow.provider ? prow.provider.label : ""
-            font.pixelSize: 11
-            color: "#f8fafc"
-            opacity: prow.serviceOn ? 1 : 0.6
-            Layout.preferredWidth: 86
-            elide: Text.ElideRight
+        // Name and "key set" on one line, so a row stays one line tall.
+        Row {
+            anchors.left: badge.right
+            anchors.leftMargin: 10
+            anchors.right: controls.left
+            anchors.rightMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 8
+            Text {
+                text: prow.provider ? prow.provider.label : ""
+                color: Theme.text
+                opacity: prow.serviceOn ? 1 : 0.65
+                font.pixelSize: 12
+                font.weight: Font.Medium
+            }
+            Text {
+                topPadding: 2
+                visible: prow.keySet
+                text: prow.shell.i18n("key set")
+                color: Theme.ok
+                font.pixelSize: 10
+            }
         }
 
-        // Off / Local / Live — the same segmented control the popup uses for
-        // Usage/Stats, so it reads as a picker rather than a toggle.
-        SegmentBar {
-            visible: prow.tristate
-            Layout.fillWidth: false
-            Layout.preferredWidth: 168
-            accent: prow.provider ? prow.provider.accent : "#4f9dde"
-            tabs: [
-                {
-                    id: "off",
-                    label: prow.shell.i18n("Off")
-                },
-                {
-                    id: "local",
-                    label: prow.shell.i18n("Local")
-                },
-                {
-                    id: "live",
-                    label: prow.shell.i18n("Live")
+        Row {
+            id: controls
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 12
+
+            // Off / Local / Live — one choice among three, so a segmented
+            // control rather than a switch.
+            StudioSeg {
+                visible: prow.tristate
+                accent: prow.accent
+                anchors.verticalCenter: parent.verticalCenter
+                options: [["off", prow.shell.i18n("Off")], ["local", prow.shell.i18n("Local")], ["live", prow.shell.i18n("Live")]]
+                value: !prow.serviceOn ? "off" : (prow.shell.settings.museQuota === true ? "live" : "local")
+                onChosen: id => {
+                    // Live implies on, and off drops the billed call with it, so
+                    // the two settings can never disagree from in here.
+                    prow.shell.setSetting("providers", prow.providerId, id !== "off");
+                    prow.shell.setSetting2("museQuota", id === "live");
+                    if (id !== "off")
+                        prow.expanded = true;
+                    prow.shell.refresh();
                 }
-            ]
-            currentId: !prow.serviceOn ? "off" : (prow.shell.settings.museQuota === true ? "live" : "local")
-            onSelected: id => {
-                // Live implies on, and off drops the billed call with it, so
-                // the two settings can never disagree from in here.
-                prow.shell.setSetting("providers", prow.providerId, id !== "off");
-                prow.shell.setSetting2("museQuota", id === "live");
-                if (id !== "off")
-                    prow.expanded = true;
-                prow.shell.refresh();
             }
-        }
 
-        StyledToggle {
-            visible: !prow.tristate
-            checked: prow.serviceOn
-            onToggled: {
-                prow.shell.setSetting("providers", prow.providerId, checked);
-                prow.shell.refresh();
+            StudioSwitch {
+                visible: !prow.tristate
+                anchors.verticalCenter: parent.verticalCenter
+                checked: prow.serviceOn
+                onToggled: on => {
+                    prow.shell.setSetting("providers", prow.providerId, on);
+                    prow.shell.refresh();
+                }
             }
-        }
 
-        Item {
-            Layout.fillWidth: true
-        }
-
-        // Says, without unfolding the row, that a key was already entered.
-        Text {
-            visible: prow.keySet && !prow.expanded
-            text: prow.shell.i18n("key set")
-            font.pixelSize: 9
-            color: "#94a3b8"
-        }
-
-        Text {
-            visible: (prow.serviceOn || prow.providerId === "selfhosted") && (prow.hasDetails || prow.tristate)
-            text: prow.expanded ? "▴" : "▾"
-            font.pixelSize: 12
-            color: "#f8fafc"
-            opacity: chevronMouse.containsMouse ? 1.0 : 0.5
-            Layout.alignment: Qt.AlignVCenter
-
-            MouseArea {
-                id: chevronMouse
-                anchors.fill: parent
-                anchors.margins: -6
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: prow.expanded = !prow.expanded
+            // A fixed slot, so every switch lines up whether or not its row folds.
+            Item {
+                width: 14
+                height: 20
+                anchors.verticalCenter: parent.verticalCenter
+                Text {
+                    anchors.centerIn: parent
+                    visible: prow.foldable
+                    text: prow.expanded ? "▴" : "▾"
+                    color: Theme.muted
+                    font.pixelSize: 12
+                }
             }
         }
     }
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.leftMargin: 13
-        Layout.bottomMargin: visible ? 4 : 0
-        spacing: 4
+    Column {
+        id: details
+        y: head.height
+        width: parent.width
+        spacing: 8
         visible: prow.expanded && (prow.serviceOn || prow.providerId === "selfhosted")
 
-        KeyField {
+        // Label over field, so a long key gets the whole card width.
+        Column {
+            width: parent.width
+            spacing: 4
             visible: prow.keySetting !== ""
-            shell: prow.shell
-            label: prow.shell.i18n("API key")
-            placeholder: prow.provider && prow.provider.keyPlaceholder ? prow.provider.keyPlaceholder : ""
-            settingKey: prow.keySetting
+            Text {
+                text: prow.shell.i18n("API key")
+                color: Theme.muted
+                font.pixelSize: 10
+            }
+            StudioField {
+                id: keyField
+                width: parent.width
+                secret: true
+                live: true
+                mono: true
+                value: String((prow.shell.settings.keys || {})[prow.keySetting] || "")
+                placeholder: prow.provider && prow.provider.keyPlaceholder ? prow.provider.keyPlaceholder : ""
+                // Stored trimmed: a pasted key often carries a trailing space
+                // or newline. The field is left alone while typing.
+                onCommitted: v => {
+                    prow.shell.setSetting("keys", prow.keySetting, v);
+                    refreshDebounce.restart();
+                }
+            }
         }
 
-        RowLayout {
+        Column {
+            width: parent.width
+            spacing: 4
             visible: prow.providerId === "selfhosted"
-            Layout.fillWidth: true
             Text {
                 text: prow.shell.i18n("Server URL")
-                color: "#f8fafc"
-                font.pixelSize: 11
+                color: Theme.muted
+                font.pixelSize: 10
             }
-            QC.TextField {
-                Layout.fillWidth: true
-                text: prow.shell.settings.selfhostedEndpoint || ""
-                placeholderText: prow.shell.i18n("Server URLs, separated by commas")
-                onEditingFinished: {
-                    prow.shell.setSetting2("selfhostedEndpoint", text.trim());
+            StudioField {
+                width: parent.width
+                value: prow.shell.settings.selfhostedEndpoint || ""
+                placeholder: prow.shell.i18n("Server URLs, separated by commas")
+                onCommitted: v => {
+                    prow.shell.setSetting2("selfhostedEndpoint", v);
                     prow.shell.refresh();
                 }
             }
         }
-        RowLayout {
+
+        Row {
+            spacing: 10
             visible: prow.providerId === "selfhosted"
-            Layout.fillWidth: true
             Text {
+                anchors.verticalCenter: parent.verticalCenter
                 text: prow.shell.i18n("Engine")
-                color: "#f8fafc"
-                font.pixelSize: 11
+                color: Theme.muted
+                font.pixelSize: 10
             }
-            QC.ComboBox {
-                model: ["auto", "ollama", "vllm", "llama.cpp"]
-                currentIndex: Math.max(0, model.indexOf(prow.shell.settings.selfhostedEngine || "auto"))
-                onActivated: {
-                    prow.shell.setSetting2("selfhostedEngine", currentText);
+            StudioSelect {
+                width: 140
+                options: [["auto", "auto"], ["ollama", "ollama"], ["vllm", "vllm"], ["llama.cpp", "llama.cpp"]]
+                value: prow.shell.settings.selfhostedEngine || "auto"
+                onChosen: v => {
+                    prow.shell.setSetting2("selfhostedEngine", v);
                     prow.shell.refresh();
                 }
             }
@@ -177,21 +235,40 @@ ColumnLayout {
         // Every other tab reads its quota for free. Muse cannot, so the price
         // of the Live segment is stated next to the control that buys it.
         Text {
-            Layout.fillWidth: true
+            width: parent.width
             visible: prow.tristate
             text: prow.shell.settings.museQuota === true ? prow.shell.i18n("Live: plan windows come from a billed model call (~130 tokens per refresh, cached 30 min).") : prow.shell.i18n("Local: read from Muse's own files, free. Meta reports plan windows only on a billed call — that is what Live buys.")
-            font.pixelSize: 9
-            color: "#94a3b8"
+            color: Theme.muted
+            font.pixelSize: 10
             wrapMode: Text.WordWrap
         }
 
-        KeyField {
+        Column {
+            width: parent.width
+            spacing: 4
             visible: prow.providerId === "copilot"
-            shell: prow.shell
-            label: prow.shell.i18n("Quota")
-            placeholder: prow.shell.i18n("fallback if the plan reports none")
-            settingKey: "copilotQuota"
-            secret: false
+            Text {
+                text: prow.shell.i18n("Quota")
+                color: Theme.muted
+                font.pixelSize: 10
+            }
+            StudioField {
+                width: parent.width
+                value: String((prow.shell.settings.keys || {}).copilotQuota || "")
+                placeholder: prow.shell.i18n("fallback if the plan reports none")
+                live: true
+                onCommitted: v => {
+                    prow.shell.setSetting("keys", "copilotQuota", v);
+                    refreshDebounce.restart();
+                }
+            }
         }
+    }
+
+    // Debounce so we don't spawn a backend refresh on every keystroke.
+    Timer {
+        id: refreshDebounce
+        interval: 1200
+        onTriggered: prow.shell.refresh()
     }
 }

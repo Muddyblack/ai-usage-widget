@@ -137,6 +137,11 @@ Item {
         })
     property bool settingsLoaded: false
     property bool showSettings: false
+    // How wide the popup is: the settings studio brings a sidebar, which needs
+    // the room. Each host binds its window to this.
+    // The settings section on screen, shared by the page and the popup's header.
+    property string settingsSection: "providers"
+    readonly property int popupWidth: showSettings ? 760 : 460
     onSettingsChanged: root.publishTray()
     readonly property string antigravityChartFilter: root.settings.antigravityChartFilter || "both"
 
@@ -1044,6 +1049,8 @@ Item {
     property var historyStore: UsageHistory.newStore(root.historyLimit)
     property bool historySaving: false
     property string historyMsg: ""
+    // The prune in flight is the automatic one at startup: no message for it.
+    property bool historyAutoPrune: false
     readonly property int historyDebounceMs: 300000
 
     // The store replaces `history` rather than patching it in place, so an
@@ -1107,6 +1114,25 @@ Item {
 
     function exportHistory() {
         backend.history("export", "");
+    }
+
+    // Delete the whole recorded history.
+    function clearHistory() {
+        backend.history("clear", "");
+    }
+
+    // Keep the last `days` days of history and delete the rest.
+    function pruneHistory(days) {
+        backend.history("prune", String(days));
+    }
+
+    // The file is now `data`: start the store over from it, so nothing deleted
+    // is still held here to be written back by the next save.
+    function resetHistoryStore(data) {
+        root.historyStore = UsageHistory.newStore(root.historyLimit);
+        UsageHistory.adopt(root.historyStore, data);
+        UsageHistory.opened(root.historyStore);
+        root.syncUsageHistory();
     }
 
     Timer {
@@ -1267,6 +1293,32 @@ Item {
                 } catch (e) {}
                 UsageHistory.opened(root.historyStore);
                 root.saveHistory();
+                // Settings → Data → Auto-delete: trim what the file holds on every start.
+                var keepDays = Number(root.settings.historyKeepDays || 0);
+                if (keepDays > 0) {
+                    root.historyAutoPrune = true;
+                    root.pruneHistory(keepDays);
+                }
+            } else if (op === "clear" || op === "prune") {
+                try {
+                    var c = JSON.parse(result);
+                    if (c.error) {
+                        root.historyMsg = c.error;
+                    } else {
+                        root.resetHistoryStore(c.data || []);
+                        if (op === "clear")
+                            root.historyMsg = root.i18np("Deleted %1 point.", "Deleted %1 points.", c.removed);
+                        else if (c.removed > 0)
+                            root.historyMsg = root.i18np("Removed %1 older point.", "Removed %1 older points.", c.removed);
+                        else if (!root.historyAutoPrune)
+                            root.historyMsg = root.i18n("Nothing older to remove.");
+                    }
+                    root.historyAutoPrune = false;
+                } catch (e) {
+                    root.historyAutoPrune = false;
+                    root.historyMsg = root.i18n("Could not change the history.");
+                }
+                historyMsgTimer.restart();
             } else if (op === "export") {
                 try {
                     var x = JSON.parse(result);

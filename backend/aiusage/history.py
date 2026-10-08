@@ -166,6 +166,12 @@ def save(path, incoming, limit=None, keep_existing=False):
     if merged == stored:
         return merged
 
+    write(path, merged)
+    return merged
+
+
+def write(path, series):
+    """Replace the file at `path` with `series`. The caller holds the lock."""
     directory = os.path.dirname(path) or "."
     os.makedirs(directory, exist_ok=True)
     # Hand-rolled rather than tempfile.mkstemp: importing tempfile costs about as
@@ -176,7 +182,7 @@ def save(path, incoming, limit=None, keep_existing=False):
     try:
         fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
-            json.dump(merged, fh, separators=(",", ":"))
+            json.dump(series, fh, separators=(",", ":"))
         # A rename is atomic, so a reader without the lock sees the whole old
         # file or the whole new one, never a half-written array.
         replace(tmp, path)
@@ -186,8 +192,6 @@ def save(path, incoming, limit=None, keep_existing=False):
         except OSError:
             pass
         raise
-
-    return merged
 
 
 def main(argv):

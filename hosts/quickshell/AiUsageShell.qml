@@ -338,8 +338,9 @@ ShellRoot {
             // ── Popup (Plasma full representation port) ──────────────────────────
             PanelWindow {
                 id: popup
-                implicitWidth: 460
-                implicitHeight: Math.min(popup.screen ? Math.min(740, popup.screen.height - 60) : 720, mainColumn.implicitHeight + 40)
+                // Wider while the settings studio is open: it has a sidebar.
+                implicitWidth: app.popupWidth
+                implicitHeight: Math.min(popup.screen ? Math.min(740, popup.screen.height - 60) : 720, popupHeader.implicitHeight + 12 + mainColumn.implicitHeight + 28)
                 visible: root.popupOpen && root.popupOwnedBy(panel.screen)
                 color: "transparent"
                 aboveWindows: true
@@ -379,10 +380,26 @@ ShellRoot {
                 // The popup height is capped, but the settings page is far taller than
                 // the cap once every provider and API-key field is listed — without a
                 // Flickable the last rows (Python path, Save) are simply unreachable.
+                // Title bar and tabs stay put while the body below scrolls.
+                PopupHeader {
+                    id: popupHeader
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: 14
+                    z: 2
+                    shell: app
+                    snapshotTarget: popup.contentItem
+                }
+
                 Flickable {
                     id: contentFlick
-                    anchors.fill: parent
-                    anchors.margins: 20
+                    anchors.top: popupHeader.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.margins: 14
+                    anchors.topMargin: 12
                     clip: true
                     contentWidth: width
                     contentHeight: mainColumn.implicitHeight
