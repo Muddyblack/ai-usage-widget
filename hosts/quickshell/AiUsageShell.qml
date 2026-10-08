@@ -32,6 +32,40 @@ ShellRoot {
         workingDirectory: root.repoDir
     }
 
+    // ── Compositor blur ──────────────────────────────────────────────────────
+    // Settings → Appearance → Blur puts the popup in the -glass namespace. The
+    // blur itself is Hyprland's layer rule, which used to need glass.conf
+    // sourced in hyprland.conf; it is added at runtime instead, once per run
+    // (rules last until Hyprland reloads its config, so a reload re-adds them
+    // on the next switch-on or start). Hyprland 0.53+ syntax first, then the
+    // older one; glass.conf still works for anyone who prefers it.
+    property bool glassRulesApplied: false
+    function applyGlassRules() {
+        if (root.glassRulesApplied)
+            return;
+        root.glassRulesApplied = true;
+        var rules = [["blur on, match:namespace ^ai-usage-widget-glass$", "ignore_alpha 0.01, match:namespace ^ai-usage-widget-glass$"], ["blur, ^(ai-usage-widget-glass)$", "ignorealpha 0.01, ^(ai-usage-widget-glass)$"]];
+        function attempt(set) {
+            if (set >= rules.length)
+                return;
+            runner.run(["hyprctl", "keyword", "layerrule", rules[set][0]], function (out, err, code) {
+                if (code !== 0 || String(out).trim().toLowerCase() !== "ok") {
+                    attempt(set + 1);
+                    return;
+                }
+                runner.run(["hyprctl", "keyword", "layerrule", rules[set][1]], function () {});
+            });
+        }
+        attempt(0);
+    }
+    Connections {
+        target: app
+        function onSettingsChanged() {
+            if (app.settings.compositorGlass === true)
+                root.applyGlassRules();
+        }
+    }
+
     CommandBackend {
         id: commandBackend
         runner: runner
@@ -340,7 +374,7 @@ ShellRoot {
                 id: popup
                 // Wider while the settings studio is open: it has a sidebar.
                 implicitWidth: app.popupWidth
-                implicitHeight: Math.min(popup.screen ? Math.min(740, popup.screen.height - 60) : 720, popupHeader.implicitHeight + 12 + mainColumn.implicitHeight + 28)
+                implicitHeight: Math.min(popup.screen ? popup.screen.height - 90 : 720, popupHeader.implicitHeight + 12 + mainColumn.implicitHeight + 28)
                 visible: root.popupOpen && root.popupOwnedBy(panel.screen)
                 color: "transparent"
                 aboveWindows: true
@@ -370,52 +404,68 @@ ShellRoot {
                     right: root.positionRight ? 12 : 0
                 }
 
-                // The shared glass (ui/PopupBackground.qml), with its tint and decoration.
-                PopupBackground {
+                // Everything in the popup, in one QML-made item: "Save as" grabs it.
+                // The window's own contentItem is made in C++ by Quickshell and has no
+                // QML engine, so grabToImage on it fails ("item has no QML engine").
+                Item {
+                    id: popupBody
                     anchors.fill: parent
-                    shell: app
-                    blurred: app.settings.compositorGlass === true
-                }
 
-                // The popup height is capped, but the settings page is far taller than
-                // the cap once every provider and API-key field is listed — without a
-                // Flickable the last rows (Python path, Save) are simply unreachable.
-                // Title bar and tabs stay put while the body below scrolls.
-                PopupHeader {
-                    id: popupHeader
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.margins: 14
-                    z: 2
-                    shell: app
-                    snapshotTarget: popup.contentItem
-                }
-
-                Flickable {
-                    id: contentFlick
-                    anchors.top: popupHeader.bottom
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    anchors.margins: 14
-                    anchors.topMargin: 12
-                    clip: true
-                    contentWidth: width
-                    contentHeight: mainColumn.implicitHeight
-                    boundsBehavior: Flickable.StopAtBounds
-                    // Leave wheel events to the chart's range controls when everything
-                    // already fits, which is the usual case on the usage page.
-                    interactive: Math.round(contentHeight) > Math.round(height) + 1
-
-                    QC.ScrollBar.vertical: PopupScrollBar {
-                        policy: contentFlick.interactive ? QC.ScrollBar.AsNeeded : QC.ScrollBar.AlwaysOff
+                    // The shared glass (ui/PopupBackground.qml), with its tint and decoration.
+                    PopupBackground {
+                        anchors.fill: parent
+                        shell: app
+                        blurred: app.settings.compositorGlass === true
                     }
 
-                    PopupContent {
-                        id: mainColumn
-                        width: contentFlick.width
+                    // The popup height is capped, but the settings page is far taller than
+                    // the cap once every provider and API-key field is listed — without a
+                    // Flickable the last rows (Python path, Save) are simply unreachable.
+                    // Title bar and tabs stay put while the body below scrolls.
+                    PopupHeader {
+                        id: popupHeader
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.margins: 14
+                        z: 2
                         shell: app
+                        snapshotTarget: popupBody
+                    }
+
+                    Flickable {
+                        id: contentFlick
+                        anchors.top: popupHeader.bottom
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.margins: 14
+                        anchors.topMargin: 12
+                        clip: true
+                        contentWidth: width
+                        contentHeight: mainColumn.implicitHeight
+                        boundsBehavior: Flickable.StopAtBounds
+                        // Leave wheel events to the chart's range controls when everything
+                        // already fits, which is the usual case on the usage page.
+                        interactive: Math.round(contentHeight) > Math.round(height) + 1
+
+                        QC.ScrollBar.vertical: PopupScrollBar {
+                            policy: contentFlick.interactive ? QC.ScrollBar.AsNeeded : QC.ScrollBar.AlwaysOff
+                        }
+
+                        PopupContent {
+                            id: mainColumn
+                            width: contentFlick.width
+                            shell: app
+                        }
+                    }
+
+                    // Fades the bottom edge while more is below (ui/ScrollFade.qml).
+                    ScrollFade {
+                        anchors.left: contentFlick.left
+                        anchors.right: contentFlick.right
+                        anchors.bottom: contentFlick.bottom
+                        flick: contentFlick
                     }
                 }
             }

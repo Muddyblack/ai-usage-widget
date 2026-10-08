@@ -16,7 +16,7 @@ brings PySide6 (or `make run-windows`), else `pip install -r hosts/desktop/requi
                                          render the popup (or the settings page)
                                          into F (PNG) and exit
   python hosts/desktop/app.py --screenshot DIR --demo
-                                         render popup.png and settings.png into
+                                         render every popup tab and settings section into
                                          DIR using demo fixture data (no network,
                                          no credentials) — used by CI
 """
@@ -74,6 +74,8 @@ def _server_name():
 SERVER_NAME = _server_name()
 ICON_PATH = ROOT / "assets" / "icons" / "org.muddyblack.aiUsageWidget.svg"
 MAIN_QML = ROOT / "hosts" / "desktop" / "qml" / "Main.qml"
+# The settings studio's sections, in sidebar order (ui/SettingsPage.qml).
+SETTINGS_SECTIONS = ("providers", "local", "panel", "appearance", "data", "advanced", "info")
 
 # os.environ is process-wide and snapshot() writes the settings' keys into it,
 # so one collection runs at a time and puts the environment back afterwards.
@@ -1489,43 +1491,71 @@ def _run_headless(app, engine, backend, warnings, screenshot, settings):
     if screenshot:
         # screenshot can be:
         #   - a file path (legacy single-shot form): one PNG, then exit.
-        #   - a directory path (CI / --demo form): popup.png then settings.png.
+        #   - a directory path (CI / --demo form): popup-NN-<tab>.png per tab, then settings-NN-<section>.png.
         screenshot_path = Path(screenshot)
         is_dir = screenshot_path.suffix == "" or screenshot_path.is_dir()
 
         if is_dir:
             screenshot_path.mkdir(parents=True, exist_ok=True)
 
-            # We take two shots in sequence, driven by a list of steps:
-            #   1. Wait for the first snapshot, grab popup.png.
-            #   2. Switch to settings, grab settings.png, quit.
+            # Once the first snapshot is in: every popup tab (feature tabs and
+            # each provider, popup-NN-<id>.png), then every settings section
+            # (settings-NN-<section>.png). Names stay [a-z0-9-] for the PR
+            # comment job in macos.yml.
             shots_done = []
+            pending = []
+            started = []
 
-            def grab_popup():
-                out = str(screenshot_path / "popup.png")
-                window.grabWindow().save(out)
-                print(f"  popup.png  ({Path(out).stat().st_size} bytes)")
-                shots_done.append(out)
-                # Now switch to settings and schedule the second shot.
+            def slug(text):
+                return re.sub(r"[^a-z0-9]+", "-", str(text).lower()).strip("-") or "tab"
+
+            def show_tab(tab_id):
+                window.setProperty("showSettings", False)
+                window.setProperty("activeId", tab_id)
+
+            def show_section(section):
                 window.setProperty("showSettings", True)
-                QTimer.singleShot(800, grab_settings)
+                window.setProperty("settingsSection", section)
 
-            def grab_settings():
-                out = str(screenshot_path / "settings.png")
+            def plan():
+                tab_ids = window.property("popupTabIds") or []
+                if hasattr(tab_ids, "toVariant"):
+                    tab_ids = tab_ids.toVariant()
+                for i, tab_id in enumerate(tab_ids):
+                    pending.append((f"popup-{i:02d}-{slug(tab_id)}.png", lambda t=tab_id: show_tab(t)))
+                for i, section in enumerate(SETTINGS_SECTIONS):
+                    pending.append((f"settings-{i:02d}-{section}.png", lambda s=section: show_section(s)))
+
+            def next_shot():
+                if not pending:
+                    app.quit()
+                    return
+                name, select = pending.pop(0)
+                select()
+                QTimer.singleShot(800, lambda: grab(name))
+
+            def grab(name):
+                out = str(screenshot_path / name)
                 window.grabWindow().save(out)
-                print(f"  settings.png  ({Path(out).stat().st_size} bytes)")
+                print(f"  {name}  ({Path(out).stat().st_size} bytes)")
                 shots_done.append(out)
-                app.quit()
+                next_shot()
 
-            backend.snapshotReady.connect(lambda _text: QTimer.singleShot(800, grab_popup))
-            # Safety net: if the backend never fires (e.g. demo mode emits
-            # immediately), give up after 30 s.
-            QTimer.singleShot(30000, lambda: app.quit() if len(shots_done) < 2 else None)
+            def start(_text):
+                if started:
+                    return
+                started.append(True)
+                plan()
+                QTimer.singleShot(800, next_shot)
+
+            backend.snapshotReady.connect(start)
+            # Safety net: if the backend never answers, give up after 60 s.
+            QTimer.singleShot(60000, app.quit)
             app.exec()
             for warning in warnings:
                 print(warning, file=sys.stderr)
             _flush_stdio()
-            os._exit(0 if len(shots_done) == 2 else 1)
+            os._exit(0 if shots_done and not pending else 1)
 
         else:
             # Single-file form: legacy behaviour unchanged.
@@ -1551,7 +1581,7 @@ def _run_headless(app, engine, backend, warnings, screenshot, settings):
         # Every section once, so a binding that only breaks on a hidden page
         # still shows up as a warning.
         steps.append(lambda: window.setProperty("showSettings", True))
-        for section in ("providers", "local", "panel", "appearance", "data", "advanced", "info"):
+        for section in SETTINGS_SECTIONS:
             steps.append(lambda s=section: page.setProperty("section", s))
         steps.append(lambda: window.setProperty("showSettings", False))
     # The first step waits for the first refresh and history load to answer.

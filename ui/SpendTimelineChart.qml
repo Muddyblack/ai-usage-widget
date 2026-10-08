@@ -414,8 +414,10 @@ ColumnLayout {
                 // chart) rather than a line under the whole chart.
                 Rectangle {
                     id: scrubTip
-                    readonly property bool shown: canvas.scrubIndex >= 0 && canvas.scrubIndex < canvas.points.length
-                    readonly property var point: shown ? canvas.points[canvas.scrubIndex] : null
+                    // Bound to the point itself, not the index: when the points change
+                    // under a hovered day, shown and point can update in either order.
+                    readonly property var point: canvas.scrubIndex >= 0 ? (canvas.points[canvas.scrubIndex] || null) : null
+                    readonly property bool shown: point !== null
                     visible: shown
                     width: tipRow.implicitWidth + 16
                     height: tipRow.implicitHeight + 10
@@ -429,7 +431,7 @@ ColumnLayout {
                     // and kept inside the chart.
                     readonly property real anchorX: shown ? canvas.xFor(canvas.scrubIndex) : 0
                     readonly property real anchorY: {
-                        if (!shown)
+                        if (!point)
                             return 0;
                         var ys = [];
                         if (chart.drawCost)
@@ -446,21 +448,21 @@ ColumnLayout {
                         anchors.centerIn: parent
                         spacing: 2
                         Text {
-                            text: scrubTip.shown ? scrubTip.point.date : ""
+                            text: scrubTip.point ? scrubTip.point.date || "" : ""
                             font.pixelSize: 11
                             color: "#f8fafc"
                             opacity: 0.8
                         }
                         Text {
                             visible: chart.drawCost && scrubTip.shown
-                            text: scrubTip.shown ? "$" + Number(scrubTip.point.usd || 0).toFixed(2) : ""
+                            text: scrubTip.point ? "$" + Number(scrubTip.point.usd || 0).toFixed(2) : ""
                             font.pixelSize: 12
                             font.bold: true
                             color: chart.costColor
                         }
                         Text {
                             visible: chart.drawTokens && scrubTip.shown
-                            text: scrubTip.shown ? Number(scrubTip.point.total || 0).toLocaleString(Qt.locale(), "f", 0) + " " + shell.i18n("tok") : ""
+                            text: scrubTip.point ? Number(scrubTip.point.total || 0).toLocaleString(Qt.locale(), "f", 0) + " " + shell.i18n("tok") : ""
                             font.pixelSize: 12
                             font.bold: true
                             color: chart.tokenColor

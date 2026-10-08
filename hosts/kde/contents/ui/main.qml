@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls as QQC2
 import QtCore
@@ -48,6 +49,7 @@ PlasmoidItem {
         interpreterControls: true
         themeAccentAvailable: true
         backgroundStyleAvailable: true
+        backgroundStyleApplies: Plasmoid.formFactor === PlasmaCore.Types.Planar
         themeAccentColor: Kirigami.Theme.highlightColor
         cliPath: root.contentsDir + "/backend/sh/ai-usage-cli"
         // Each widget keeps its own pins and rotation (one per panel or
@@ -133,7 +135,9 @@ PlasmoidItem {
         readonly property int margin: 6
         // Wider while the settings studio is open: it has a sidebar.
         implicitWidth: app.popupWidth
-        implicitHeight: Math.min(740, popupHeader.implicitHeight + 12 + mainColumn.implicitHeight + margin * 2)
+        // As tall as the content, up to the screen (less room for the panel):
+        // a fixed cap cut the chart off tabs with long model lists.
+        implicitHeight: Math.min(Screen.desktopAvailableHeight > 0 ? Screen.desktopAvailableHeight - 100 : 740, popupHeader.implicitHeight + 12 + mainColumn.implicitHeight + margin * 2)
         Layout.minimumWidth: implicitWidth
         Layout.preferredWidth: implicitWidth
         Layout.minimumHeight: implicitHeight
@@ -143,8 +147,10 @@ PlasmoidItem {
         // The shared glass (ui/PopupBackground.qml), with its tint and decoration.
         PopupBackground {
             anchors.fill: parent
-            // Over the whole dialog, edge to edge.
-            anchors.margins: -popupRoot.margin
+            // Over the whole dialog, edge to edge: out past Plasma's own frame
+            // padding too, not just this item's margin, or the tint and glass
+            // stop short of the frame and read as a second, inner border.
+            anchors.margins: -20
             // Plasma already draws the popup's blurred card; this adds only
             // the tint and decoration so it stays one layer, not a card in a card.
             translucent: true
@@ -189,6 +195,14 @@ PlasmoidItem {
                 width: contentFlick.width
                 shell: app
             }
+        }
+
+        // Fades the bottom edge while more is below (ui/ScrollFade.qml).
+        ScrollFade {
+            anchors.left: contentFlick.left
+            anchors.right: contentFlick.right
+            anchors.bottom: contentFlick.bottom
+            flick: contentFlick
         }
     }
 }

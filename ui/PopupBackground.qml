@@ -22,11 +22,9 @@ Rectangle {
     property bool blurred: false
     // Settings → Appearance → Glass opacity (popupGlassOpacity, 0.2–1): how
     // much of the popup's own glass is drawn; lower lets more of the desktop
-    // (and the blur, where there is one) show through.
-    // Under a host whose frame is Plasma's (`translucent`) the same setting runs
-    // the other way: 0 leaves Plasma's backdrop as it is, and raising it lays
-    // this popup's own solid glass over it.
-    readonly property real glassOpacity: translucent ? Math.max(0, Math.min(1, Number(settings.popupGlassOpacity || 0))) : Math.max(0.2, Math.min(1, settings.popupGlassOpacity === undefined ? 1 : Number(settings.popupGlassOpacity)))
+    // (and the blur, where there is one) show through. Unused under a
+    // `translucent` host, whose frame is the background (see the tint below).
+    readonly property real glassOpacity: Math.max(0.2, Math.min(1, settings.popupGlassOpacity === undefined ? 1 : Number(settings.popupGlassOpacity)))
     readonly property real fillScale: (blurred ? 0.62 : 1) * glassOpacity
     // The glass colour at gradient stop 0, 1 or 2, for opacity scale `s`.
     function glassStop(i, s) {
@@ -76,34 +74,72 @@ Rectangle {
     border.color: Qt.rgba(1, 1, 1, 0.12)
     clip: true
 
-    // Plasma host: the popup's own glass over Plasma's backdrop, as strong as
-    // the setting says.
+    // Frost (Settings → Appearance → Frost, popupFrost 0–1): a milky wash,
+    // brighter at the top, and fine grain — the frosted-glass look of the
+    // Glassy System Monitor's cards. It is drawn, not sampled: no window can
+    // read what is behind it, so it reads as frosted with or without the
+    // compositor's blur, and keeps text legible over a busy desktop. Not
+    // under a `translucent` host, for the reason the tint below gives.
+    readonly property real frost: glass.translucent ? 0 : Math.max(0, Math.min(1, Number(settings.popupFrost || 0)))
     Rectangle {
         anchors.fill: parent
         radius: glass.radius
-        visible: glass.translucent && glass.glassOpacity > 0
+        visible: glass.frost > 0
         gradient: Gradient {
             GradientStop {
                 position: 0.0
-                color: glass.glassStop(0, glass.glassOpacity * 1.2)
+                color: Qt.rgba(0.92, 0.95, 1.0, 0.52 * glass.frost)
             }
             GradientStop {
-                position: 0.5
-                color: glass.glassStop(1, glass.glassOpacity * 1.2)
+                position: 0.45
+                color: Qt.rgba(0.85, 0.89, 0.97, 0.42 * glass.frost)
             }
             GradientStop {
                 position: 1.0
-                color: glass.glassStop(2, glass.glassOpacity * 1.2)
+                color: Qt.rgba(0.78, 0.83, 0.94, 0.36 * glass.frost)
+            }
+        }
+    }
+    // Grain: specks batched into two paths (light and dark), painted once per
+    // size from a fixed seed, so it never shimmers or costs a frame.
+    Canvas {
+        anchors.fill: parent
+        visible: glass.frost > 0
+        opacity: Math.min(1, 0.35 + glass.frost)
+        renderStrategy: Canvas.Cooperative
+        readonly property var signature: [width, height, visible]
+        onSignatureChanged: requestPaint()
+        onPaint: {
+            var ctx = getContext("2d");
+            ctx.reset();
+            if (!visible || width <= 0 || height <= 0)
+                return;
+            var seed = 1234567;
+            function rnd() {
+                seed = (seed * 1103515245 + 12345) % 2147483648;
+                return seed / 2147483648;
+            }
+            var count = Math.floor(width * height / 26);
+            for (var pass = 0; pass < 2; pass++) {
+                ctx.beginPath();
+                for (var i = 0; i < count / 2; i++)
+                    ctx.rect(Math.floor(rnd() * width), Math.floor(rnd() * height), 1, 1);
+                ctx.fillStyle = pass === 0 ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.10)";
+                ctx.fill();
             }
         }
     }
 
     // Tint: under the decoration, so a stronger tint does not blot it out.
+    // Not under a `translucent` host: Plasma clips the popup's content to the
+    // inside of its frame padding, so any full fill here stops short of the
+    // frame and reads as a second, inner border. Plasma's frame is the
+    // background there.
     Rectangle {
         anchors.fill: parent
         radius: glass.radius
         color: glass.tint
-        visible: glass.tintOpacity > 0
+        visible: !glass.translucent && glass.tintOpacity > 0
     }
 
     // Soft glow in the top-left in the active tab's accent — also the

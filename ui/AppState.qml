@@ -443,6 +443,10 @@ Item {
 
     // A host whose popup frame has a style to choose (Plasma's background hints).
     property bool backgroundStyleAvailable: false
+    // ...and whether that style reaches what the user sees. Plasma reads
+    // backgroundHints only for a widget on the desktop; a panel popup always
+    // takes the theme's dialog frame, blurred by KWin if the theme allows.
+    property bool backgroundStyleApplies: backgroundStyleAvailable
     // A host whose compositor can blur behind the popup on request (Quickshell
     // on Hyprland, via hosts/quickshell/glass.conf): settings.compositorGlass.
     property bool compositorGlassAvailable: false
