@@ -514,7 +514,13 @@ ColumnLayout {
                         StudioSeg {
                             options: [["dark", page.shell.i18n("Dark")], ["milky", page.shell.i18n("Milky")]]
                             value: page.shell.settings.popupGlassStyle === "milky" ? "milky" : "dark"
-                            onChosen: v => page.shell.setSetting2("popupGlassStyle", v)
+                            onChosen: v => {
+                                page.shell.setSetting2("popupGlassStyle", v);
+                                // On Plasma the glass layer is off at 0 %, which
+                                // would make the two looks identical: show it.
+                                if (page.shell.backgroundStyleAvailable && !(Number(page.shell.settings.popupGlassOpacity || 0) > 0))
+                                    page.shell.setSetting2("popupGlassOpacity", 0.5);
+                            }
                         }
                     }
                     StudioRow {
@@ -537,29 +543,23 @@ ColumnLayout {
                         }
                     }
                     StudioRow {
-                        label: page.shell.i18n("Bg Style")
-                        desc: page.shell.i18n("Plasma draws the popup's backdrop: Glassmorphic adds the blur, Translucent is flat, Native follows your theme.")
-                        dot: "#a78bfa"
-                        visible: page.shell.backgroundStyleAvailable
-                        StudioSelect {
-                            width: 210
-                            options: [[0, page.shell.i18n("Plasma Native")], [1, page.shell.i18n("Translucent (Flat)")], [2, page.shell.i18n("Glassmorphic (Shadow + Blur)")]]
-                            value: {
-                                var v = Number(page.shell.settingValue("backgroundHints"));
-                                return v >= 0 && v <= 2 ? v : 1;
-                            }
-                            onChosen: v => page.shell.setSetting2("backgroundHints", v)
-                        }
-                    }
-                    StudioRow {
-                        // TRANSLATORS: the compositor (Hyprland) blurs what is behind the popup
+                        // TRANSLATORS: the compositor (KWin or Hyprland) blurs what is behind the popup
                         label: page.shell.i18n("Blur")
-                        desc: page.shell.compositorGlassAvailable === true ? page.shell.i18n("Needs hosts/quickshell/glass.conf sourced in hyprland.conf") : page.shell.backgroundStyleAvailable ? page.shell.i18n("On Plasma the blur is KWin's: pick Glassmorphic in Bg Style above.") : page.shell.i18n("This app has no blur of its own; it is drawn by Hyprland or Plasma.")
+                        desc: page.shell.compositorGlassAvailable === true ? page.shell.i18n("Needs hosts/quickshell/glass.conf sourced in hyprland.conf") : page.shell.backgroundStyleAvailable ? page.shell.i18n("KWin blurs the desktop behind the popup.") : page.shell.i18n("This app has no blur of its own; it is drawn by Hyprland or Plasma.")
                         dot: "#7dd3fc"
+                        // Plasma: the widget's background hint, translucent (2,
+                        // which KWin blurs) or the standard flat dialog (1).
+                        // The old "native" choice (0) looked no different, so it
+                        // reads as off here.
                         StudioSwitch {
-                            enabled: page.shell.compositorGlassAvailable === true
+                            enabled: page.shell.compositorGlassAvailable === true || page.shell.backgroundStyleAvailable === true
                             checked: page.shell.compositorGlassAvailable === true ? page.shell.settings.compositorGlass === true : Number(page.shell.settingValue("backgroundHints")) === 2
-                            onToggled: on => page.shell.setSetting2("compositorGlass", on)
+                            onToggled: on => {
+                                if (page.shell.compositorGlassAvailable === true)
+                                    page.shell.setSetting2("compositorGlass", on);
+                                else
+                                    page.shell.setSetting2("backgroundHints", on ? 2 : 1);
+                            }
                         }
                     }
                     StudioRow {
