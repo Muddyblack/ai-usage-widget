@@ -132,6 +132,26 @@ jobs:
           AI_USAGE_CONFIG: ${{ runner.temp }}/bundle-settings.json
         run: '"dist/AI Usage.app/Contents/MacOS/AI Usage" --selftest'
 
+      # The proof the other pictures are not just an offscreen render: the
+      # real app on the runner's real desktop, full screen. On a first start
+      # (a fresh settings file) the popup opens by itself under the menu bar
+      # item, with the demo data. Best effort: a runner image without screen
+      # recording rights only loses this one picture.
+      - name: Full-screen capture of the running app
+        if: matrix.arch == 'apple-silicon'
+        continue-on-error: true
+        env:
+          AI_USAGE_CONFIG: ${{ runner.temp }}/desktop-settings.json
+        run: |
+          mkdir -p "$RUNNER_TEMP/screens"
+          python3 hosts/desktop/app.py --demo > "$RUNNER_TEMP/desktop.log" 2>&1 &
+          pid=$!
+          sleep 20
+          screencapture -x "$RUNNER_TEMP/screens/desktop-macos.png"
+          kill "$pid" || true
+          cat "$RUNNER_TEMP/desktop.log"
+          ls -la "$RUNNER_TEMP/screens/desktop-macos.png"
+
       - name: Import the signing certificate
         if: env.NOTARIZE == 'true'
         env:
@@ -225,3 +245,132 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           overwrite: true
+
+  # The screenshots in a comment on the pull request, updated with every new
+  # commit. Here, in the PR's own workflow, because a workflow triggered any
+  # other way (a comment, workflow_run) only runs once it is on the default
+  # branch. Nothing of the PR runs in this job: it reads the app job's PNGs
+  # and commits them to one orphan branch, `ci-screenshots`, a pr-<n>/ folder
+  # per PR. GitHub has no API for attaching an image to a comment, so a
+  # committed file is the only URL a comment can embed. The comment links the
+  # commit, so its images outlive the folder, which macos-screenshots.yml
+  # removes when the PR closes. Fork PRs have read-only tokens; their PNGs
+  # stay in the run's artifact.
+  screenshots-comment:
+    needs: [backend, app]
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    concurrency:
+      group: macos-screenshots-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    env:
+      BRANCH: ci-screenshots
+    steps:
+      # No checkout or execution of app code in this publishing job.
+      - uses: actions/download-artifact@v8
+        with:
+          name: screenshots
+          path: ${{ runner.temp }}/screens
+
+      - name: Commit the PNGs and update the PR conversation
+        uses: actions/github-script@v8
+        env:
+          SCREENSHOT_DIR: ${{ runner.temp }}/screens
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          RUN: ${{ github.run_id }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const repo = context.repo;
+            const number = Number(process.env.PR);
+            const sha = process.env.SHA;
+            const folder = `pr-${number}/`;
+
+            const { data: current } = await github.rest.pulls.get({ ...repo, pull_number: number });
+            if (current.state !== 'open' || current.head.sha !== sha) {
+              core.info('Skipping screenshots of a superseded commit or a closed PR.');
+              return;
+            }
+
+            const dir = process.env.SCREENSHOT_DIR;
+            const names = fs.readdirSync(dir).filter(name => /^[a-z0-9-]+\.png$/.test(name)).sort();
+            if (!names.length) throw new Error('Screenshot artifact contains no PNGs');
+            const files = [];
+            for (const name of names) {
+              const file = path.join(dir, name);
+              const stat = fs.lstatSync(file);
+              if (!stat.isFile() || stat.size > 10 * 1024 * 1024) throw new Error(`Invalid screenshot: ${name}`);
+              const png = fs.readFileSync(file);
+              if (!png.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])))
+                throw new Error(`Not a PNG: ${name}`);
+              const { data: blob } = await github.rest.git.createBlob({ ...repo, content: png.toString('base64'), encoding: 'base64' });
+              files.push({ path: folder + name, mode: '100644', type: 'blob', sha: blob.sha });
+            }
+
+            // Replace this PR's folder on the shared branch. Another PR's run
+            // may move the branch in between, so a rejected update starts over
+            // from the new tip.
+            let commit;
+            for (let attempt = 1; ; attempt++) {
+              let parent = null;
+              let baseTree;
+              try {
+                const { data: ref } = await github.rest.git.getRef({ ...repo, ref: `heads/${process.env.BRANCH}` });
+                parent = ref.object.sha;
+                const { data: tip } = await github.rest.git.getCommit({ ...repo, commit_sha: parent });
+                baseTree = tip.tree.sha;
+              } catch (error) {
+                if (error.status !== 404) throw error;
+              }
+              const tree = [...files];
+              // A new branch gets a README, which also keeps its tree from
+              // ever going empty when the last PR folder is removed.
+              if (!baseTree)
+                tree.push({ path: 'README.md', mode: '100644', type: 'blob',
+                  content: '# CI screenshots\n\nWritten by .github/workflows/macos-screenshots.yml: one pr-<n>/ folder per pull request that asked for `/macos`, removed when the PR closes. Not for merging.\n' });
+              if (baseTree) {
+                const { data: old } = await github.rest.git.getTree({ ...repo, tree_sha: baseTree, recursive: 'true' });
+                const keep = new Set(files.map(f => f.path));
+                for (const entry of old.tree)
+                  if (entry.type === 'blob' && entry.path.startsWith(folder) && !keep.has(entry.path))
+                    tree.push({ path: entry.path, mode: entry.mode, type: 'blob', sha: null });
+              }
+              const { data: snapshot } = await github.rest.git.createTree({ ...repo, tree, ...(baseTree ? { base_tree: baseTree } : {}) });
+              ({ data: commit } = await github.rest.git.createCommit({
+                ...repo, message: `macOS screenshots for PR #${number} (${sha.slice(0, 7)})`,
+                tree: snapshot.sha, parents: parent ? [parent] : []
+              }));
+              try {
+                if (parent)
+                  await github.rest.git.updateRef({ ...repo, ref: `heads/${process.env.BRANCH}`, sha: commit.sha, force: false });
+                else
+                  await github.rest.git.createRef({ ...repo, ref: `refs/heads/${process.env.BRANCH}`, sha: commit.sha });
+                break;
+              } catch (error) {
+                if (attempt >= 5 || ![409, 422].includes(error.status)) throw error;
+                core.info(`Branch moved, retrying (${attempt})`);
+              }
+            }
+
+            const marker = '<!-- macos-screenshots -->';
+            const runUrl = `${context.serverUrl}/${repo.owner}/${repo.repo}/actions/runs/${process.env.RUN}`;
+            const imageRoot = `${context.serverUrl}/${repo.owner}/${repo.repo}/blob/${commit.sha}/${folder}`;
+            let body = `${marker}\n### macOS screenshots (${sha.slice(0, 7)})\n\n`;
+            body += `[Build and downloadable PNGs](${runUrl}) · updated with every new commit\n\n`;
+            body += `<details>\n<summary>View screenshots (${names.length})</summary>\n\n`;
+            for (const name of names) {
+              body += `**${name}**\n\n![${name}](${imageRoot}${name}?raw=true)\n\n`;
+            }
+            body += `</details>\n`;
+            const comments = await github.paginate(github.rest.issues.listComments, { ...repo, issue_number: number, per_page: 100 });
+            const existing = comments.find(c => c.user?.login === 'github-actions[bot]' && c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ ...repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...repo, issue_number: number, body });
+            }

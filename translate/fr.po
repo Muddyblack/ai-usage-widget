@@ -927,6 +927,12 @@ msgid "Blur"
 msgstr "Flou"
 
 #: ui/SettingsPage.qml
+msgid "macOS blurs the desktop behind the popup, in the popup's light or dark."
+msgstr ""
+"macOS floute le bureau derrière la fenêtre, en clair ou en sombre selon la "
+"fenêtre."
+
+#: ui/SettingsPage.qml
 msgid ""
 "Hyprland blurs the desktop behind the popup; the widget adds the layer rule "
 "itself."

@@ -126,8 +126,12 @@ jobs:
   # so unlike windows.yml it needs no version input).
   macos:
     uses: ./.github/workflows/macos.yml
+    # macos.yml's screenshots-comment job needs these; a reusable workflow's
+    # jobs can't be granted more than the caller job passes down, even for a
+    # job whose `if:` is never true on a tag push.
     permissions:
-      contents: read
+      contents: write
+      pull-requests: write
     # Developer ID signed and notarized once the Apple secrets are set
     # (docs/macos.md#signing-and-distribution); ad-hoc signed until then.
     with:

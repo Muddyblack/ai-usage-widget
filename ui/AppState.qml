@@ -467,6 +467,9 @@ Item {
     // A host whose compositor can blur behind the popup on request (Quickshell
     // on Hyprland, via hosts/quickshell/glass.conf): settings.compositorGlass.
     property bool compositorGlassAvailable: false
+    // A host that has the system's own blur behind the popup, always (macOS,
+    // hosts/macos/vibrancy.py): Settings shows Blur as on, with no switch.
+    property bool systemBlur: false
 
     readonly property color activeAccent: {
         if (root.themeAccentAvailable && root.settings.themeAccent === true)

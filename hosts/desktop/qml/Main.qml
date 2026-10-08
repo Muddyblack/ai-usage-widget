@@ -51,6 +51,7 @@ Window {
         systemLight: Qt.styleHints.colorScheme === Qt.ColorScheme.Light
         popupVisible: root.visible
         trayOptions: true
+        systemBlur: root.nativeBlur
     }
 
     function flushHistory() {
