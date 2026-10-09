@@ -98,6 +98,12 @@ jobs:
   # selftest, the installer — with the release's version in the file names.
   windows:
     uses: ./.github/workflows/windows.yml
+    # windows.yml's screenshots-comment job needs these; a reusable workflow's
+    # jobs can't be granted more than the caller job passes down, even for a
+    # job whose `if:` is never true on a tag push.
+    permissions:
+      contents: write
+      pull-requests: write
     with:
       version: ${{ github.ref_name }}
 
