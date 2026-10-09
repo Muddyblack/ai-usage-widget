@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./package/icon.png" width="180" alt="AI Usage Widget Logo">
+  <img src="./assets/icon.png" width="180" alt="AI Usage Widget Logo">
 </p>
 
 
@@ -117,17 +117,7 @@ Session search is handled by the backend with `get-ai-usage --sessions --query <
 
 The backend returns the additive `sources` descriptor list with verified IDs and labels, in canonical order: Cline (`cline`), Muse (`muse`), Codex (`openai`), Grok (`grok`), Claude Code (`claude`), OpenCode (`opencode`), MiMo Code (`mimo`), Antigravity (`antigravity`), Mistral (`mistral`), Cursor (`cursor`), and Junie (`junie`). Only sources with cached parsed rows appear. Query-only searches read that cache and do not scan local stores. Non-empty searches check all underlying session records using only `provider`, `title`, `sessionName`, `state`, and `detail`; `fullTitle`, opaque resume keys, IDs, paths, and transcripts are not searchable or exposed. Claude titles are clipped opening-prompt previews; raw prompt text never leaves the backend. See the [provider contract](docs/provider-contract.md#session-search) for response, refresh, incomplete-cache, privacy, and cross-platform details.
 
-Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on macOS](docs/macos.md) and [in a terminal](docs/cli.md) — every frontend shares one backend.
-
-## macOS — native Swift menu bar app
-
-<p align="center">
-  <img src="./docs/readme/macos/popover-expanded-light.png" alt="macOS usage, history and activity statistics in light mode" width="340" valign="top"/>
-  <img src="./docs/readme/macos/popover-expanded-dark.png" alt="macOS usage, history and activity statistics in dark mode" width="340" valign="top"/>
-</p>
-
-Captured with demo data. See the [macOS guide](docs/macos.md) for usage history,
-settings, menu bar styles, and build instructions.
+Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on macOS](docs/macos.md) and [in a terminal](docs/cli.md) — every platform shows the same UI (`ui/`) on the same backend (`backend/`); only the panel, tray or menu bar item around it is per platform (`hosts/`). See [docs/architecture.md](docs/architecture.md).
 
 ---
 
@@ -263,7 +253,8 @@ All configuration is done in the widget's settings panel (right-click the widget
 | [docs/cli.md](docs/cli.md) | `ai-usage-cli` — the terminal frontend, for SSH, status bars and non-Plasma desktops |
 | [docs/hyprland.md](docs/hyprland.md) | Running the Quickshell panel on Hyprland, Caelestia or Waybar |
 | [docs/windows.md](docs/windows.md) | The Windows tray app: installing, using and building it |
-| [docs/macos.md](docs/macos.md) | The macOS menu bar app: why it is native Swift, where each provider's data is on a Mac, and how to build it |
+| [docs/architecture.md](docs/architecture.md) | How the repository is laid out: one backend, one UI, one thin host per platform |
+| [docs/macos.md](docs/macos.md) | The macOS menu bar app: the native menu bar item, where each provider's data is on a Mac, and how to build it |
 | [docs/provider-contract.md](docs/provider-contract.md) | The JSON model every frontend reads, and the backend architecture behind it |
 | [docs/provider-detection.md](docs/provider-detection.md) | Zero-default detection policy, platform settings, privacy limits, and provider addition checklist |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Development install, tests, packaging, releasing |

@@ -1,35 +1,25 @@
 # Provider data contract (schema version 1)
 
-All five frontends — the KDE Plasma widget (`package/contents/ui`), the
-Hyprland/Quickshell shell (`hyprland/`), the Windows tray app (`windows/`), the
-macOS menu bar app (`macos/`) and the terminal frontend (`aiusage/render.py`) —
-get all of their provider data from a single backend. The Linux frontends run it
-through `package/contents/tools/sh/get-ai-usage`; the Windows app, which has no
-shell, calls it in-process; the macOS app runs a frozen copy of the same package
-as a subprocess.
-
-The macOS app reads the **provider-agnostic** core of this document — `summary`,
-`quotaWindows`, `chartWindows`, `slots`, `historyValues`, and the shared
-`details.status` — plus the generic provider cost figures under `details`, the
-shared `localSpend` aggregates, and structured session cost fields. That keeps
-the third UI codebase small: a provider added to the backend appears in the
-core views with no Swift change, while a new contract field or provider-specific
-presentation may require one. See `macos/README.md`.
+Every frontend gets all of its provider data from a single backend: the one
+shared UI (`ui/`) in every host — KDE Plasma (`hosts/kde`), Quickshell
+(`hosts/quickshell`), and the Windows and macOS tray app (`hosts/desktop`) —
+and the terminal frontend (`aiusage/render.py`). The process-based hosts run it
+through `backend/sh/get-ai-usage` (`ui/CommandBackend.qml`); the tray app calls
+it in-process. See `docs/architecture.md`.
 
 ```
-shared provider backend (Python, stdlib only)   package/contents/tools/aiusage
+shared provider backend (Python, stdlib only)   backend/aiusage
   - credential discovery, HTTP, local-data reads   aiusage/providers/, aiusage/http.py
   - normalization                                  aiusage/normalize/
                  │
                  ▼  thin bash launcher, execs into the package above
-  package/contents/tools/sh/get-ai-usage
+  backend/sh/get-ai-usage
                  │
           stable JSON model
            ┌─────────┼─────────┐
            ▼         ▼         ▼
-      KDE Plasma Quickshell terminal
-          UI          UI     aiusage/render.py
-   (shared JS: package/contents/code/Format.js, UsageHistory.js)
+      ui/ (every host)       terminal
+                         aiusage/render.py
 ```
 
 No frontend performs a provider network request, parses a provider response, or
@@ -587,7 +577,8 @@ empty: paying for a window and then discarding it would be the worst of both.
 `totalMessages`, `totalSessions`, `totalTokens`, `totalToolCalls`,
 `favoriteModel`, `firstDate`, `computedDate`, `activeDays`, `spanDays`,
 `currentStreak`, `longestStreak`, `longestSessionMs`,
-`longestSessionMessages`, `peakHour`, `models`, `dailyTokens[]` (`date`,
+`longestSessionMessages`, `peakHour`, `hourCounts[24]` (activity per hour of
+day, hour 0 first, for the heatmap), `models`, `dailyTokens[]` (`date`,
 `total`), plus `dailySeries[]` and `dailyUnit` — the per-day series the
 frontends draw, named separately because not every CLI counts tokens. Claude
 adds `version`, `totalCostUSD` and `totalWebSearches`; Codex adds `model` and
@@ -616,7 +607,7 @@ hammer them.
 ## Shared frontend code
 
 Three things are identical in both QML frontends and live in
-`package/contents/code/` so they cannot drift (the terminal frontend keeps no
+`ui/js/` so they cannot drift (the terminal frontend keeps no
 history and formats its own countdowns from `resetText`):
 
 - `Format.js` — countdown formatting (`countdown`, `countdownFromEpoch`).
@@ -730,7 +721,7 @@ with `make test`.
 ## Changing the contract
 
 Adding a field is backwards compatible. Removing or repurposing one is not:
-bump `SCHEMA_VERSION` in `package/contents/tools/aiusage/contract.py`, update
+bump `SCHEMA_VERSION` in `backend/aiusage/contract.py`, update
 this document, and update every frontend in the same change — except that
 the macOS app needs no change for a new provider, only for a new *field*.
 

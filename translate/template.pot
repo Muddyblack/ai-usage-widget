@@ -1,0 +1,2521 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the AI Usage Monitor package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: AI Usage Monitor 3.3.0\n"
+"Report-Msgid-Bugs-To: https://github.com/Muddyblack/ai-usage-widget/issues\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: hosts/kde/contents/ui/main.qml
+msgid "AI Usage"
+msgstr ""
+
+#: hosts/kde/contents/ui/main.qml ui/AppState.qml ui/SettingsPage.qml
+msgid "Refresh"
+msgstr ""
+
+#: hosts/kde/contents/ui/main.qml ui/AppState.qml ui/PopupHeader.qml
+msgid "Settings"
+msgstr ""
+
+#: ui/ActivityHeatmap.qml
+msgid "Activity"
+msgstr ""
+
+#: ui/ActivityHeatmap.qml
+msgid "%1 active day in the last %2 weeks"
+msgid_plural "%1 active days in the last %2 weeks"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/ActivityHeatmap.qml
+msgid "no activity"
+msgstr ""
+
+#: ui/ActivityHeatmap.qml
+msgid "Hour of day"
+msgstr ""
+
+#: ui/ActivityHeatmap.qml
+msgid "%1 start"
+msgid_plural "%1 starts"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/AppState.qml
+msgid "No data"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Loading"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Open AI Usage"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Tray style"
+msgstr ""
+
+#: ui/AppState.qml ui/SettingsPage.qml
+msgid "Logo and percent"
+msgstr ""
+
+#. TRANSLATORS: tray icon style: only the percentages, as digits
+#: ui/AppState.qml ui/SettingsPage.qml
+msgid "Numbers"
+msgstr ""
+
+#. TRANSLATORS: tray icon style: one circular progress ring
+#: ui/AppState.qml ui/SettingsPage.qml
+msgid "Ring"
+msgstr ""
+
+#: ui/AppState.qml ui/SettingsPage.qml
+msgid "Floating pill"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Start with Windows"
+msgstr ""
+
+#: ui/AppState.qml ui/PopupHeader.qml ui/SettingsPage.qml
+msgid "Start at login"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Quit"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "usage backend returned no data"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Could not open the terminal frontend: %1"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Could not open the terminal frontend."
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Export failed: could not capture the image"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Saved to %1"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Export failed: %1"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Export failed"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Detection failed."
+msgstr ""
+
+#: ui/AppState.qml
+msgid "No changes: enabled providers match what is installed."
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Enabled: %1"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Disabled (not installed): %1"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Could not load cached sessions."
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Could not load sessions."
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Could not resume session."
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Could not refresh pricing."
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Deleted %1 point."
+msgid_plural "Deleted %1 points."
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/AppState.qml
+msgid "Removed %1 older point."
+msgid_plural "Removed %1 older points."
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/AppState.qml
+msgid "Nothing older to remove."
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Could not change the history."
+msgstr ""
+
+#: ui/MistralUsage.qml
+#, no-javascript-format
+msgid "%1d ago"
+msgstr ""
+
+#: ui/MistralUsage.qml
+msgid "%1h ago"
+msgstr ""
+
+#: ui/MistralUsage.qml
+msgid "TOTAL SPEND · VIBE CLI"
+msgstr ""
+
+#: ui/MistralUsage.qml ui/StatsSection.qml
+msgid "%1 session"
+msgid_plural "%1 sessions"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/MistralUsage.qml ui/StatsSection.qml ui/UsageChart.qml
+msgid "%1 tokens"
+msgstr ""
+
+#: ui/MistralUsage.qml
+msgid "Input"
+msgstr ""
+
+#: ui/MistralUsage.qml
+msgid "Output"
+msgstr ""
+
+#: ui/MistralUsage.qml
+msgid "Steps"
+msgstr ""
+
+#: ui/MistralUsage.qml
+msgid "Tool calls"
+msgstr ""
+
+#: ui/MistralUsage.qml
+msgid "· %1 failed"
+msgstr ""
+
+#: ui/MistralUsage.qml
+msgid "RECENT SESSIONS"
+msgstr ""
+
+#: ui/MistralUsage.qml ui/SpendPage.qml
+msgid "%1 of %2"
+msgstr ""
+
+#: ui/MistralUsage.qml
+msgid "Mistral has no billing API — figures come from local vibe CLI logs."
+msgstr ""
+
+#: ui/OpenCodeUsageChart.qml
+msgid "Daily token usage"
+msgstr ""
+
+#: ui/OverviewPage.qml
+msgid "Enable a provider in Settings to see it here."
+msgstr ""
+
+#: ui/PopupContent.qml
+msgid "Usage"
+msgstr ""
+
+#. TRANSLATORS: sub-tab with activity statistics (tokens, sessions, models)
+#: ui/PopupContent.qml
+msgid "Stats"
+msgstr ""
+
+#: ui/PopupContent.qml
+#, no-javascript-format
+msgid "Used: %1%"
+msgstr ""
+
+#: ui/PopupContent.qml
+#, no-javascript-format
+msgid "%1% left"
+msgstr ""
+
+#: ui/PopupContent.qml
+msgid "Resets: %1"
+msgstr ""
+
+#: ui/PopupContent.qml
+msgid ""
+"Plan quota is off: Meta reports it only on a billed model call. Everything "
+"above is read from Muse's own local files."
+msgstr ""
+
+#: ui/PopupContent.qml
+msgid "Plan quota: Meta refused the credential."
+msgstr ""
+
+#: ui/PopupContent.qml
+msgid ""
+"Plan quota: could not reach Meta — the local numbers above are unaffected."
+msgstr ""
+
+#: ui/PopupContent.qml
+msgid "Plan quota needs a Meta API key, or a `muse login` that stored one."
+msgstr ""
+
+#: ui/PopupContent.qml
+msgid "Plan quota needs a model: run Muse once so it caches its catalog."
+msgstr ""
+
+#: ui/PopupContent.qml
+msgid "No plan windows on this account — pay-as-you-go has none."
+msgstr ""
+
+#: ui/PopupContent.qml
+msgid "last known %1 · refreshing…"
+msgstr ""
+
+#: ui/PopupContent.qml
+msgid "updated %1"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "%1 Usage"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "Views, pill, position and chart"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "Views, language and usage chart"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "Popup glass, tint and colours"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "About AI Usage Monitor and project links"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "Local endpoints: Ollama, vLLM and llama.cpp"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "Refresh interval and usage history"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "Python interpreter and terminal tool"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "Turn providers on and set their keys"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "%1 provider"
+msgid_plural "%1 providers"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/PopupHeader.qml ui/SettingsPage.qml
+msgid "Refreshing…"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "%1 local session"
+msgid_plural "%1 local sessions"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/PopupHeader.qml
+msgid "Save this view as a picture"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "Save as PNG"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "Save as SVG"
+msgstr ""
+
+#: ui/PopupHeader.qml
+msgid "Pinned on panel"
+msgstr ""
+
+#: ui/ProviderSections.qml
+msgid "· resetting…"
+msgstr ""
+
+#: ui/ProviderSections.qml
+msgid "resets in %1"
+msgstr ""
+
+#: ui/ProviderSettingRow.qml
+msgid "key set"
+msgstr ""
+
+#: ui/ProviderSettingRow.qml ui/SettingsPage.qml
+msgid "Off"
+msgstr ""
+
+#: ui/ProviderSettingRow.qml
+msgid "Local"
+msgstr ""
+
+#: ui/ProviderSettingRow.qml
+msgid "Live"
+msgstr ""
+
+#: ui/ProviderSettingRow.qml
+msgid "API key"
+msgstr ""
+
+#: ui/ProviderSettingRow.qml
+msgid "Server URL"
+msgstr ""
+
+#: ui/ProviderSettingRow.qml
+msgid "Server URLs, separated by commas"
+msgstr ""
+
+#: ui/ProviderSettingRow.qml ui/SettingsPage.qml
+msgid "Engine"
+msgstr ""
+
+#: ui/ProviderSettingRow.qml
+msgid ""
+"Live: plan windows come from a billed model call (~130 tokens per refresh, "
+"cached 30 min)."
+msgstr ""
+
+#: ui/ProviderSettingRow.qml
+msgid ""
+"Local: read from Muse's own files, free. Meta reports plan windows only on a "
+"billed call — that is what Live buys."
+msgstr ""
+
+#: ui/ProviderSettingRow.qml
+msgid "Quota"
+msgstr ""
+
+#: ui/ProviderSettingRow.qml
+msgid "fallback if the plan reports none"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "All sources"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "%1 source selected"
+msgid_plural "%1 sources selected"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/SessionsPage.qml
+msgid "Search sessions…"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Search sessions"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Filter sessions by source"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Refresh failed; no cached sessions are available."
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Refresh incomplete; showing cached sessions."
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "No cached session data yet."
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "%1 session source was removed."
+msgid_plural "%1 session sources were removed."
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/SessionsPage.qml
+msgid "Cached session data · %1 min old"
+msgid_plural "Cached session data · %1 min old"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/SessionsPage.qml
+msgid "Session cache status unavailable."
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid ""
+"No local agent sessions found. They appear after Claude Code, Codex, Muse, "
+"Cline or Grok CLI records activity."
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "No sessions match your search."
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Session"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Active"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Idle"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "just now"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "%1 min ago"
+msgid_plural "%1 min ago"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/SessionsPage.qml
+msgid "%1 h ago"
+msgid_plural "%1 h ago"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/SessionsPage.qml
+msgid "%1 d ago"
+msgid_plural "%1 d ago"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/SessionsPage.qml
+msgid "Cost unavailable"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Free model"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Covered by plan · $%1 on API"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Covered by plan · ~$%1 on API"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Actual provider cost: $%1 (exact)"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Actual provider cost: $%1 (partial)"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Calculated estimate: $%1 (exact)"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Calculated estimate: $%1 (partial)"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Mixed cost: $%1 (exact)"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Mixed cost: $%1 (partial)"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Cost: $%1 (exact)"
+msgstr ""
+
+#: ui/SessionsPage.qml
+msgid "Cost: $%1 (partial)"
+msgstr ""
+
+#: ui/SettingsPage.qml ui/SpendPage.qml
+msgid "Providers"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Local Models"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Panel"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Display"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Appearance"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgctxt "settings tab"
+msgid "Data"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Advanced"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Info"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Refreshing pricing…"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Pricing updated."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Pricing refresh failed; using saved rates."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "No pricing rates available; try again."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Detecting…"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Detect installed providers"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"Expand a provider for its API key and options. Keys are stored in %1; leave "
+"one blank to use env vars or an existing CLI login."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"Token counters reflect usage since server start. GPU VRAM tracking is "
+"enabled automatically where supported."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Monitor Ollama, vLLM, or llama.cpp servers"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Server URLs"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"Separate multiple endpoints with commas. Leave empty to auto-discover Ollama "
+"(:11434), vLLM (:8000), and llama.cpp (:8080)."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "e.g. http://127.0.0.1:11434, http://127.0.0.1:8000"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Bearer Token (optional)"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Optional auth token"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Views"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Optional tabs that sit ahead of your providers in the popup."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Overview"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "All enabled providers at a glance"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Usage & Spend"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Combined cost figures across providers"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Sessions"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Recent local agent sessions (no transcripts)"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "General"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Language"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "System default"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Usage chart"
+msgstr ""
+
+#. TRANSLATORS: the small rounded usage readout floating on the desktop edge
+#: ui/SettingsPage.qml
+msgid "Pill"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Always"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Edge hover"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Tray only"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Position"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Top left"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Top center"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Top right"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Bottom left"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Bottom center"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Bottom right"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Monitor"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Follow focus"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "All monitors"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Panel rotation"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"%1 provider pinned. With several pinned, the panel shows them side by side, "
+"or one at a time when rotation is on."
+msgid_plural ""
+"%1 providers pinned. With several pinned, the panel shows them side by side, "
+"or one at a time when rotation is on."
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"Pin a provider with the pin on its tab to keep it on the panel whatever the "
+"popup shows."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "30 seconds"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "1 minute"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "2 minutes"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "5 minutes"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "10 minutes"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Tray"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"Logo and percent reads like the panel pill; the tray gives every icon the "
+"same square, so each value is two icons. The floating pill is the panel's "
+"own pill in a small window: drag it anywhere, click it for this popup."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Popup glass"
+msgstr ""
+
+#. TRANSLATORS: light or dark look of the popup
+#: ui/SettingsPage.qml
+msgid "Theme"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Auto follows the system's light or dark appearance."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Auto"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Light"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Dark"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Popup tint"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Glass opacity"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"How solid the popup's glass is: lower lets the desktop (and the blur, if on) "
+"show through."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Tint strength"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "How much of the tint colour is laid over the glass."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Frost"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"A milky, grainy frosted look over the glass; keeps text readable over a busy "
+"desktop. Pairs well with Blur."
+msgstr ""
+
+#. TRANSLATORS: the compositor (KWin or Hyprland) blurs what is behind the popup
+#: ui/SettingsPage.qml
+msgid "Blur"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "macOS blurs the desktop behind the popup, in the popup's light or dark."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"Hyprland blurs the desktop behind the popup; the widget adds the layer rule "
+"itself."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "KWin blurs the desktop behind the widget."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"In a panel, Plasma draws this popup with your Plasma theme: KWin blurs it "
+"when the Blur desktop effect is on and the theme's dialog background is "
+"translucent."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "This app has no blur of its own; it is drawn by Hyprland or Plasma."
+msgstr ""
+
+#. TRANSLATORS: what is drawn faintly behind the popup's content
+#: ui/SettingsPage.qml
+msgid "Decoration"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Accent glow"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Provider logo"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "None"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Colours"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Theme accent"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Use the system accent colour"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Card background"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"Colour of the cards inside the popup, and how opaque they are: lower is more "
+"see-through."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "1 min"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "2 min"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "5 min"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "10 min"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "15 min"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "30 min"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Pricing"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Refresh pricing"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "History"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"The chart's recorded history, as JSON — for a backup, or to carry it to "
+"another machine."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "%1 point"
+msgid_plural "%1 points"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/SettingsPage.qml
+msgid "Export"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Delete older history"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Keep the last N days and delete everything before that."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "days"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Delete older"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Auto-delete"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"On every start, delete history older than this many days. 0 keeps everything."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Delete all history"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Removes the whole chart history. Exported copies stay."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Click again to delete"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Delete all…"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"Starts AI Usage in the tray when you sign in. The same switch is in the tray "
+"icon's menu."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Backend"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Python"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"Interpreter for the backend — e.g. a venv's bin/python. Empty auto-detects "
+"from PATH (python3 → python3.x → python). The tray helper picks this up on "
+"its next refresh."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "auto-detect"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Terminal"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"Same data as this popup, as a table in a shell. Link it into ~/.local/bin to "
+"run it as ai-usage-cli, or pass --compact for one status-bar line."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Copy"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Open in terminal"
+msgstr ""
+
+#: ui/SpendPage.qml
+msgid "Could not read model pricing."
+msgstr ""
+
+#: ui/SpendPage.qml
+msgid "No cached model rates yet — refresh pricing in settings."
+msgstr ""
+
+#: ui/SpendPage.qml
+msgid "Model rates"
+msgstr ""
+
+#: ui/SpendPage.qml
+msgctxt "spend timeframe: all history"
+msgid "ALL"
+msgstr ""
+
+#: ui/SpendPage.qml
+msgid ""
+"Totals come from each provider's own usage APIs and local CLI logs. Ranges "
+"differ (30-day, all-time, lifetime)."
+msgstr ""
+
+#: ui/SpendPage.qml
+msgid ""
+"No cost figures yet. Enable providers that report spend, or use them until "
+"local logs appear."
+msgstr ""
+
+#: ui/SpendPage.qml
+msgid "Filter by provider or model…"
+msgstr ""
+
+#: ui/SpendPage.qml
+msgid "Model"
+msgstr ""
+
+#: ui/SpendPage.qml
+msgid "In"
+msgstr ""
+
+#: ui/SpendPage.qml
+msgid "Out"
+msgstr ""
+
+#: ui/SpendPage.qml
+msgid "Cached"
+msgstr ""
+
+#: ui/SpendPage.qml
+msgid "Previous"
+msgstr ""
+
+#: ui/SpendPage.qml
+msgid "Next"
+msgstr ""
+
+#: ui/SpendTimelineChart.qml
+msgid "Cost"
+msgstr ""
+
+#: ui/SpendTimelineChart.qml
+msgid "Tokens (log)"
+msgstr ""
+
+#: ui/SpendTimelineChart.qml
+msgid "· no token history"
+msgstr ""
+
+#: ui/SpendTimelineChart.qml
+msgid "· no cost history"
+msgstr ""
+
+#: ui/SpendTimelineChart.qml
+msgid "30d"
+msgstr ""
+
+#: ui/SpendTimelineChart.qml
+msgid "90d"
+msgstr ""
+
+#: ui/SpendTimelineChart.qml
+msgid "All"
+msgstr ""
+
+#: ui/SpendTimelineChart.qml
+msgid "tok"
+msgstr ""
+
+#: ui/SpendTimelineChart.qml
+msgid "Limited history (%1 days recorded) — dashed line, not a smoothed trend."
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Top repositories"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Top workspaces"
+msgstr ""
+
+#: ui/StatsSection.qml
+#, no-javascript-format
+msgctxt "duration in days, abbreviated"
+msgid "%1d"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgctxt "duration in hours, abbreviated"
+msgid "%1h"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgctxt "duration in minutes, abbreviated"
+msgid "%1m"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "<1m"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "No Codex history yet"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Run a Codex CLI session and stats will appear here."
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid ""
+"No local activity stats yet.\n"
+"Run the Copilot CLI to fill ~/.copilot/session-store.db"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid ""
+"No Muse sessions yet.\n"
+"Run Muse Code and its own logs will appear here."
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid ""
+"No Cursor usage this billing cycle yet.\n"
+"Requests made with Cursor or cursor-agent will appear here."
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid ""
+"No Cline sessions yet.\n"
+"Run the Cline CLI and its session logs in ~/.cline will appear here."
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "No local Junie token usage yet. Run a CLI session to see activity."
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "No local MiMo Code usage yet. Account quota is unavailable."
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid ""
+"No Kiro sessions yet.\n"
+"Run kiro-cli or the Kiro IDE's agent; finished turns will appear here."
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid ""
+"No Antigravity sessions yet.\n"
+"Run agy or the Antigravity editor; its logs in ~/.gemini will appear here."
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid ""
+"No OpenCode sessions yet.\n"
+"Enable OpenCode and run a local session; usage is read from its SQLite "
+"database."
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid ""
+"No local activity stats yet.\n"
+"Run Claude Code to generate ~/.claude/stats-cache.json"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Activity Stats"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgctxt "stat label"
+msgid "tokens"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Total tokens across all models (this billing cycle)"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Total tokens across all models (all time)"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgctxt "stat label"
+msgid "sessions"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "%1 messages total"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "active days"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Since %1"
+msgstr ""
+
+#: ui/StatsSection.qml
+#, no-javascript-format
+msgctxt "streak length in days, abbreviated"
+msgid "%1d"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgctxt "stat label"
+msgid "streak"
+msgstr ""
+
+#: ui/StatsSection.qml
+#, no-javascript-format
+msgctxt "longest streak in days, abbreviated"
+msgid "best %1d"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid ""
+"Current consecutive-day streak\n"
+"Longest: %1 day"
+msgid_plural ""
+"Current consecutive-day streak\n"
+"Longest: %1 days"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/StatsSection.qml
+msgid "longest session"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "%1 msg"
+msgid_plural "%1 msgs"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/StatsSection.qml
+msgid "peak hour"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Hour of day with the most activity"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "tool calls"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Total tool invocations across all sessions"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgctxt "stat label"
+msgid "spend"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Total cost across all models (this billing cycle)"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Total cost across all models (all time)"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "credits"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Kiro credits used by the recorded sessions"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "requests"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Model requests made, several per prompt while the agent works"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "web searches"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Total web search requests across all models"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "files touched"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Distinct files read or edited across all sessions"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "repos"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Repositories the CLI has been run in"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Tokens / day"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Requests / day"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Messages / day"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "%1 requests"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "%1 messages"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Models"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "%1 in"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "%1 out"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgctxt "abbreviated sessions"
+msgid "%1 sess"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "computed %1"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Cursor dashboard ↗"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Codex analytics ↗"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Open the cursor.com usage dashboard in your browser"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid "Open chatgpt.com Codex usage analytics in your browser"
+msgstr ""
+
+#: ui/StatusChip.qml
+msgid "Status"
+msgstr ""
+
+#: ui/StatusChip.qml
+msgid "Unknown"
+msgstr ""
+
+#: ui/StatusChip.qml
+msgid "Affected:"
+msgstr ""
+
+#: ui/StatusChip.qml
+msgid "Incident:"
+msgid_plural "Incidents:"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/StatusChip.qml
+msgid "Latest update:"
+msgstr ""
+
+#: ui/StatusChip.qml
+msgid "Click to open status page"
+msgstr ""
+
+#: ui/StatusChip.qml
+msgid "Status ↗"
+msgstr ""
+
+#: ui/StatusChip.qml
+msgid "Major Outage"
+msgstr ""
+
+#: ui/StatusChip.qml
+msgid "Partial Outage"
+msgstr ""
+
+#: ui/StatusChip.qml
+msgid "Minor Issues"
+msgstr ""
+
+#: ui/StatusChip.qml
+msgid "Operational"
+msgstr ""
+
+#: ui/UsageChart.qml
+msgid "Both"
+msgstr ""
+
+#: ui/UsageChart.qml
+msgid "Combined"
+msgstr ""
+
+#: ui/UsageChart.qml
+msgctxt "quota model"
+msgid "Rest"
+msgstr ""
+
+#: ui/UsageChart.qml
+msgid "No data in this range"
+msgstr ""
+
+#: ui/UsageChart.qml
+msgctxt "chart reset window"
+msgid "week reset"
+msgstr ""
+
+#: ui/UsageChart.qml
+msgctxt "chart reset window"
+msgid "5h reset"
+msgstr ""
+
+#: ui/UsageChart.qml
+#, no-javascript-format
+msgid "Gemini: %1%"
+msgstr ""
+
+#: ui/UsageChart.qml
+#, no-javascript-format
+msgid "Rest: %1%"
+msgstr ""
+
+#: translate/metadata-i18n.js
+msgid "AI Usage Monitor"
+msgstr ""
+
+#: translate/metadata-i18n.js
+msgid ""
+"Multi-service AI quota tracker with cost breakdown (Claude, Antigravity, "
+"OpenAI, Grok, Kiro, OpenRouter & Mistral)"
+msgstr ""
+
+#: backend/aiusage/contract.py
+msgid "unavailable"
+msgstr ""
+
+#: backend/aiusage/http.py
+msgid "Invalid %1 credential"
+msgstr ""
+
+#: backend/aiusage/http.py
+msgid "%1 network error"
+msgstr ""
+
+#: backend/aiusage/http.py
+msgid "%1 HTTP %2"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py backend/aiusage/normalize/cursor.py
+#: backend/aiusage/normalize/muse.py backend/aiusage/normalize/ollama.py
+#: backend/aiusage/normalize/opencode.py
+#: backend/aiusage/normalize/selfhosted.py
+msgid "%1% used"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "⚠ Quota exhausted"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Antigravity not configured"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Gemini Models"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Claude & GPT Models"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Gemini Code Assist"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Prompt Credits"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "%1 / %2 left"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Overall Quota"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Model Quotas"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Average quota usage across Gemini models"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Gemini (Google) quota: %1%"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py backend/aiusage/normalize/cursor.py
+#: backend/aiusage/normalize/kiro.py
+msgid "Plan: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "External models quota: %1%"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "7-day %1"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "7-day scoped"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "default"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "pro"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "max"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "business"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "free"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "high"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "low"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "medium"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "%1…"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "Claude Code User"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py backend/aiusage/normalize/openai.py
+msgid "effort: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "Thinking budget: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "dream: on"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "dream: off"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid ""
+"Extended thinking (dream mode): ON\n"
+"Claude will reason longer on complex tasks"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "Extended thinking (dream mode): OFF"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "OAuth missing — API stats only"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "Claude not logged in"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "Claude usage request failed"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py backend/aiusage/normalize/zai.py
+msgid "%1 / %2 tokens"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "5-hour session"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "7-day window"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "Claude 5-hour: %1%"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "Claude 7-day: %1%"
+msgstr ""
+
+#: backend/aiusage/normalize/cline.py
+msgid "Cline: no sessions yet — run cline once"
+msgstr ""
+
+#: backend/aiusage/normalize/cline.py
+msgid "last 30 days"
+msgstr ""
+
+#: backend/aiusage/normalize/cline.py
+#: backend/aiusage/normalize/local_activity.py
+msgid "%1: %2"
+msgstr ""
+
+#: backend/aiusage/normalize/copilot.py
+msgid "Copilot: no token configured"
+msgstr ""
+
+#: backend/aiusage/normalize/copilot.py
+msgid "Copilot: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/copilot.py
+msgid "%1 requests · unlimited"
+msgstr ""
+
+#: backend/aiusage/normalize/copilot.py
+msgid "%1 / %2 requests"
+msgstr ""
+
+#: backend/aiusage/normalize/copilot.py
+msgid "Personal billing"
+msgstr ""
+
+#: backend/aiusage/normalize/copilot.py
+msgid "Premium requests"
+msgstr ""
+
+#: backend/aiusage/normalize/copilot.py
+msgid "Copilot premium requests: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/cursor.py
+msgid "Cursor: not signed in — run cursor-agent login"
+msgstr ""
+
+#: backend/aiusage/normalize/cursor.py
+msgid "Cursor: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/cursor.py
+msgid "Cursor: usage details are not available for this plan"
+msgstr ""
+
+#: backend/aiusage/normalize/cursor.py
+msgid "%1% of included usage"
+msgstr ""
+
+#: backend/aiusage/normalize/cursor.py
+msgid "Included usage"
+msgstr ""
+
+#: backend/aiusage/normalize/cursor.py
+msgid "Auto + Composer"
+msgstr ""
+
+#: backend/aiusage/normalize/cursor.py
+msgid "API models"
+msgstr ""
+
+#: backend/aiusage/normalize/cursor.py
+msgid "On-demand"
+msgstr ""
+
+#: backend/aiusage/normalize/cursor.py
+msgid "Included usage: %1%"
+msgstr ""
+
+#: backend/aiusage/normalize/deepseek.py
+msgid "DeepSeek: no API key configured"
+msgstr ""
+
+#: backend/aiusage/normalize/deepseek.py
+msgid "DeepSeek: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/deepseek.py
+msgid "Available for API calls"
+msgstr ""
+
+#: backend/aiusage/normalize/deepseek.py
+msgid "Low balance"
+msgstr ""
+
+#: backend/aiusage/normalize/deepseek.py
+msgid "Total balance"
+msgstr ""
+
+#: backend/aiusage/normalize/deepseek.py
+msgid "Granted / topped up"
+msgstr ""
+
+#: backend/aiusage/normalize/deepseek.py
+msgid "DeepSeek balance: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/grok.py
+msgid "Grok: run grok --oauth or configure an xAI key"
+msgstr ""
+
+#: backend/aiusage/normalize/grok.py
+msgid "rolling 24h"
+msgstr ""
+
+#: backend/aiusage/normalize/grok.py
+msgid "Grok CLI"
+msgstr ""
+
+#: backend/aiusage/normalize/grok.py
+msgid "CLI"
+msgstr ""
+
+#: backend/aiusage/normalize/grok.py backend/aiusage/normalize/openrouter.py
+msgid "Credit usage"
+msgstr ""
+
+#: backend/aiusage/normalize/grok.py
+msgid "Billing quota"
+msgstr ""
+
+#: backend/aiusage/normalize/grok.py
+msgid "Not exposed for this Grok account"
+msgstr ""
+
+#: backend/aiusage/normalize/grok.py
+msgid "Local CLI activity"
+msgstr ""
+
+#: backend/aiusage/normalize/grok.py
+msgid "%1%2%3 tokens · %4 tool calls"
+msgstr ""
+
+#: backend/aiusage/normalize/grok.py
+msgid "Grok credits: %1% used"
+msgstr ""
+
+#: backend/aiusage/normalize/grok.py
+msgid "Grok CLI connected; billing quota is not exposed"
+msgstr ""
+
+#: backend/aiusage/normalize/junie.py
+msgid ""
+"Junie (untested): no recorded token usage yet. Run a session using /account "
+"or junie --provider google."
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid ""
+"Sign in to kiro-cli (kiro-cli login), or open the Kiro IDE and sign in once "
+"so the widget can read its usage snapshot. A kiro-cli login expires about an "
+"hour after the CLI last ran — start kiro-cli to renew it."
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid "Kiro: no local usage data found"
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid "Kiro: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid "%1 / %2 credits"
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid "Kiro: usage snapshot is empty"
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid "Current Usage"
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid "%1 %2"
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid "Remaining"
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid "Overage"
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid "Overage Rate"
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid "Read live with the kiro-cli login. No API key required."
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid ""
+"Read locally from Kiro app state. No API key or network request required."
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid "Monthly credits"
+msgstr ""
+
+#: backend/aiusage/normalize/kiro.py
+msgid "Credits: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/local_activity.py
+msgid "%1 tokens · %2 session · %3"
+msgstr ""
+
+#: backend/aiusage/normalize/local_activity.py
+msgid "%1 tokens · %2 sessions · %3"
+msgstr ""
+
+#: backend/aiusage/normalize/local_activity.py
+msgid "%1 tokens · %2 session"
+msgstr ""
+
+#: backend/aiusage/normalize/local_activity.py
+msgid "%1 tokens · %2 sessions"
+msgstr ""
+
+#: backend/aiusage/normalize/local_activity.py
+msgid "%1: no local sessions yet"
+msgstr ""
+
+#: backend/aiusage/normalize/local_activity.py
+msgid "%1 local usage"
+msgstr ""
+
+#: backend/aiusage/normalize/mistral.py
+msgid "Mistral: no API key configured"
+msgstr ""
+
+#: backend/aiusage/normalize/mistral.py
+msgid "CONNECTED"
+msgstr ""
+
+#: backend/aiusage/normalize/mistral.py
+msgid "%1 models available"
+msgstr ""
+
+#: backend/aiusage/normalize/mistral.py
+msgid "vibe CLI spend"
+msgstr ""
+
+#: backend/aiusage/normalize/mistral.py backend/aiusage/normalize/openrouter.py
+msgid "✓ key"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "Weekly limit"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "Daily limit"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "%1-day limit"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "%1-hour limit"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "%1-minute limit"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "Plan usage"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "Kimi: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "Kimi: no Moonshot API key or Kimi Code login"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "Plan quota used up"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "Extra usage"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "%1 left"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "of %1"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "Available balance"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "Voucher / cash"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "Kimi Code"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "Moonshot API"
+msgstr ""
+
+#: backend/aiusage/normalize/moonshot.py
+msgid "Kimi balance: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/muse.py
+msgid "Tokens"
+msgstr ""
+
+#: backend/aiusage/normalize/muse.py
+msgid "%1 out · %2 calls"
+msgstr ""
+
+#: backend/aiusage/normalize/muse.py
+msgid "Spend (est.)"
+msgstr ""
+
+#: backend/aiusage/normalize/muse.py
+msgid "Muse tokens: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/muse.py
+msgid "%1 sessions"
+msgstr ""
+
+#: backend/aiusage/normalize/ollama.py
+msgid "Ollama Cloud: no API key found in settings, environment, or OpenCode"
+msgstr ""
+
+#: backend/aiusage/normalize/ollama.py backend/aiusage/providers/ollama.py
+msgid "Ollama Cloud: invalid usage response"
+msgstr ""
+
+#: backend/aiusage/normalize/ollama.py
+msgid "Ollama Cloud: usage response has no limit data"
+msgstr ""
+
+#: backend/aiusage/normalize/ollama.py
+msgid "Ollama Cloud: no recognized usage limits in response"
+msgstr ""
+
+#: backend/aiusage/normalize/ollama.py
+msgid "%1: %2%"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "Codex / ChatGPT User"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "Reasoning effort: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "OpenAI: no API key or Codex login"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "Codex 5-hour"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "ChatGPT/Codex plan window"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "Codex weekly"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "Secondary plan window"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "%1 · 5-hour"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "Limit reached"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "%1 · weekly"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "Codex 5h: %1% left"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "Codex weekly: %1% left"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "API"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "API key configured"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "API credentials"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "Organization usage available"
+msgstr ""
+
+#: backend/aiusage/normalize/openai.py
+msgid "Codex signed in; no organization API key"
+msgstr ""
+
+#: backend/aiusage/normalize/opencode.py
+msgid "OpenCode Go: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/opencode.py
+msgid "OpenCode Go: no usage data"
+msgstr ""
+
+#: backend/aiusage/normalize/opencode.py
+msgid "OpenCode Go: malformed usage response"
+msgstr ""
+
+#: backend/aiusage/normalize/opencode.py
+msgid "OpenCode Go: no usable quota windows"
+msgstr ""
+
+#: backend/aiusage/normalize/opencode.py
+msgid ""
+"OpenCode Go %1\n"
+"%2% used"
+msgstr ""
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "OpenRouter: no API key configured"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "All local model servers offline"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "%1 of %2 servers online"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "No local model server"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "GPU VRAM"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "%1 / %2 GB"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "Model VRAM"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "%1 GB loaded"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "KV cache"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "Requests"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "%1 running · %2 waiting"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "Active slots"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "%1 of %2 generating"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "Server tokens"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "%1 tokens since server start"
+msgstr ""
+
+#: backend/aiusage/normalize/selfhosted.py
+msgid "Loaded models"
+msgstr ""
+
+#: backend/aiusage/normalize/zai.py
+msgid "Today"
+msgstr ""
+
+#: backend/aiusage/normalize/zai.py
+msgid "Today (%1 %2)"
+msgstr ""
+
+#: backend/aiusage/normalize/zai.py
+msgid "%1 calls"
+msgstr ""
+
+#: backend/aiusage/normalize/zai.py
+msgid "Z.AI: no token configured"
+msgstr ""
+
+#: backend/aiusage/normalize/zai.py
+msgid "Z.AI: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/zai.py
+msgid "%1 remaining"
+msgstr ""
+
+#: backend/aiusage/normalize/zai.py
+msgid "5-hour tokens"
+msgstr ""
+
+#: backend/aiusage/normalize/zai.py
+msgid "7-day tokens"
+msgstr ""
+
+#: backend/aiusage/normalize/zai.py
+msgid "Monthly tools"
+msgstr ""
+
+#: backend/aiusage/normalize/zai.py
+msgid "Z.AI tokens (5h): %1%"
+msgstr ""
+
+#: backend/aiusage/normalize/zai.py
+msgid "Z.AI tokens (7d): %1%"
+msgstr ""
+
+#: backend/aiusage/normalize/zai.py
+msgid "Z.AI tools: %1%"
+msgstr ""
+
+#: backend/aiusage/providers/antigravity.py
+msgid "Antigravity language server found but could not connect to API"
+msgstr ""
+
+#: backend/aiusage/providers/antigravity.py
+msgid ""
+"Finding Antigravity on this platform needs the psutil package (pip install "
+"psutil)"
+msgstr ""
+
+#: backend/aiusage/providers/antigravity.py
+msgid "Antigravity is not running. Please open your IDE."
+msgstr ""
+
+#: backend/aiusage/providers/copilot.py
+msgid "Invalid GitHub token"
+msgstr ""
+
+#: backend/aiusage/providers/copilot.py
+msgid "GitHub username missing"
+msgstr ""
+
+#: backend/aiusage/providers/copilot.py
+msgid "GitHub token cannot read Copilot premium request usage"
+msgstr ""
+
+#: backend/aiusage/providers/copilot.py
+msgid "GitHub Copilot invalid JSON"
+msgstr ""
+
+#: backend/aiusage/providers/cursor.py
+msgid "login expired — run cursor-agent login"
+msgstr ""
+
+#: backend/aiusage/providers/cursor.py
+msgid "login rejected — run cursor-agent login"
+msgstr ""
+
+#: backend/aiusage/providers/cursor.py
+msgid "usage response could not be parsed"
+msgstr ""
+
+#: backend/aiusage/providers/cursor_sessions.py
+msgid "Cursor"
+msgstr ""
+
+#: backend/aiusage/providers/deepseek.py
+msgid "Invalid DeepSeek API key"
+msgstr ""
+
+#: backend/aiusage/providers/deepseek.py
+msgid "DeepSeek invalid JSON"
+msgstr ""
+
+#: backend/aiusage/providers/deepseek.py
+msgid "DeepSeek unexpected response"
+msgstr ""
+
+#: backend/aiusage/providers/grok.py
+msgid "Grok auth expired — run grok --oauth"
+msgstr ""
+
+#: backend/aiusage/providers/grok.py
+msgid "Billing HTTP %1"
+msgstr ""
+
+#: backend/aiusage/providers/kimi_code.py
+msgid "Kimi Code usage response could not be parsed"
+msgstr ""
+
+#: backend/aiusage/providers/kimi_code.py
+msgid "Kimi Code login rejected — run kimi once to refresh it"
+msgstr ""
+
+#: backend/aiusage/providers/kimi_code.py
+msgid "Kimi Code %1"
+msgstr ""
+
+#: backend/aiusage/providers/kimi_code.py
+msgid "Kimi Code is not signed in — run kimi and /login"
+msgstr ""
+
+#: backend/aiusage/providers/kimi_code.py
+msgid "Kimi Code login expired — run kimi once to refresh it"
+msgstr ""
+
+#: backend/aiusage/providers/kiro.py
+msgid "No Kiro usage snapshot — open Kiro and let it refresh"
+msgstr ""
+
+#: backend/aiusage/providers/kiro.py
+msgid "Kiro usage payload could not be parsed"
+msgstr ""
+
+#: backend/aiusage/providers/kiro.py
+msgid "Kiro usage response could not be parsed"
+msgstr ""
+
+#: backend/aiusage/providers/kiro.py
+msgid "Kiro usage response has no credit breakdown"
+msgstr ""
+
+#: backend/aiusage/providers/kiro.py
+msgid "kiro-cli is not signed in — run kiro-cli login"
+msgstr ""
+
+#: backend/aiusage/providers/kiro.py
+msgid "kiro-cli login expired — run kiro-cli once to refresh it"
+msgstr ""
+
+#: backend/aiusage/providers/kiro.py
+msgid "kiro-cli login rejected — run kiro-cli once to refresh it"
+msgstr ""
+
+#: backend/aiusage/providers/kiro.py
+msgid "No Kiro state found — sign in to Kiro IDE or kiro-cli once"
+msgstr ""
+
+#: backend/aiusage/providers/mistral.py
+msgid "untitled"
+msgstr ""
+
+#: backend/aiusage/providers/mistral.py
+msgid "Mistral invalid JSON"
+msgstr ""
+
+#: backend/aiusage/providers/mistral.py backend/aiusage/providers/openrouter.py
+msgid "Invalid API key (401)"
+msgstr ""
+
+#: backend/aiusage/providers/mistral.py
+msgid "Rate limited (429)"
+msgstr ""
+
+#: backend/aiusage/providers/mistral.py
+msgid "Mistral network error"
+msgstr ""
+
+#: backend/aiusage/providers/mistral.py
+msgid "HTTP %1"
+msgstr ""
+
+#: backend/aiusage/providers/mistral_sessions.py
+msgid "Mistral Vibe"
+msgstr ""
+
+#: backend/aiusage/providers/moonshot.py
+msgid "Invalid Moonshot API key"
+msgstr ""
+
+#: backend/aiusage/providers/moonshot.py
+msgid "Kimi invalid JSON"
+msgstr ""
+
+#: backend/aiusage/providers/moonshot.py
+msgid "Kimi unexpected response"
+msgstr ""
+
+#: backend/aiusage/providers/ollama.py
+msgid "Ollama Cloud: invalid API key characters"
+msgstr ""
+
+#: backend/aiusage/providers/openrouter.py
+msgid "OpenRouter invalid JSON"
+msgstr ""
+
+#: backend/aiusage/providers/selfhosted.py
+msgid "Invalid local server URL"
+msgstr ""
+
+#: backend/aiusage/providers/selfhosted.py
+msgid "Offline or unsupported"
+msgstr ""
+
+#: backend/aiusage/providers/selfhosted.py
+msgid "Unknown local engine"
+msgstr ""
+
+#: backend/aiusage/providers/selfhosted.py
+msgid "Invalid local server key"
+msgstr ""
+
+#: backend/aiusage/providers/selfhosted.py
+msgid "At most eight local server URLs are supported"
+msgstr ""
+
+#: backend/aiusage/providers/selfhosted.py
+msgid "No local server URL configured"
+msgstr ""
+
+#: backend/aiusage/providers/selfhosted.py
+msgid "Local model servers offline or unsupported"
+msgstr ""
+
+#: backend/aiusage/providers/zai.py
+msgid "Invalid Z.AI token"
+msgstr ""
+
+#: backend/aiusage/providers/zai.py
+msgid "Z.AI invalid JSON"
+msgstr ""
+
+#: backend/aiusage/providers/zai.py
+msgid "Z.AI API error"
+msgstr ""
+
+#: backend/aiusage/providers/zai.py
+msgid "Z.AI unexpected response"
+msgstr ""

@@ -1,18 +1,18 @@
 # Dev-only lint/format config for the provider backend
-# (package/contents/tools/aiusage). Nothing here is a runtime dependency —
+# (backend/aiusage). Nothing here is a runtime dependency —
 # the backend itself stays standard-library-only; see plan.md.
 
 # The backend is imported as the top-level package `aiusage` with
-# package/contents/tools on sys.path (the bash launcher exports PYTHONPATH;
+# backend on sys.path (the bash launcher exports PYTHONPATH;
 # scripts/check-pricing.py inserts it). Tell type checkers the same, so
 # `import aiusage.…` resolves outside of a running widget.
 [tool.pyrefly]
-search-path = ["package/contents/tools", "."]
+search-path = ["backend", "."]
 
 [tool.ruff]
 line-length = 150
 target-version = "py39"
-include = ["package/contents/tools/aiusage/**/*.py", "scripts/**/*.py", "windows/**/*.py", "macos/**/*.py", "tests/python/**/*.py"]
+include = ["backend/aiusage/**/*.py", "scripts/**/*.py", "hosts/**/*.py", "tests/python/**/*.py"]
 
 [tool.ruff.lint]
 select = [

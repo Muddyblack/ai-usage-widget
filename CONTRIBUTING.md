@@ -13,8 +13,8 @@ Nix, install:
 
 | Tool | Needed for |
 |---|---|
-| Plasma SDK (`kpackagetool6`, `plasmoidviewer`) | `./test_install.sh`, `make view` |
-| gettext (`msgfmt`, `xgettext`, `msgmerge`, `msgattrib`) | compiling translations in `./test_install.sh`, `make view`, `make pack`; `make translations` |
+| Plasma SDK (`kpackagetool6`, `plasmoidviewer`) | `make test-install`, `make view` |
+| gettext (`msgfmt`, `xgettext`, `msgmerge`, `msgattrib`) | compiling translations in `make test-install`, `make view`, `make pack`; `make translations` |
 | `zip` | `make pack` |
 | Python 3.8+ | the backend and every test suite |
 | `jq`, `flock`, `timeout` | `make test` (the shell contract tests) |
@@ -25,8 +25,8 @@ Nix, install:
 
 Only if you work on that part:
 
-- **Windows tray app** — PySide6 and psutil (`windows/requirements.txt`); building
-  the `.exe` also needs `windows/build-requirements.txt` (PyInstaller) and Inno
+- **Windows tray app** — PySide6 and psutil (`hosts/desktop/requirements.txt`); building
+  the `.exe` also needs `hosts/windows/build-requirements.txt` (PyInstaller) and Inno
   Setup on Windows. See [`docs/windows.md`](docs/windows.md).
 - **Hyprland / Quickshell** — Quickshell, plus CMake and Qt 6 for the tray helper;
   `nix run .#hyprland` brings them. See [`docs/hyprland.md`](docs/hyprland.md).
@@ -45,38 +45,37 @@ default one — which CI enters — stays small. For SQLite timings, use a tmpfs
 ## Development install
 
 ```bash
-./test_install.sh
+make test-install     # or ./scripts/test_install.sh
 ```
 
 Installs as `AI Usage (Test)` alongside the real widget so you can iterate
 without touching your live install.
 
-`test_install.sh`, `make view` and `make pack` compile the translations first,
+`make test-install`, `make view` and `make pack` compile the translations first,
 so they need gettext (`msgfmt`); `nix develop` has it. The compiled `.mo`
-files under `package/contents/locale/` are git-ignored build output: edit
+files under `build/kde/contents/locale/` are git-ignored build output: edit
 `translate/*.po` (regenerate with `make translations`), never commit a `.mo`.
 
 ## Translations
 
-One catalog per language, `translate/<lang>.po`, serves every frontend. The
-Plasma widget loads it compiled (KDE's `i18n()`); the Hyprland panel and the
-Windows tray app parse the `.po` itself with `package/contents/code/I18n.js`,
-through `shell.i18n()` / `shell.i18nc()` / `shell.i18np()` — the same call shapes,
-so `translate/Messages.sh` extracts all three frontends into the same file.
-Wrap new UI text in those calls, as one full phrase with `%1` placeholders
-rather than pieces joined with `+`.
+One catalog per language, `translate/<lang>.po`, serves every platform: the
+shared UI parses it at runtime (`ui/js/I18n.js`) through `shell.i18n()` /
+`shell.i18nc()` / `shell.i18np()`, and text the backend words itself is
+written as `tr("…")` (`backend/aiusage/messages.py`) and translated by the UI
+from the same catalog. `translate/Messages.sh` extracts both. Write new text
+as one full phrase with `%1` placeholders rather than pieces joined with `+`,
+and see [`translate/README.md`](translate/README.md) for Weblate.
 
 Adding a language:
 
 ```bash
-make translations                                   # refresh translate/template.pot
-msginit -i translate/template.pot -l de -o translate/de.po
+make new-language CODE=de                           # starts translate/de.po
 # translate de.po, then:
 make translations && make check-translations
 ```
 
-Nothing else needs registering: the scripts, CI, packaging and all three
-frontends pick up every `translate/*.po`. `package/metadata.json` can carry a
+Nothing else needs registering: the scripts, CI, packaging and every
+host pick up every `translate/*.po`. `hosts/kde/metadata.json` can carry a
 `"Name[de]"` / `"Description[de]"` for the widget list.
 
 To remove the test copy:
@@ -119,7 +118,7 @@ CI also runs on Windows: platform paths, the shared history file and its lock,
 the Codex app-server client against a fake `codex.cmd`, finding Antigravity
 through `psutil`, credential discovery, and the tray app loading its QML headless
 with every settings section opened once (`make test-py`, or
-`python windows/app.py --selftest`).
+`python hosts/desktop/app.py --selftest`).
 
 Linting the Python backend and tray app needs `ruff`:
 
@@ -139,16 +138,16 @@ described in [`docs/providers.md`](docs/providers.md).
 
 For provider defaulting and detection, follow the complete checklist in
 [`docs/provider-detection.md`](docs/provider-detection.md). It covers
-`config.py`, `collect.py`, `envelope.py`, Plasma KConfig, `ProviderRegistry.js`,
-`SettingsStore.swift`, fixtures, tests, and every affected document. A new
+`config.py`, `collect.py`, `envelope.py`, `ProviderRegistry.js`, fixtures,
+tests, and every affected document. A new
 provider must not be called automatically detected unless it is in the backend
 `AUTO_DETECT_PROVIDERS` allowlist and has stat-only, no-network, no-credential-read
 tests.
 
 For behavior shared by frontends, add a case to
 [`tests/behavior/scenarios.json`](tests/behavior/scenarios.json). The
-[behavioral test guide](tests/behavior/README.md) explains how Python, Plasma,
-Hyprland/Windows and Swift consume the same scenarios and how to run the tests.
+[behavioral test guide](tests/behavior/README.md) explains how Python, Node
+and Qt consume the same scenarios and how to run the tests.
 
 ## Packaging
 
@@ -160,9 +159,9 @@ make pack
 ## Releasing
 
 ```bash
-./tag.sh
+make tag     # or ./scripts/tag.sh
 ```
 
 Prompts for a version bump (patch / minor / major), updates
-`package/metadata.json`, commits, tags, and pushes. CI then builds the
+`hosts/kde/metadata.json`, commits, tags, and pushes. CI then builds the
 `.plasmoid` and creates a GitHub release automatically.

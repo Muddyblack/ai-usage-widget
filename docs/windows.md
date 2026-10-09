@@ -1,6 +1,6 @@
 # The Windows tray app
 
-A tray app with the same popup as the Hyprland panel — the QML is shared, not
+A tray app with the same popup as every other platform — the QML is shared, not
 copied — backed by the same provider package. Preview quality.
 
 ## Installing it
@@ -75,12 +75,12 @@ winget upgrade --id Muddyblack.AIUsage --exact --source winget
 
 ### Maintaining the manifests
 
-The Windows build runs `windows/package-manifests.py` after packaging each
+The Windows build runs `hosts/windows/package-manifests.py` after packaging each
 stable release. It hashes the actual ZIP and installer, checks the portable
 archive layout, and writes version-specific download URLs. To reproduce:
 
 ```powershell
-python windows/package-manifests.py --version 3.2.0 --assets . --output dist/package-manifests
+python hosts/windows/package-manifests.py --version 3.2.0 --assets . --output dist/package-manifests
 ```
 
 Use assets from that exact release; rebuilding a binary changes its hash.
@@ -118,6 +118,16 @@ Windows** and **Quit**. Three tray styles (also under *Settings → Display*):
 
 **Floating pill** adds the panel's own pill as a small always-on-top window —
 drag it anywhere, it stays where it was left; a click opens the popup beside it.
+Enable **Dock pill to taskbar** in the tray menu to place it beside the primary
+taskbar's notification area, using the taskbar's light or dark text colour and
+the KDE panel's unframed appearance. Dragging detaches it. This is an optional
+overlay: Explorer does not reserve space for it, so it can cover task buttons.
+Vertical and auto-hide taskbars keep the floating placement.
+
+On Windows 11 22H2 or newer the popup requests Windows' Desktop Acrylic
+backdrop and rounded corners, following its Theme setting. Earlier Windows
+versions keep the QML glass background. Windows controls whether Acrylic is
+visible (including the system transparency setting).
 
 Windows 11 puts new tray icons in the `^` overflow at first — which is why the
 very first start opens the popup by itself: drag the icon onto the taskbar
@@ -167,23 +177,22 @@ the shared provider-addition checklist.
 
 ## How it fits together
 
-`windows/` is a PySide6 host for the same popup the Hyprland panel draws. It
-adds no provider logic of its own:
+The Windows app is the shared tray app in `hosts/desktop/` (also the macOS
+host) around the one shared UI. It adds no provider logic of its own:
 
 | Part | Lives in | Shared with |
 |---|---|---|
-| Provider data, credentials, maths | `package/contents/tools/aiusage` | every frontend |
-| Usage history file and its lock | `aiusage/historyio.py` | Plasma + Hyprland, via `tools/sh/history-io` |
-| Platform directories | `aiusage/paths.py` | every frontend |
-| Popup layout | `hyprland/PopupContent.qml` | Hyprland |
-| Settings page, rows, chart, stats | `hyprland/*.qml` | Hyprland |
-| Provider display registry | `hyprland/ProviderRegistry.js` | Hyprland |
-| Countdown / history JS | `package/contents/code/*.js` | Plasma + Hyprland |
-| Window, tray icon, autostart | `windows/app.py`, `windows/qml/Main.qml` | — |
+| Provider data, credentials, maths | `backend/aiusage` | every host |
+| Usage history file and its lock | `aiusage/historyio.py` | every host |
+| Platform directories | `aiusage/paths.py` | every host |
+| Popup, settings page, rows, chart, stats | `ui/*.qml` | every host |
+| All application state | `ui/AppState.qml` | every host |
+| Provider display registry, countdown / history JS | `ui/js/*.js` | every host |
+| Window, tray icon, autostart | `hosts/desktop/app.py`, `hosts/desktop/qml/Main.qml` | macOS |
+| Installer, PyInstaller spec, package manifests | `hosts/windows/` | — |
 
-`Main.qml` and `hyprland/AiUsageShell.qml` are the two implementations of the
-`shell` interface that `PopupContent.qml` and `SettingsPage.qml` read. A
-property added to one belongs in the other.
+`app.py`'s `Backend` implements the same interface `ui/CommandBackend.qml`
+documents for the process-based hosts; `ui/AppState.qml` talks only to that.
 
 ## Running it
 
@@ -191,14 +200,14 @@ On Linux, which is how it is developed:
 
 ```bash
 make run-windows              # PySide6 + psutil from `nix develop .#windows`
-python windows/app.py         # the same, from inside `nix develop .#windows`
-python3 windows/app.py        # or any Python with windows/requirements.txt installed
+python hosts/desktop/app.py         # the same, from inside `nix develop .#windows`
+python3 hosts/desktop/app.py        # or any Python with hosts/desktop/requirements.txt installed
 ```
 
 On Windows, from a checkout:
 
 ```powershell
-pip install -r windows/requirements.txt
+pip install -r hosts/desktop/requirements.txt
 python windows\app.py
 ```
 
@@ -208,9 +217,9 @@ opening another tray icon.
 ## Checking it without a desktop
 
 ```bash
-python3 windows/app.py --selftest                      # exit 1 on any QML warning
-python3 windows/app.py --screenshot popup.png          # after the first refresh
-python3 windows/app.py --screenshot settings.png --settings
+python3 hosts/desktop/app.py --selftest                      # exit 1 on any QML warning
+python3 hosts/desktop/app.py --screenshot popup.png          # after the first refresh
+python3 hosts/desktop/app.py --screenshot settings.png --settings
 ```
 
 `--selftest` opens every settings section once, so a binding that only breaks on
@@ -222,14 +231,14 @@ every provider switched off, so it needs no network.
 On Windows (PyInstaller does not cross-compile):
 
 ```powershell
-pip install -r windows/build-requirements.txt
-pyinstaller --noconfirm windows/ai-usage.spec
+pip install -r hosts/windows/build-requirements.txt
+pyinstaller --noconfirm hosts/windows/ai-usage.spec
 "dist\AI Usage\AI Usage.exe" --selftest
 ```
 
-`windows/build-requirements.txt` pins the exact PySide6, PyInstaller and Pillow
+`hosts/windows/build-requirements.txt` pins the exact PySide6, PyInstaller and Pillow
 the releases are built with, so a tag rebuilt later gives the same `.exe`.
-`windows/requirements.txt` keeps the ranges the app itself needs; CI's test job
+`hosts/desktop/requirements.txt` keeps the ranges the app itself needs; CI's test job
 installs those as they come, so a new PySide6 is tried there before a bump of
 the pins ships it.
 
@@ -237,7 +246,7 @@ The result is a folder, `dist\AI Usage\`, rather than a single file: a one-file
 build unpacks itself to a temp directory on every start. Zip the folder to ship
 it.
 
-The installer wraps that folder (Inno Setup, `windows/installer.iss`):
+The installer wraps that folder (Inno Setup, `hosts/windows/installer.iss`):
 
 ```powershell
 windows\build-installer.ps1 -Version 2.4.0     # → AI-Usage-Setup-2.4.0.exe
@@ -258,6 +267,15 @@ and on demand from any branch (*Actions → Windows → Run workflow*). A tag ru
 the same workflow from `release.yml`, which attaches the installer and the zip
 to the release once they have passed — after the `.plasmoid`, which a failing
 Windows build does not hold back.
+
+Windows PRs also upload a few full-screen captures of the running app on the
+runner's real desktop (`--tour`: popup tabs, settings, docked pill) — never
+offscreen renders. The screenshot job updates a PR comment for branches in this repository;
+fork PRs retain downloadable artifacts. The job fails if the capture can't be
+taken, and the runner's Windows version may
+not support Acrylic. Both platforms share `pr-screenshots.yml`, storing images
+in separate platform folders so Windows and macOS cannot replace each other's
+screenshots.
 
 ## Testing on real Windows
 

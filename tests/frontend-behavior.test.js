@@ -5,21 +5,21 @@ const path = require("node:path");
 const vm = require("node:vm");
 const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
-const UsageHistory = require("../package/contents/code/UsageHistory.js");
-const SessionSources = require("../package/contents/code/SessionSources.js");
-const PanelColor = require("../package/contents/code/PanelColor.js");
+const UsageHistory = require("../ui/js/UsageHistory.js");
+const SessionSources = require("../ui/js/SessionSources.js");
+const PanelColor = require("../ui/js/PanelColor.js");
 const rootDir = path.resolve(__dirname, "..");
 const staleStateFixtures = require("./behavior/stale-state.json");
 const FeatureTabs = {};
 vm.runInNewContext(
-    fs.readFileSync(path.join(rootDir, "package/contents/code/FeatureTabs.js"), "utf8")
+    fs.readFileSync(path.join(rootDir, "ui/js/FeatureTabs.js"), "utf8")
         .replace(/^\.pragma library\s*/, ""),
     FeatureTabs,
 );
 
 const ProviderRegistry = {};
 vm.runInNewContext(
-    fs.readFileSync(path.join(rootDir, "hyprland/ProviderRegistry.js"), "utf8")
+    fs.readFileSync(path.join(rootDir, "ui/js/ProviderRegistry.js"), "utf8")
         .replace(/^\.pragma library\s*/, ""),
     ProviderRegistry,
 );
@@ -78,49 +78,6 @@ function qmlPropertyBody(file, declaration) {
 
 function qmlSource(file) {
     return fs.readFileSync(path.join(rootDir, file), "utf8");
-}
-
-function replaySnapshotState(cases) {
-    const functions = ["applySnapshot", "applyProvider", "applyOpenAi"]
-        .map(name => qmlFunctionBlock("package/contents/ui/main.qml", name))
-        .join("\n");
-    const root = {
-        enabledTabs: ["openai"],
-        activeTab: 0,
-        providerChartWindows: {},
-        providerStatus: {},
-        rawProviders: [],
-        localSpend: {},
-        errorMsg: "",
-        stale: false,
-        lastUpdate: "",
-        openaiAccountId: "",
-        dateFromEpoch: seconds => seconds > 0 ? seconds : null,
-        ensureAvailableChartWindow: () => {},
-        recordHistoryValues: () => {},
-        updateCountdowns: () => {},
-        emptyStatus: () => ({}),
-        i18n: text => text,
-        offlineRetryTimer: { stop: () => {}, restart: () => {} },
-        backoffTimer: { restart: () => {} },
-        backoffMs: 0
-    };
-    const context = {
-        root,
-        UsageHistory,
-        offlineRetryTimer: root.offlineRetryTimer,
-        backoffTimer: root.backoffTimer,
-        i18n: root.i18n,
-        Qt: { formatTime: () => "12:00" },
-        Plasmoid: { configuration: {} }
-    };
-    vm.runInNewContext(`${functions}
-        root.applySnapshot = applySnapshot;
-        root.applyProvider = applyProvider;
-        root.applyOpenAi = applyOpenAi;`, context);
-    for (const scenario of cases)
-        root.applySnapshot(scenario.response.text, scenario.response.replayed);
-    return root;
 }
 
 function countOccurrences(source, text) {
@@ -190,11 +147,7 @@ function assertSourcePopupWiring(file, owner) {
 test("source popup stages multiple selections and commits once on close", () => {
     const frontends = [
         {
-            file: "package/contents/ui/SessionsTab.qml",
-            owner: "sessionsTab"
-        },
-        {
-            file: "hyprland/SessionsPage.qml",
+            file: "ui/SessionsPage.qml",
             owner: "page"
         }
     ];
@@ -263,59 +216,29 @@ test("provider registries keep legacy defaults until defaults are applied", () =
 });
 
 test("startup initializes provider defaults before normal provider refresh", () => {
-    const plasma = qmlSource("package/contents/ui/main.qml");
-    const hyprland = qmlSource("hyprland/AiUsageShell.qml");
-    const windows = qmlSource("windows/app.py");
-    const macos = qmlSource("macos/Sources/AIUsage/App/AppDelegate.swift");
+    const state = qmlSource("ui/AppState.qml");
+    const command = qmlSource("ui/CommandBackend.qml");
+    const windows = qmlSource("hosts/desktop/app.py");
 
-    assert.match(plasma, /--detect-providers/);
-    assert.match(qmlFunctionBlock("package/contents/ui/main.qml", "refresh"), /providerDefaultsReady/);
-    assert.match(hyprland, /--initialize-provider-defaults/);
-    assert.match(qmlFunctionBlock("hyprland/AiUsageShell.qml", "refresh"), /providerDefaultsReady/);
+    // Every host: no usage refresh before the defaults have answered.
+    assert.match(qmlFunctionBlock("ui/AppState.qml", "refresh"), /providerDefaultsReady/);
+    assert.match(qmlFunctionBlock("ui/AppState.qml", "applyLoadedSettings"), /initializeProviderDefaults\(\)/);
+    assert.match(command, /--initialize-provider-defaults/);
     assert.match(windows, /config\.initialize_provider_defaults\(\)/);
     assert.ok(windows.indexOf("config.initialize_provider_defaults()") < windows.indexOf("backend = Backend(first_run)"));
-    assert.match(macos, /Backend\.initializeProviderDefaults\(\)/);
-    assert.ok(macos.indexOf("Backend.initializeProviderDefaults()") < macos.indexOf("model.refresh()"));
-});
-
-test("popup guards the Ollama weekly window binding", () => {
-    const main = qmlSource("package/contents/ui/main.qml");
-
-    assert.match(main, /root\.ollamaWeeklyWindow \? root\.ollamaWeeklyWindow\.label/);
+    assert.match(state, /running: root\.providerDefaultsReady/);
 });
 
 test("source changes keep normal rows and preserve stale-response recovery clears", () => {
-    const kde = qmlSource("package/contents/ui/SessionsTab.qml");
-    const hyprland = qmlSource("hyprland/AiUsageShell.qml");
-    const windows = qmlSource("windows/qml/Main.qml");
-
-    assert.doesNotMatch(qmlFunctionBlock("package/contents/ui/SessionsTab.qml", "setSourceSelection"), /sessionsTab\.sessions\s*=\s*\[\]/);
-    assert.doesNotMatch(qmlFunctionBlock("hyprland/AiUsageShell.qml", "setSessionsSourceIds"), /root\.sessions\s*=\s*\[\]/);
-    assert.doesNotMatch(qmlFunctionBlock("windows/qml/Main.qml", "setSessionsSourceIds"), /root\.sessions\s*=\s*\[\]/);
-
-    assert.equal(countOccurrences(kde, "sessionsTab.sessions = [];"), 1);
-    assert.equal(countOccurrences(hyprland, "root.sessions = [];"), 1);
-    assert.equal(countOccurrences(windows, "root.sessions = [];"), 1);
-});
-
-test("Plasma sessions query cache on open and reconcile only at the ten-minute cadence", () => {
-    const source = qmlSource("package/contents/ui/SessionsTab.qml");
-    const request = qmlFunctionBlock("package/contents/ui/SessionsTab.qml", "requestSessions");
-    const timer = source.match(/Timer\s*\{[^}]*SessionRefreshPolicy\.refreshDelayMs[^}]*\}/s)?.[0] || "";
-
-    assert.match(source, /readonly property int reconcileIntervalMs: SessionRefreshPolicy\.RECONCILE_INTERVAL_MS/);
-    assert.match(source, /Component\.onCompleted:\s*\{\s*if \(foregroundSessionsVisible\)\s*queryOnly\(0\);/);
-    assert.match(source, /onForegroundSessionsVisibleChanged:\s*\{\s*if \(foregroundSessionsVisible && !loading\)\s*queryOnly\(sessionsOffset\);/);
-    assert.match(source, /running: sessionsTab\.foregroundSessionsVisible/);
-    assert.match(request, /var mode = activeRefresh \? "--refresh" : "--query-only"/);
-    assert.doesNotMatch(request, /sessionsTotal\s*=\s*0/);
-    assert.match(timer, /sessionsTab\.refresh\(\)/);
+    const state = qmlSource("ui/AppState.qml");
+    assert.doesNotMatch(qmlFunctionBlock("ui/AppState.qml", "setSessionsSourceIds"), /root\.sessions\s*=\s*\[\]/);
+    assert.equal(countOccurrences(state, "root.sessions = [];"), 1);
 });
 
 test("session refresh policy uses deterministic cache-age and resume boundaries", () => {
     const policy = {};
     vm.runInNewContext(
-        fs.readFileSync(path.join(rootDir, "package/contents/code/SessionRefreshPolicy.js"), "utf8")
+        fs.readFileSync(path.join(rootDir, "ui/js/SessionRefreshPolicy.js"), "utf8")
             .replace(/^\.pragma library\s*/, ""),
         policy,
     );
@@ -330,61 +253,38 @@ test("session refresh policy uses deterministic cache-age and resume boundaries"
     assert.equal(policy.resumed(10000, 100001), true);
 });
 
-test("Windows, Hyprland, and macOS query cached pages first and preserve page state in flight", () => {
-    const windows = qmlSource("windows/qml/Main.qml");
-    const hyprland = qmlSource("hyprland/AiUsageShell.qml");
-    const macos = fs.readFileSync(path.join(rootDir, "macos/Sources/AIUsage/App/AppModel.swift"), "utf8");
-    const windowsRequest = qmlFunctionBlock("windows/qml/Main.qml", "requestSessions");
-    const hyprlandRequest = qmlFunctionBlock("hyprland/AiUsageShell.qml", "startSessionsRequest");
-    const macosRequest = macos.match(/private func refreshSessions\(query: String, offset: Int, appending: Bool, refresh: Bool\) \{([\s\S]*?)\n    \}/)?.[1] || "";
+test("every host queries cached pages first and preserves page state in flight", () => {
+    const state = qmlSource("ui/AppState.qml");
+    const request = qmlFunctionBlock("ui/AppState.qml", "requestSessions");
+    const send = qmlFunctionBlock("ui/AppState.qml", "sendSessionsRequest");
 
-    assert.match(windows, /onSessionsViewVisibleChanged:[\s\S]{0,120}querySessions\(sessionsQuery, 0, false/);
-    assert.match(hyprland, /onSessionsViewVisibleChanged:[\s\S]{0,140}querySessions\(root\.sessionsQuery/);
-    assert.match(macos, /if visible, featureView == \.sessions \{\s*refreshSessions\(query: sessionsQuery, refresh: false\)/);
-    assert.match(windowsRequest, /if \(reconcile\)[\s\S]*refreshSessionsAndQuery[\s\S]*else[\s\S]*backend\.refreshSessions/);
-    assert.match(windows, /function reconcileSessions\(query, sourceIds\)\s*\{\s*root\.requestSessions\(query, true, sourceIds\)/);
-    assert.match(windows, /if \(requestId !== root\.sessionsRequestId[\s\S]*return;/);
-    assert.match(hyprlandRequest, /root\.sessionsActiveRefresh = refreshMode === true/);
-    assert.match(hyprland, /function reconcileSessions\(query, sourceIds\)[\s\S]*root\.refreshSessions\(query, undefined, false, sourceIds\)/);
-    assert.doesNotMatch(windowsRequest, /sessionsTotal\s*=\s*0|sessionsHasMore\s*=\s*false/);
-    assert.doesNotMatch(hyprlandRequest, /sessionsTotal\s*=\s*0|sessionsHasMore\s*=\s*false/);
-    assert.doesNotMatch(macosRequest.split("sessionsLoading = true")[0], /sessionsTotal\s*=\s*0|sessionsHasMore\s*=\s*false/);
-    assert.match(macos, /func refreshManually\(\)[\s\S]*refreshSessions\(query: sessionsQuery, refresh: true\)/);
-    assert.match(macos, /NSWorkspace\.didWakeNotification[\s\S]*refreshSessions\(query: self\.sessionsQuery, refresh: true\)/);
+    assert.match(state, /onSessionsViewVisibleChanged:[\s\S]{0,120}querySessions\(sessionsQuery, 0, false/);
+    assert.match(send, /if \(reconcile\)[\s\S]*refreshSessionsAndQuery[\s\S]*else[\s\S]*backend\.refreshSessions/);
+    assert.match(state, /function reconcileSessions\(query, sourceIds\)\s*\{\s*root\.requestSessions\(query, true, sourceIds, root\.sessionsOffset\)/);
+    assert.match(state, /if \(requestId !== root\.sessionsRequestId[\s\S]*return;/);
+    assert.doesNotMatch(request, /sessionsTotal\s*=\s*0|sessionsHasMore\s*=\s*false/);
 });
 
 test("session response metadata exposes safe freshness and source-removal status", () => {
-    const cache = fs.readFileSync(path.join(rootDir, "package/contents/tools/aiusage/session_cache.py"), "utf8");
-    const adapters = [
-        qmlSource("package/contents/ui/SessionsTab.qml"),
-        qmlSource("windows/qml/Main.qml"),
-        qmlSource("hyprland/AiUsageShell.qml"),
-        fs.readFileSync(path.join(rootDir, "macos/Sources/AIUsage/Backend/Contract.swift"), "utf8")
-    ];
+    const cache = fs.readFileSync(path.join(rootDir, "backend/aiusage/session_cache.py"), "utf8");
+    const state = qmlSource("ui/AppState.qml");
 
     assert.match(cache, /"cacheStatus"/);
     assert.match(cache, /"cacheAgeSeconds"/);
     assert.match(cache, /\["refreshStatus"\] = self\.refresh_status/);
     assert.match(cache, /\["removedSourceCount"\] = self\.removed_sources/);
-    for (const source of adapters) {
-        assert.match(source, /cacheStatus/);
-        assert.match(source, /cacheAgeSeconds/);
-        assert.match(source, /refreshStatus/);
-    }
+    assert.match(state, /cacheStatus/);
+    assert.match(state, /cacheAgeSeconds/);
+    assert.match(state, /refreshStatus/);
 });
 
-test("Hyprland rejects superseded pages and keeps last-good pagination metadata on cache failure", () => {
-    const handleOutput = qmlFunctionBlock("hyprland/AiUsageShell.qml", "handleSessionsOutput");
+test("the shared state rejects superseded pages and keeps last-good pagination metadata on cache failure", () => {
+    const handle = qmlFunctionBlock("ui/AppState.qml", "handleSessions");
     const state = {
-        sessionsActiveRequestId: 4,
         sessionsRequestId: 5,
-        sessionsActiveQuery: "old",
         sessionsQuery: "new",
         sessionsActiveSourceSignature: "",
         sessionsSourceSignature: "",
-        sessionsFollowup: false,
-        sessionsResponseDone: false,
-        sessionsProcessExited: false,
         sessionsLoading: true,
         sessions: [{ title: "last good" }],
         sessionsTotal: 60,
@@ -393,141 +293,61 @@ test("Hyprland rejects superseded pages and keeps last-good pagination metadata 
         sessionsOffset: 0,
         sessionsSources: [{ id: "claude", label: "Claude Code" }],
         sessionsError: "",
+        sessionsCacheStatus: "fresh",
         sessionsRefreshStatus: "not-run",
-        finishCalls: 0,
-        sessionsReconcileTimer: { restart() {} },
-        finishSessionsProcess() { this.finishCalls += 1; },
         normalizeSessionSources: values => values || [],
         sessionSourceSelectionHasStaleIds: () => false,
         i18n: value => value,
     };
-    const sandbox = { root: state, JSON, Number, sessionsReconcileTimer: state.sessionsReconcileTimer };
-    vm.runInNewContext(`${handleOutput}\nroot.handleSessionsOutput = handleSessionsOutput;`, sandbox);
+    const sessionsReconcileTimer = { restart() {} };
+    const sandbox = { root: state, JSON, Number, sessionsReconcileTimer, SessionRefreshPolicy: { cacheExpired: () => false } };
+    vm.runInNewContext(`${handle}\nroot.handleSessions = handleSessions;`, sandbox);
 
-    state.handleSessionsOutput(JSON.stringify({ sessions: [{ title: "superseded" }] }));
+    // An answer to an older request (or query) changes nothing.
+    state.handleSessions(JSON.stringify({ sessions: [{ title: "superseded" }] }), "new", 4);
+    state.handleSessions(JSON.stringify({ sessions: [{ title: "superseded" }] }), "old", 5);
     assert.deepEqual(state.sessions, [{ title: "last good" }]);
     assert.equal(state.sessionsTotal, 60);
-    assert.equal(state.sessionsHasMore, true);
-    assert.equal(state.sessionsTotalExact, true);
-    assert.deepEqual(state.sessionsSources, [{ id: "claude", label: "Claude Code" }]);
-    assert.equal(state.finishCalls, 1);
+    assert.equal(state.sessionsLoading, true);
 
-    state.sessionsActiveRequestId = 5;
-    state.sessionsActiveQuery = "new";
-    state.sessionsResponseDone = false;
-    state.handleSessionsOutput(JSON.stringify({ cacheStatus: "failed", sessions: [], sources: [], total: 0 }));
+    // A failed cache read keeps the last good page and its pagination.
+    state.handleSessions(JSON.stringify({ cacheStatus: "failed", sessions: [], sources: [], total: 0 }), "new", 5);
     assert.deepEqual(state.sessions, [{ title: "last good" }]);
     assert.equal(state.sessionsTotal, 60);
     assert.equal(state.sessionsHasMore, true);
     assert.equal(state.sessionsTotalExact, true);
     assert.deepEqual(state.sessionsSources, [{ id: "claude", label: "Claude Code" }]);
     assert.equal(state.sessionsRefreshStatus, "failed");
+    assert.equal(state.sessionsLoading, false);
 });
 
-test("panel thresholds and stale opacity remain cross-frontend contracts", () => {
-    const usageColor = qmlFunctionBlock("package/contents/ui/main.qml", "usageColor");
-    const context = {
-        root: { dangerColor: "danger", warningColor: "warning" },
-        Kirigami: { Theme: { textColor: "normal" } }
-    };
-    vm.runInNewContext(`${usageColor}\nroot.usageColor = usageColor;`, context);
-    for (const [pct, expected] of [[0, "normal"], [69, "normal"], [70, "warning"], [89, "warning"], [90, "danger"], [100, "danger"]])
-        assert.equal(context.root.usageColor(pct), expected, `${pct}%`);
-
-    // Plasma delegates its threshold colour to the shared, exhaustively tested
-    // PanelColor module; Hyprland keeps the inline expression. Both must still
-    // express the same 70/90 boundaries and the 0.55 stale opacity.
-    const plasmaSlot = qmlSource("package/contents/ui/PanelSlot.qml");
-    assert.match(plasmaSlot, /PanelColor\.colorFor\(slot\.pct/);
-    assert.match(plasmaSlot, /stale \? 0\.55/);
-
-    const hyprlandSlot = qmlSource("hyprland/PanelSlot.qml");
-    assert.match(hyprlandSlot, /pct >= 90/);
-    assert.match(hyprlandSlot, /pct >= 70/);
-    assert.match(hyprlandSlot, /stale \? 0\.55/);
-
+test("panel thresholds and stale opacity remain panel contracts", () => {
+    const slot = qmlSource("ui/PanelSlot.qml");
+    assert.match(slot, /PanelColor\.colorFor\(slot\.pct/);
+    assert.match(slot, /stale \? 0\.55/);
     for (const [pct, expected] of [[0, "normal"], [69, "normal"], [70, "warning"], [89, "warning"], [90, "danger"], [100, "danger"]])
         assert.equal(PanelColor.level(pct), expected, `${pct}%`);
 
-    const panel = qmlSource("package/contents/ui/main.qml");
-    assert.match(panel, /readonly property string panelTab/);
-    assert.match(panel, /pinnedTabs\.length > 0/);
-    assert.match(panel, /FeatureTabs\.isFeatureTab\(tab\)/);
-    assert.match(panel, /lastProviderId/);
-    assert.match(panel, /PanelSlot \{/);
-});
-
-test("panel fallback is independent of popup lifetime", () => {
-    const body = qmlPropertyBody("package/contents/ui/main.qml", "readonly property string panelTab:");
-    const root = {
-        panelRotationEnabled: false,
-        panelRotationProviderId: "",
-        pinnedTabs: [],
-        enabledTabs: ["overview", "spend", "openai", "claude"],
-        activeTab: 1,
-        lastProviderId: "claude"
-    };
-    const context = { root, FeatureTabs };
-    vm.runInNewContext(`root.panelTab = function () { ${body.slice(1, -1)} };`, context);
-    assert.equal(root.panelTab(), "claude", "feature tabs fall back to the last provider");
-
-    root.pinnedTabs = ["openai", "claude"];
-    assert.equal(root.panelTab(), "openai", "pins win over the active feature tab");
-    root.panelRotationEnabled = true;
-    root.panelRotationProviderId = "claude";
-    assert.equal(root.panelTab(), "claude", "rotation selection wins while the popup is unloaded");
-
-    root.panelRotationProviderId = "";
-    assert.equal(root.panelTab(), "openai", "rotation starts at the first pin");
-    root.panelRotationEnabled = false;
-    root.pinnedTabs = [];
-    root.enabledTabs = ["overview", "spend"];
-    root.lastProviderId = "";
-    assert.equal(root.panelTab(), "", "no provider means no panel value");
-});
-
-test("a replayed last snapshot at startup shows its values marked stale", () => {
-    const live = staleStateFixtures.find(scenario => scenario.name === "valid-live");
-    const root = replaySnapshotState([{ response: { text: live.response.text, replayed: true } }]);
-    assert.equal(root.codexSessionPct, 69);
-    assert.equal(root.stale, true);
+    // The pill falls back to the last real provider while a feature tab is open.
+    const state = qmlSource("ui/AppState.qml");
+    assert.match(qmlFunctionBlock("ui/AppState.qml", "unpinnedPillProvider"), /lastProviderId/);
+    assert.match(state, /readonly property var pillSlots/);
 });
 
 // A replay only paints a widget that has no live answer yet: once one arrived,
 // a replay that resolves late must leave the live state (and its freshness) alone.
-test("last-good panel data survives empty, timeout, stale, and cache identity transitions", () => {
-    const live = staleStateFixtures.find(scenario => scenario.name === "valid-live");
-    assert.ok(live);
-    for (const scenario of staleStateFixtures.filter(item => item.name !== "late-request-generation")) {
-        const root = replaySnapshotState([live, scenario]);
-        assert.equal(root.openaiAccountId, scenario.expected.accountId, scenario.name);
-        assert.equal(root.codexSessionPct, scenario.expected.pct, scenario.name);
-        assert.equal(root.codexSessionAvailable, scenario.expected.available, scenario.name);
-        assert.equal(root.stale, scenario.expected.stale, scenario.name);
-        assert.equal(root.errorMsg, scenario.expected.error, scenario.name);
-    }
-});
-const plasma = qmlFunction("package/contents/ui/main.qml", "applyOpenAi");
-const plasmaCost = qmlFunction("package/contents/ui/SessionsTab.qml", "sessionCostText");
-const hyprlandCost = qmlFunction("hyprland/SessionsPage.qml", "sessionCostText");
-const spendTabSource = fs.readFileSync(path.join(rootDir, "package/contents/ui/SpendTab.qml"), "utf8");
-test("QML scrollbars explicitly create horizontal attached objects", () => {
-    for (const file of ["SpendTab.qml", "MistralTab.qml", "SessionsTab.qml"]) {
-        const source = fs.readFileSync(path.join(rootDir, "package/contents/ui", file), "utf8");
-        assert.doesNotMatch(source, /ScrollBar\.horizontal\.policy/);
-        assert.match(source, /ScrollBar\.horizontal:\s+QQC2\.ScrollBar\s*\{/);
-    }
-});
-const windows = ["providerById", "activeProvider", "pillProvider", "publishTray"]
-    .map(name => qmlFunction("windows/qml/Main.qml", name)
+const hyprlandCost = qmlFunction("ui/SessionsPage.qml", "sessionCostText");
+const windows = ["providerById", "activeProvider", "unpinnedPillProvider", "pillProvider", "publishTray", "tr", "trMessage"]
+    .map(name => qmlFunction("ui/AppState.qml", name)
         + "\nroot." + name + " = " + name + ";")
     .join("\n");
 
 function publishWindowsTray(state) {
     let published;
-    const root = { providers: [], settings: {}, providerIcon: () => "", ...state };
+    const root = { providers: [], settings: {}, pinnedTabs: [], panelProviderIds: [], catalog: {}, i18n: text => text, providerIcon: () => "", ...state };
     const backend = { defaultTrayStyle: "numbers", publishTrayState: value => { published = JSON.parse(value); } };
-    vm.runInNewContext(windows + "\nroot.publishTray();", { root, backend });
+    const I18n = { i18n: (catalog, text, ...args) => text.replace(/%(\d)/g, (all, i) => args[Number(i) - 1] ?? all) };
+    vm.runInNewContext(windows + "\nroot.publishTray();", { root, backend, I18n });
     return published;
 }
 
@@ -545,39 +365,13 @@ test("shared frontend behavior", async t => {
         [path.join(rootDir, "scripts/frontend-fixtures.py")]);
     const cases = JSON.parse(stdout);
     for (const scenario of cases) {
-        await t.test(scenario.name + ": Plasma quota state and shared history", () => {
-            const provider = scenario.envelope.providers[0];
-            if (provider.id === "junie") {
-                const tab = { providerId: "junie" };
-                const sandbox = { tab, providers: scenario.envelope.providers };
-                vm.runInNewContext(qmlFunction("package/contents/ui/OpenCodeTab.qml", "providerFromRawProviders")
-                    + "\nresult = providerFromRawProviders(providers);", sandbox);
-                assert.equal(sandbox.result.id, "junie");
-                assert.deepEqual(sandbox.result.slots.map(slot => slot.text), scenario.expected.panelText);
-                assert.equal(sandbox.result.details.untested, true);
-                assert.deepEqual(UsageHistory.collect([provider]), scenario.expected.history);
-                return;
-            }
-            const root = { dateFromEpoch: x => x, ensureAvailableChartWindow() {} };
-            vm.runInNewContext(plasma + "\napplyOpenAi(details);", { root, details: provider.details || {} });
-            assert.equal(root.codexSessionAvailable, scenario.expected.rowKeys.includes("codex_session"));
-            assert.equal(root.codexWeeklyAvailable, scenario.expected.rowKeys.includes("codex_weekly"));
-            const values = [];
-            if (root.codexSessionAvailable) values.push(root.codexSessionPct);
-            if (root.codexWeeklyAvailable) values.push(root.codexWeeklyPct);
-            assert.deepEqual(values.map(v => Math.round(v) + "%"), scenario.expected.panelText);
-            const additional = root.codexAdditionalLimits.flatMap(entry =>
-                [entry.session, entry.weekly].filter(window => window.available).map(window => window.pct));
-            assert.deepEqual(values.concat(additional), scenario.expected.rowValues);
-            assert.deepEqual(UsageHistory.collect([provider]), scenario.expected.history);
-        });
-
-        await t.test(scenario.name + ": Windows tray publication", () => {
+        await t.test(scenario.name + ": tray publication and shared history", () => {
             const provider = scenario.envelope.providers[0];
             const published = publishWindowsTray({
                 activeId: provider.id, activeIsFeature: false, providers: [provider]
             });
             assert.deepEqual(published.slots.map(s => s.text || Math.round(s.pct) + "%"), scenario.expected.panelText);
+            assert.deepEqual(UsageHistory.collect([provider]), scenario.expected.history);
         });
     }
 });
@@ -683,57 +477,10 @@ test("OpenCode local rows retain separate upstream billing providers", () => {
     ]);
 });
 
-test("OpenCode tab reads live provider stats from rawProviders", () => {
-    const source = qmlSource("package/contents/ui/OpenCodeTab.qml");
-    assert.match(source, /readonly property var provider: [^\n]*rootItem\.rawProviders/);
-    assert.doesNotMatch(source, /readonly property var provider: [^\n]*rootItem\.providerById\("opencode"\)/);
-});
-
-test("shared usage chart controls and Zen caveat use readable theme contrast", () => {
-    const chart = qmlSource("package/contents/ui/UsageChart.qml");
-    const openCode = qmlSource("package/contents/ui/OpenCodeTab.qml");
-    assert.match(chart, /color: rootItem\.chartWindow === modelData\.id \? rootItem\.activeAccent : Qt\.rgba\(Kirigami\.Theme\.textColor\.r,\s*Kirigami\.Theme\.textColor\.g,\s*Kirigami\.Theme\.textColor\.b,\s*0\.18\)/);
-    assert.match(chart, /property color chartGridColor: Kirigami\.Theme\.textColor/);
-    assert.match(chart, /font\.pixelSize: 10/);
-    assert.match(openCode, /visible: !tab\.available && !tab\.goMode[\s\S]*?font\.pixelSize: 11[\s\S]*?opacity: 0\.9/);
-});
-
-test("OpenCode tab separates Zen activity from Go account quotas", () => {
-    const source = qmlSource("package/contents/ui/OpenCodeTab.qml");
-    const normalizer = qmlSource("package/contents/tools/aiusage/normalize/opencode.py");
-    assert.match(source, /details\.accountMode === "go"/);
-    assert.match(source, /accountModeLabel/);
-    assert.match(source, /device-local/);
-    assert.match(source, /no account quota/i);
-    assert.match(source, /visible: tab\.goMode && tab\.provider\.ok/);
-    assert.match(source, /quotaWindows/);
-    assert.match(source, /modelData\.showMeter/);
-    assert.match(source, /modelData\.available/);
-    assert.match(source, /rootItem\.countdownTick/);
-    assert.match(source, /dateFromEpoch\(modelData\.resetAt\)/);
-    for (const key of ["opencode_go_rolling_pct", "opencode_go_weekly_pct", "opencode_go_monthly_pct"])
-        assert.ok(normalizer.includes(`"${key}"`), `Go quota/history contract includes ${key}`);
-    assert.match(normalizer, /r\["historyValues"\]/);
-    assert.match(source, /i18n\("Local %1 activity", tab\.providerLabel\)/);
-    assert.match(source, /OpenCodeUsageChart/);
-    assert.ok(source.indexOf("OpenCodeUsageChart") > source.indexOf("Secondary stats grid"));
-});
-
-test("OpenCode Go API errors stay unavailable without zero-valued quota rows", () => {
-    const source = qmlSource("package/contents/ui/OpenCodeTab.qml");
-    assert.match(source, /details\.accountMode === "go"/);
-    assert.match(source, /details\.goError/);
-    assert.match(source, /provider\.ok/);
-    assert.match(source, /quotaWindows/);
-    assert.match(source, /visible: [^\n]*provider\.ok/);
-    assert.doesNotMatch(source, /quotaWindows[^\n]*\|\|\s*\[\s*\{[^\n]*(?:pct|value):\s*0/);
-});
-
 test("OpenCode usage chart range selects matching daily data and period summary", () => {
-    const file = "package/contents/ui/OpenCodeUsageChart.qml";
+    const file = "ui/OpenCodeUsageChart.qml";
     const source = qmlSource(file);
-    const tabSource = qmlSource("package/contents/ui/OpenCodeTab.qml");
-    const tab = require("../package/contents/code/OpenCodeUsage.js");
+    const tab = require("../ui/js/OpenCodeUsage.js");
 
     const now = new Date(2026, 8, 22, 12).getTime();
     const series = [
@@ -786,17 +533,14 @@ test("OpenCode usage chart range selects matching daily data and period summary"
     assert.deepEqual(Array.from(tab.chartWindows(series, now), window => window.label), ["7D", "30D", "All"]);
     assert.match(source, /^UsageChart \{/m);
     assert.match(source, /OpenCodeUsage\.chartWindows\(sourceSeries/);
-    assert.match(source, /OpenCodeUsage\.chartSeries\(chartWindow/);
     assert.match(source, /stats\.dailySeries && stats\.dailySeries\.length \? stats\.dailySeries : stats\.dailyTokens/);
     assert.doesNotMatch(source, /Canvas \{/);
-    assert.ok(tabSource.indexOf("OpenCodeUsageChart") > tabSource.indexOf("Secondary stats grid"));
 });
 
-test("Hyprland and Windows show the same OpenCode daily chart on the Usage tab", () => {
-    const chart = qmlSource("hyprland/OpenCodeUsageChart.qml");
-    const plasma = qmlSource("package/contents/ui/OpenCodeUsageChart.qml");
-    const popup = qmlSource("hyprland/PopupContent.qml");
-    for (const source of [chart, plasma]) {
+test("every host shows the OpenCode daily chart on the Usage tab", () => {
+    const chart = qmlSource("ui/OpenCodeUsageChart.qml");
+    const popup = qmlSource("ui/PopupContent.qml");
+    for (const source of [chart]) {
         assert.match(source, /UsageChart \{/);
         assert.match(source, /OpenCodeUsage\.chartWindows\(sourceSeries/);
         assert.match(source, /stats\.dailySeries && stats\.dailySeries\.length \? stats\.dailySeries : stats\.dailyTokens/);
@@ -804,15 +548,6 @@ test("Hyprland and Windows show the same OpenCode daily chart on the Usage tab",
     assert.match(popup, /OpenCodeUsageChart \{\s*visible: \(shell\.activeId === "opencode" \|\| shell\.activeId === "mimo" \|\| shell\.activeId === "junie"\)[^\n]*stats \|\| \{\}\)\.available === true/);
     // Inside the Usage column, not the Stats sub-tab.
     assert.ok(popup.indexOf("OpenCodeUsageChart") < popup.indexOf("StatsSection {"));
-});
-
-test("local activity providers share a panel slot gated by provider selection", () => {
-    const main = qmlSource("package/contents/ui/main.qml");
-    const slot = qmlSource("package/contents/ui/LocalActivityPanelSlot.qml");
-    for (const provider of ["opencode", "mimo", "junie"])
-        assert.ok(main.includes(`providerId: "${provider}"`));
-    assert.match(slot, /visible: rootItem\.panelShows\(providerId\) && !rootItem\.showSettings/);
-    assert.match(slot, /rawProviderById\(providerId\)/);
 });
 
 test("local spend rows keep legacy flat totals and reject unavailable groups", () => {
@@ -869,10 +604,10 @@ test("upstream provider labels cover every OpenCode-routed provider", () => {
 test("spend views identify provider totals and constrain local metadata", () => {
     // The grand total sits in each frontend's popup header, not in the Spend
     // view itself, so the figure stays visible while the view scrolls.
-    for (const file of ["package/contents/ui/main.qml", "hyprland/PopupContent.qml"]) {
+    for (const file of ["ui/PopupHeader.qml"]) {
         assert.match(fs.readFileSync(path.join(rootDir, file), "utf8"), /Provider\/API total/);
     }
-    for (const file of ["package/contents/ui/SpendTab.qml", "hyprland/SpendPage.qml"]) {
+    for (const file of ["ui/SpendPage.qml"]) {
         const source = fs.readFileSync(path.join(rootDir, file), "utf8");
         assert.match(source, /maximumLineCount: 1/);
         assert.match(source, /elide: Text\.ElideRight/);
@@ -1151,35 +886,9 @@ test("spend timeframe windows end today rather than at the last recorded day", (
     assert.equal(FeatureTabs.spendRowsForWindow(rows, 0)[0].cost, 4);
 });
 
-test("Plasma spend timeframe controls are global and fixed", () => {
-    assert.match(spendTabSource, /property int spendWindowDays: 0/);
-    assert.match(spendTabSource, /spendRowsForWindow/);
-    assert.doesNotMatch(spendTabSource, /rootItem\.refresh\(\)/);
-
-    for (const label of ["1D", "7D", "30D", "ALL"])
-        assert.match(spendTabSource, new RegExp('text: "' + label + '"'));
-
-    const chartSource = fs.readFileSync(path.join(rootDir, "package/contents/ui/SpendTimelineChart.qml"), "utf8");
-    assert.doesNotMatch(chartSource, /i18n\("90d"\)/);
-    assert.doesNotMatch(chartSource, /windowDaysSelected/);
-});
-
-test("spend rows keep long text from moving the amount and center it vertically", () => {
-    const rowStart = spendTabSource.indexOf("        Rectangle {\n            id: rowCard\n            required property var modelData");
-    assert.notEqual(rowStart, -1);
-    const row = spendTabSource.slice(rowStart);
-    const bodyStart = row.indexOf("            RowLayout {");
-    const bodyEnd = row.indexOf("            MouseArea {", bodyStart);
-    assert.notEqual(bodyStart, -1);
-    assert.notEqual(bodyEnd, -1);
-    const body = row.slice(bodyStart, bodyEnd);
-    assert.match(body, /ColumnLayout \{[\s\S]*Layout\.fillWidth: true\s+Layout\.minimumWidth: 0/);
-    assert.match(body, /PlasmaComponents\.Label \{[\s\S]*?text: rootItem\.formatMoney[\s\S]*font\.family: "monospace"/);
-});
-
 test("spend prices align their decimal points with fixed-width digits", () => {
     // Two-decimal amounts plus fixed-width digits put "." in one column.
-    for (const file of ["package/contents/ui/SpendTab.qml", "hyprland/SpendPage.qml"]) {
+    for (const file of ["ui/SpendPage.qml"]) {
         const source = fs.readFileSync(path.join(rootDir, file), "utf8");
         assert.match(source, /font\.family: "monospace"/);
         assert.doesNotMatch(source, /Layout\.preferredWidth: 60/);
@@ -1202,45 +911,12 @@ test("session rows render provenance, coverage, unavailable, and legacy costs", 
         [{ costStatus: "exact", costProvenance: "actual", costUSD: "0.123456" }, "Cost unavailable"],
     ];
     for (const [entry, expected] of cases) {
-        assert.equal(renderSessionCost(plasmaCost, entry, false), expected);
         assert.equal(renderSessionCost(hyprlandCost, entry, true), expected);
     }
 });
 
-test("KDE source popup stages selection and queries only on close", () => {
-    const state = replaySourcePopupSelection("package/contents/ui/SessionsTab.qml", "sessionsTab");
-    state.pendingSourceIds = state.selectedSourceIds.slice(0);
-    state.stageSourceSelection(SessionSources.toggled(state.pendingSourceIds, "claude", true, state.sessionSources));
-    assert.equal(state.queryCount, 0, "no query while the popup is open");
-    assert.deepEqual(state.sessions, ["existing row"], "rows stay visible while the popup is open");
-    state.commitSourceSelection();
-    assert.equal(state.queryCount, 1, "one query after the popup closes");
-    assert.deepEqual(state.selectedSourceIds, ["codex", "claude"]);
-    assert.deepEqual(state.sessions, ["existing row"], "rows stay visible until the response replaces them");
-});
-
-test("KDE source popup close without changes does not query", () => {
-    const state = replaySourcePopupSelection("package/contents/ui/SessionsTab.qml", "sessionsTab");
-    state.pendingSourceIds = state.selectedSourceIds.slice(0);
-    state.commitSourceSelection();
-    assert.equal(state.queryCount, 0);
-    assert.deepEqual(state.selectedSourceIds, ["codex"]);
-});
-
-test("KDE source popup coalesces multiple checkbox clicks into one query", () => {
-    const state = replaySourcePopupSelection("package/contents/ui/SessionsTab.qml", "sessionsTab");
-    state.pendingSourceIds = state.selectedSourceIds.slice(0);
-    state.stageSourceSelection(SessionSources.toggled(state.pendingSourceIds, "claude", true, state.sessionSources));
-    state.stageSourceSelection(SessionSources.toggled(state.pendingSourceIds, "muse", true, state.sessionSources));
-    state.stageSourceSelection(SessionSources.toggled(state.pendingSourceIds, "claude", false, state.sessionSources));
-    assert.equal(state.queryCount, 0);
-    state.commitSourceSelection();
-    assert.equal(state.queryCount, 1);
-    assert.deepEqual(state.selectedSourceIds, ["codex", "muse"]);
-});
-
 test("shared Hyprland/Windows page stages source selection until popup close", () => {
-    const state = replaySourcePopupSelection("hyprland/SessionsPage.qml", "page");
+    const state = replaySourcePopupSelection("ui/SessionsPage.qml", "page");
     state.pendingSourceIds = state.selectedSourceIds.slice(0);
     state.stageSourceSelection(SessionSources.toggled(state.pendingSourceIds, "claude", true, state.sessionSources));
     assert.equal(state.queryCount, 0, "no query while the popup is open");
@@ -1251,7 +927,7 @@ test("shared Hyprland/Windows page stages source selection until popup close", (
 });
 
 test("shared Hyprland/Windows page close without changes does not query", () => {
-    const state = replaySourcePopupSelection("hyprland/SessionsPage.qml", "page");
+    const state = replaySourcePopupSelection("ui/SessionsPage.qml", "page");
     state.pendingSourceIds = state.selectedSourceIds.slice(0);
     state.commitSourceSelection();
     assert.equal(state.queryCount, 0);
@@ -1441,122 +1117,6 @@ test("parseRateTable normalizes payloads and rejects unusable output", () => {
     assert.equal(bare.rows.length, 0);
     assert.equal(bare.total, 0);
     assert.equal(bare.error, "");
-});
-
-function sharedSettingsHarness(config) {
-    const functions = ["isSharedSetting", "sharedSettingsSnapshot", "applySharedSettings", "finishSharedSettings"]
-        .map(name => qmlFunctionBlock("package/contents/ui/main.qml", name))
-        .join("\n");
-    const configuration = Object.assign({}, config);
-    Object.defineProperty(configuration, "keys", { value: () => Object.keys(configuration).filter(key => key !== "keys") });
-    const calls = { sync: 0, initialize: 0, refresh: 0 };
-    const root = {
-        perWidgetSettings: ["lastTab", "pinnedTab", "panelRotationIntervalSec", "chartWindow", "chartGranularity", "antigravityChartFilter", "costHistoryMetric", "usageHistory", "weeklyUsageHistory", "backgroundHints"],
-        sharedSettingsReady: false,
-        applyingSharedSettings: false,
-        pendingSharedPatch: {},
-        syncSharedSettings: () => { calls.sync += 1; },
-        initializeProviderDefaults: () => { calls.initialize += 1; },
-        refresh: () => { calls.refresh += 1; }
-    };
-    vm.runInNewContext(`${functions}
-        root.isSharedSetting = isSharedSetting;
-        root.sharedSettingsSnapshot = sharedSettingsSnapshot;
-        root.applySharedSettings = applySharedSettings;
-        root.finishSharedSettings = finishSharedSettings;`, { root, Plasmoid: { configuration } });
-    return { root, configuration, calls };
-}
-
-test("Plasma shared settings: an older reply never undoes a newer choice", () => {
-    const functions = ["syncSharedSettings", "sharedSettingsReplied"]
-        .map(name => qmlFunctionBlock("package/contents/ui/main.qml", name))
-        .join("\n");
-    const sent = [];
-    const finished = [];
-    const root = {
-        pendingSharedPatch: {},
-        sharedSettingsInFlight: "",
-        sharedSettingsSentAt: 0,
-        sharedSettingsSentPatch: {},
-        sharedSettingsQueued: false,
-        sharedSettingsSeq: 0,
-        pythonEnv: () => "",
-        envAssign: (name, value) => `${name}=${value} `,
-        scriptPath: name => name,
-        finishSharedSettings: result => finished.push(result)
-    };
-    const context = {
-        root,
-        Date,
-        Plasmoid: { metaData: { pluginId: "w" } },
-        sharedSettingsTimer: { stop() {} },
-        sharedSettingsSource: { connectSource: cmd => sent.push(cmd) }
-    };
-    vm.runInNewContext(`${functions}
-        root.syncSharedSettings = syncSharedSettings;
-        root.sharedSettingsReplied = sharedSettingsReplied;`, context);
-
-    root.syncSharedSettings(); // a plain poll read
-    root.pendingSharedPatch = { claudeEnabled: true };
-    root.syncSharedSettings(); // the user enables Claude meanwhile
-    assert.equal(sent.length, 1, "the write waits for the read in flight");
-    assert.equal(root.pendingSharedPatch.claudeEnabled, true, "the waiting change stays pending, so replies cannot overwrite it");
-    root.sharedSettingsReplied(sent[0], { ok: true, data: { claudeEnabled: false } });
-    assert.equal(sent.length, 2, "the queued write goes out after the reply");
-    assert.match(sent[1], /"claudeEnabled":true/);
-    root.sharedSettingsReplied(sent[0], { ok: true, data: { claudeEnabled: false } });
-    assert.equal(finished.length, 1, "a duplicate or late reply is ignored");
-    root.sharedSettingsReplied(sent[1], { ok: true, data: { claudeEnabled: true } });
-    assert.equal(finished.length, 2);
-    assert.equal(root.sharedSettingsInFlight, "");
-
-    // A reply that never comes does not block syncing, and its patch is resent.
-    root.pendingSharedPatch = { openaiEnabled: false };
-    root.syncSharedSettings();
-    root.sharedSettingsSentAt -= 20000;
-    root.pendingSharedPatch = { grokApiKey: "k" };
-    root.syncSharedSettings();
-    assert.equal(sent.length, 4);
-    assert.match(sent[3], /"openaiEnabled":false/);
-    assert.match(sent[3], /"grokApiKey":"k"/);
-});
-
-test("Plasma shares settings between instances but keeps the pill per widget", () => {
-    const { root, configuration, calls } = sharedSettingsHarness({
-        claudeEnabled: false, claudeEnabledDefault: true, grokApiKey: "", pinnedTab: "openai", lastTab: "openai", providerDefaultsApplied: false
-    });
-    root.finishSharedSettings({ ok: true, data: {
-        claudeEnabled: true, grokApiKey: "k", pinnedTab: "claude", lastTab: "claude", providerDefaultsApplied: true, unknownKey: 1
-    } });
-    assert.equal(configuration.claudeEnabled, true);
-    assert.equal(configuration.grokApiKey, "k");
-    assert.equal(configuration.providerDefaultsApplied, true, "an adopted latch skips first-run detection");
-    assert.equal(configuration.pinnedTab, "openai", "pins stay per widget");
-    assert.equal(configuration.lastTab, "openai");
-    assert.equal(configuration.unknownKey, undefined, "keys this widget does not declare are ignored");
-    assert.equal(root.isSharedSetting("claudeEnabledDefault"), false, "KConfig default mirrors are not settings");
-    assert.equal(calls.initialize, 1, "provider defaults are decided after the first sync");
-    assert.equal(root.applyingSharedSettings, false);
-});
-
-test("Plasma shared settings: a local pending change wins, and the first instance seeds the file", () => {
-    const later = sharedSettingsHarness({ claudeEnabled: true, openaiEnabled: false, pinnedTab: "" });
-    later.root.sharedSettingsReady = true;
-    later.root.pendingSharedPatch = { claudeEnabled: true };
-    later.root.finishSharedSettings({ ok: true, data: { claudeEnabled: false, openaiEnabled: true } });
-    assert.equal(later.configuration.claudeEnabled, true, "a change not yet sent is not overwritten");
-    assert.equal(later.configuration.openaiEnabled, true);
-    assert.equal(later.calls.refresh, 1, "adopted changes refresh the widget");
-    assert.equal(later.calls.initialize, 0);
-
-    const first = sharedSettingsHarness({ claudeEnabled: true, pinnedTab: "claude" });
-    first.root.finishSharedSettings({ ok: true, data: {} });
-    assert.deepEqual(JSON.parse(JSON.stringify(first.root.pendingSharedPatch)), { claudeEnabled: true });
-    assert.equal(first.calls.sync, 1);
-
-    const offline = sharedSettingsHarness({ claudeEnabled: true });
-    offline.root.finishSharedSettings(null);
-    assert.equal(offline.calls.initialize, 1, "a failed read still lets the widget start");
 });
 
 test("MiMo spend is labeled separately and counted once when its provider card is present", () => {

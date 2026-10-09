@@ -13,7 +13,7 @@ set -euo pipefail
 # which binary py_resolve settles on.
 
 repo="$(cd "$(dirname "$0")/.." && pwd)"
-sh_dir="$repo/package/contents/tools/sh"
+sh_dir="$repo/backend/sh"
 real_py="$(command -v python3)"
 bash_bin="$(command -v bash)"
 

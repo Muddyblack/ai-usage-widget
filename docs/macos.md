@@ -1,63 +1,45 @@
 # AI Usage on macOS
 
 A menu bar app: the active provider's mark and its percentages in the menu
-bar, and a popover under it with the quota windows, their reset countdowns and
-the usage history.
+bar, and the same popup every other host shows under it — quota windows, reset
+countdowns, usage history, sessions, spend and settings.
 
-<p align="center">
-  <img src="readme/macos/popover-expanded-light.png" alt="macOS usage history and activity statistics in light mode" width="340" valign="top"/>
-  <img src="readme/macos/popover-expanded-dark.png" alt="macOS usage history and activity statistics in dark mode" width="340" valign="top"/>
-</p>
-<p align="center">
-  <img src="readme/macos/settings-light.png" alt="macOS settings in light mode" width="420" valign="top"/>
-  <img src="readme/macos/settings-dark.png" alt="macOS settings in dark mode" width="420" valign="top"/>
-</p>
+## How it is built
 
-Screenshots use demo data.
+There is one UI for every platform: the QML under `ui/`, with its state in
+`ui/AppState.qml`. On macOS it runs inside the shared PySide6 tray app
+(`hosts/desktop/app.py`, the same one Windows uses); the only macOS-specific
+part is the menu bar item, `hosts/macos/statusitem.py`, a real `NSStatusItem`
+created through PyObjC:
 
-## Frontend choices
+- the pill's values ("23% · 61%") are the item's **text**, in the menu bar
+  font, so they adapt to a light or dark bar like any other item; a value at
+  70% or more takes its warning colour;
+- the active provider's logo is a **template image**, tinted by macOS;
+- a click opens the popup under the item, a right- or control-click opens the
+  menu (refresh, settings, tray style, start at login, quit).
 
-Swift is the supported macOS frontend. AppKit's `NSStatusItem` and `NSPopover`
-provide the menu bar item and popover, while SwiftUI renders the usage and
-settings views. Credential discovery, provider requests, quota calculations,
-and history remain in the shared Python backend.
+The app has no Dock icon (`LSUIElement`). "Start at login" registers the app
+as a login item through `SMAppService` (`hosts/macos/loginitem.py`), so it
+shows by name under **System Settings → General → Login Items**; an older
+build's LaunchAgent plist is moved over on the first start. Run from a
+checkout, which has no app bundle to register, it still writes a per-user
+LaunchAgent (`~/Library/LaunchAgents/org.muddyblack.aiUsageWidget.plist`).
 
-The Hyprland frontend uses Quickshell. The Windows app (`windows/app.py`)
-uses PySide6 to host shared Hyprland QML. That host is a possible starting
-point for an experimental Qt frontend on macOS, but this repository does not
-currently build, test, or package it for Mac users. Treat it as unverified.
-
-Supporting it as a second option would require macOS smoke tests, tray and
-popup interaction checks, and a separate bundle and distribution process.
-For now, the native app is the documented macOS option. Its provider-agnostic
-contract means new backend providers do not need their own Swift views; see
-[the provider contract](provider-contract.md).
+The popup is the shared glass panel rather than an `NSPopover`: that is the
+trade for one UI that cannot drift between platforms. It does get the
+system's own blur: `hosts/macos/vibrancy.py` puts an `NSVisualEffectView`
+(the popover material) behind it, set to the popup's light or dark, and the
+QML glass thins out over it. Settings → Appearance → Theme picks light, dark,
+or Auto, which follows the system appearance.
 
 ## Python on macOS
 
-macOS ships no Python anyone can rely on. `/usr/bin/python3` is a stub that
-offers to install the Xcode command line tools; there is no `python3` for a
-user who has never opened a terminal.
-
-So `AI Usage.app` carries its own, frozen with PyInstaller into
-`Contents/Resources/backend/`. This is cheap precisely because the backend is
-standard-library-only — there are no wheels to build, no native extensions to
-sign, and the whole thing is about 15 MB. The one exception is `psutil`, which
-only Antigravity needs (it finds the IDE's language server among the user's own
-processes, which `/proc` answers on Linux and nothing answers on macOS), and it
-is bundled too.
-
-The app looks for its backend in this order:
-
-1. `$AI_USAGE_BACKEND`, if set — how a checkout runs against the working tree,
-   and how CI points it at a fixture
-2. `Contents/Resources/backend/ai-usage-backend` — the release build
-3. `package/contents/tools/sh/get-ai-usage`, walking up from the executable —
-   a `swift run` out of a checkout
-
-The terminal frontend (`ai-usage-cli`) is a separate matter: it is a shell
-script that needs a Python of its own, so a Mac user who wants it needs
-`brew install python` or equivalent. The app does not.
+macOS ships no Python anyone can rely on, so `AI Usage.app` carries its own:
+PyInstaller freezes the app, Qt, PyObjC and the standard-library-only backend
+into one bundle (`hosts/macos/ai-usage.spec`). The terminal frontend
+(`ai-usage-cli`) is a separate matter: it is a shell script that needs a
+Python of its own (`brew install python`).
 
 ## Where things are on macOS
 
@@ -79,13 +61,11 @@ offers both, best first, and the provider picks whichever exists.
 
 ### Provider defaults and detection
 
-The native app shares the backend settings file and format with Hyprland and
+The app shares the backend settings file and format with Hyprland and
 Windows. New shared JSON settings are zero based. The explicit
 `--initialize-provider-defaults` operation enables only approved providers with
 local evidence and sets `providerDefaultsApplied`; it is not implicit in
-refresh or `--all`. `SettingsStore.swift` mirrors the backend provider list and
-opt-in classification, but detection remains a backend policy rather than a
-Swift-only feature.
+refresh or `--all`; the shared UI runs it on first start, as on every host.
 
 Detection looks for installed tools only — a CLI in `PATH`, Homebrew,
 `~/.local/bin`, npm/nvm and similar folders (a Finder-launched app gets a short
@@ -122,87 +102,46 @@ would mean pasting every API key twice and keeping two histories.
 
 ## Building
 
+On a Mac:
+
 ```bash
-python3 -m pip install -r macos/packaging/build-requirements.txt
-macos/scripts/build-app.sh                   # universal, with the frozen backend
-macos/scripts/build-app.sh --arch arm64      # this machine only, much faster
-macos/scripts/build-app.sh --skip-backend    # runs against the checkout
-swift test --package-path macos              # the suites that need no window
+pip install -r hosts/macos/build-requirements.txt
+hosts/macos/build-app.sh       # dist/AI Usage.app
+hosts/macos/package-dmg.sh     # ai-usage-macos-<version>-<apple-silicon|intel>.dmg
 ```
 
-There is no Xcode project: SwiftPM compiles the executable and the script
-assembles the bundle around it, so the whole build reviews as a diff. The
-provider logos are the widget's own SVGs, compiled into an asset catalog by
-`actool` (which ships with Xcode) so they stay vectors — one file draws
-crisply at 16 points in the menu bar and at 32 in the popover. The `.icns`
-needs a rasteriser; `brew install librsvg` supplies one, and without it the
-build warns and carries on with the generic Finder icon.
+`rsvg-convert` (`brew install librsvg`) is needed for the Finder icon; without
+it the build still succeeds with the generic icon.
 
 ### Seeing it without a Mac
 
-The app's `--selftest` and `--screenshot <dir>` switches render the views with
-no menu bar and exit, the way `windows/app.py` does.
-`scripts/demo-envelope.py` feeds them a contract-shaped envelope built
-from `tests/fixtures/`, so the screenshots need no credentials, reach no
-network, and come out the same every time. `.github/workflows/macos.yml` runs both on a
-`macos-14` runner and uploads the results.
+The popup is the shared QML, so `python3 hosts/desktop/app.py --screenshot DIR
+--demo` on Linux renders exactly what the Mac shows inside the popup. Only the
+menu bar item itself (`statusitem.py`) needs a Mac to try.
 
-## The menu bar item
-
-Three icon styles, in Settings › Menu Bar:
-
-| | |
-| --- | --- |
-| **Monochrome** (default) | one template logo at the left, the percentages beside it. What macOS wants: a template image inverts with the menu bar, dims with the app, and stays legible over any wallpaper |
-| **One per value, tinted** | a logo beside *every* value, filled with that value's colour — the panel pill's layout, where "the logo contributes its shape and the backend its colour" (`hyprland/PanelSlot.qml`), so severity is read off the icon |
-| **One per value, brand colours** | the same layout in the brand's own artwork |
-
-The per-value logos are `NSTextAttachment`s inside the item's attributed title
-rather than the button's image, because a button has one image and this layout
-wants one per reading.
-
-Monochrome is the default on purpose rather than by omission. A coloured menu
-bar item does not invert, does not dim when the app is inactive, and fights
-whatever is behind it. The other two are there because the Plasma widget and
-the Hyprland pill both show colour and somebody moving between them may want
-the same thing — see `menubar-*.png` in the CI artifact and decide by looking.
+Every macOS CI run starts the real app on a Mac's real desktop and keeps a few
+full-screen captures of it (`--tour`: popup tabs, settings) as its `screenshots`
+artifact — never offscreen renders. On a pull request, a
+maintainer can comment `/macos` to have them posted into a comment on the PR;
+that labels the PR `macos-screenshots`, and the comment then updates with
+every new commit (`.github/workflows/macos-screenshots.yml`).
 
 ## Translations
 
-The app reads `translate/<lang>.po` — the same catalogs the Quickshell panel
-and the Windows tray app read — rather than carrying a `.lproj` or a String
-Catalog of its own. A second set of translation files for one application means
-a translator does the work twice, and `translate/fr.po` already holds
-"Paramètres", "Actualiser" and "Réinitialisation dans %1"; using the same
-msgids means a string the QML frontends translated is translated here the
-moment it is used.
-
-`Catalog.swift` is a port of `package/contents/code/I18n.js` — same parsing,
-same fuzzy/obsolete/untranslated rules, same `%1` placeholders, same ki18n call
-shapes. The one deliberate difference is plural forms: I18n.js compiles the
-header's C expression at runtime, which Swift cannot do, so the three rules our
-catalogs use are recognised by name and anything else falls back to English's.
-
-`translate/Messages.sh` extracts the Swift in a second `xgettext` pass with the
-C parser (there is no Swift backend) and merges it with `msgcat`. A string held
-in a table rather than shown directly — the settings page's per-provider key
-labels — is marked with `i18nNoop()` where the table is built and translated
-where it is shown. `tests/python/test_macos_i18n.py` holds all of that
-together: no interpolation inside a msgid, no bare `Text("…")`, placeholders
-numbered from one, and the strings shared with the QML frontends spelled
-identically. It caught the first one on its first run — the menu item said
-"Settings…" where the catalog had "Settings", so it would have shipped in
-English next to a translation that already existed.
+The popup and the menu read `translate/<lang>.po` at runtime, like every other
+host (`ui/js/I18n.js`); there is no separate macOS catalog.
 
 ## Signing and distribution
 
-Download the release DMG, open it, and drag **AI Usage.app** onto
+Each release has two builds: `ai-usage-macos-<version>-apple-silicon.dmg`
+for M1 and later, and `ai-usage-macos-<version>-intel.dmg` for Intel Macs
+(Apple menu → **About This Mac** says which). psutil ships no universal
+wheel, so CI builds each on its own runner (`macos-14`, `macos-15-intel`).
+Download the right DMG, open it, and drag **AI Usage.app** onto
 **Applications**. Eject the disk image and open the app from Applications.
-The ZIP remains available: extract it and copy the app to Applications.
 
-The app is ad-hoc signed and is not notarized by Apple. A DMG provides the
-installer layout; it does not remove Gatekeeper's verification warning.
-If macOS blocks the first launch and you trust the download:
+Until the repository has an Apple Developer ID, the app is ad-hoc signed and
+not notarized. If macOS blocks the first launch and you trust the download:
 
 1. Try opening the app from Applications.
 2. Open **System Settings → Privacy & Security** and scroll to **Security**.
@@ -210,84 +149,20 @@ If macOS blocks the first launch and you trust the download:
 
 See [Apple's instructions for opening an app from an unknown developer](https://support.apple.com/guide/mac-help/mh40616/mac).
 Users do **not** need an Apple developer account to install or use the app.
-Developer ID signing and notarization require the publisher to enroll in the
-[Apple Developer Program](https://developer.apple.com/developer-id/).
-`AI_USAGE_SIGN_IDENTITY` selects a signing identity during the build; it does
-not perform notarization.
 
-To package an existing build on macOS, run:
+### Notarizing releases
 
-```bash
-bash macos/scripts/package-dmg.sh
-```
+With a paid Apple Developer account, releases are signed with a Developer
+ID and notarized by Apple, so they open with no "Open Anyway" step. The
+release workflow does it by itself (`hosts/macos/notarize.sh`, the
+hardened-runtime exceptions in `hosts/macos/entitlements.plist`) once these
+repository secrets exist; without them it builds ad-hoc signed as before.
 
-This creates `ai-usage-macos-<version>.dmg` with the app, an Applications
-shortcut, and first-launch instructions. CI verifies the disk image and
-uploads both DMG and ZIP packages for releases.
-
-## CI
-
-`.github/workflows/macos.yml` builds the app on a `macos-14` runner, runs the
-Swift suites and the Python ones, and uploads the screenshots as a
-`screenshots` artifact. Download the artifact from the workflow run to inspect
-the full gallery.
-
-For pull requests from this repository, a separate job waits for both backend
-and app checks to pass, stores the PNGs on `ci-screenshots/pr-<number>`, and
-updates one bot comment in the PR conversation with all images inline. Image
-links use the screenshot commit so reruns cannot change an older image URL.
-Fork PRs retain the downloadable artifact because their token cannot publish
-repository files or comments. A failed comment job is visible in CI.
-
-The app bundle includes the frozen Python backend. CI smoke-tests its provider
-listing, offline fixture normalization, and history loading before switching
-to the shared demo script for screenshots.
-
-`--screenshot` photographs the **running app**, not a render of its views. The
-first version used SwiftUI's `ImageRenderer`, which cannot rasterise an
-AppKit-backed control: every `Menu`, segmented `Picker` and `TabView` came out
-as a yellow "prohibited" box, so the provider picker, the overflow menu and the
-whole settings window were missing from the shots, and the popover's material
-and arrow never appeared at all. Now the real popover opens under the real
-status item and `screencapture` takes that window — what comes out is what a
-user sees. Where the window server declines, it falls back to the window
-drawing itself into a bitmap, which keeps the real controls even though it
-loses the material behind them.
-
-Capture steps wait for the previous step to finish before starting their
-settling delay. Window PNGs are composited onto an opaque background matching
-their light or dark appearance, so GitHub's page theme cannot darken a
-translucent light popover. Full-screen and menu-bar captures are unmodified.
-
-Eight shots come out, uploaded as the run's `screenshots` artifact:
-
-| | |
+| Secret | What it holds |
 | --- | --- |
-| `menubar-monochrome` / `-tinted` / `-brand` | the right-hand end of the menu bar, one shot per icon style — the equivalent of the README's panel-pill pictures. No light and dark versions: the system menu bar does not follow an application's appearance, so there is nothing different to photograph |
-| `popover-dark` | the popover as it opens, with the provider logo beside its selector |
-| `popover-expanded-light` / `-dark` | with the usage history and the activity statistics open |
-| `screen-dark` | the whole display, item and popover together |
-| `settings-dark` | the settings window |
-
-The session hashes every shot and fails the run when two come out identical.
-That has earned itself twice: once on a capture that raced the compositor and
-handed back the previous frame, and once on the two menu bar shots that could
-never have differed in the first place.
-
-Changes under `macos/` also trigger the portable backend checks in `lint.yml`,
-including the Swift/Python contract tests. Swift source changes trigger the
-translation checks too.
-
-## Not done yet
-
-- Signing and notarisation, and a Homebrew cask
-- Universal release builds (CI currently builds for Apple Silicon)
-- Interactive checks on a personal Mac: multiple displays, menu bar placement,
-  credential discovery, and login-item behavior. CI screenshots do not cover
-  those interactions.
-
-
-Junie is available as an **untested** local CLI provider, using `~/.junie/sessions`
-(or `$JUNIE_HOME/sessions`). It uses the shared activity and session views;
-account quota and billed spend are unavailable. See
-[Junie setup and BYOK](providers.md#junie-cli-untested).
+| `MACOS_CERT_P12` | the "Developer ID Application" certificate and key, exported as .p12, base64-encoded |
+| `MACOS_CERT_PASSWORD` | that .p12's password |
+| `MACOS_SIGN_IDENTITY` | the identity name, e.g. `Developer ID Application: Name (TEAMID)` |
+| `APPLE_ID` | the Apple Account email notarytool signs in with |
+| `APPLE_TEAM_ID` | the 10-character team ID |
+| `APPLE_APP_PASSWORD` | an app-specific password for that account (account.apple.com) |

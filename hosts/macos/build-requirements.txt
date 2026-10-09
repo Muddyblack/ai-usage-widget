@@ -1,0 +1,13 @@
+# Exact versions for the .app that CI builds and releases ship; keep inside the
+# ranges of hosts/macos/requirements.txt and bump on purpose.
+PySide6-Essentials==6.11.2
+shiboken6==6.11.2
+psutil==7.2.2
+pyobjc-core==11.1
+pyobjc-framework-Cocoa==11.1
+pyobjc-framework-ServiceManagement==11.1
+pyinstaller==6.22.2
+pyinstaller-hooks-contrib==2026.7
+altgraph==0.17.5
+macholib==1.16.3
+setuptools==84.0.0

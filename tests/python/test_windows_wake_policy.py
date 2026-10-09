@@ -12,7 +12,7 @@ from pathlib import Path
 
 from _support import REPO  # noqa: F401  (ensures TOOLS is on sys.path)
 
-WINDOWS_APP = Path(REPO) / "windows" / "app.py"
+WINDOWS_APP = Path(REPO) / "hosts" / "desktop" / "app.py"
 
 
 def _main_ast():

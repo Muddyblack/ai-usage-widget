@@ -12,6 +12,25 @@ on:
       - 'macos/**'
   workflow_dispatch:
   workflow_call:
+    inputs:
+      # Developer ID signing and notarization (release.yml sets it). Skipped
+      # anyway while the Apple Developer secrets are not set.
+      notarize:
+        type: boolean
+        default: false
+    secrets:
+      MACOS_CERT_P12:
+        required: false
+      MACOS_CERT_PASSWORD:
+        required: false
+      MACOS_SIGN_IDENTITY:
+        required: false
+      APPLE_ID:
+        required: false
+      APPLE_TEAM_ID:
+        required: false
+      APPLE_APP_PASSWORD:
+        required: false
 
 permissions:
   contents: read
@@ -34,10 +53,10 @@ jobs:
 
       - name: The backend answers on this platform
         run: |
-          ./package/contents/tools/sh/get-ai-usage --list
+          ./backend/sh/get-ai-usage --list
           # --all with no credentials anywhere: every provider should come back
           # as a readable error row, not a traceback.
-          ./package/contents/tools/sh/get-ai-usage --all > /tmp/envelope.json
+          ./backend/sh/get-ai-usage --all > /tmp/envelope.json
           python3 -c "
           import json, sys
           envelope = json.load(open('/tmp/envelope.json'))
@@ -47,8 +66,24 @@ jobs:
               print(f\"  {provider['id']:12} ok={provider['ok']!s:5} {provider['error'] or provider['summary']['text']}\")
           "
 
+  # One build per CPU: psutil ships no universal wheel, so a universal app
+  # would mean stitching two builds together. Apple Silicon on macos-14,
+  # Intel on macos-15-intel (GitHub's last Intel image).
   app:
-    runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: apple-silicon
+            runner: macos-14
+          - arch: intel
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner }}
+    env:
+      # Signing and notarization (hosts/macos/notarize.sh): only for a
+      # release, and only once the Apple Developer secrets exist. Without
+      # them the app stays ad-hoc signed, as before.
+      NOTARIZE: ${{ inputs.notarize == true && secrets.MACOS_CERT_P12 != '' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -56,63 +91,79 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install backend build dependencies
-        run: python3 -m pip install -r macos/packaging/build-requirements.txt
+      - name: Install build dependencies
+        run: python3 -m pip install -r hosts/macos/build-requirements.txt
 
-      - name: Versions
-        run: swift --version && xcodebuild -version
-
-      - name: Build
-        run: |
-          # One architecture for CI: a universal build doubles the compile for
-          # nothing a test can see. The build script defaults to both for distribution.
-          swift build -c release --package-path macos --arch arm64 2>&1 | tee /tmp/build.log
-          ! grep -q "warning:" /tmp/build.log || echo "::warning::the build produced warnings"
-
-      - name: Test
-        run: swift test --package-path macos
-
-      - name: Assemble the app bundle
+      - name: Self-test (from the checkout)
         env:
-          AI_USAGE_TARGET_ARCH: arm64
-        run: macos/scripts/build-app.sh --arch arm64
+          QT_QPA_PLATFORM: offscreen
+          # A throwaway settings file, so the run cannot read or write
+          # anything of the runner's.
+          AI_USAGE_CONFIG: ${{ runner.temp }}/settings.json
+        run: python3 hosts/desktop/app.py --selftest
 
-      - name: Smoke-test the bundled backend
+      - name: The native macOS modules import
+        run: |
+          python3 -c "
+          import sys; sys.path.insert(0, 'hosts/macos')
+          import statusitem, vibrancy, loginitem
+          print('statusitem, vibrancy, loginitem ok')
+          "
+
+      - name: Build the app bundle
+        run: hosts/macos/build-app.sh
+
+      - name: The bundle is built for this CPU
+        run: |
+          file "dist/AI Usage.app/Contents/MacOS/AI Usage"
+          case "${{ matrix.arch }}" in
+            apple-silicon) file "dist/AI Usage.app/Contents/MacOS/AI Usage" | grep -q arm64 ;;
+            intel) file "dist/AI Usage.app/Contents/MacOS/AI Usage" | grep -q x86_64 ;;
+          esac
+
+      - name: Self-test the bundled app
         env:
-          AI_USAGE_CONFIG: ${{ runner.temp }}/backend-smoke/settings.json
-          XDG_DATA_HOME: ${{ runner.temp }}/backend-smoke/data
-        run: |
-          backend="$PWD/macos/.build/AI Usage.app/Contents/Resources/backend/ai-usage-backend"
-          "$backend" --list > "$RUNNER_TEMP/providers.txt"
-          "$backend" --normalize < tests/fixtures/claude-success.json > "$RUNNER_TEMP/normalized.json"
-          "$backend" history autoload > "$RUNNER_TEMP/history.json"
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
+          QT_QPA_PLATFORM: offscreen
+          AI_USAGE_CONFIG: ${{ runner.temp }}/bundle-settings.json
+        run: '"dist/AI Usage.app/Contents/MacOS/AI Usage" --selftest'
 
-          root = Path(os.environ["RUNNER_TEMP"])
-          assert "claude" in (root / "providers.txt").read_text().split()
-          provider = json.loads((root / "normalized.json").read_text())
-          assert provider["id"] == "claude", provider
-          assert provider["ok"] is True, provider
-          history = json.loads((root / "history.json").read_text())
-          assert history["ok"] is True, history
-          PY
-
-      - name: Self-test and screenshots
+      # The only screenshots: the real app on the runner's real desktop, full
+      # screen shots of a few views (--tour), never offscreen renders. Demo
+      # data, as a CI runner has no AI subscriptions. Fails the job if it can't.
+      - name: Screenshot of the running app on the real desktop
+        if: matrix.arch == 'apple-silicon'
+        env:
+          AI_USAGE_CONFIG: ${{ runner.temp }}/desktop-settings.json
         run: |
-          # Pointed at a fixture instead of the real backend: a CI runner has
-          # no AI subscriptions, and the screenshots have to be reproducible.
-          export AI_USAGE_BACKEND="$PWD/scripts/demo-envelope.py"
-          # A throwaway settings file, so the run cannot read or write anything
-          # of the runner's.
-          export AI_USAGE_CONFIG="$RUNNER_TEMP/settings.json"
-          "macos/.build/AI Usage.app/Contents/MacOS/AIUsage" --selftest
-          "macos/.build/AI Usage.app/Contents/MacOS/AIUsage" --screenshot "$RUNNER_TEMP/screens"
+          mkdir -p "$RUNNER_TEMP/screens"
+          python3 hosts/desktop/app.py --demo --tour "$RUNNER_TEMP/screens"
           ls -la "$RUNNER_TEMP/screens"
 
+      - name: Import the signing certificate
+        if: env.NOTARIZE == 'true'
+        env:
+          MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
+          echo "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -P "$MACOS_CERT_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" login.keychain-db
+          rm "$RUNNER_TEMP/cert.p12"
+
+      - name: Sign the app (Developer ID)
+        if: env.NOTARIZE == 'true'
+        env:
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+        run: hosts/macos/notarize.sh app
+
       - uses: actions/upload-artifact@v7
+        if: matrix.arch == 'apple-silicon'
         id: screenshots-upload
         continue-on-error: true
         with:
@@ -122,11 +173,11 @@ jobs:
 
       # Artifact finalization can intermittently return an intermediary 403.
       - name: Wait before retrying screenshot upload
-        if: steps.screenshots-upload.outcome == 'failure'
+        if: matrix.arch == 'apple-silicon' && steps.screenshots-upload.outcome == 'failure'
         run: sleep 10
 
       - name: Retry screenshot upload
-        if: steps.screenshots-upload.outcome == 'failure'
+        if: matrix.arch == 'apple-silicon' && steps.screenshots-upload.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
           name: screenshots
@@ -134,21 +185,30 @@ jobs:
           if-no-files-found: error
           overwrite: true
 
+      - name: Create DMG
+        run: bash hosts/macos/package-dmg.sh
+
+      - name: Notarize the DMG
+        if: env.NOTARIZE == 'true'
+        env:
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: hosts/macos/notarize.sh dmg ai-usage-macos-*.dmg
+
       # ditto, not zip: it preserves the app bundle's extended attributes
       # (the codesign signature) the way Finder's own "Compress" does.
-      - name: Create DMG
-        run: bash macos/scripts/package-dmg.sh
-
       - name: zip
         run: |
-          VERSION="$(grep -oE '"Version":[[:space:]]*"[^"]+"' package/metadata.json | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
-          ditto -c -k --keepParent "macos/.build/AI Usage.app" "ai-usage-macos-$VERSION.zip"
+          VERSION="$(grep -oE '"Version":[[:space:]]*"[^"]+"' hosts/kde/metadata.json | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
+          ditto -c -k --keepParent "dist/AI Usage.app" "ai-usage-macos-$VERSION-${{ matrix.arch }}.zip"
 
       - uses: actions/upload-artifact@v7
         id: app-upload
         continue-on-error: true
         with:
-          name: ai-usage-macos
+          name: ai-usage-macos-${{ matrix.arch }}
           path: |
             ai-usage-macos-*.zip
             ai-usage-macos-*.dmg
@@ -165,7 +225,7 @@ jobs:
         if: steps.app-upload.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
-          name: ai-usage-macos
+          name: ai-usage-macos-${{ matrix.arch }}
           path: |
             ai-usage-macos-*.zip
             ai-usage-macos-*.dmg
@@ -175,82 +235,12 @@ jobs:
 
   screenshots-comment:
     needs: [backend, app]
-    # Fork pull requests have read-only tokens; their PNGs remain in artifacts.
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
-    concurrency:
-      group: macos-screenshots-${{ github.event.pull_request.number }}
-      cancel-in-progress: false
-    steps:
-      # No checkout or execution of app code in this publishing job.
-      - uses: actions/download-artifact@v8
-        with:
-          name: screenshots
-          path: ${{ runner.temp }}/screens
-
-      - name: Publish PNGs and update the PR conversation
-        uses: actions/github-script@v8
-        env:
-          SCREENSHOT_DIR: ${{ runner.temp }}/screens
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-            const repo = context.repo;
-            const pr = context.payload.pull_request;
-            const { data: current } = await github.rest.pulls.get({ ...repo, pull_number: pr.number });
-            if (current.state !== 'open' || current.head.sha !== pr.head.sha) {
-              core.info('Skipping screenshots from a superseded or closed PR.');
-              return;
-            }
-            const dir = process.env.SCREENSHOT_DIR;
-            const names = fs.readdirSync(dir).filter(name => /^[a-z0-9-]+\.png$/.test(name)).sort();
-            if (!names.length) throw new Error('Screenshot artifact contains no PNGs');
-            const tree = [];
-            for (const name of names) {
-              const file = path.join(dir, name);
-              const stat = fs.lstatSync(file);
-              if (!stat.isFile() || stat.size > 10 * 1024 * 1024) throw new Error(`Invalid screenshot: ${name}`);
-              const png = fs.readFileSync(file);
-              if (!png.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])))
-                throw new Error(`Not a PNG: ${name}`);
-              const { data: blob } = await github.rest.git.createBlob({ ...repo, content: png.toString('base64'), encoding: 'base64' });
-              tree.push({ path: name, mode: '100644', type: 'blob', sha: blob.sha });
-            }
-            const ref = `heads/ci-screenshots/pr-${pr.number}`;
-            let previous;
-            try {
-              const result = await github.rest.git.getRef({ ...repo, ref });
-              previous = result.data.object.sha;
-            } catch (error) {
-              if (error.status !== 404) throw error;
-            }
-            const { data: snapshot } = await github.rest.git.createTree({ ...repo, tree });
-            const { data: commit } = await github.rest.git.createCommit({
-              ...repo, message: `macOS screenshots for PR #${pr.number} (${pr.head.sha.slice(0, 7)})`,
-              tree: snapshot.sha, parents: previous ? [previous] : []
-            });
-            if (previous) {
-              await github.rest.git.updateRef({ ...repo, ref, sha: commit.sha, force: false });
-            } else {
-              await github.rest.git.createRef({ ...repo, ref: `refs/${ref}`, sha: commit.sha });
-            }
-            const marker = '<!-- macos-screenshots -->';
-            const runUrl = `${context.serverUrl}/${repo.owner}/${repo.repo}/actions/runs/${context.runId}`;
-            const imageRoot = `${context.serverUrl}/${repo.owner}/${repo.repo}/blob/${commit.sha}`;
-            let body = `${marker}\n### macOS screenshots (${pr.head.sha.slice(0, 7)})\n\nBackend and app checks passed. [Build and downloadable PNGs](${runUrl})\n\n`;
-            body += `<details>\n<summary>View screenshots (${names.length})</summary>\n\n`;
-            for (const name of names) {
-              body += `**${name}**\n\n![${name}](${imageRoot}/${name}?raw=true)\n\n`;
-            }
-            body += `</details>\n`;
-            const comments = await github.paginate(github.rest.issues.listComments, { ...repo, issue_number: pr.number, per_page: 100 });
-            const existing = comments.find(c => c.user?.login === 'github-actions[bot]' && c.body?.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({ ...repo, comment_id: existing.id, body });
-            } else {
-              await github.rest.issues.createComment({ ...repo, issue_number: pr.number, body });
-            }
+    uses: ./.github/workflows/pr-screenshots.yml
+    with:
+      platform: macos
+      label: macOS
+      artifact: screenshots

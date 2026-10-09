@@ -1,23 +1,40 @@
 #!/usr/bin/env bash
 #
-# Fail when a catalog is incomplete: an untranslated or fuzzy entry is a string
-# that would silently fall back to English in the UI. Run from CI and before a
-# release.
+# Check the translation catalogs. Run from CI and before a release.
+#
+# Every catalog must compile cleanly (msgfmt --check: placeholders, plural
+# forms, syntax). A language listed in translate/complete-languages must also
+# be complete — an untranslated or fuzzy entry there is a string that would
+# silently fall back to English. Any other language (one still being
+# translated, e.g. on Weblate) only reports how far along it is: a partial
+# catalog is fine, the missing strings show in English.
 set -euo pipefail
 
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+required=" $(grep -v '^#' "$dir/complete-languages" 2>/dev/null | tr '\n' ' ') "
 
 shopt -s nullglob
 status=0
 for po in "$dir"/*.po; do
     lang="$(basename "$po" .po)"
-    untranslated=$(msgattrib --untranslated --no-obsolete "$po" | grep -cE '^msgid ".+"') || true
-    fuzzy=$(msgattrib --only-fuzzy --no-obsolete "$po" | grep -cE '^msgid ".+"') || true
-    if [ "$untranslated" -gt 0 ] || [ "$fuzzy" -gt 0 ]; then
-        echo "[i18n] $lang: $untranslated untranslated, $fuzzy fuzzy" >&2
+    if ! msgfmt --check --output-file=/dev/null "$po"; then
+        echo "[i18n] $lang: does not compile" >&2
+        status=1
+        continue
+    fi
+    # --no-wrap: a long msgid is otherwise wrapped onto 'msgid ""' and
+    # continuation lines, which the pattern below would not count.
+    untranslated=$(msgattrib --untranslated --no-obsolete --no-wrap "$po" | grep -cE '^msgid ".+"') || true
+    fuzzy=$(msgattrib --only-fuzzy --no-obsolete --no-wrap "$po" | grep -cE '^msgid ".+"') || true
+    total=$(msgattrib --no-obsolete --no-wrap "$po" | grep -cE '^msgid ".+"') || true
+    if [ "$untranslated" -eq 0 ] && [ "$fuzzy" -eq 0 ]; then
+        echo "[i18n] $lang: complete"
+    elif [[ "$required" == *" $lang "* ]]; then
+        echo "[i18n] $lang: $untranslated untranslated, $fuzzy fuzzy (listed in translate/complete-languages)" >&2
         status=1
     else
-        echo "[i18n] $lang: complete"
+        done=$((total - untranslated - fuzzy))
+        echo "[i18n] $lang: $done/$total translated (partial; missing strings show in English)"
     fi
 done
 shopt -u nullglob

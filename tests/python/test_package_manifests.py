@@ -10,7 +10,7 @@ from pathlib import Path
 
 from _support import REPO
 
-SPEC = importlib.util.spec_from_file_location("package_manifests", Path(REPO) / "windows/package-manifests.py")
+SPEC = importlib.util.spec_from_file_location("package_manifests", Path(REPO) / "hosts/windows/package-manifests.py")
 manifests = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(manifests)
 
@@ -50,7 +50,7 @@ class PackageManifestsTest(unittest.TestCase):
         self.assertIn("/v3.2.1/AI-Usage-Setup-3.2.1.exe", installer)
         self.assertIn("Scope: user", installer)
         self.assertIn("InstallerType: inno", installer)
-        inno = (Path(REPO) / "windows/installer.iss").read_text(encoding="utf-8")
+        inno = (Path(REPO) / "hosts/windows/installer.iss").read_text(encoding="utf-8")
         self.assertIn(f"AppId={{{manifests.PRODUCT_CODE.removesuffix('_is1')}", inno)
 
     def test_rejects_non_release_versions_before_writing(self):

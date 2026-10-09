@@ -1,0 +1,7 @@
+# Runtime for the macOS menu bar app: the shared tray app's needs
+# (hosts/desktop/requirements.txt) plus PyObjC: AppKit draws the native menu bar
+# item and the popup blur (statusitem.py, vibrancy.py), ServiceManagement the
+# login item (loginitem.py).
+-r ../desktop/requirements.txt
+pyobjc-framework-Cocoa>=10.0
+pyobjc-framework-ServiceManagement>=10.0

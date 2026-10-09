@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+# Snapshot export helper for the AI Usage widget.
+#
+# Usage:
+#   export-snapshot png  <src_png> <dest_path>   — mkdir + move the PNG to dest
+#   export-snapshot svg  <src_png> <dest_path> <width> <height>
+#       — read src_png, base64-encode it, write an SVG wrapper to dest_path
+#
+# Output: single-line JSON  {"ok":true,"path":"…"}  or  {"error":"…"}
+set -euo pipefail
+
+emit_err() { printf '{"error":"%s"}\n' "$1"; }
+
+# Shared interpreter resolution — sets $PY, empty when no Python 3 exists.
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/python-interp.sh"
+py_resolve || true
+
+# The work lives in aiusage.snapshot_export, shared with the desktop tray app.
+# The code below is the fallback for a machine where Python does not run at all;
+# the module prints every error as an object and exits 0, so a non-zero exit
+# means the interpreter itself failed.
+if [ -n "$PY" ]; then
+  _pkg_tools="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  if _out="$(PYTHONPATH="$_pkg_tools${PYTHONPATH:+:$PYTHONPATH}" "$PY" -B -m aiusage.snapshot_export "$@" 2>/dev/null)"; then
+    printf '%s\n' "$_out"
+    exit 0
+  fi
+fi
+
+cmd="${1:-}"
+src="${2:-}"
+dest="${3:-}"
+
+# Expand ~ in dest
+dest="${dest/#\~/$HOME}"
+
+if [ -z "$cmd" ] || [ -z "$src" ] || [ -z "$dest" ]; then
+  emit_err "usage: export-snapshot <png|svg> <src> <dest> [width] [height]"
+  exit 1
+fi
+
+if [ ! -f "$src" ]; then
+  emit_err "source file not found: $src"
+  exit 1
+fi
+
+mkdir -p "$(dirname "$dest")"
+
+case "$cmd" in
+  png)
+    if command -v magick >/dev/null 2>&1; then
+      magick "$src" -background "#0d0d1a" -flatten "$dest"
+    elif command -v convert >/dev/null 2>&1; then
+      convert -background "#0d0d1a" -flatten "$src" "$dest"
+    elif [ -n "$PY" ]; then
+      "$PY" - "$src" "$dest" <<'PYEOF'
+import sys
+src, dest = sys.argv[1], sys.argv[2]
+try:
+    from PIL import Image
+    img = Image.open(src).convert("RGBA")
+    bg = Image.new("RGBA", img.size, (13, 13, 26, 255))
+    bg.paste(img, mask=img.split()[3])
+    bg.convert("RGB").save(dest, "PNG")
+except ImportError:
+    import shutil
+    shutil.copy(src, dest)
+PYEOF
+    else
+      cp "$src" "$dest"
+    fi
+    printf '{"ok":true,"path":"%s"}\n' "$dest"
+    ;;
+  svg)
+    width="${4:-800}"
+    height="${5:-600}"
+    if [ -n "$PY" ]; then
+      "$PY" - "$src" "$dest" "$width" "$height" <<'PYEOF'
+import base64, sys, os
+
+src, dest, w, h = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+png_data = open(src, 'rb').read()
+b64 = base64.b64encode(png_data).decode()
+
+svg = (
+    '<?xml version="1.0" encoding="UTF-8"?>\n'
+    '<svg xmlns="http://www.w3.org/2000/svg" '
+    'xmlns:xlink="http://www.w3.org/1999/xlink" '
+    f'width="{w}" height="{h}" viewBox="0 0 {w} {h}">\n'
+    f'  <rect width="{w}" height="{h}" fill="#0d0d1a" rx="10"/>\n'
+    f'  <image width="{w}" height="{h}" '
+    f'href="data:image/png;base64,{b64}"/>\n'
+    '</svg>\n'
+)
+
+os.makedirs(os.path.dirname(dest), exist_ok=True)
+with open(dest, 'w') as f:
+    f.write(svg)
+
+print(f'{{"ok":true,"path":"{dest}"}}')
+PYEOF
+    else
+      emit_err "no Python 3 interpreter found — cannot generate SVG"
+      exit 1
+    fi
+    ;;
+  *)
+    emit_err "unknown command: $cmd"
+    ;;
+esac

@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 #
 # Compile translate/<lang>.po into the binary catalogs the plasmoid loads at
-# runtime: package/contents/locale/<lang>/LC_MESSAGES/plasma_applet_<Id>.mo.
+# runtime: <package>/contents/locale/<lang>/LC_MESSAGES/plasma_applet_<Id>.mo.
 #
-# The .mo files are build output, not committed: `make pack` (and so the
-# release), `make view`, test_install.sh and the Nix package run this first, so
-# the .plasmoid users install already carries them.
+# Usage: translate/build.sh [PACKAGE_DIR]   (default: build/kde)
+#
+# The .mo files are build output, not committed: scripts/build-kde-package.sh
+# (and so `make pack`, the release, `make view`, `make test-install` and the Nix
+# package) runs this, so the .plasmoid users install already carries them.
 set -euo pipefail
 
 if ! command -v msgfmt >/dev/null 2>&1; then
@@ -15,9 +17,9 @@ fi
 
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(dirname "$dir")"
-pkg="$root/package"
+pkg="${1:-$root/build/kde}"
 
-id="$(grep -oE '"Id"[[:space:]]*:[[:space:]]*"[^"]+"' "$pkg/metadata.json" | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
+id="$(grep -oE '"Id"[[:space:]]*:[[:space:]]*"[^"]+"' "$root/hosts/kde/metadata.json" | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
 domain="plasma_applet_$id"
 
 # An unchanged .po does not need recompiling: the .mo is derived output, and

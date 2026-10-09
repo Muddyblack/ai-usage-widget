@@ -18,24 +18,21 @@ frontends; extend the adapters when adding coverage for another provider.
 Consumers:
 
 - Python checks backend output against the expectations.
-- Node executes Plasma's actual `applyOpenAi` and Windows' `publishTray` QML
-  functions and the shared history collector. These test data mapping, not
-  Plasma rendering; the desktop host is stubbed to avoid polling or side effects.
-- Qt instantiates the production `UsageRows.qml` used by both Hyprland and
-  Windows, checks actual delegate counts/values, and reuses the component across
-  scenarios to catch stale rows. QML warnings fail the test.
-- Swift decodes the same envelopes and tests the visible-row model used by
-  `UsageView`, menu-bar readings and decoded history values.
+- Node executes the shared state's actual `publishTray` QML function
+  (`ui/AppState.qml`) and the shared history collector, with the host stubbed
+  to avoid polling or side effects.
+- Qt instantiates the production `ui/UsageRows.qml` every host shows, checks
+  actual delegate counts/values, and reuses the component across scenarios to
+  catch stale rows. QML warnings fail the test.
 
 Run from the repository root:
 
 ```sh
 python3 -m unittest discover -s tests/python -p test_frontend_behavior.py
 node --test tests/frontend-behavior.test.js
-swift test --package-path macos  # macOS
 ```
 
 Qt requires PySide6 (`nix develop .#windows` supplies it). The portable suite
 skips Qt when absent; the Windows/Linux CI matrix sets `REQUIRE_FRONTEND_QT=1`
-so missing Qt fails that job. Swift runs in macOS CI. Screenshot artifacts
+so missing Qt fails that job. Screenshot artifacts
 remain available for visual review; these behavioral tests do not replace them.

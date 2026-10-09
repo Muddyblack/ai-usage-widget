@@ -4,7 +4,7 @@
 # per-language catalogs under translate/.
 #
 # The widget ships its own translations inside the .plasmoid archive, in
-# package/contents/locale/<lang>/LC_MESSAGES/plasma_applet_<Id>.mo. This script
+# <package>/contents/locale/<lang>/LC_MESSAGES/plasma_applet_<Id>.mo. This script
 # only produces the sources of truth: translate/template.pot and translate/*.po.
 # build.sh compiles the .mo files; they are git-ignored build output.
 #
@@ -14,7 +14,7 @@ set -euo pipefail
 
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(dirname "$dir")"
-pkg="$root/package"
+pkg="$root/hosts/kde"
 
 id="$(grep -oE '"Id"[[:space:]]*:[[:space:]]*"[^"]+"' "$pkg/metadata.json" | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
 version="$(grep -oE '"Version"[[:space:]]*:[[:space:]]*"[^"]+"' "$pkg/metadata.json" | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
@@ -35,17 +35,12 @@ pot="$dir/template.pot"
 # Paths are relative to the repo root so template.pot does not embed the build
 # machine's home directory (which would make every diff machine-specific).
 #
-# hyprland/ and windows/qml/ are the Quickshell panel and the Windows tray app:
-# their shell.i18n(…) calls land in this same catalog (see package/contents/code/I18n.js).
-#
-# macos/ is the third: Swift, but its i18n("…") calls are the same shape, and
-# xgettext has no Swift backend — so they are extracted in a second pass with
-# the C parser, which reads Swift's comments and string literals correctly, and
-# the two halves are merged. Nothing translatable in that app uses Swift string
-# interpolation; the placeholders are ki18n's %1, as everywhere else.
+# ui/ is the one UI every host shows; the hosts' own QML (hosts/*/) adds the
+# few words of their panels and menus. All call shell.i18n(…) / i18n(…), which
+# land in this one catalog (see ui/js/I18n.js).
 cd "$root"
 mapfile -t sources < <(
-    find package/contents/ui package/contents/config package/contents/code hyprland windows/qml \
+    find ui hosts \
         -type f \( -name '*.qml' -o -name '*.js' \) | LC_ALL=C sort
 )
 # The KPlugin name and description are read from metadata.json by KJsonUtils,
@@ -69,25 +64,29 @@ xgettext \
     --output="$pot" \
     "${sources[@]}"
 
-mapfile -t swift_sources < <(find macos/Sources -type f -name '*.swift' | LC_ALL=C sort)
-if [ ${#swift_sources[@]} -gt 0 ]; then
-    swift_pot="$(mktemp)"
-    xgettext \
-        --from-code=UTF-8 \
-        --language=C \
-        --add-comments=TRANSLATORS \
-        --add-location=file \
-        --keyword=i18n --keyword=i18nc:1c,2 --keyword=i18np:1,2 --keyword=i18nNoop \
-        --package-name="AI Usage Monitor" \
-        --package-version="$version" \
-        --msgid-bugs-address="$bug_url/issues" \
-        --output="$swift_pot" \
-        "${swift_sources[@]}"
-    # --use-first keeps the JavaScript pass's header, which carries the charset
-    # normalisation below; the Swift pass only contributes entries.
-    msgcat --use-first --add-location=file --output="$pot" "$pot" "$swift_pot"
-    rm -f "$swift_pot"
+# The backend words its own rows and errors (backend/aiusage/messages.py):
+# every tr("…") there is extracted in a second pass with the Python parser and
+# merged in, so backend and UI strings share the one catalog the UI reads.
+mapfile -t py_sources < <(find backend/aiusage -type f -name '*.py' | LC_ALL=C sort)
+py_pot="$(mktemp)"
+xgettext \
+    --from-code=UTF-8 \
+    --language=Python \
+    --add-comments=TRANSLATORS \
+    --add-location=file \
+    --keyword=tr \
+    --package-name="AI Usage Monitor" \
+    --package-version="$version" \
+    --msgid-bugs-address="$bug_url/issues" \
+    --output="$py_pot" \
+    "${py_sources[@]}"
+if [ -s "$py_pot" ]; then
+    # --use-first keeps the QML pass's header; the Python pass only adds entries.
+    msgcat --use-first --add-location=file --output="$pot" "$pot" "$py_pot"
 fi
+rm -f "$py_pot"
+# Python's parser flags "%"-strings as python-format; ours are ki18n's %1.
+sed -i '/^#, python-format$/d; s/^\(#,.*\), python-format/\1/; s/^#, python-format, /#, /' "$pot"
 
 # xgettext keys the catalog header on the charmap; normalise it so the .pot is
 # stable and the merge in a fresh checkout is a no-op.

@@ -22,6 +22,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      # hosts/kde/metadata.json is the version's one source (scripts/tag.sh
+      # bumps it); a tag pushed by hand without the bump would ship a package
+      # that reports the old version.
+      - name: Check the tag matches metadata.json
+        run: |
+          META="$(jq -r .KPlugin.Version hosts/kde/metadata.json)"
+          if [ "${GITHUB_REF_NAME#v}" != "$META" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match metadata.json version $META"
+            exit 1
+          fi
+
       # make pack compiles the translations (msgfmt) before zipping.
       - name: Install gettext
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext
@@ -77,7 +88,7 @@ jobs:
 
             Stable Windows builds also include Scoop and WinGet manifests. See the [package manager instructions](https://github.com/Muddyblack/ai-usage-widget/blob/main/docs/windows.md#package-managers).
 
-            **macOS:** open `ai-usage-macos-${{ steps.info.outputs.version }}.dmg` and drag `AI Usage.app` to Applications (ZIP also available). It lives in the menu bar. The app is ad-hoc signed and not notarized: if macOS blocks it, use System Settings → Privacy & Security → Open Anyway after attempting to launch. No developer account is needed to use it. See the [macOS install guide](https://github.com/Muddyblack/ai-usage-widget/blob/main/docs/macos.md#signing-and-distribution).
+            **macOS:** open `ai-usage-macos-${{ steps.info.outputs.version }}-apple-silicon.dmg` (M1 and later) or `ai-usage-macos-${{ steps.info.outputs.version }}-intel.dmg` (Intel Macs; Apple menu → About This Mac → Chip/Processor says which) and drag `AI Usage.app` to Applications (ZIPs also available). It lives in the menu bar. If macOS blocks the first launch, use System Settings → Privacy & Security → Open Anyway. See the [macOS install guide](https://github.com/Muddyblack/ai-usage-widget/blob/main/docs/macos.md#signing-and-distribution).
 
             All platform assets are attached a few minutes after the release appears, once their build has passed.
           files: |
@@ -111,16 +122,21 @@ jobs:
             dist/package-manifests/ai-usage-winget-*.zip
 
   # The workflow every push runs, with the app job's version-stamped ZIP and DMG
-  # this time (macos.yml derives its version from package/metadata.json,
+  # this time (macos.yml derives its version from hosts/kde/metadata.json,
   # so unlike windows.yml it needs no version input).
   macos:
     uses: ./.github/workflows/macos.yml
     # macos.yml's screenshots-comment job needs these; a reusable workflow's
-    # jobs can't be granted more than the caller job explicitly passes down,
-    # even for a job whose `if:` will never be true on a tag push.
+    # jobs can't be granted more than the caller job passes down, even for a
+    # job whose `if:` is never true on a tag push.
     permissions:
       contents: write
       pull-requests: write
+    # Developer ID signed and notarized once the Apple secrets are set
+    # (docs/macos.md#signing-and-distribution); ad-hoc signed until then.
+    with:
+      notarize: true
+    secrets: inherit
 
   macos-assets:
     needs: [release, macos]
@@ -129,9 +145,11 @@ jobs:
       contents: write
 
     steps:
+      # Both CPU builds (ai-usage-macos-apple-silicon, ai-usage-macos-intel).
       - uses: actions/download-artifact@v4
         with:
-          name: ai-usage-macos
+          pattern: ai-usage-macos-*
+          merge-multiple: true
 
       - name: Attach the macOS build to the release
         uses: softprops/action-gh-release@v3

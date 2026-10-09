@@ -1,0 +1,59 @@
+name: PR screenshots cleanup
+
+# macOS and Windows screenshots-comment jobs put every pull request's
+# screenshots on the orphan branch `ci-screenshots`, one pr-<n>/ folder per
+# PR. This takes a PR's folder off again when the PR closes. The PR comments
+# link the commits, not the branch, so their images keep working.
+#
+# Like every pull_request_target workflow, this runs from the default branch.
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions: {}
+
+env:
+  BRANCH: ci-screenshots
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const repo = context.repo;
+            const number = context.payload.pull_request.number;
+            const folder = `pr-${number}/`;
+            for (let attempt = 1; ; attempt++) {
+              let parent;
+              try {
+                const { data: ref } = await github.rest.git.getRef({ ...repo, ref: `heads/${process.env.BRANCH}` });
+                parent = ref.object.sha;
+              } catch (error) {
+                if (error.status === 404) return;
+                throw error;
+              }
+              const { data: tip } = await github.rest.git.getCommit({ ...repo, commit_sha: parent });
+              const { data: old } = await github.rest.git.getTree({ ...repo, tree_sha: tip.tree.sha, recursive: 'true' });
+              const gone = old.tree.filter(e => e.type === 'blob' && e.path.startsWith(folder))
+                .map(e => ({ path: e.path, mode: e.mode, type: 'blob', sha: null }));
+              if (!gone.length) {
+                core.info(`No screenshots for PR #${number}.`);
+                return;
+              }
+              const { data: snapshot } = await github.rest.git.createTree({ ...repo, base_tree: tip.tree.sha, tree: gone });
+              const { data: commit } = await github.rest.git.createCommit({
+                ...repo, message: `Remove screenshots of closed PR #${number}`, tree: snapshot.sha, parents: [parent]
+              });
+              try {
+                await github.rest.git.updateRef({ ...repo, ref: `heads/${process.env.BRANCH}`, sha: commit.sha, force: false });
+                return;
+              } catch (error) {
+                if (attempt >= 5 || ![409, 422].includes(error.status)) throw error;
+                core.info(`Branch moved, retrying (${attempt})`);
+              }
+            }

@@ -12,7 +12,7 @@ import unittest
 
 from _support import REPO
 
-APP = os.path.join(REPO, "windows", "app.py")
+APP = os.path.join(REPO, "hosts", "desktop", "app.py")
 HAS_PYSIDE = importlib.util.find_spec("PySide6") is not None
 # Every provider off, so nothing here depends on the network.
 ALL_OFF = {"providers": dict.fromkeys(("claude", "antigravity", "openai", "kiro", "mistral", "openrouter", "grok"), False)}

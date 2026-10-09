@@ -87,10 +87,10 @@ program is the evidence, and it still says nothing about authentication.
 
 | System | Provider toggle store | Detection/default behavior |
 |---|---|---|
-| KDE Plasma | Plasma KConfig, `Plasmoid.configuration.<id>Enabled`, declared in `package/contents/config/main.xml`, mirrored between widget instances through `plasma-shared-settings-<widget id>.json` | Every widget instance shares its settings (providers, keys, appearance); pins, panel rotation and view state stay per widget. A widget added next to a configured one adopts its settings instead of running first-run detection. Plasma provider tabs do not read the Hyprland shared JSON toggles. |
+| KDE Plasma | The same shared JSON as Hyprland. The old KConfig values (`hosts/kde/contents/config/main.xml`) are carried into it once, on the first start after updating (`hosts/kde/contents/ui/KdeMigration.js`). | Same as every host: the shared UI runs the latched first-run initialization. |
 | Hyprland | Shared JSON at `$XDG_CONFIG_HOME/ai-usage-widget/hyprland-settings.json`, or `AI_USAGE_CONFIG` | Backend `--all` reads this file. First-run initialization must be explicit and latched. |
 | Windows | The same shared JSON under `%APPDATA%\\ai-usage-widget\\hyprland-settings.json` | The Windows app uses the shared backend and settings format. It must not silently rerun detection during refresh. |
-| macOS | The same shared JSON under `~/.config/ai-usage-widget/hyprland-settings.json`, unless overridden | `SettingsStore.swift` mirrors the backend provider list and shared JSON settings. The native app does not make provider detection a Swift-only feature. |
+| macOS | The same shared JSON under `~/.config/ai-usage-widget/hyprland-settings.json`, unless overridden | Same as every host. |
 
 The backend path is named `hyprland-settings.json` for compatibility. Windows
 and macOS share the file format even though neither is Hyprland. Platform data
@@ -113,16 +113,13 @@ only its collector works.
    separate concerns.
 4. Register the provider's normalized envelope fields, labels, and invariants in
    `envelope.py` and update the provider contract if the JSON shape changes.
-5. Register Plasma's KConfig `<id>Enabled` entry in
-   `package/contents/config/main.xml` and wire provider-specific Plasma
-   presentation only when the contract requires it. Verify its KConfig default
-   does not contradict the zero-default policy.
-6. Add the provider to `hyprland/ProviderRegistry.js`, including display
+5. Add the provider to `ui/js/ProviderRegistry.js`, including display
    metadata and key setting. Keep its opt-in classification aligned with
-   `config.py`.
-7. Add the provider ID to `macos/Sources/AIUsage/Backend/SettingsStore.swift`
-   and update its opt-in set when needed. Add Swift presentation only for fields
-   outside the provider-agnostic contract.
+   `config.py`. Wire provider-specific presentation in `ui/` only when the
+   contract requires it — it then appears on every platform.
+6. If the provider has an API key, add its old KConfig entry (if any) to
+   `hosts/kde/contents/ui/KdeMigration.js`; new providers need nothing there.
+7. (no per-platform step: there is one UI.)
 8. Add success, missing-credential, malformed, offline, and rate-limited fixtures
    under `tests/fixtures/` as applicable. Fixtures must not contain real secrets.
 9. Add collector, normalization, CLI, detection, migration, and frontend contract

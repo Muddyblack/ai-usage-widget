@@ -1,0 +1,226 @@
+import QtQuick
+import QtQuick.Layouts
+import "js/Tone.js" as Tone
+
+// A labelled usage row, ported from the Plasma PopupRow: title + "· reset" +
+// live countdown chip + animated %, a 20-segment bar with gradient partial
+// fill, and an optional sub-label.
+ColumnLayout {
+    id: row
+
+    property string label: ""
+    property string detail: ""
+    property string note: ""
+    property string resetText: ""
+    property string countdownText: ""
+    property real value: 0
+    property color barColor: "#7dd3fc"
+    property bool showMeter: true
+    // Shown in a bubble while the row is hovered (name, used share, reset time).
+    property string tooltipText: ""
+
+    readonly property color dangerColor: "#ff4d4d"
+    readonly property color warningColor: "#ffa64d"
+    readonly property int segmentCount: 20
+
+    Layout.fillWidth: true
+    spacing: 5
+
+    property real displayValue: 0
+    onValueChanged: displayValue = value
+    Component.onCompleted: displayValue = value
+    Behavior on displayValue {
+        NumberAnimation {
+            duration: 600
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 6
+
+        Text {
+            text: row.label
+            font.bold: true
+            font.pixelSize: 13
+            color: Tone.c(palette, "#f8fafc")
+        }
+
+        Text {
+            visible: row.resetText !== ""
+            text: "· " + row.resetText
+            font.pixelSize: 11
+            opacity: 0.5
+            color: Tone.c(palette, "#f8fafc")
+        }
+
+        Item {
+            Layout.fillWidth: true
+        }
+
+        Rectangle {
+            visible: row.countdownText !== ""
+            Layout.preferredHeight: 20
+            Layout.preferredWidth: cdLabel.implicitWidth + 14
+            radius: 4
+            color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
+            border.width: 1
+            border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
+            Layout.alignment: Qt.AlignVCenter
+
+            Text {
+                id: cdLabel
+                anchors.centerIn: parent
+                text: row.countdownText
+                font.pixelSize: 11
+                color: Tone.c(palette, "#f8fafc")
+                opacity: 0.8
+            }
+        }
+
+        Item {
+            Layout.preferredWidth: 2
+        }
+
+        Text {
+            visible: row.showMeter
+            text: Math.round(row.displayValue) + "%"
+            font.bold: true
+            font.pixelSize: 14
+            color: row.value >= 90 ? row.dangerColor : row.value >= 70 ? row.warningColor : row.barColor
+            Layout.alignment: Qt.AlignVCenter
+        }
+    }
+
+    Item {
+        visible: row.showMeter
+        Layout.fillWidth: true
+        Layout.preferredHeight: visible ? 8 : 0
+
+        Row {
+            anchors.fill: parent
+            spacing: 3
+
+            Repeater {
+                model: row.segmentCount
+
+                Rectangle {
+                    width: (row.width - (row.segmentCount - 1) * 3) / row.segmentCount
+                    height: parent.height
+                    radius: 2
+                    readonly property real segThresh: (index + 1) * (100 / row.segmentCount)
+                    readonly property real prevThresh: index * (100 / row.segmentCount)
+                    readonly property real fillRatio: {
+                        if (row.value >= segThresh)
+                            return 1.0;
+                        if (row.value <= prevThresh)
+                            return 0.0;
+                        return (row.value - prevThresh) / (100 / row.segmentCount);
+                    }
+                    color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
+                    border.width: 1
+                    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.10))
+
+                    Rectangle {
+                        anchors {
+                            left: parent.left
+                            top: parent.top
+                            bottom: parent.bottom
+                            margins: 1
+                        }
+                        width: Math.max(0, (parent.width - 2) * parent.fillRatio)
+                        radius: 1.5
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop {
+                                position: 0.0
+                                color: Qt.lighter(row.barColor, 1.15)
+                            }
+                            GradientStop {
+                                position: 1.0
+                                color: row.barColor
+                            }
+                        }
+                        Behavior on width {
+                            NumberAnimation {
+                                duration: 500
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Text {
+        visible: row.detail !== ""
+        Layout.fillWidth: true
+        text: row.detail
+        color: Tone.c(palette, "#94a3b8")
+        font.pixelSize: 11
+        wrapMode: Text.WordWrap
+    }
+
+    Text {
+        visible: row.note !== ""
+        Layout.fillWidth: true
+        text: row.note
+        color: Tone.c(palette, "#94a3b8")
+        font.pixelSize: 10
+        wrapMode: Text.WordWrap
+    }
+
+    // Hover bubble. A zero-height layout item whose mouse area reaches back up
+    // over the whole row, so the row keeps its layout and the bubble is not
+    // clipped by it.
+    Item {
+        id: tipHost
+        Layout.fillWidth: true
+        Layout.preferredHeight: 0
+        z: 10
+
+        MouseArea {
+            id: rowHover
+            x: 0
+            y: -row.height
+            width: row.width
+            height: row.height
+            hoverEnabled: row.tooltipText !== ""
+            acceptedButtons: Qt.NoButton
+            onContainsMouseChanged: {
+                if (containsMouse)
+                    tipDelay.restart();
+                else {
+                    tipDelay.stop();
+                    tipHost.shown = false;
+                }
+            }
+        }
+        property bool shown: false
+        Timer {
+            id: tipDelay
+            interval: 450
+            onTriggered: tipHost.shown = rowHover.containsMouse
+        }
+        Rectangle {
+            visible: tipHost.shown && row.tooltipText !== ""
+            x: Math.max(0, Math.min(rowHover.mouseX + 10, row.width - width))
+            y: -row.height + rowHover.mouseY + 20
+            width: tipText.implicitWidth + 18
+            height: tipText.implicitHeight + 12
+            radius: 6
+            color: Tone.c(palette, Qt.rgba(0.04, 0.045, 0.06, 0.96))
+            border.width: 1
+            border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.14))
+            Text {
+                id: tipText
+                anchors.centerIn: parent
+                text: row.tooltipText
+                font.pixelSize: 11
+                color: Tone.c(palette, "#e2e8f0")
+            }
+        }
+    }
+}

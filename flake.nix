@@ -6,7 +6,7 @@
   outputs = { self, nixpkgs }:
     let
       forAllSystems = f: nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (system: f system);
-      metadata = builtins.fromJSON (builtins.readFile ./package/metadata.json);
+      metadata = builtins.fromJSON (builtins.readFile ./hosts/kde/metadata.json);
     in {
       packages = forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};
@@ -14,10 +14,11 @@
           default = pkgs.stdenvNoCC.mkDerivation {
             pname = "ai-usage-widget";
             version = metadata.KPlugin.Version;
-            # translate/ comes along so the .mo catalogs (git-ignored) can be compiled.
+            # The package is assembled from the shared sources by
+            # scripts/build-kde-package.sh, which also compiles the .mo catalogs.
             src = pkgs.lib.fileset.toSource {
               root = ./.;
-              fileset = pkgs.lib.fileset.unions [ ./package ./translate ];
+              fileset = pkgs.lib.fileset.unions [ ./hosts/kde ./ui ./backend ./assets ./translate ./scripts/build-kde-package.sh ];
             };
             nativeBuildInputs = [ pkgs.gettext ];
 
@@ -25,7 +26,7 @@
 
             buildPhase = ''
               runHook preBuild
-              bash translate/build.sh
+              bash scripts/build-kde-package.sh build/kde
               runHook postBuild
             '';
 
@@ -35,7 +36,7 @@
               # Install plasmoid package
               root=$out/share/plasma/plasmoids/org.muddyblack.aiUsageWidget
               mkdir -p "$root"
-              cp -r package/. "$root/"
+              cp -r build/kde/. "$root/"
 
               # The shell tools resolve Python from PATH, but plasmashell inherits the
               # systemd user session's PATH, which on NixOS has no Python at all — the
@@ -45,18 +46,14 @@
               # $PYTHON3 still wins at runtime, the PATH candidates still act as
               # fallbacks, and --replace-fail turns a drifted line into a build error
               # rather than a silently unpatched script.
-              substituteInPlace "$root/contents/tools/sh/python-interp.sh" \
+              substituteInPlace "$root/contents/backend/sh/python-interp.sh" \
                 --replace-fail 'PY_DEFAULT="python3"' \
                                'PY_DEFAULT="${pkgs.python3}/bin/python3"'
 
-              # Plasma's refresh deadline must also work with the session PATH.
-              substituteInPlace "$root/contents/ui/UsageRefresh.qml" \
-                --replace-fail 'property string timeoutExecutable: "timeout"' \
-                               'property string timeoutExecutable: "${pkgs.coreutils}/bin/timeout"'
 
               # Register icon in hicolor theme so Plasma Widget Explorer picks it up
               mkdir -p "$out/share/icons/hicolor/scalable/apps"
-              cp package/contents/icons/org.muddyblack.aiUsageWidget.svg "$out/share/icons/hicolor/scalable/apps/org.muddyblack.aiUsageWidget.svg"
+              cp assets/icons/org.muddyblack.aiUsageWidget.svg "$out/share/icons/hicolor/scalable/apps/org.muddyblack.aiUsageWidget.svg"
 
               runHook postInstall
             '';
@@ -72,7 +69,7 @@
           tray-helper = pkgs.stdenv.mkDerivation {
             pname = "ai-usage-tray";
             version = metadata.KPlugin.Version;
-            src = ./hyprland/tray;
+            src = ./hosts/quickshell/tray;
             nativeBuildInputs = with pkgs; [ cmake ninja qt6.wrapQtAppsHook ];
             buildInputs = with pkgs; [ qt6.qtbase ];
           };
@@ -97,15 +94,15 @@
           view = {
             type = "app";
             program = toString (pkgs.writeShellScript "view" ''
-              if [ ! -f "$PWD/package/metadata.json" ]; then
-                echo "error: no plasmoid at $PWD/package" >&2
+              if [ ! -f "$PWD/hosts/kde/metadata.json" ]; then
+                echo "error: no plasmoid host at $PWD/hosts/kde" >&2
                 echo "  'nix run .#view' previews your working copy, so run it from the repo root." >&2
                 exit 1
               fi
               export PATH=${pkgs.lib.makeBinPath [ pkgs.kdePackages.plasma-sdk pkgs.kdePackages.plasma-desktop pkgs.gettext ]}:"$PATH"
-              "$PWD/translate/build.sh"
+              "$PWD/scripts/build-kde-package.sh" "$PWD/build/kde"
               exec plasmoidviewer \
-                -a "$PWD/package" -f "''${1:-planar}"
+                -a "$PWD/build/kde" -f "''${1:-planar}"
             '');
           };
           pack = {
@@ -113,21 +110,27 @@
             program = toString (pkgs.writeShellScript "pack" ''
               set -euo pipefail
               here="$PWD"
-              ver="$(grep -oE '"Version":[[:space:]]*"[^"]+"' "$here/package/metadata.json" | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
+              ver="$(grep -oE '"Version":[[:space:]]*"[^"]+"' "$here/hosts/kde/metadata.json" | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
               name="$(basename "$here")"
               out="$here/$name-$ver.plasmoid"
               rm -f "$out"
-              PATH=${pkgs.gettext}/bin:"$PATH" "$here/translate/build.sh"
-              (cd "$here/package" && ${pkgs.zip}/bin/zip -r "$out" . -x '*.swp' '*~')
+              PATH=${pkgs.gettext}/bin:"$PATH" "$here/scripts/build-kde-package.sh" "$here/build/kde"
+              (cd "$here/build/kde" && ${pkgs.zip}/bin/zip -r "$out" . -x '*.swp' '*~')
               echo "wrote $out"
             '');
+          };
+          # `nix run .#ruff -- format .` / `-- check . --fix`: the pinned linter,
+          # without entering the dev shell.
+          ruff = {
+            type = "app";
+            program = "${pkgs.ruff}/bin/ruff";
           };
           cli = {
             type = "app";
             program = toString (pkgs.writeShellScript "ai-usage-cli" ''
               set -eu
               export PATH=${pkgs.lib.makeBinPath [ pkgs.python3 ]}:"$PATH"
-              exec ${self}/package/contents/tools/sh/ai-usage-cli "$@"
+              exec ${self}/backend/sh/ai-usage-cli "$@"
             '');
           };
           hyprland = {
@@ -139,9 +142,9 @@
                 pkgs.coreutils
                 pkgs.python3
               ]}:"$PATH"
-              # The repo root, not hyprland/ — Quickshell roots its QML sandbox at
-              # the entry point's directory, and hyprland/ cannot reach the shared
-              # JS under package/. See shell.qml.
+              # The repo root, not hosts/quickshell/ — Quickshell roots its QML sandbox at
+              # the entry point's directory, and hosts/quickshell/ cannot reach the shared
+              # ui/ and backend/. See shell.qml.
               config=${self}/shell.qml
               desktop_dir="''${XDG_DATA_HOME:-$HOME/.local/share}/applications"
               ${pkgs.coreutils}/bin/mkdir -p "$desktop_dir"
@@ -150,7 +153,7 @@
                 "$desktop_dir/org.quickshell.desktop"
               ${self.packages.${system}.tray-helper}/bin/ai-usage-tray \
                 ${pkgs.quickshell}/bin/qs "$config" \
-                ${self}/package/contents/tools/sh/get-ai-usage &
+                ${self}/backend/sh/get-ai-usage &
               tray_pid=$!
               trap 'kill "$tray_pid" 2>/dev/null || true' EXIT INT TERM
               ${pkgs.quickshell}/bin/qs -p "$config"
@@ -215,15 +218,29 @@
             inherit (default) shellHook;
           };
 
-          # The Windows tray app (windows/) runs on Linux too, which is how it is
-          # developed: `nix develop .#windows`, then `python windows/app.py`.
+          # The desktop tray app (hosts/desktop/, the Windows and macOS host) runs on Linux too, which is how it is
+          # developed: `nix develop .#windows`, then `python hosts/desktop/app.py`.
           # Separate because only people working on that app want PySide6.
           windows = pkgs.mkShell {
             name = "ai-usage-widget-windows";
             packages = [
               (pkgs.python3.withPackages (ps: [ ps.pyside6 ps.psutil ]))
               pkgs.ruff
+              pkgs.qt6.qtdeclarative
+              pkgs.qt6.qtsvg
             ];
+            shellHook = ''
+              # nixpkgs' PySide6 ships no QML modules (QtQuick.Controls …): they
+              # come from qtdeclarative, which must be the same Qt it runs on.
+              # A desktop session exports its own Qt/Plasma paths (a different
+              # Qt build) that would be loaded in their place and crash on a
+              # symbol mismatch, so those are dropped first.
+              unset QML2_IMPORT_PATH QT_PLUGIN_PATH QT_ADDITIONAL_PACKAGES_PREFIX_PATH \
+                NIXPKGS_QT6_QML_IMPORT_PATH NIXPKGS_QML_SEARCH_PATHS QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE
+              export QML_IMPORT_PATH="${pkgs.qt6.qtdeclarative}/lib/qt-6/qml"
+              # The provider logos are SVGs: Qt's SVG image-format plugin.
+              export QT_PLUGIN_PATH="${pkgs.qt6.qtsvg}/lib/qt-6/plugins"
+            '';
           };
         });
     };
