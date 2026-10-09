@@ -48,6 +48,11 @@ Window {
         backend: root.hostBackend
         // Settings → Appearance → Theme "auto": the system's light or dark.
         systemLight: Qt.styleHints.colorScheme === Qt.ColorScheme.Light
+        // Settings → Appearance → "use the theme's accent": the accent colour
+        // set in Windows / macOS (Qt 6.6+).
+        // Where the platform has none (offscreen, older Qt) the switch is hidden.
+        themeAccentAvailable: Qt.styleHints.accentColor !== undefined && Qt.styleHints.accentColor.valid
+        themeAccentColor: themeAccentAvailable ? Qt.styleHints.accentColor : "#3daee9"
         popupVisible: root.visible
         trayOptions: true
         systemBlur: root.nativeBlur
