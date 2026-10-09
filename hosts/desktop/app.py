@@ -19,6 +19,10 @@ brings PySide6 (or `make run-windows`), else `pip install -r hosts/desktop/requi
                                          render every popup tab and settings section into
                                          DIR using demo fixture data (no network,
                                          no credentials) — used by CI
+  python hosts/desktop/app.py --tour DIR --demo
+                                         run the real app on the real desktop and save
+                                         full-screen captures of a few views into DIR
+                                         (popup tabs, settings) — CI's only screenshots
 """
 
 import contextlib
@@ -1739,6 +1743,73 @@ def _hand_off_to_running_instance():
     return True
 
 
+# The views the desktop tour captures: the first popup tab, the next two
+# popup tabs, and two settings sections. Few on purpose.
+TOUR_POPUP_TABS = 3
+TOUR_SETTINGS = ("providers", "appearance")
+
+
+def _run_tour(app, backend, tray, out_dir):
+    """--tour: the app as it really runs (tray, popup, pill, native window
+    chrome), photographed from the screen — not rendered offscreen — once per
+    view. Exits the process itself."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    window = tray.window
+    steps = []
+    done = []
+    started = []
+
+    def view(name, **props):
+        def go():
+            for key, value in props.items():
+                window.setProperty(key, value)
+            # The popup hides itself when focus leaves it, which a CI desktop
+            # may do at any time.
+            if not window.isVisible():
+                tray.show()
+            QTimer.singleShot(1500, lambda: grab(name))
+
+        steps.append(go)
+
+    def grab(name):
+        file = out / name
+        # Window id 0: the whole screen, every window on it.
+        pixmap = QGuiApplication.primaryScreen().grabWindow(0)
+        if pixmap.save(str(file)):
+            print(f"  {name}  ({file.stat().st_size} bytes)")
+            done.append(name)
+        else:
+            print(f"could not save {file}", file=sys.stderr)
+        advance()
+
+    def advance():
+        if not steps:
+            app.quit()
+            return
+        steps.pop(0)()
+
+    def start(_text):
+        if started:
+            return
+        started.append(True)
+        tab_ids = window.property("popupTabIds") or []
+        if hasattr(tab_ids, "toVariant"):
+            tab_ids = tab_ids.toVariant()
+        for i, tab_id in enumerate(list(tab_ids)[:TOUR_POPUP_TABS]):
+            slug = re.sub(r"[^a-z0-9]+", "-", str(tab_id).lower()).strip("-") or "tab"
+            view(f"desktop-{i:02d}-{slug}.png", showSettings=False, activeId=tab_id)
+        for i, section in enumerate(TOUR_SETTINGS):
+            view(f"desktop-{TOUR_POPUP_TABS + i:02d}-settings-{section}.png", showSettings=True, settingsSection=section)
+        QTimer.singleShot(1000, advance)
+
+    backend.snapshotReady.connect(start)
+    QTimer.singleShot(90000, app.quit)  # the backend never answered
+    app.exec()
+    _flush_stdio()
+    os._exit(0 if done and not steps else 1)
+
+
 def main(argv):
     selftest = "--selftest" in argv
     screenshot = argv[argv.index("--screenshot") + 1] if "--screenshot" in argv else ""
@@ -1818,10 +1889,13 @@ def main(argv):
         return _run_headless(app, engine, backend, warnings, screenshot, "--settings" in argv)
 
     tray = TrayApp(app, engine, backend)
-    if first_run or "--demo" in argv:
+    tour = argv[argv.index("--tour") + 1] if "--tour" in argv else ""
+    if first_run or "--demo" in argv or tour:
         # Windows 11 puts a new tray icon out of sight, behind the ^ overflow:
         # the popup opening by itself shows the app is there, the first time.
         QTimer.singleShot(1500, tray.show)
+    if tour:
+        return _run_tour(app, backend, tray, tour)
     server = QLocalServer()
     QLocalServer.removeServer(SERVER_NAME)
     server.listen(SERVER_NAME)

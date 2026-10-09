@@ -268,11 +268,11 @@ the same workflow from `release.yml`, which attaches the installer and the zip
 to the release once they have passed — after the `.plasmoid`, which a failing
 Windows build does not hold back.
 
-Windows PRs also upload demo PNGs of every popup tab and settings section, plus
-a best-effort full-screen capture of the running app with its tray and docked
-pill. The screenshot job updates a PR comment for branches in this repository;
-fork PRs retain downloadable artifacts. The live capture may be unavailable on
-a runner without an interactive desktop, and the runner's Windows version may
+Windows PRs also upload a few full-screen captures of the running app on the
+runner's real desktop (`--tour`: popup tabs, settings, docked pill) — never
+offscreen renders. The screenshot job updates a PR comment for branches in this repository;
+fork PRs retain downloadable artifacts. The job fails if the capture can't be
+taken, and the runner's Windows version may
 not support Acrylic. Both platforms share `pr-screenshots.yml`, storing images
 in separate platform folders so Windows and macOS cannot replace each other's
 screenshots.

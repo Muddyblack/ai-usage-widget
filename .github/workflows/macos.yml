@@ -94,18 +94,13 @@ jobs:
       - name: Install build dependencies
         run: python3 -m pip install -r hosts/macos/build-requirements.txt
 
-      - name: Self-test and screenshots (from the checkout)
+      - name: Self-test (from the checkout)
         env:
           QT_QPA_PLATFORM: offscreen
           # A throwaway settings file, so the run cannot read or write
           # anything of the runner's.
           AI_USAGE_CONFIG: ${{ runner.temp }}/settings.json
-        run: |
-          python3 hosts/desktop/app.py --selftest
-          # Demo data: a CI runner has no AI subscriptions, and the
-          # screenshots have to be reproducible.
-          python3 hosts/desktop/app.py --screenshot "$RUNNER_TEMP/screens" --demo
-          ls -la "$RUNNER_TEMP/screens"
+        run: python3 hosts/desktop/app.py --selftest
 
       - name: The native macOS modules import
         run: |
@@ -132,25 +127,17 @@ jobs:
           AI_USAGE_CONFIG: ${{ runner.temp }}/bundle-settings.json
         run: '"dist/AI Usage.app/Contents/MacOS/AI Usage" --selftest'
 
-      # The proof the other pictures are not just an offscreen render: the
-      # real app on the runner's real desktop, full screen. On a first start
-      # (a fresh settings file) the popup opens by itself under the menu bar
-      # item, with the demo data. Best effort: a runner image without screen
-      # recording rights only loses this one picture.
-      - name: Full-screen capture of the running app
+      # The only screenshots: the real app on the runner's real desktop, full
+      # screen shots of a few views (--tour), never offscreen renders. Demo
+      # data, as a CI runner has no AI subscriptions. Fails the job if it can't.
+      - name: Screenshot of the running app on the real desktop
         if: matrix.arch == 'apple-silicon'
-        continue-on-error: true
         env:
           AI_USAGE_CONFIG: ${{ runner.temp }}/desktop-settings.json
         run: |
           mkdir -p "$RUNNER_TEMP/screens"
-          python3 hosts/desktop/app.py --demo > "$RUNNER_TEMP/desktop.log" 2>&1 &
-          pid=$!
-          sleep 20
-          screencapture -x "$RUNNER_TEMP/screens/desktop-macos.png"
-          kill "$pid" || true
-          cat "$RUNNER_TEMP/desktop.log"
-          ls -la "$RUNNER_TEMP/screens/desktop-macos.png"
+          python3 hosts/desktop/app.py --demo --tour "$RUNNER_TEMP/screens"
+          ls -la "$RUNNER_TEMP/screens"
 
       - name: Import the signing certificate
         if: env.NOTARIZE == 'true'

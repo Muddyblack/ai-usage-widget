@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       screenshots:
-        description: 'Generate demo screenshots as an artifact'
+        description: 'Capture the running app on the desktop as an artifact'
         type: boolean
         default: false
   workflow_call:
@@ -102,23 +102,8 @@ jobs:
       - name: tray app loads
         run: python hosts/desktop/app.py --selftest
 
-      - name: Screenshots
+      - name: Screenshot of the running app on the real desktop
         if: runner.os == 'Windows' && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.screenshots))
-        shell: pwsh
-        env:
-          QT_QPA_PLATFORM: offscreen
-          QT_QPA_FONTDIR: C:\Windows\Fonts
-          # A throwaway config file so the run cannot read or write the
-          # runner's real settings.
-          AI_USAGE_CONFIG: ${{ runner.temp }}\settings.json
-        run: |
-          $screens = "$env:RUNNER_TEMP\screens"
-          python hosts/desktop/app.py --screenshot $screens --demo
-          Get-ChildItem $screens
-
-      - name: Full-screen capture of the running app
-        if: runner.os == 'Windows' && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.screenshots))
-        continue-on-error: true
         shell: pwsh
         env:
           QT_QPA_PLATFORM: windows
