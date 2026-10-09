@@ -6,6 +6,11 @@ on:
     branches:
       - main
       - master
+    paths-ignore:
+      # The release commit only bumps the version. The v* tag it ships with runs
+      # release.yml, which builds and tests everything again.
+      - 'hosts/kde/metadata.json'
+      - 'ui/js/ProjectInfo.js'
 
 permissions:
   contents: read

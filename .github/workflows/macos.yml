@@ -10,6 +10,11 @@ on:
       # so its branches build here rather than only on a pull request.
       - 'claude/**'
       - 'macos/**'
+    paths-ignore:
+      # The release commit only bumps the version. The v* tag it ships with runs
+      # release.yml, which builds and tests everything again.
+      - 'hosts/kde/metadata.json'
+      - 'ui/js/ProjectInfo.js'
   workflow_dispatch:
   workflow_call:
     inputs:

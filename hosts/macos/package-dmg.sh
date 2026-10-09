@@ -35,7 +35,19 @@ AI Usage — Installation
 You do not need an Apple developer account to use this app.
 https://support.apple.com/guide/mac-help/mh40616/mac
 TXT
-hdiutil create -volname "AI Usage" -srcfolder "$STAGING" \
-    -format UDZO -ov "$OUT"
+# hdiutil create fails with "Resource busy" on CI runners when Spotlight or
+# diskimages-helper still holds the staging folder; retry after a short pause.
+for attempt in 1 2 3 4 5; do
+    if hdiutil create -volname "AI Usage" -srcfolder "$STAGING" \
+        -format UDZO -ov "$OUT"; then
+        break
+    fi
+    if [ "$attempt" -eq 5 ]; then
+        echo "hdiutil create kept failing." >&2
+        exit 1
+    fi
+    echo "hdiutil create failed (attempt $attempt); retrying..." >&2
+    sleep $((attempt * 5))
+done
 hdiutil verify "$OUT"
 echo "Built $OUT"

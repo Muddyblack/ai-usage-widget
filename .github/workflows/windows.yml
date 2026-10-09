@@ -11,6 +11,11 @@ on:
     branches:
       - main
       - master
+    paths-ignore:
+      # The release commit only bumps the version. The v* tag it ships with runs
+      # release.yml, which builds and tests everything again.
+      - 'hosts/kde/metadata.json'
+      - 'ui/js/ProjectInfo.js'
   # A build from any branch by hand: Actions → Windows → Run workflow.
   workflow_dispatch:
     inputs:
