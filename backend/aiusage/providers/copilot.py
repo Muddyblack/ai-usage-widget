@@ -23,7 +23,7 @@ import os
 import shutil
 import subprocess
 
-from .. import paths
+from .. import paths, sources
 from ..http import as_json, clean_credential, error_json, fetch_json, http_error_json, resolve_key
 from ..messages import tr
 
@@ -144,31 +144,70 @@ def _copilot_cli_login():
     return ""
 
 
-def _github_token():
-    """(token, username) — the username is whatever the source happened to
-    know, "" when it knew none."""
-    token = resolve_key(
+def _key_token():
+    """A token the user supplied: the widget setting, the environment, or a
+    token file."""
+    return resolve_key(
         "WIDGET_GITHUB_TOKEN",
         ("GITHUB_TOKEN", "GH_TOKEN"),
         os.path.join(_config_home(), "github-copilot", "token"),
         os.path.expanduser("~/.config/github-copilot/token"),
     )
-    if token:
-        return token, ""
 
-    for directory in _plugin_dirs():
-        for name in ("apps.json", "hosts.json"):
-            path = os.path.join(directory, name)
-            if not os.path.isfile(path):
-                continue
-            token, user = _oauth_from_apps_json(path)
-            if token:
-                return token, user
 
-    token = _gh_cli_token()
-    if token:
-        return token, _copilot_cli_login()
+def _editor_login_files():
+    return [os.path.join(directory, name) for directory in _plugin_dirs() for name in ("apps.json", "hosts.json")]
+
+
+def _has_editor_login():
+    return any(os.path.isfile(path) for path in _editor_login_files())
+
+
+def _editor_login():
+    """(token, username) from the Copilot editor plugin's own login."""
+    for path in _editor_login_files():
+        if not os.path.isfile(path):
+            continue
+        token, user = _oauth_from_apps_json(path)
+        if token:
+            return token, user
     return "", ""
+
+
+def _cli_login():
+    """(token, username) from `gh auth token`."""
+    token = _gh_cli_token()
+    return (token, _copilot_cli_login()) if token else ("", "")
+
+
+SOURCES = (
+    sources.Source(
+        "key",
+        "api",
+        tr("Access token"),
+        tr("A token from settings, $GITHUB_TOKEN or $GH_TOKEN"),
+        lambda: bool(os.environ.get("WIDGET_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")),
+    ),
+    sources.Source("editor", "ide", tr("Copilot editor login"), tr("The login your editor's Copilot plugin stored"), lambda: _has_editor_login()),
+    sources.Source("cli", "cli", tr("GitHub CLI"), tr("The token `gh auth token` prints"), sources.has_program("gh")),
+)
+
+_LOGINS = {"key": lambda: (_key_token(), ""), "editor": _editor_login, "cli": _cli_login}
+
+
+def _github_login():
+    """(token, username, source) — the username is whatever the source happened
+    to know, "" when it knew none."""
+    for source in sources.candidates("copilot", tuple(_LOGINS)):
+        token, user = _LOGINS[source]()
+        if token:
+            return token, user, source
+    return "", "", ""
+
+
+def _github_token():
+    token, user, _source = _github_login()
+    return token, user
 
 
 def _github_get(url, api_key, fixture_path, extra_headers=None):
@@ -295,10 +334,16 @@ def _billing_usage(api_key, username, quota):
 
 
 def get_copilot_usage():
-    api_key, username = _github_token()
+    api_key, username, source = _github_login()
     if not api_key:
         return {}
+    usage = _usage_for(api_key, username)
+    if isinstance(usage, dict) and usage:
+        usage["source"] = source
+    return usage
 
+
+def _usage_for(api_key, username):
     quota_override = _configured_quota()
 
     internal = _github_get(

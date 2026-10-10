@@ -121,6 +121,8 @@ only its collector works.
    metadata and key setting. Keep its opt-in classification aligned with
    `config.py`. Wire provider-specific presentation in `ui/` only when the
    contract requires it — it then appears on every platform.
+5a. If the provider can be read more than one way, declare its `SOURCES` and
+   register them in `sources._registry()` (see the provider contract, "Sources").
 6. If the provider has an API key, add its old KConfig entry (if any) to
    `hosts/kde/contents/ui/KdeMigration.js`; new providers need nothing there.
 7. (no per-platform step: there is one UI.)

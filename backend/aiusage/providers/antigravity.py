@@ -22,7 +22,7 @@ import urllib.error
 import urllib.request
 
 from .. import config as _config
-from .. import paths
+from .. import paths, sources
 from ..http import as_json
 from ..messages import tr
 
@@ -374,30 +374,34 @@ def _format_agy_usage(data):
     }
 
 
-def get_antigravity_usage():
+def _from_aiu():
+    """The antigravity-usage CLI. None when it is absent or failed, so the next
+    source gets its turn; {} when it answered with something that is not usage."""
     cli = shutil.which("aiu") or shutil.which("antigravity-usage")
-    if cli:
-        try:
-            proc = subprocess.run(
-                [cli, "--json"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15, **paths.no_window()
-            )
-        except (OSError, subprocess.TimeoutExpired):
-            proc = None
-        if proc is not None and proc.returncode == 0:
-            parsed = as_json(proc.stdout)
-            return parsed if isinstance(parsed, dict) else {}
+    if not cli:
+        return None
+    try:
+        proc = subprocess.run([cli, "--json"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15, **paths.no_window())
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode != 0:
+        return None
+    parsed = as_json(proc.stdout)
+    return parsed if isinstance(parsed, dict) else {}
 
-    # A reachable local language server (the standalone IDE, or the VS Code
-    # extension's own server) answers with real per-model quota - richer
-    # than agy's /usage, which only reports two family-level weekly
-    # buckets. Prefer it whenever one is actually reachable.
+
+def _from_server():
+    """The IDE's (or the VS Code extension's) language server, which answers with
+    real per-model quota - richer than agy's /usage, which only reports two
+    family-level weekly buckets. Returns (usage or None, whether any Antigravity
+    process was found at all)."""
     found_any_process = False
     for pid, csrf_token, ext_port in _scan_processes():
         found_any_process = True
         if not csrf_token:
             # No token available to us (e.g. the CLI's "agy --hub" process,
             # which doesn't put it on the cmdline) - any request would just
-            # 401. Still counts as "found" for the error message below.
+            # 401. Still counts as "found" for the error message.
             continue
         ports = _pid_listening_ports(pid)
         if not ports and ext_port:
@@ -411,17 +415,19 @@ def get_antigravity_usage():
                 continue
             data = _fetch_user_status(scheme, port, csrf_token)
             if data is not None:
-                return _format_user_status(data)
+                return _format_user_status(data), True
+    return None, found_any_process
 
+
+def _from_agy(found_any_process):
+    """agy's own /usage command. It needs neither a running IDE nor the language
+    server's CSRF token, just the CLI itself, but only reports coarse per-family
+    quota — so a recent answer is reused while an IDE process is around."""
     ttl = _ttl()
     if found_any_process and ttl > 0:
         cached = _read_cache(ttl)
         if cached is not None:
             return cached
-
-    # No reachable local server - fall back to agy's own /usage command.
-    # It needs neither a running IDE nor the language server's CSRF token,
-    # just the CLI itself, but only reports coarse per-family quota.
     agy = shutil.which("agy")
     if agy:
         agy_data = _run_agy_usage(agy)
@@ -430,7 +436,47 @@ def get_antigravity_usage():
             if ttl > 0:
                 _write_cache(usage)
             return usage
+    return None
 
+
+SOURCES = (
+    sources.Source("aiu", "cli", tr("antigravity-usage"), tr("The antigravity-usage CLI"), sources.has_program("aiu", "antigravity-usage")),
+    sources.Source(
+        "server",
+        "server",
+        tr("IDE language server"),
+        tr("The local server a running Antigravity IDE or extension exposes"),
+        sources.has_program("antigravity"),
+    ),
+    sources.Source("agy", "cli", tr("agy session"), tr("The agy CLI's own /usage report"), sources.has_program("agy")),
+)
+
+
+def get_antigravity_usage():
+    order = sources.candidates("antigravity", ("aiu", "server", "agy"))
+    found_any_process = False
+    for source in order:
+        if source == "aiu":
+            usage = _from_aiu()
+        elif source == "server":
+            usage, found_any_process = _from_server()
+        else:
+            usage = _from_agy(found_any_process)
+        if usage is None:
+            continue
+        # {} is the CLI's "answered, but not with usage": keep it empty so the
+        # normalizer reads it as no data rather than as a source with a name.
+        return {**usage, "source": source} if usage else usage
+
+    if len(order) == 1:
+        # An explicit choice does not fall back, so say which one stayed silent.
+        silent = {
+            "aiu": tr("The antigravity-usage CLI did not answer"),
+            "server": tr("Antigravity language server not reachable - open the IDE"),
+            "agy": tr("agy did not answer - run agy once"),
+        }
+        if order[0] != "server" or not found_any_process:
+            return {"error": silent[order[0]]}
     if found_any_process:
         return {"error": tr("Antigravity language server found but could not connect to API")}
     if not _HAS_PROC and _psutil() is None:

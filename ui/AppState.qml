@@ -1,6 +1,7 @@
 import QtQuick
 import QtCore
 import "js/ProviderRegistry.js" as ProviderRegistry
+import "js/ProviderSources.js" as ProviderSources
 import "js/Format.js" as Format
 import "js/FeatureTabs.js" as FeatureTabs
 import "js/RefreshCoalescer.js" as RefreshCoalescer
@@ -121,6 +122,8 @@ Item {
     property var settings: ({
             providers: {},
             keys: {},
+            sources: {},
+            proxy: {},
             pollSec: 300,
             showChart: true,
             museQuota: false,
@@ -150,6 +153,8 @@ Item {
         var s = Object.assign({}, d);
         s.providers = d.providers || {};
         s.keys = d.keys || {};
+        s.sources = d.sources || {};
+        s.proxy = d.proxy || {};
         s.pollSec = d.pollSec || 300;
         s.showChart = d.showChart !== false;
         s.museQuota = d.museQuota === true;
@@ -233,6 +238,45 @@ Item {
 
     function providerEnabled(id) {
         return ProviderRegistry.enabled(root.settings, id);
+    }
+
+    // ── Provider sources ─────────────────────────────────────────────────────
+    // A provider that can be read more than one way (a CLI, an IDE, a local
+    // server, an API key…) reports its ways in its snapshot's `sources` block;
+    // which one is used is the user's choice, "auto" meaning the first that works.
+    // The backend honours the choice from the settings file (aiusage/sources.py).
+    function sourceChoice(id) {
+        return (root.settings.sources || {})[id] || ProviderSources.AUTO;
+    }
+
+    function chooseSource(id, source) {
+        root.setSetting("sources", id, source);
+        root.refresh();
+    }
+
+    // The one line a provider's row shows: which source is answering, or what
+    // is wrong. ProviderSources.statusLine decides; this words it.
+    function providerStatusText(id) {
+        var line = ProviderSources.statusLine(root.providerById(id));
+        switch (line.code) {
+        case "using":
+            return root.i18n("Using %1", line.label);
+        case "failing":
+            return line.text !== "" ? line.label + ": " + line.text : root.i18n("%1 is not working", line.label);
+        case "unset":
+            return root.i18n("Not set up");
+        case "ok":
+            return root.i18n("Working");
+        case "error":
+            return line.text;
+        }
+        return root.i18n("Waiting for data");
+    }
+
+    // "ok" | "bad" | "muted", for colouring that line.
+    function providerStatusTone(id) {
+        var line = ProviderSources.statusLine(root.providerById(id));
+        return line.code === "using" || line.code === "ok" ? "ok" : line.code === "failing" || line.code === "error" ? "bad" : "muted";
     }
 
     // ── Provider defaults ────────────────────────────────────────────────────

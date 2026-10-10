@@ -48,6 +48,7 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across 25 provider s
 
 ## Features
 
+- **Add providers from a search, pick how each is read** — Settings → Providers shows what is on and how it is being read; a provider's page lists its sources (CLI, IDE, local server, API key) with a working indicator, and an optional HTTP proxy is under Advanced
 - **Multi-service support** — 25 providers in one popup, each on its own tab
 - **Panel view** — Compact percentage readouts in the taskbar, color-coded by usage level, with an inline spark-line trend
 - **Popup view** — Segmented bars showing exact fill level with reset times and live countdowns that show "resetting..." when a window flips

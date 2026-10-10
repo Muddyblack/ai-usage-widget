@@ -773,3 +773,39 @@ review count in non-metered rows. `zed` carries `details.untested: true`.
 `openrouter` adds `details.balanceUSD`, `creditsTotalUSD`, `creditsUsedUSD`,
 `usageDailyUSD`, `usageWeeklyUSD`, `usageMonthlyUSD` and `keyUnavailable`; any
 of them is `null` when OpenRouter did not report it.
+
+### Sources
+
+A provider that can be read more than one way carries a `sources` block on its
+envelope — error envelopes included — built by `aiusage/sources.py`:
+
+```json
+"sources": {
+  "choice": true,
+  "selected": "auto",
+  "active": "cli",
+  "options": [
+    {"id": "cli", "kind": "cli", "label": "cursor-agent", "detail": "…", "state": "working"},
+    {"id": "ide", "kind": "ide", "label": "Cursor app", "detail": "…", "state": "ready"}
+  ]
+}
+```
+
+`kind` is one of `cli`, `ide`, `server`, `api`, `file`, `browser`. `state` is
+`working` (it answered on the last refresh), `failing` (it was in use and did
+not), `ready` (it looks set up but is not the one in use) or `missing`.
+`active` comes from `usage["source"]`, which the collector records; a provider
+that records none is taken to use the first source that looks set up. `choice:
+false` means the options are not alternatives and none is chosen between.
+`selected` is the user's choice (`"auto"` or a source id), stored in the settings
+file as `sources: {provider: id}`.
+
+A provider is made choosable by declaring `SOURCES` (a tuple of `sources.Source`,
+each with a stat-only `probe`) in its module, listing it in
+`sources._registry()`, and asking `sources.candidates(provider, default_order)`
+which sources to try. A new kind of source, such as a browser session, is one more
+`Source` and a fetch function; the settings page needs no change.
+
+Settings also carry `proxy: {mode: "system" | "off" | "http", host, port}`,
+applied by `config.apply_proxy` (see providers.md).
+

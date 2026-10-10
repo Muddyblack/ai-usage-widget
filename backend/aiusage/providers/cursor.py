@@ -17,7 +17,7 @@ import os
 import sqlite3
 import time
 
-from .. import keychain, paths
+from .. import keychain, paths, sources
 from ..contract import num
 from ..http import as_json, clean_credential, fetch_json, http_error_text
 from ..messages import tr
@@ -69,10 +69,14 @@ def _agent_token():
     return ""
 
 
-def _ide_token():
-    path = os.environ.get("CURSOR_IDE_DB") or paths.first_file(
+def _ide_db():
+    return os.environ.get("CURSOR_IDE_DB") or paths.first_file(
         [os.path.join(base, "Cursor", "User", "globalStorage", "state.vscdb") for base in paths.electron_app_data_dirs()]
     )
+
+
+def _ide_token():
+    path = _ide_db()
     if not os.path.isfile(path):
         return ""
     try:
@@ -91,14 +95,32 @@ def _ide_token():
     return clean_credential(value.strip().strip('"'))
 
 
+SOURCES = (
+    sources.Source(
+        "cli",
+        "cli",
+        tr("cursor-agent"),
+        tr("The login cursor-agent keeps"),
+        sources.has_any(
+            lambda: os.path.isfile(os.path.join(_config_home(), "cursor", "auth.json")),
+            sources.has_file("~/.cursor/auth.json"),
+            sources.has_program("cursor-agent"),
+        ),
+    ),
+    sources.Source("ide", "ide", tr("Cursor app"), tr("The Cursor editor's local session database"), lambda: os.path.isfile(_ide_db())),
+)
+
+# Late-bound, so each reader is looked up when it is used.
+_TOKEN_READERS = {"cli": lambda: _agent_token(), "ide": lambda: _ide_token()}
+
+
 def _cursor_token():
-    """(token, source) — cursor-agent first, the IDE second."""
-    token = _agent_token()
-    if token:
-        return token, "cli"
-    token = _ide_token()
-    if token:
-        return token, "ide"
+    """(token, source) — cursor-agent first, the IDE second, unless the user
+    chose one of them."""
+    for source in sources.candidates("cursor", tuple(_TOKEN_READERS)):
+        token = _TOKEN_READERS[source]()
+        if token:
+            return token, source
     return "", ""
 
 

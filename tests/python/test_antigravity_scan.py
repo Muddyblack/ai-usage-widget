@@ -134,6 +134,7 @@ class AntigravityCacheTest(unittest.TestCase):
         self._write_cache(cached, time.time())
         expected = dict(cached)
         expected["email"] = "account@example.com"
+        expected["source"] = "agy"
         with (
             mock.patch.object(antigravity.shutil, "which", side_effect=self._which),
             mock.patch.object(antigravity, "_run_agy_usage", side_effect=AssertionError("fresh cache must skip agy")),
@@ -220,7 +221,7 @@ class AntigravityCacheTest(unittest.TestCase):
             mock.patch.object(antigravity, "_format_agy_usage", return_value=live),
         ):
             result = antigravity.get_antigravity_usage()
-        self.assertEqual(result, live)
+        self.assertEqual(result, {**live, "source": "agy"})
         run_agy.assert_called_once_with("/usr/bin/agy")
         with open(os.path.join(self.cache_dir.name, "antigravity.json"), encoding="utf-8") as stream:
             self.assertIsNone(json.load(stream)["usage"]["email"])

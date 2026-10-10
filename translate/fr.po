@@ -2824,3 +2824,287 @@ msgid ""
 msgstr ""
 "Aucune session Pi ou OMP pour le moment.\n"
 "Lancez Pi ou OMP : l’utilisation de jetons de ses fichiers de session apparaîtra ici."
+
+#: provider sources
+msgid "…"
+msgstr "…"
+
+#: provider sources
+msgid "User"
+msgstr "Utilisateur"
+
+#: provider sources
+msgid "Credits"
+msgstr "Crédits"
+
+#: provider sources
+msgid "%1 / %2"
+msgstr "%1 / %2"
+
+#: provider sources
+msgid "Messages"
+msgstr "Messages"
+
+#: provider sources
+msgid "antigravity-usage"
+msgstr "antigravity-usage"
+
+#: provider sources
+msgid "The antigravity-usage CLI"
+msgstr "Le CLI antigravity-usage"
+
+#: provider sources
+msgid "IDE language server"
+msgstr "Serveur de langage de l’IDE"
+
+#: provider sources
+msgid "The local server a running Antigravity IDE or extension exposes"
+msgstr "Le serveur local qu’expose un IDE ou une extension Antigravity en cours d’exécution"
+
+#: provider sources
+msgid "agy session"
+msgstr "Session agy"
+
+#: provider sources
+msgid "The agy CLI's own /usage report"
+msgstr "Le rapport /usage du CLI agy"
+
+#: provider sources
+msgid "The antigravity-usage CLI did not answer"
+msgstr "Le CLI antigravity-usage n’a pas répondu"
+
+#: provider sources
+msgid "Antigravity language server not reachable - open the IDE"
+msgstr "Serveur de langage Antigravity injoignable - ouvrez l’IDE"
+
+#: provider sources
+msgid "agy did not answer - run agy once"
+msgstr "agy n’a pas répondu - lancez agy une fois"
+
+#: provider sources
+msgid "Access token"
+msgstr "Jeton d’accès"
+
+#: provider sources
+msgid "A token from settings, $GITHUB_TOKEN or $GH_TOKEN"
+msgstr "Un jeton des paramètres, de $GITHUB_TOKEN ou de $GH_TOKEN"
+
+#: provider sources
+msgid "Copilot editor login"
+msgstr "Connexion de l’éditeur Copilot"
+
+#: provider sources
+msgid "The login your editor's Copilot plugin stored"
+msgstr "La connexion enregistrée par le plugin Copilot de votre éditeur"
+
+#: provider sources
+msgid "GitHub CLI"
+msgstr "CLI GitHub"
+
+#: provider sources
+msgid "The token `gh auth token` prints"
+msgstr "Le jeton affiché par `gh auth token`"
+
+#: provider sources
+msgid "cursor-agent"
+msgstr "cursor-agent"
+
+#: provider sources
+msgid "The login cursor-agent keeps"
+msgstr "La connexion conservée par cursor-agent"
+
+#: provider sources
+msgid "Cursor app"
+msgstr "Application Cursor"
+
+#: provider sources
+msgid "The Cursor editor's local session database"
+msgstr "La base de session locale de l’éditeur Cursor"
+
+#: provider sources
+msgid "A key from settings or $KILO_API_KEY"
+msgstr "Une clé des paramètres ou de $KILO_API_KEY"
+
+#: provider sources
+msgid "Kilo CLI"
+msgstr "CLI Kilo"
+
+#: provider sources
+msgid "The login `kilo auth login` stored"
+msgstr "La connexion enregistrée par `kilo auth login`"
+
+#: provider sources
+msgid "kiro-cli"
+msgstr "kiro-cli"
+
+#: provider sources
+msgid "The kiro-cli login, read live"
+msgstr "La connexion kiro-cli, lue en direct"
+
+#: provider sources
+msgid "Kiro IDE"
+msgstr "IDE Kiro"
+
+#: provider sources
+msgid "The usage snapshot the IDE caches"
+msgstr "L’instantané d’utilisation mis en cache par l’IDE"
+
+#: provider sources
+msgid "A key from settings or $OLLAMA_API_KEY"
+msgstr "Une clé des paramètres ou de $OLLAMA_API_KEY"
+
+#: provider sources
+msgid "OpenCode login"
+msgstr "Connexion OpenCode"
+
+#: provider sources
+msgid "The ollama-cloud key OpenCode stored"
+msgstr "La clé ollama-cloud enregistrée par OpenCode"
+
+#: provider sources
+msgid "Using %1"
+msgstr "Utilise %1"
+
+#: provider sources
+msgid "%1 is not working"
+msgstr "%1 ne fonctionne pas"
+
+#: provider sources
+msgid "Not set up"
+msgstr "Non configuré"
+
+#: provider sources
+msgid "Working"
+msgstr "Fonctionne"
+
+#: provider sources
+msgid "Waiting for data"
+msgstr "En attente de données"
+
+#: provider sources
+msgid "Remove provider"
+msgstr "Retirer le fournisseur"
+
+#: provider sources
+msgid "Add provider"
+msgstr "Ajouter un fournisseur"
+
+#: provider sources
+msgid "Keys are stored in %1; leave one blank to use env vars or an existing CLI login."
+msgstr "Les clés sont stockées dans %1 ; laissez-en une vide pour utiliser des variables d’environnement ou une connexion CLI existante."
+
+#: provider sources
+msgid "No providers yet. Use Add provider, or Detect installed providers to switch on what is installed."
+msgstr "Aucun fournisseur pour le moment. Utilisez Ajouter un fournisseur, ou Détecter les fournisseurs installés pour activer ce qui est installé."
+
+#: provider sources
+msgid "A key is set."
+msgstr "Une clé est définie."
+
+#: provider sources
+msgid "Optional where a login or an environment variable already covers it."
+msgstr "Facultative lorsqu’une connexion ou une variable d’environnement la remplace déjà."
+
+#: provider sources
+msgid "Plan quota"
+msgstr "Quota du forfait"
+
+#: provider sources
+msgid "Plan windows"
+msgstr "Fenêtres du forfait"
+
+#: provider sources
+msgid "Search providers"
+msgstr "Rechercher des fournisseurs"
+
+#: provider sources
+msgid "Every provider is already on."
+msgstr "Tous les fournisseurs sont déjà activés."
+
+#: provider sources
+msgid "No provider matches “%1”."
+msgstr "Aucun fournisseur ne correspond à « %1 »."
+
+#: provider sources
+msgid "Network"
+msgstr "Réseau"
+
+#: provider sources
+msgid "Applies on the next refresh, without restarting anything. Requests to this machine never go through it. An environment proxy (HTTPS_PROXY) takes precedence."
+msgstr "S’applique à la prochaine actualisation, sans rien redémarrer. Les requêtes vers cette machine ne passent jamais par le proxy. Un proxy d’environnement (HTTPS_PROXY) est prioritaire."
+
+#: provider sources
+msgid "Proxy"
+msgstr "Proxy"
+
+#: provider sources
+msgid "System uses the environment as it is; Off ignores any proxy."
+msgstr "Système utilise l’environnement tel quel ; Désactivé ignore tout proxy."
+
+#: provider sources
+msgid "System"
+msgstr "Système"
+
+#: provider sources
+msgid "Host"
+msgstr "Hôte"
+
+#: provider sources
+msgid "Port"
+msgstr "Port"
+
+#: provider sources
+msgid "Files"
+msgstr "Fichiers"
+
+#: provider sources
+msgid "API keys are stored in this file as plain text. Keep it private, and leave a key blank to use an env var or an existing CLI login instead."
+msgstr "Les clés API sont stockées en clair dans ce fichier. Gardez-le privé, et laissez une clé vide pour utiliser une variable d’environnement ou une connexion CLI existante."
+
+#: provider sources
+msgid "Configuration file"
+msgstr "Fichier de configuration"
+
+#: provider sources
+msgid "IDE"
+msgstr "IDE"
+
+#: provider sources
+msgid "Server"
+msgstr "Serveur"
+
+#: provider sources
+msgid "Browser"
+msgstr "Navigateur"
+
+#: provider sources
+msgid "Local files"
+msgstr "Fichiers locaux"
+
+#: provider sources
+msgid "Not working"
+msgstr "Ne fonctionne pas"
+
+#: provider sources
+msgid "Ready"
+msgstr "Prêt"
+
+#: provider sources
+msgid "Not found"
+msgstr "Introuvable"
+
+#: provider sources
+msgid "Authentication"
+msgstr "Authentification"
+
+#: provider sources
+msgid "Choose where this provider is read from. Auto uses the first source that works."
+msgstr "Choisissez d’où ce fournisseur est lu. Auto utilise la première source qui fonctionne."
+
+#: provider sources
+msgid "Everything this provider is read from. All of it is used."
+msgstr "Tout ce dont ce fournisseur est lu. Tout est utilisé."
+
+#: provider sources
+msgid "The first source below that works"
+msgstr "La première source ci-dessous qui fonctionne"
