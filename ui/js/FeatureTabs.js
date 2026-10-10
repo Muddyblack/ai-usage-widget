@@ -95,6 +95,7 @@ function localSourceLabel(source) {
         mimo: "MiMo Code",
         junie: "Junie",
         pi: "Pi",
+        gemini: "Gemini",
         claude: "Claude Code",
         "claude-code": "Claude Code",
         openai: "Codex",
@@ -154,6 +155,7 @@ function providerAccent(provider) {
         jetbrains: "#e6e6e6",
         windsurf: "#34e8bb",
         pi: "#d4d4d8",
+        gemini: "#3186ff",
         kilo: "#f4e04d",
         coderabbit: "#ff7a3d",
         zed: "#e6e6e6"

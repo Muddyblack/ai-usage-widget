@@ -91,6 +91,8 @@ ColumnLayout {
                     return statsSectionRoot.shell.i18n("No local Junie token usage yet. Run a CLI session to see activity.");
                 if (statsSectionRoot.providerId === "pi")
                     return statsSectionRoot.shell.i18n("No Pi or OMP sessions yet.\nRun Pi or OMP and the token usage in its session files will appear here.");
+                if (statsSectionRoot.providerId === "gemini")
+                    return statsSectionRoot.shell.i18n("No Gemini CLI sessions yet.\nRun the Gemini CLI and the token usage in its chats under ~/.gemini will appear here.");
                 if (statsSectionRoot.providerId === "mimo")
                     return statsSectionRoot.shell.i18n("No local MiMo Code usage yet. Account quota is unavailable.");
                 if (statsSectionRoot.providerId === "kiro")

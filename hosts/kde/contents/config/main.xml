@@ -183,7 +183,7 @@
       <default>#100a1a</default>
     </entry>
     <entry name="cardBgOpacity" type="Double">
-      <default>0.10</default>
+      <default>0.00</default>
     </entry>
     <entry name="popupBgColor" type="String">
       <default>#000000</default>

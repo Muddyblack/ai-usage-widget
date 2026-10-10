@@ -39,6 +39,7 @@ _CRASH_LABELS = {
     "jetbrains": ("JetBrains AI", "#e6e6e6"),
     "windsurf": ("Windsurf", "#34e8bb"),
     "pi": ("Pi", "#d4d4d8"),
+    "gemini": ("Gemini", "#3186ff"),
     "kilo": ("Kilo", "#f4e04d"),
     "coderabbit": ("CodeRabbit", "#ff7a3d"),
     "zed": ("Zed", "#e6e6e6"),

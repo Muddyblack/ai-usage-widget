@@ -7,6 +7,7 @@ from .coderabbit import normalize_coderabbit
 from .copilot import normalize_copilot
 from .cursor import normalize_cursor
 from .deepseek import normalize_deepseek
+from .gemini import normalize_gemini
 from .grok import normalize_grok
 from .jetbrains import normalize_jetbrains
 from .junie import normalize_junie
@@ -49,6 +50,7 @@ _DISPATCH = {
     "jetbrains": normalize_jetbrains,
     "windsurf": normalize_windsurf,
     "pi": normalize_pi,
+    "gemini": normalize_gemini,
     "kilo": normalize_kilo,
     "coderabbit": normalize_coderabbit,
     "zed": normalize_zed,

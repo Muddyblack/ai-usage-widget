@@ -1403,6 +1403,13 @@ msgid ""
 msgstr ""
 
 #: ui/StatsSection.qml
+msgid ""
+"No Gemini CLI sessions yet.\n"
+"Run the Gemini CLI and the token usage in its chats under ~/.gemini will "
+"appear here."
+msgstr ""
+
+#: ui/StatsSection.qml
 msgid "No local MiMo Code usage yet. Account quota is unavailable."
 msgstr ""
 
@@ -2101,6 +2108,10 @@ msgstr ""
 
 #: backend/aiusage/normalize/deepseek.py
 msgid "DeepSeek balance: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/gemini.py
+msgid "Gemini: no recorded token usage yet. Run a Gemini CLI session."
 msgstr ""
 
 #: backend/aiusage/normalize/grok.py

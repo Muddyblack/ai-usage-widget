@@ -545,7 +545,7 @@ test("every host shows the OpenCode daily chart on the Usage tab", () => {
         assert.match(source, /OpenCodeUsage\.chartWindows\(sourceSeries/);
         assert.match(source, /stats\.dailySeries && stats\.dailySeries\.length \? stats\.dailySeries : stats\.dailyTokens/);
     }
-    assert.match(popup, /OpenCodeUsageChart \{\s*visible: \(shell\.activeId === "opencode" \|\| shell\.activeId === "mimo" \|\| shell\.activeId === "junie" \|\| shell\.activeId === "pi"\)[^\n]*stats \|\| \{\}\)\.available === true/);
+    assert.match(popup, /OpenCodeUsageChart \{\s*visible: \(shell\.activeId === "opencode" \|\| shell\.activeId === "mimo" \|\| shell\.activeId === "junie" \|\| shell\.activeId === "pi" \|\| shell\.activeId === "gemini"\)[^\n]*stats \|\| \{\}\)\.available === true/);
     // Inside the Usage column, not the Stats sub-tab.
     assert.ok(popup.indexOf("OpenCodeUsageChart") < popup.indexOf("StatsSection {"));
 });

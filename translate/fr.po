@@ -1507,6 +1507,16 @@ msgstr ""
 "apparaîtra ici."
 
 #: ui/StatsSection.qml
+msgid ""
+"No Gemini CLI sessions yet.\n"
+"Run the Gemini CLI and the token usage in its chats under ~/.gemini will "
+"appear here."
+msgstr ""
+"Aucune session Gemini CLI pour le moment.\n"
+"Lancez Gemini CLI : l’utilisation de jetons de ses conversations sous "
+"~/.gemini apparaîtra ici."
+
+#: ui/StatsSection.qml
 msgid "No local MiMo Code usage yet. Account quota is unavailable."
 msgstr ""
 "Aucune utilisation locale de MiMo Code pour le moment. Le quota du compte "
@@ -2239,6 +2249,12 @@ msgstr "Offert / rechargé"
 #: backend/aiusage/normalize/deepseek.py
 msgid "DeepSeek balance: %1"
 msgstr "Solde DeepSeek : %1"
+
+#: backend/aiusage/normalize/gemini.py
+msgid "Gemini: no recorded token usage yet. Run a Gemini CLI session."
+msgstr ""
+"Gemini : aucune utilisation de jetons enregistrée pour le moment. Lancez une "
+"session Gemini CLI."
 
 #: backend/aiusage/normalize/grok.py
 msgid "Grok: run grok --oauth or configure an xAI key"

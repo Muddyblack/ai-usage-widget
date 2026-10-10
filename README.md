@@ -49,7 +49,7 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across 25 provider s
 ## Features
 
 - **Add providers from a search, pick how each is read** — Settings → Providers shows what is on and how it is being read; a provider's page lists its sources (CLI, IDE, local server, API key) with a working indicator, and an optional HTTP proxy is under Advanced
-- **Multi-service support** — 25 providers in one popup, each on its own tab
+- **Multi-service support** — 26 providers in one popup, each on its own tab
 - **Panel view** — Compact percentage readouts in the taskbar, color-coded by usage level, with an inline spark-line trend
 - **Popup view** — Segmented bars showing exact fill level with reset times and live countdowns that show "resetting..." when a window flips
 - **Usage chart** — Smooth, glowing area chart of historical usage with availability-aware 5H / 24H / 7D choices and hover-scrub
@@ -147,6 +147,7 @@ Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on ma
 | JetBrains AI | Monthly AI credits, top-up credits and refill date, read from the IDE's own quota file — no key, no network | Reads the format the IDE writes; not yet verified on every IDE |
 | Windsurf | Daily and weekly quota (or message / flow-action counters on older plans) from the editor's local cache — no key, no network | Reads the cache the editor writes; only as fresh as the last Windsurf run |
 | Pi / OMP | Local token activity, model breakdowns and workspaces from the agents' session files | Local files only; spend is not shown (see below) |
+| Gemini CLI | Local token activity, model breakdowns and project folders from the CLI's chat files | Local files only; spend is not shown, and AI Studio API keys have no usage endpoint |
 | Kilo | Prepaid credit balance and Kilo Pass period usage, via an API key or the `kilo` CLI login | Request shape from Kilo's web API; not yet verified against a live account |
 | CodeRabbit | Review count and reset date from `coderabbit usage` | Supported where the CLI is signed in; CodeRabbit publishes a count, not a quota |
 | Zed | Plan and edit-prediction usage, via the editor's macOS Keychain login | Untested; macOS only |

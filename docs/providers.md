@@ -120,6 +120,7 @@ The local provider only reads health, model, slot, and metrics endpoints. It nev
 | JetBrains AI | A JetBrains IDE signed in to JetBrains AI, opened at least once. Nothing to configure; manual-only |
 | Windsurf | The Windsurf editor, signed in and opened at least once. Nothing to configure |
 | Pi / OMP | Pi or OMP, run at least once. Nothing to configure |
+| Gemini CLI | The Gemini CLI, run at least once. Nothing to configure |
 | Kilo | The `kilo` CLI login (`kilo auth login`), or a Kilo API key from widget settings or `$KILO_API_KEY` |
 | CodeRabbit | The `coderabbit` CLI, signed in |
 | Zed | macOS only: the Zed editor signed in. Untested; manual-only |
@@ -475,6 +476,22 @@ Cost is deliberately not shown: Pi records an API-rate price on every turn even
 when the model was reached through a subscription login, so presenting it as
 spend would overstate the bill. The OMP location is the one these agents are
 documented to use; it has not been checked against an OMP install.
+
+## Gemini CLI
+
+The Gemini CLI saves each session under `~/.gemini/tmp/<project>/chats/` as
+`session-*.json` (a `messages` list) or `session-*.jsonl` (a header line, then
+one message per line). `GEMINI_CLI_HOME` moves the `.gemini` folder's parent.
+Replies of type `gemini` carry `tokens`: `input` (which includes `cached`),
+`output`, `thoughts` and `tool`. The widget counts `input` minus `cached` plus
+`tool` as input, `output` plus `thoughts` as output, and `cached` as cache reads.
+Repeated message ids and the same session saved under two projects count once.
+Only counters, model ids and the project folder name are kept; a hashed folder
+name is shown as no name.
+
+Cost is deliberately not shown: a Gemini CLI login is usually a free tier or a
+subscription, so pricing tokens at API rates would overstate the bill. Google AI
+Studio API keys are not read: Google offers no usage or quota endpoint for them.
 
 ## Kilo
 

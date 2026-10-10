@@ -139,13 +139,15 @@ Rectangle {
     }
 
     // Tint: under the decoration, so a stronger tint does not blot it out.
-    // Under a `translucent` host the host oversizes this item past Plasma's
-    // frame padding, so the tint reaches the frame's edge.
+    // Not under a `translucent` host: Plasma clips the popup's content to the
+    // inside of its frame padding, so a fill here stops short of the frame and
+    // reads as a second, inner border. Plasma's frame is the background there;
+    // turn Blur off (AppState.ownGlass) to tint.
     Rectangle {
         anchors.fill: parent
         radius: glass.radius
         color: glass.tint
-        visible: glass.tintOpacity > 0
+        visible: !glass.translucent && glass.tintOpacity > 0
     }
 
     // Soft glow in the top-left in the active tab's accent — also the
