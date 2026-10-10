@@ -46,6 +46,10 @@ The backend constant `AUTO_DETECT_PROVIDERS` is the complete allowlist:
 | `opencode` | `opencode` executable |
 | `mimo` | `mimo` executable |
 | `junie` | `junie` executable |
+| `windsurf` | `windsurf` executable, or the Windsurf desktop app |
+| `pi` | `pi` or `omp` executable |
+| `kilo` | `kilo` executable |
+| `coderabbit` | `coderabbit` executable |
 
 Executables are looked up on `PATH` and in the directories user-level
 installers use but a desktop session's `PATH` often lacks (`~/.local/bin`,
@@ -64,7 +68,7 @@ to `AUTO_DETECT_PROVIDERS` and its stat-only probe is implemented and tested.
 
 These providers are in `ALL_PROVIDERS` but are intentionally not detected:
 
-`openrouter`, `ollama`, `selfhosted`, `zai`, `copilot`, `deepseek`, and `kimi`.
+`openrouter`, `ollama`, `selfhosted`, `zai`, `copilot`, `deepseek`, `kimi`, `jetbrains` (IDE installs are too varied for stat-only probes), and `zed` (untested, macOS only).
 
 They require a user decision, an API key, an endpoint choice, or a credential
 source whose presence is not a sufficient local-use signal. Their tabs are
@@ -133,5 +137,5 @@ only its collector works.
     is introduced.
 
 Finally, run the full test suite and review the provider count in every document.
-The current backend has 19 IDs in `ALL_PROVIDERS` and 12 IDs in
+The current backend has 25 IDs in `ALL_PROVIDERS` and 16 IDs in
 `AUTO_DETECT_PROVIDERS`.

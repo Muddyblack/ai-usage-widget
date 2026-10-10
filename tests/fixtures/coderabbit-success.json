@@ -1,0 +1,14 @@
+{
+  "id": "coderabbit",
+  "now": 1790841600,
+  "inputs": {
+    "usage": {
+      "organization": "Example Org",
+      "plan": "Pro",
+      "user": "example",
+      "billing": "active",
+      "reviews": 12,
+      "resetAt": 1793433600
+    }
+  }
+}

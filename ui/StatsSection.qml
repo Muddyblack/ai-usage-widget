@@ -89,6 +89,8 @@ ColumnLayout {
                     return statsSectionRoot.shell.i18n("No Cline sessions yet.\nRun the Cline CLI and its session logs in ~/.cline will appear here.");
                 if (statsSectionRoot.providerId === "junie")
                     return statsSectionRoot.shell.i18n("No local Junie token usage yet. Run a CLI session to see activity.");
+                if (statsSectionRoot.providerId === "pi")
+                    return statsSectionRoot.shell.i18n("No Pi or OMP sessions yet.\nRun Pi or OMP and the token usage in its session files will appear here.");
                 if (statsSectionRoot.providerId === "mimo")
                     return statsSectionRoot.shell.i18n("No local MiMo Code usage yet. Account quota is unavailable.");
                 if (statsSectionRoot.providerId === "kiro")

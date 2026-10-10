@@ -2519,3 +2519,177 @@ msgstr ""
 #: backend/aiusage/providers/zai.py
 msgid "Z.AI unexpected response"
 msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Open a JetBrains IDE signed in to JetBrains AI once so it records your quota."
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "JetBrains AI: no IDE quota file found"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "JetBrains AI: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Top-up credits: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Top-up credits"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Read from the IDE's own quota file. No key or network request needed; it updates while an IDE is running."
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Open Windsurf and sign in once so it caches your plan."
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Windsurf: no local data found"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Windsurf: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Daily quota"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Weekly quota"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Flow actions"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Windsurf: the cached plan has no quota figures"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Read from Windsurf's local cache, last written %1. It only updates while Windsurf is running."
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Read from Windsurf's local cache. It only updates while Windsurf is running."
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Kilo: no API key or CLI login found"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Kilo: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "%1 (incl. %2 bonus)"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Kilo Pass"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Credit balance"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Read with your Kilo CLI login."
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Read with your Kilo API key."
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "CodeRabbit: CLI not found"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "CodeRabbit: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "reviews this period"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Your reviews"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Your reviews: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Usage billing"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Read by running the CodeRabbit CLI's own usage report. CodeRabbit publishes a count, not a quota."
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Zed (untested): the editor login can only be read on macOS"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Zed (untested): sign in to the Zed editor first"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Zed (untested): %1"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Edit predictions"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Unlimited"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Zed (untested): no usage figures in the account response"
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Overdue invoices on this account — check your Zed billing page."
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Read with the Zed editor's own login from the macOS Keychain. Untested against a live account."
+msgstr ""
+
+#: backend/aiusage/normalize/*.py
+msgid "Pi: no recorded token usage yet. Run a Pi or OMP session."
+msgstr ""
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "Balance"
+msgstr ""
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "This week"
+msgstr ""
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "This month"
+msgstr ""
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "Key spend"
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid ""
+"No Pi or OMP sessions yet.\n"
+"Run Pi or OMP and the token usage in its session files will appear here."
+msgstr ""

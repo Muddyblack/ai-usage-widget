@@ -1,0 +1,31 @@
+{
+  "id": "pi",
+  "now": 1790841600,
+  "inputs": {
+    "usage": {
+      "agents": [
+        "pi"
+      ],
+      "sessions": [
+        {
+          "id": "2026-10-01T08-00-00_fixture",
+          "createdAt": 1790841600,
+          "lastActivity": 1790841600,
+          "directory": "demo",
+          "usage": [
+            {
+              "provider": "anthropic",
+              "model": "claude-test",
+              "input": 100,
+              "output": 20,
+              "cacheRead": 40,
+              "cacheWrite": 10,
+              "timestamp": 1790841600,
+              "costStatus": "unavailable"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

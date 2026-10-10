@@ -1,0 +1,14 @@
+{
+  "id": "zed",
+  "now": 1790841600,
+  "inputs": {
+    "usage": {
+      "plan": "Pro",
+      "used": null,
+      "limit": null,
+      "unlimited": true,
+      "resetAt": 1793433600,
+      "overdue": false
+    }
+  }
+}

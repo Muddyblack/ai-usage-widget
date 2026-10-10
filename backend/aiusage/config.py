@@ -31,11 +31,36 @@ ALL_PROVIDERS = [
     "opencode",
     "mimo",
     "junie",
+    "jetbrains",
+    "windsurf",
+    "pi",
+    "kilo",
+    "coderabbit",
+    "zed",
 ]
 
 # Legacy classification: what a missing toggle means in settings that have
 # not had the zero-default policy applied (providerDefaultsApplied unset).
-OPT_IN_PROVIDERS = {"zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo", "junie", "ollama", "selfhosted"}
+OPT_IN_PROVIDERS = {
+    "zai",
+    "copilot",
+    "deepseek",
+    "kimi",
+    "muse",
+    "cursor",
+    "cline",
+    "opencode",
+    "mimo",
+    "junie",
+    "jetbrains",
+    "windsurf",
+    "pi",
+    "kilo",
+    "coderabbit",
+    "zed",
+    "ollama",
+    "selfhosted",
+}
 PROVIDER_DEFAULTS_LATCH = "providerDefaultsApplied"
 
 _KEY_EXPORTS = [
@@ -51,6 +76,7 @@ _KEY_EXPORTS = [
     ("WIDGET_MUSE_API_KEY", "muse"),
     ("WIDGET_DEEPSEEK_API_KEY", "deepseek"),
     ("WIDGET_MOONSHOT_API_KEY", "moonshot"),
+    ("WIDGET_KILO_API_KEY", "kilo"),
 ]
 
 

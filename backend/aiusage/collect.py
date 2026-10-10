@@ -16,6 +16,7 @@ from .pricing import get_pricing
 from .providers.antigravity import get_antigravity_usage
 from .providers.claude_credentials import get_claude_credentials
 from .providers.cline import get_cline_sessions
+from .providers.coderabbit import get_coderabbit_usage
 from .providers.codex_rate_limits import get_codex_rate_limits
 from .providers.codex_rate_limits import remember as remember_codex_rate_limits
 from .providers.codex_stats import get_codex_stats
@@ -24,7 +25,9 @@ from .providers.copilot_stats import get_copilot_stats
 from .providers.cursor import get_cursor_usage
 from .providers.deepseek import get_deepseek_balance
 from .providers.grok import get_grok_usage
+from .providers.jetbrains import get_jetbrains_usage
 from .providers.junie import usage_snapshot as get_junie_usage
+from .providers.kilo import get_kilo_usage
 from .providers.kimi_code import get_kimi_code_usage
 from .providers.kiro import get_kiro_usage
 from .providers.mimo import usage_snapshot as get_mimo_usage
@@ -37,7 +40,10 @@ from .providers.openai_credentials import codex_home, get_openai_credentials
 from .providers.opencode import usage_snapshot as get_opencode_usage
 from .providers.opencode_account import account_mode, get_go_usage
 from .providers.openrouter import get_openrouter_usage
+from .providers.pi import usage_snapshot as get_pi_usage
+from .providers.windsurf import get_windsurf_usage
 from .providers.zai import get_zai_usage
+from .providers.zed import get_zed_usage
 
 
 def read_json_file(path):
@@ -270,6 +276,12 @@ _SIMPLE = {
     "cline": get_cline_sessions,
     "mimo": get_mimo_usage,
     "junie": get_junie_usage,
+    "jetbrains": get_jetbrains_usage,
+    "windsurf": get_windsurf_usage,
+    "pi": get_pi_usage,
+    "kilo": get_kilo_usage,
+    "coderabbit": get_coderabbit_usage,
+    "zed": get_zed_usage,
 }
 
 

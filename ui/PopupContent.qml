@@ -242,7 +242,7 @@ ColumnLayout {
 
         // Local ledgers use the same navigable chart, with a token scale.
         OpenCodeUsageChart {
-            visible: (shell.activeId === "opencode" || shell.activeId === "mimo" || shell.activeId === "junie") && shell.settings.showChart && shell.activeProvider() !== null && ((shell.activeProvider().details || {}).stats || {}).available === true
+            visible: (shell.activeId === "opencode" || shell.activeId === "mimo" || shell.activeId === "junie" || shell.activeId === "pi") && shell.settings.showChart && shell.activeProvider() !== null && ((shell.activeProvider().details || {}).stats || {}).available === true
             shell: content.shell
             stats: shell.activeProvider() ? ((shell.activeProvider().details || {}).stats || ({})) : ({})
             accent: shell.activeAccent

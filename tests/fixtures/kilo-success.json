@@ -1,0 +1,21 @@
+{
+  "id": "kilo",
+  "now": 1790841600,
+  "inputs": {
+    "usage": {
+      "credits": {
+        "used": 4,
+        "total": 10,
+        "remaining": 6
+      },
+      "pass": {
+        "tier": "Pro",
+        "used": 12.5,
+        "total": 50,
+        "bonus": 5,
+        "resetAt": 1793433600
+      },
+      "source": "key"
+    }
+  }
+}

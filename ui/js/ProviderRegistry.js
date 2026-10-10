@@ -122,6 +122,38 @@ var providers = [
         accent: "#48e054"
     },
     {
+        id: "jetbrains",
+        label: "JetBrains AI",
+        accent: "#e6e6e6"
+    },
+    {
+        id: "windsurf",
+        label: "Windsurf",
+        accent: "#34e8bb"
+    },
+    {
+        id: "pi",
+        label: "Pi",
+        accent: "#d4d4d8"
+    },
+    {
+        id: "kilo",
+        label: "Kilo",
+        accent: "#f4e04d",
+        keySetting: "kilo",
+        keyPlaceholder: "optional — the kilo CLI login is used"
+    },
+    {
+        id: "coderabbit",
+        label: "CodeRabbit",
+        accent: "#ff7a3d"
+    },
+    {
+        id: "zed",
+        label: "Zed",
+        accent: "#e6e6e6"
+    },
+    {
         id: "opencode",
         label: "OpenCode",
         accent: "#B7B1B1"
@@ -148,6 +180,12 @@ var ICONS = {
     opencode: "opencode-color.svg",
     mimo: "mimo.svg",
     junie: "junie.svg",
+    jetbrains: "jetbrains.svg",
+    windsurf: "windsurf.svg",
+    pi: "pi.svg",
+    kilo: "kilo.svg",
+    coderabbit: "coderabbit.svg",
+    zed: "zed.svg",
     selfhosted: "local-models.svg",
     openrouter: "openrouter.svg",
     zai: "zai.svg"
@@ -157,7 +195,7 @@ for (var _i = 0; _i < providers.length; _i++)
 
 // Mirrors OPT_IN_PROVIDERS in aiusage/config.py: what a missing toggle means
 // until providerDefaultsApplied is set (or when applying the defaults failed).
-var OPT_IN = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo", "junie", "ollama", "selfhosted"];
+var OPT_IN = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo", "junie", "jetbrains", "windsurf", "pi", "kilo", "coderabbit", "zed", "ollama", "selfhosted"];
 
 function enabled(settings, id) {
     var toggles = (settings && settings.providers) || {};
@@ -171,7 +209,7 @@ function enabled(settings, id) {
 
 // Mirrors AUTO_DETECT_PROVIDERS in aiusage/detect.py: the providers detection
 // can speak for. Every other provider is only ever switched by hand.
-var AUTO_DETECT = ["claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode", "mimo", "junie"];
+var AUTO_DETECT = ["claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode", "mimo", "junie", "windsurf", "pi", "kilo", "coderabbit"];
 
 // Re-run of detection from the settings page. Detection reports what is
 // installed right now, so it syncs both ways: a detected provider that is off

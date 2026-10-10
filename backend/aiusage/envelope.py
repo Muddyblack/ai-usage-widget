@@ -36,6 +36,12 @@ _CRASH_LABELS = {
     "opencode": ("OpenCode", "#38bdf8"),
     "mimo": ("MiMo Code", "#E8E8E8"),
     "junie": ("Junie", "#48e054"),
+    "jetbrains": ("JetBrains AI", "#e6e6e6"),
+    "windsurf": ("Windsurf", "#34e8bb"),
+    "pi": ("Pi", "#d4d4d8"),
+    "kilo": ("Kilo", "#f4e04d"),
+    "coderabbit": ("CodeRabbit", "#ff7a3d"),
+    "zed": ("Zed", "#e6e6e6"),
 }
 
 
