@@ -1002,14 +1002,8 @@ msgstr ""
 "règle de calque."
 
 #: ui/SettingsPage.qml
-msgid ""
-"On: Plasma draws the widget's frame and KWin blurs the desktop behind it. "
-"Off: no frame, no blur; the widget draws its own glass, so Popup tint, Glass "
-"opacity and Frost apply."
-msgstr ""
-"Activé : Plasma dessine le cadre du widget et KWin floute le bureau "
-"derrière. Désactivé : ni cadre ni flou ; le widget dessine son propre verre, "
-"donc la teinte de la fenêtre, l’opacité du verre et le givre s’appliquent."
+msgid "KWin blurs the desktop behind the widget."
+msgstr "KWin floute le bureau derrière le widget."
 
 #: ui/SettingsPage.qml
 msgid ""
@@ -1875,6 +1869,38 @@ msgid "⚠ Quota exhausted"
 msgstr "⚠ Quota épuisé"
 
 #: backend/aiusage/normalize/antigravity.py
+msgid "Online"
+msgstr "En ligne"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Offline"
+msgstr "Hors ligne"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Updated %1"
+msgstr "Mis à jour %1"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote devices"
+msgstr "Appareils distants"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "%1 online · %2 devices"
+msgstr "%1 en ligne · %2 appareils"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "No remote devices registered for this account."
+msgstr "Aucun appareil distant enregistré pour ce compte."
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Open antigravity.google.com ↗"
+msgstr "Ouvrir antigravity.google.com ↗"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Select a device to open it in Antigravity."
+msgstr "Sélectionnez un appareil pour l’ouvrir dans Antigravity."
+
+#: backend/aiusage/normalize/antigravity.py
 msgid "Remote Control is online"
 msgstr "Le contrôle à distance est en ligne"
 
@@ -1905,16 +1931,12 @@ msgstr ""
 "locaux depuis un autre appareil."
 
 #: backend/aiusage/normalize/antigravity.py
-msgid "Open antigravity.google.com ↗"
-msgstr "Ouvrir antigravity.google.com ↗"
-
-#: backend/aiusage/normalize/antigravity.py
 msgid ""
-"The device name and your other devices are kept by Google, so they are only "
-"listed on that page."
+"Device list unavailable. Showing this desktop app's local status; open the "
+"website to see all devices."
 msgstr ""
-"Le nom de l’appareil et vos autres appareils sont conservés par Google ; ils "
-"ne sont listés que sur cette page."
+"Liste des appareils indisponible. État local de cette application de bureau "
+"affiché ; ouvrez le site web pour voir tous les appareils."
 
 #: backend/aiusage/normalize/antigravity.py
 msgid "Antigravity not configured"

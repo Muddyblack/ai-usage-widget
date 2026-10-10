@@ -94,7 +94,7 @@ def _cooled_down():
         pass
     try:
         os.makedirs(os.path.dirname(stamp), exist_ok=True)
-        with open(stamp, "w"):
+        with open(stamp, "w", encoding="utf-8"):
             pass
     except OSError:
         pass

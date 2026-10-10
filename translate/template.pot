@@ -952,10 +952,7 @@ msgid ""
 msgstr ""
 
 #: ui/SettingsPage.qml
-msgid ""
-"On: Plasma draws the widget's frame and KWin blurs the desktop behind it. "
-"Off: no frame, no blur; the widget draws its own glass, so Popup tint, Glass "
-"opacity and Frost apply."
+msgid "KWin blurs the desktop behind the widget."
 msgstr ""
 
 #: ui/SettingsPage.qml
@@ -1750,6 +1747,38 @@ msgid "⚠ Quota exhausted"
 msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
+msgid "Online"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Offline"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Updated %1"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote devices"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "%1 online · %2 devices"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "No remote devices registered for this account."
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Open antigravity.google.com ↗"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Select a device to open it in Antigravity."
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
 msgid "Remote Control is online"
 msgstr ""
 
@@ -1776,13 +1805,9 @@ msgid ""
 msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
-msgid "Open antigravity.google.com ↗"
-msgstr ""
-
-#: backend/aiusage/normalize/antigravity.py
 msgid ""
-"The device name and your other devices are kept by Google, so they are only "
-"listed on that page."
+"Device list unavailable. Showing this desktop app's local status; open the "
+"website to see all devices."
 msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
