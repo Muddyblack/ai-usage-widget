@@ -35,7 +35,7 @@ def session_roots():
     if agent_dir:
         roots.append(os.path.join(os.path.expanduser(agent_dir), "sessions"))
     for default in ("~/.pi/agent/sessions", "~/.omp/agent/sessions"):
-        roots.append(os.path.expanduser(default))
+        roots.append(os.path.normpath(os.path.expanduser(default)))
     seen = []
     for root in roots:
         if root not in seen:
@@ -142,7 +142,7 @@ def read_sessions():
     for root in session_roots():
         if not os.path.isdir(root):
             continue
-        agent = "omp" if f"{os.sep}.omp{os.sep}" in root else "pi"
+        agent = "omp" if f"{os.sep}.omp{os.sep}" in os.path.normpath(root) else "pi"
         for path in _transcripts(root):
             try:
                 stat = os.stat(path)

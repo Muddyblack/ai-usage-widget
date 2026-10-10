@@ -6,7 +6,7 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Usage Monitor 3.3.0\n"
+"Project-Id-Version: AI Usage Monitor 3.3.1\n"
 "Report-Msgid-Bugs-To: https://github.com/Muddyblack/ai-usage-widget/issues\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
@@ -52,6 +52,26 @@ msgid "%1 start"
 msgid_plural "%1 starts"
 msgstr[0] ""
 msgstr[1] ""
+
+#: ui/AppState.qml
+msgid "Using %1"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "%1 is not working"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Not set up"
+msgstr ""
+
+#: ui/AppState.qml ui/SourceChoice.qml
+msgid "Working"
+msgstr ""
+
+#: ui/AppState.qml
+msgid "Waiting for data"
+msgstr ""
 
 #: ui/AppState.qml
 msgid "No data"
@@ -368,64 +388,104 @@ msgstr ""
 msgid "Pinned on panel"
 msgstr ""
 
+#: ui/ProviderDetail.qml
+msgid "Remove provider"
+msgstr ""
+
+#: ui/ProviderList.qml
+msgid "Detecting…"
+msgstr ""
+
+#: ui/ProviderList.qml
+msgid "Detect installed providers"
+msgstr ""
+
+#: ui/ProviderList.qml ui/ProviderPicker.qml
+msgid "Add provider"
+msgstr ""
+
+#: ui/ProviderList.qml ui/SettingsPage.qml ui/SpendPage.qml
+msgid "Providers"
+msgstr ""
+
+#: ui/ProviderList.qml
+msgid ""
+"Keys are stored in %1; leave one blank to use env vars or an existing CLI "
+"login."
+msgstr ""
+
+#: ui/ProviderList.qml
+msgid ""
+"No providers yet. Use Add provider, or Detect installed providers to switch "
+"on what is installed."
+msgstr ""
+
+#: ui/ProviderOptions.qml ui/SourceChoice.qml
+msgid "API key"
+msgstr ""
+
+#: ui/ProviderOptions.qml
+msgid "A key is set."
+msgstr ""
+
+#: ui/ProviderOptions.qml
+msgid "Optional where a login or an environment variable already covers it."
+msgstr ""
+
+#: ui/ProviderOptions.qml
+msgid "Plan quota"
+msgstr ""
+
+#: ui/ProviderOptions.qml
+msgid "Plan windows"
+msgstr ""
+
+#: ui/ProviderOptions.qml
+msgid ""
+"Live: plan windows come from a billed model call (~130 tokens per refresh, "
+"cached 30 min)."
+msgstr ""
+
+#: ui/ProviderOptions.qml
+msgid ""
+"Local: read from Muse's own files, free. Meta reports plan windows only on a "
+"billed call — that is what Live buys."
+msgstr ""
+
+#: ui/ProviderOptions.qml
+msgid "Local"
+msgstr ""
+
+#: ui/ProviderOptions.qml
+msgid "Live"
+msgstr ""
+
+#: ui/ProviderOptions.qml
+msgid "Quota"
+msgstr ""
+
+#: ui/ProviderOptions.qml
+msgid "fallback if the plan reports none"
+msgstr ""
+
+#: ui/ProviderPicker.qml
+msgid "Search providers"
+msgstr ""
+
+#: ui/ProviderPicker.qml
+msgid "Every provider is already on."
+msgstr ""
+
+#: ui/ProviderPicker.qml
+msgid "No provider matches “%1”."
+msgstr ""
+
 #: ui/ProviderSections.qml
 msgid "· resetting…"
 msgstr ""
 
 #: ui/ProviderSections.qml
 msgid "resets in %1"
-msgstr ""
-
-#: ui/ProviderSettingRow.qml
-msgid "key set"
-msgstr ""
-
-#: ui/ProviderSettingRow.qml ui/SettingsPage.qml
-msgid "Off"
-msgstr ""
-
-#: ui/ProviderSettingRow.qml
-msgid "Local"
-msgstr ""
-
-#: ui/ProviderSettingRow.qml
-msgid "Live"
-msgstr ""
-
-#: ui/ProviderSettingRow.qml
-msgid "API key"
-msgstr ""
-
-#: ui/ProviderSettingRow.qml
-msgid "Server URL"
-msgstr ""
-
-#: ui/ProviderSettingRow.qml
-msgid "Server URLs, separated by commas"
-msgstr ""
-
-#: ui/ProviderSettingRow.qml ui/SettingsPage.qml
-msgid "Engine"
-msgstr ""
-
-#: ui/ProviderSettingRow.qml
-msgid ""
-"Live: plan windows come from a billed model call (~130 tokens per refresh, "
-"cached 30 min)."
-msgstr ""
-
-#: ui/ProviderSettingRow.qml
-msgid ""
-"Local: read from Muse's own files, free. Meta reports plan windows only on a "
-"billed call — that is what Live buys."
-msgstr ""
-
-#: ui/ProviderSettingRow.qml
-msgid "Quota"
-msgstr ""
-
-#: ui/ProviderSettingRow.qml
-msgid "fallback if the plan reports none"
 msgstr ""
 
 #: ui/SessionsPage.qml
@@ -570,10 +630,6 @@ msgstr ""
 msgid "Cost: $%1 (partial)"
 msgstr ""
 
-#: ui/SettingsPage.qml ui/SpendPage.qml
-msgid "Providers"
-msgstr ""
-
 #: ui/SettingsPage.qml
 msgid "Local Models"
 msgstr ""
@@ -620,20 +676,6 @@ msgid "No pricing rates available; try again."
 msgstr ""
 
 #: ui/SettingsPage.qml
-msgid "Detecting…"
-msgstr ""
-
-#: ui/SettingsPage.qml
-msgid "Detect installed providers"
-msgstr ""
-
-#: ui/SettingsPage.qml
-msgid ""
-"Expand a provider for its API key and options. Keys are stored in %1; leave "
-"one blank to use env vars or an existing CLI login."
-msgstr ""
-
-#: ui/SettingsPage.qml
 msgid ""
 "Token counters reflect usage since server start. GPU VRAM tracking is "
 "enabled automatically where supported."
@@ -655,6 +697,10 @@ msgstr ""
 
 #: ui/SettingsPage.qml
 msgid "e.g. http://127.0.0.1:11434, http://127.0.0.1:8000"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Engine"
 msgstr ""
 
 #: ui/SettingsPage.qml
@@ -791,6 +837,10 @@ msgid ""
 msgstr ""
 
 #: ui/SettingsPage.qml
+msgid "Off"
+msgstr ""
+
+#: ui/SettingsPage.qml
 msgid "30 seconds"
 msgstr ""
 
@@ -834,7 +884,7 @@ msgstr ""
 msgid "Auto follows the system's light or dark appearance."
 msgstr ""
 
-#: ui/SettingsPage.qml
+#: ui/SettingsPage.qml ui/SourceChoice.qml
 msgid "Auto"
 msgstr ""
 
@@ -1083,6 +1133,101 @@ msgstr ""
 msgid "Open in terminal"
 msgstr ""
 
+#: ui/SettingsPage.qml
+msgid "Network"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"Applies on the next refresh, without restarting anything. Requests to this "
+"machine never go through it. An environment proxy (HTTPS_PROXY) takes "
+"precedence."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Proxy"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "System uses the environment as it is; Off ignores any proxy."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "System"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Host"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Port"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Files"
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid ""
+"API keys are stored in this file as plain text. Keep it private, and leave a "
+"key blank to use an env var or an existing CLI login instead."
+msgstr ""
+
+#: ui/SettingsPage.qml
+msgid "Configuration file"
+msgstr ""
+
+#: ui/SourceChoice.qml
+msgid "CLI"
+msgstr ""
+
+#: ui/SourceChoice.qml
+msgid "IDE"
+msgstr ""
+
+#: ui/SourceChoice.qml
+msgid "Server"
+msgstr ""
+
+#: ui/SourceChoice.qml
+msgid "Browser"
+msgstr ""
+
+#: ui/SourceChoice.qml
+msgid "Local files"
+msgstr ""
+
+#: ui/SourceChoice.qml
+msgid "Not working"
+msgstr ""
+
+#: ui/SourceChoice.qml
+msgid "Ready"
+msgstr ""
+
+#: ui/SourceChoice.qml
+msgid "Not found"
+msgstr ""
+
+#: ui/SourceChoice.qml
+msgid "Authentication"
+msgstr ""
+
+#: ui/SourceChoice.qml
+msgid ""
+"Choose where this provider is read from. Auto uses the first source that "
+"works."
+msgstr ""
+
+#: ui/SourceChoice.qml
+msgid "Everything this provider is read from. All of it is used."
+msgstr ""
+
+#: ui/SourceChoice.qml
+msgid "The first source below that works"
+msgstr ""
+
 #: ui/SpendPage.qml
 msgid "Could not read model pricing."
 msgstr ""
@@ -1238,6 +1383,12 @@ msgstr ""
 
 #: ui/StatsSection.qml
 msgid "No local Junie token usage yet. Run a CLI session to see activity."
+msgstr ""
+
+#: ui/StatsSection.qml
+msgid ""
+"No Pi or OMP sessions yet.\n"
+"Run Pi or OMP and the token usage in its session files will appear here."
 msgstr ""
 
 #: ui/StatsSection.qml
@@ -1579,6 +1730,7 @@ msgstr ""
 #: backend/aiusage/normalize/muse.py backend/aiusage/normalize/ollama.py
 #: backend/aiusage/normalize/opencode.py
 #: backend/aiusage/normalize/selfhosted.py
+#: backend/aiusage/normalize/windsurf.py
 msgid "%1% used"
 msgstr ""
 
@@ -1627,7 +1779,8 @@ msgid "Gemini (Google) quota: %1%"
 msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py backend/aiusage/normalize/cursor.py
-#: backend/aiusage/normalize/kiro.py
+#: backend/aiusage/normalize/kiro.py backend/aiusage/normalize/windsurf.py
+#: backend/aiusage/normalize/zed.py
 msgid "Plan: %1"
 msgstr ""
 
@@ -1749,9 +1902,44 @@ msgstr ""
 msgid "last 30 days"
 msgstr ""
 
-#: backend/aiusage/normalize/cline.py
+#: backend/aiusage/normalize/cline.py backend/aiusage/normalize/kilo.py
 #: backend/aiusage/normalize/local_activity.py
+#: backend/aiusage/normalize/windsurf.py backend/aiusage/normalize/zed.py
 msgid "%1: %2"
+msgstr ""
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "CodeRabbit: CLI not found"
+msgstr ""
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "CodeRabbit: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "reviews this period"
+msgstr ""
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "Your reviews"
+msgstr ""
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "Your reviews: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "User"
+msgstr ""
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "Usage billing"
+msgstr ""
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid ""
+"Read by running the CodeRabbit CLI's own usage report. CodeRabbit publishes "
+"a count, not a quota."
 msgstr ""
 
 #: backend/aiusage/normalize/copilot.py
@@ -1858,10 +2046,6 @@ msgstr ""
 msgid "Grok CLI"
 msgstr ""
 
-#: backend/aiusage/normalize/grok.py
-msgid "CLI"
-msgstr ""
-
 #: backend/aiusage/normalize/grok.py backend/aiusage/normalize/openrouter.py
 msgid "Credit usage"
 msgstr ""
@@ -1890,10 +2074,90 @@ msgstr ""
 msgid "Grok CLI connected; billing quota is not exposed"
 msgstr ""
 
+#: backend/aiusage/normalize/jetbrains.py
+msgid ""
+"Open a JetBrains IDE signed in to JetBrains AI once so it records your quota."
+msgstr ""
+
+#: backend/aiusage/normalize/jetbrains.py
+msgid "JetBrains AI: no IDE quota file found"
+msgstr ""
+
+#: backend/aiusage/normalize/jetbrains.py
+msgid "JetBrains AI: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/jetbrains.py backend/aiusage/normalize/kiro.py
+msgid "%1 / %2 credits"
+msgstr ""
+
+#: backend/aiusage/normalize/jetbrains.py backend/aiusage/normalize/kiro.py
+msgid "Monthly credits"
+msgstr ""
+
+#: backend/aiusage/normalize/jetbrains.py backend/aiusage/normalize/kiro.py
+msgid "Credits: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/jetbrains.py
+msgid "Top-up credits: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/jetbrains.py backend/aiusage/normalize/kiro.py
+msgid "Remaining"
+msgstr ""
+
+#: backend/aiusage/normalize/jetbrains.py
+msgid "Top-up credits"
+msgstr ""
+
+#: backend/aiusage/normalize/jetbrains.py
+msgid ""
+"Read from the IDE's own quota file. No key or network request needed; it "
+"updates while an IDE is running."
+msgstr ""
+
 #: backend/aiusage/normalize/junie.py
 msgid ""
 "Junie (untested): no recorded token usage yet. Run a session using /account "
 "or junie --provider google."
+msgstr ""
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Kilo: no API key or CLI login found"
+msgstr ""
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Kilo: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Credits"
+msgstr ""
+
+#: backend/aiusage/normalize/kilo.py backend/aiusage/normalize/windsurf.py
+#: backend/aiusage/normalize/zed.py
+msgid "%1 / %2"
+msgstr ""
+
+#: backend/aiusage/normalize/kilo.py
+msgid "%1 (incl. %2 bonus)"
+msgstr ""
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Kilo Pass"
+msgstr ""
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Credit balance"
+msgstr ""
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Read with your Kilo CLI login."
+msgstr ""
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Read with your Kilo API key."
 msgstr ""
 
 #: backend/aiusage/normalize/kiro.py
@@ -1912,10 +2176,6 @@ msgid "Kiro: %1"
 msgstr ""
 
 #: backend/aiusage/normalize/kiro.py
-msgid "%1 / %2 credits"
-msgstr ""
-
-#: backend/aiusage/normalize/kiro.py
 msgid "Kiro: usage snapshot is empty"
 msgstr ""
 
@@ -1925,10 +2185,6 @@ msgstr ""
 
 #: backend/aiusage/normalize/kiro.py
 msgid "%1 %2"
-msgstr ""
-
-#: backend/aiusage/normalize/kiro.py
-msgid "Remaining"
 msgstr ""
 
 #: backend/aiusage/normalize/kiro.py
@@ -1946,14 +2202,6 @@ msgstr ""
 #: backend/aiusage/normalize/kiro.py
 msgid ""
 "Read locally from Kiro app state. No API key or network request required."
-msgstr ""
-
-#: backend/aiusage/normalize/kiro.py
-msgid "Monthly credits"
-msgstr ""
-
-#: backend/aiusage/normalize/kiro.py
-msgid "Credits: %1"
 msgstr ""
 
 #: backend/aiusage/normalize/local_activity.py
@@ -2202,6 +2450,30 @@ msgstr ""
 msgid "OpenRouter: no API key configured"
 msgstr ""
 
+#: backend/aiusage/normalize/openrouter.py
+msgid "Balance"
+msgstr ""
+
+#: backend/aiusage/normalize/openrouter.py backend/aiusage/normalize/zai.py
+msgid "Today"
+msgstr ""
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "This week"
+msgstr ""
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "This month"
+msgstr ""
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "Key spend"
+msgstr ""
+
+#: backend/aiusage/normalize/pi.py
+msgid "Pi: no recorded token usage yet. Run a Pi or OMP session."
+msgstr ""
+
 #: backend/aiusage/normalize/selfhosted.py
 msgid "All local model servers offline"
 msgstr ""
@@ -2262,8 +2534,47 @@ msgstr ""
 msgid "Loaded models"
 msgstr ""
 
-#: backend/aiusage/normalize/zai.py
-msgid "Today"
+#: backend/aiusage/normalize/windsurf.py
+msgid "Open Windsurf and sign in once so it caches your plan."
+msgstr ""
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Windsurf: no local data found"
+msgstr ""
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Windsurf: %1"
+msgstr ""
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Daily quota"
+msgstr ""
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Weekly quota"
+msgstr ""
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Messages"
+msgstr ""
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Flow actions"
+msgstr ""
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Windsurf: the cached plan has no quota figures"
+msgstr ""
+
+#: backend/aiusage/normalize/windsurf.py
+msgid ""
+"Read from Windsurf's local cache, last written %1. It only updates while "
+"Windsurf is running."
+msgstr ""
+
+#: backend/aiusage/normalize/windsurf.py
+msgid ""
+"Read from Windsurf's local cache. It only updates while Windsurf is running."
 msgstr ""
 
 #: backend/aiusage/normalize/zai.py
@@ -2310,6 +2621,76 @@ msgstr ""
 msgid "Z.AI tools: %1%"
 msgstr ""
 
+#: backend/aiusage/normalize/zed.py
+msgid "Zed (untested): the editor login can only be read on macOS"
+msgstr ""
+
+#: backend/aiusage/normalize/zed.py
+msgid "Zed (untested): sign in to the Zed editor first"
+msgstr ""
+
+#: backend/aiusage/normalize/zed.py
+msgid "Zed (untested): %1"
+msgstr ""
+
+#: backend/aiusage/normalize/zed.py
+msgid "Edit predictions"
+msgstr ""
+
+#: backend/aiusage/normalize/zed.py
+msgid "Unlimited"
+msgstr ""
+
+#: backend/aiusage/normalize/zed.py
+msgid "Zed (untested): no usage figures in the account response"
+msgstr ""
+
+#: backend/aiusage/normalize/zed.py
+msgid "Overdue invoices on this account — check your Zed billing page."
+msgstr ""
+
+#: backend/aiusage/normalize/zed.py
+msgid ""
+"Read with the Zed editor's own login from the macOS Keychain. Untested "
+"against a live account."
+msgstr ""
+
+#: backend/aiusage/providers/antigravity.py
+msgid "antigravity-usage"
+msgstr ""
+
+#: backend/aiusage/providers/antigravity.py
+msgid "The antigravity-usage CLI"
+msgstr ""
+
+#: backend/aiusage/providers/antigravity.py
+msgid "IDE language server"
+msgstr ""
+
+#: backend/aiusage/providers/antigravity.py
+msgid "The local server a running Antigravity IDE or extension exposes"
+msgstr ""
+
+#: backend/aiusage/providers/antigravity.py
+msgid "agy session"
+msgstr ""
+
+#: backend/aiusage/providers/antigravity.py
+msgid "The agy CLI's own /usage report"
+msgstr ""
+
+#: backend/aiusage/providers/antigravity.py
+msgid "The antigravity-usage CLI did not answer"
+msgstr ""
+
+#: backend/aiusage/providers/antigravity.py
+msgid "Antigravity language server not reachable - open the IDE"
+msgstr ""
+
+#: backend/aiusage/providers/antigravity.py
+msgid "agy did not answer - run agy once"
+msgstr ""
+
 #: backend/aiusage/providers/antigravity.py
 msgid "Antigravity language server found but could not connect to API"
 msgstr ""
@@ -2322,6 +2703,30 @@ msgstr ""
 
 #: backend/aiusage/providers/antigravity.py
 msgid "Antigravity is not running. Please open your IDE."
+msgstr ""
+
+#: backend/aiusage/providers/copilot.py
+msgid "Access token"
+msgstr ""
+
+#: backend/aiusage/providers/copilot.py
+msgid "A token from settings, $GITHUB_TOKEN or $GH_TOKEN"
+msgstr ""
+
+#: backend/aiusage/providers/copilot.py
+msgid "Copilot editor login"
+msgstr ""
+
+#: backend/aiusage/providers/copilot.py
+msgid "The login your editor's Copilot plugin stored"
+msgstr ""
+
+#: backend/aiusage/providers/copilot.py
+msgid "GitHub CLI"
+msgstr ""
+
+#: backend/aiusage/providers/copilot.py
+msgid "The token `gh auth token` prints"
 msgstr ""
 
 #: backend/aiusage/providers/copilot.py
@@ -2338,6 +2743,22 @@ msgstr ""
 
 #: backend/aiusage/providers/copilot.py
 msgid "GitHub Copilot invalid JSON"
+msgstr ""
+
+#: backend/aiusage/providers/cursor.py
+msgid "cursor-agent"
+msgstr ""
+
+#: backend/aiusage/providers/cursor.py
+msgid "The login cursor-agent keeps"
+msgstr ""
+
+#: backend/aiusage/providers/cursor.py
+msgid "Cursor app"
+msgstr ""
+
+#: backend/aiusage/providers/cursor.py
+msgid "The Cursor editor's local session database"
 msgstr ""
 
 #: backend/aiusage/providers/cursor.py
@@ -2374,6 +2795,18 @@ msgstr ""
 
 #: backend/aiusage/providers/grok.py
 msgid "Billing HTTP %1"
+msgstr ""
+
+#: backend/aiusage/providers/kilo.py
+msgid "A key from settings or $KILO_API_KEY"
+msgstr ""
+
+#: backend/aiusage/providers/kilo.py
+msgid "Kilo CLI"
+msgstr ""
+
+#: backend/aiusage/providers/kilo.py
+msgid "The login `kilo auth login` stored"
 msgstr ""
 
 #: backend/aiusage/providers/kimi_code.py
@@ -2425,6 +2858,22 @@ msgid "kiro-cli login rejected — run kiro-cli once to refresh it"
 msgstr ""
 
 #: backend/aiusage/providers/kiro.py
+msgid "kiro-cli"
+msgstr ""
+
+#: backend/aiusage/providers/kiro.py
+msgid "The kiro-cli login, read live"
+msgstr ""
+
+#: backend/aiusage/providers/kiro.py
+msgid "Kiro IDE"
+msgstr ""
+
+#: backend/aiusage/providers/kiro.py
+msgid "The usage snapshot the IDE caches"
+msgstr ""
+
+#: backend/aiusage/providers/kiro.py
 msgid "No Kiro state found — sign in to Kiro IDE or kiro-cli once"
 msgstr ""
 
@@ -2466,6 +2915,18 @@ msgstr ""
 
 #: backend/aiusage/providers/moonshot.py
 msgid "Kimi unexpected response"
+msgstr ""
+
+#: backend/aiusage/providers/ollama.py
+msgid "A key from settings or $OLLAMA_API_KEY"
+msgstr ""
+
+#: backend/aiusage/providers/ollama.py
+msgid "OpenCode login"
+msgstr ""
+
+#: backend/aiusage/providers/ollama.py
+msgid "The ollama-cloud key OpenCode stored"
 msgstr ""
 
 #: backend/aiusage/providers/ollama.py
@@ -2518,462 +2979,4 @@ msgstr ""
 
 #: backend/aiusage/providers/zai.py
 msgid "Z.AI unexpected response"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Open a JetBrains IDE signed in to JetBrains AI once so it records your quota."
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "JetBrains AI: no IDE quota file found"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "JetBrains AI: %1"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Top-up credits: %1"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Top-up credits"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Read from the IDE's own quota file. No key or network request needed; it updates while an IDE is running."
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Open Windsurf and sign in once so it caches your plan."
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Windsurf: no local data found"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Windsurf: %1"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Daily quota"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Weekly quota"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Flow actions"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Windsurf: the cached plan has no quota figures"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Read from Windsurf's local cache, last written %1. It only updates while Windsurf is running."
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Read from Windsurf's local cache. It only updates while Windsurf is running."
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Kilo: no API key or CLI login found"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Kilo: %1"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "%1 (incl. %2 bonus)"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Kilo Pass"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Credit balance"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Read with your Kilo CLI login."
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Read with your Kilo API key."
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "CodeRabbit: CLI not found"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "CodeRabbit: %1"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "reviews this period"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Your reviews"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Your reviews: %1"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Usage billing"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Read by running the CodeRabbit CLI's own usage report. CodeRabbit publishes a count, not a quota."
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Zed (untested): the editor login can only be read on macOS"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Zed (untested): sign in to the Zed editor first"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Zed (untested): %1"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Edit predictions"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Unlimited"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Zed (untested): no usage figures in the account response"
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Overdue invoices on this account — check your Zed billing page."
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Read with the Zed editor's own login from the macOS Keychain. Untested against a live account."
-msgstr ""
-
-#: backend/aiusage/normalize/*.py
-msgid "Pi: no recorded token usage yet. Run a Pi or OMP session."
-msgstr ""
-
-#: backend/aiusage/normalize/openrouter.py
-msgid "Balance"
-msgstr ""
-
-#: backend/aiusage/normalize/openrouter.py
-msgid "This week"
-msgstr ""
-
-#: backend/aiusage/normalize/openrouter.py
-msgid "This month"
-msgstr ""
-
-#: backend/aiusage/normalize/openrouter.py
-msgid "Key spend"
-msgstr ""
-
-#: ui/StatsSection.qml
-msgid ""
-"No Pi or OMP sessions yet.\n"
-"Run Pi or OMP and the token usage in its session files will appear here."
-msgstr ""
-
-#: provider sources
-msgid "…"
-msgstr ""
-
-#: provider sources
-msgid "User"
-msgstr ""
-
-#: provider sources
-msgid "Credits"
-msgstr ""
-
-#: provider sources
-msgid "%1 / %2"
-msgstr ""
-
-#: provider sources
-msgid "Messages"
-msgstr ""
-
-#: provider sources
-msgid "antigravity-usage"
-msgstr ""
-
-#: provider sources
-msgid "The antigravity-usage CLI"
-msgstr ""
-
-#: provider sources
-msgid "IDE language server"
-msgstr ""
-
-#: provider sources
-msgid "The local server a running Antigravity IDE or extension exposes"
-msgstr ""
-
-#: provider sources
-msgid "agy session"
-msgstr ""
-
-#: provider sources
-msgid "The agy CLI's own /usage report"
-msgstr ""
-
-#: provider sources
-msgid "The antigravity-usage CLI did not answer"
-msgstr ""
-
-#: provider sources
-msgid "Antigravity language server not reachable - open the IDE"
-msgstr ""
-
-#: provider sources
-msgid "agy did not answer - run agy once"
-msgstr ""
-
-#: provider sources
-msgid "Access token"
-msgstr ""
-
-#: provider sources
-msgid "A token from settings, $GITHUB_TOKEN or $GH_TOKEN"
-msgstr ""
-
-#: provider sources
-msgid "Copilot editor login"
-msgstr ""
-
-#: provider sources
-msgid "The login your editor's Copilot plugin stored"
-msgstr ""
-
-#: provider sources
-msgid "GitHub CLI"
-msgstr ""
-
-#: provider sources
-msgid "The token `gh auth token` prints"
-msgstr ""
-
-#: provider sources
-msgid "cursor-agent"
-msgstr ""
-
-#: provider sources
-msgid "The login cursor-agent keeps"
-msgstr ""
-
-#: provider sources
-msgid "Cursor app"
-msgstr ""
-
-#: provider sources
-msgid "The Cursor editor's local session database"
-msgstr ""
-
-#: provider sources
-msgid "A key from settings or $KILO_API_KEY"
-msgstr ""
-
-#: provider sources
-msgid "Kilo CLI"
-msgstr ""
-
-#: provider sources
-msgid "The login `kilo auth login` stored"
-msgstr ""
-
-#: provider sources
-msgid "kiro-cli"
-msgstr ""
-
-#: provider sources
-msgid "The kiro-cli login, read live"
-msgstr ""
-
-#: provider sources
-msgid "Kiro IDE"
-msgstr ""
-
-#: provider sources
-msgid "The usage snapshot the IDE caches"
-msgstr ""
-
-#: provider sources
-msgid "A key from settings or $OLLAMA_API_KEY"
-msgstr ""
-
-#: provider sources
-msgid "OpenCode login"
-msgstr ""
-
-#: provider sources
-msgid "The ollama-cloud key OpenCode stored"
-msgstr ""
-
-#: provider sources
-msgid "Using %1"
-msgstr ""
-
-#: provider sources
-msgid "%1 is not working"
-msgstr ""
-
-#: provider sources
-msgid "Not set up"
-msgstr ""
-
-#: provider sources
-msgid "Working"
-msgstr ""
-
-#: provider sources
-msgid "Waiting for data"
-msgstr ""
-
-#: provider sources
-msgid "Remove provider"
-msgstr ""
-
-#: provider sources
-msgid "Add provider"
-msgstr ""
-
-#: provider sources
-msgid "Keys are stored in %1; leave one blank to use env vars or an existing CLI login."
-msgstr ""
-
-#: provider sources
-msgid "No providers yet. Use Add provider, or Detect installed providers to switch on what is installed."
-msgstr ""
-
-#: provider sources
-msgid "A key is set."
-msgstr ""
-
-#: provider sources
-msgid "Optional where a login or an environment variable already covers it."
-msgstr ""
-
-#: provider sources
-msgid "Plan quota"
-msgstr ""
-
-#: provider sources
-msgid "Plan windows"
-msgstr ""
-
-#: provider sources
-msgid "Search providers"
-msgstr ""
-
-#: provider sources
-msgid "Every provider is already on."
-msgstr ""
-
-#: provider sources
-msgid "No provider matches “%1”."
-msgstr ""
-
-#: provider sources
-msgid "Network"
-msgstr ""
-
-#: provider sources
-msgid "Applies on the next refresh, without restarting anything. Requests to this machine never go through it. An environment proxy (HTTPS_PROXY) takes precedence."
-msgstr ""
-
-#: provider sources
-msgid "Proxy"
-msgstr ""
-
-#: provider sources
-msgid "System uses the environment as it is; Off ignores any proxy."
-msgstr ""
-
-#: provider sources
-msgid "System"
-msgstr ""
-
-#: provider sources
-msgid "Host"
-msgstr ""
-
-#: provider sources
-msgid "Port"
-msgstr ""
-
-#: provider sources
-msgid "Files"
-msgstr ""
-
-#: provider sources
-msgid "API keys are stored in this file as plain text. Keep it private, and leave a key blank to use an env var or an existing CLI login instead."
-msgstr ""
-
-#: provider sources
-msgid "Configuration file"
-msgstr ""
-
-#: provider sources
-msgid "IDE"
-msgstr ""
-
-#: provider sources
-msgid "Server"
-msgstr ""
-
-#: provider sources
-msgid "Browser"
-msgstr ""
-
-#: provider sources
-msgid "Local files"
-msgstr ""
-
-#: provider sources
-msgid "Not working"
-msgstr ""
-
-#: provider sources
-msgid "Ready"
-msgstr ""
-
-#: provider sources
-msgid "Not found"
-msgstr ""
-
-#: provider sources
-msgid "Authentication"
-msgstr ""
-
-#: provider sources
-msgid "Choose where this provider is read from. Auto uses the first source that works."
-msgstr ""
-
-#: provider sources
-msgid "Everything this provider is read from. All of it is used."
-msgstr ""
-
-#: provider sources
-msgid "The first source below that works"
 msgstr ""

@@ -336,7 +336,7 @@ Item {
                 id: id,
                 label: FeatureTabs.label(id, root.i18n),
                 accent: FeatureTabs.accent(id) || "#38bdf8",
-                icon: "",
+                icon: "tab-" + id + ".svg",
                 feature: true
             });
         }
