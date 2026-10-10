@@ -450,7 +450,7 @@ ColumnLayout {
                     title: page.shell.i18n("Popup glass")
 
                     // Light or dark popup (AppState.light, ui/js/Tone.js). Not on
-                    // Plasma, where the popup follows the Plasma theme.
+                    // Plasma, where the popup follows the Plasma theme's dialog.
                     StudioRow {
                         // TRANSLATORS: light or dark look of the popup
                         label: page.shell.i18n("Theme")
@@ -464,15 +464,13 @@ ColumnLayout {
                         }
                     }
 
-                    // Tint, glass and frost are this popup's own fill. With
-                    // Plasma's frame as the background a fill shows as an
-                    // inner border (see PopupBackground.qml), so on Plasma
-                    // they appear once Blur is off and the widget draws its
-                    // own glass (AppState.ownGlass).
+                    // The tint is laid over the popup on every host, Plasma
+                    // included. Glass opacity and frost are this popup's own
+                    // fill; on Plasma the frame is the background, so only
+                    // those two are not offered there.
                     StudioRow {
                         label: page.shell.i18n("Popup tint")
                         dot: page.shell.settings.popupBgColor || "#64748b"
-                        visible: page.shell.ownGlass
                         Row {
                             spacing: 12
                             // A few presets; any #rrggbb can be typed in the field.
@@ -496,7 +494,7 @@ ColumnLayout {
                         label: page.shell.i18n("Glass opacity")
                         desc: page.shell.i18n("How solid the popup's glass is: lower lets the desktop (and the blur, if on) show through.")
                         dot: Tone.c(palette, "#cbd5e1")
-                        visible: page.shell.ownGlass
+                        visible: !page.shell.backgroundStyleAvailable
                         StudioPercent {
                             from: 0.2
                             value: page.shell.settings.popupGlassOpacity === undefined ? 1 : Number(page.shell.settings.popupGlassOpacity)
@@ -507,7 +505,6 @@ ColumnLayout {
                         label: page.shell.i18n("Tint strength")
                         desc: page.shell.i18n("How much of the tint colour is laid over the glass.")
                         dot: Tone.c(palette, "#94a3b8")
-                        visible: page.shell.ownGlass
                         StudioPercent {
                             value: Number(page.shell.settings.popupBgOpacity || 0)
                             onChosen: v => page.shell.setSetting2("popupBgOpacity", v)
@@ -517,7 +514,7 @@ ColumnLayout {
                         label: page.shell.i18n("Frost")
                         desc: page.shell.i18n("A milky, grainy frosted look over the glass; keeps text readable over a busy desktop. Pairs well with Blur.")
                         dot: Tone.c(palette, "#e2e8f0")
-                        visible: page.shell.ownGlass
+                        visible: !page.shell.backgroundStyleAvailable
                         StudioPercent {
                             value: Number(page.shell.settings.popupFrost || 0)
                             onChosen: v => page.shell.setSetting2("popupFrost", v)
@@ -526,23 +523,22 @@ ColumnLayout {
                     StudioRow {
                         // TRANSLATORS: the compositor (KWin or Hyprland) blurs what is behind the popup
                         label: page.shell.i18n("Blur")
-                        desc: page.shell.systemBlur === true ? page.shell.i18n("macOS blurs the desktop behind the popup, in the popup's light or dark.") : page.shell.compositorGlassAvailable === true ? page.shell.i18n("Hyprland blurs the desktop behind the popup; the widget adds the layer rule itself.") : page.shell.backgroundStyleApplies ? page.shell.i18n("On: Plasma draws the widget's frame and KWin blurs the desktop behind it. Off: no frame, no blur; the widget draws its own glass, so Popup tint, Glass opacity and Frost apply.") : page.shell.backgroundStyleAvailable ? page.shell.i18n("In a panel, Plasma draws this popup with your Plasma theme: KWin blurs it when the Blur desktop effect is on and the theme's dialog background is translucent.") : page.shell.i18n("This app has no blur of its own; it is drawn by Hyprland or Plasma.")
+                        desc: page.shell.systemBlur === true ? page.shell.i18n("macOS blurs the desktop behind the popup, in the popup's light or dark.") : page.shell.compositorGlassAvailable === true ? page.shell.i18n("Hyprland blurs the desktop behind the popup; the widget adds the layer rule itself.") : page.shell.backgroundStyleApplies ? page.shell.i18n("KWin blurs the desktop behind the widget.") : page.shell.backgroundStyleAvailable ? page.shell.i18n("In a panel, Plasma draws this popup with your Plasma theme: KWin blurs it when the Blur desktop effect is on and the theme's dialog background is translucent.") : page.shell.i18n("This app has no blur of its own; it is drawn by Hyprland or Plasma.")
                         dot: "#7dd3fc"
                         // Plasma: the widget's background hint, translucent (2,
-                        // which KWin blurs) or none (0: no frame, no blur, the
-                        // widget's own glass). The old standard dialog (1) is
-                        // framed and blurred too, so it reads as on. Only on
-                        // the desktop: a panel popup ignores the hint
-                        // (backgroundStyleApplies).
+                        // which KWin blurs) or the standard flat dialog (1).
+                        // The old "native" choice (0) looked no different, so it
+                        // reads as off here. Only on the desktop: a panel
+                        // popup ignores the hint (backgroundStyleApplies).
                         StudioSwitch {
                             enabled: page.shell.compositorGlassAvailable === true || page.shell.backgroundStyleApplies === true
                             // macOS: always on, nothing to switch (systemBlur).
-                            checked: page.shell.systemBlur === true || (page.shell.compositorGlassAvailable === true ? page.shell.settings.compositorGlass === true : Number(page.shell.settingValue("backgroundHints")) !== 0)
+                            checked: page.shell.systemBlur === true || (page.shell.compositorGlassAvailable === true ? page.shell.settings.compositorGlass === true : Number(page.shell.settingValue("backgroundHints")) === 2)
                             onToggled: on => {
                                 if (page.shell.compositorGlassAvailable === true)
                                     page.shell.setSetting2("compositorGlass", on);
                                 else
-                                    page.shell.setSetting2("backgroundHints", on ? 2 : 0);
+                                    page.shell.setSetting2("backgroundHints", on ? 2 : 1);
                             }
                         }
                     }
@@ -585,7 +581,7 @@ ColumnLayout {
                                 onCommitted: v => page.shell.setSetting2("cardBgColor", v)
                             }
                             StudioPercent {
-                                value: page.shell.settings.cardBgOpacity === undefined ? 0 : Number(page.shell.settings.cardBgOpacity)
+                                value: page.shell.settings.cardBgOpacity === undefined ? 0.1 : Number(page.shell.settings.cardBgOpacity)
                                 onChosen: v => page.shell.setSetting2("cardBgOpacity", v)
                             }
                         }

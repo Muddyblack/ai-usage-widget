@@ -41,7 +41,6 @@ PROVIDER_ICONS = {
     "jetbrains": "jetbrains.svg",
     "windsurf": "windsurf.svg",
     "pi": "pi.svg",
-    "gemini": "gemini.svg",
     "kilo": "kilo.svg",
     "coderabbit": "coderabbit.svg",
     "zed": "zed.svg",

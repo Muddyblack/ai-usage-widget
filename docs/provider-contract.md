@@ -759,14 +759,13 @@ See [Junie provider details](providers.md#junie-cli-untested) for paths and sour
 
 ### Local-file and CLI providers
 
-`jetbrains`, `windsurf`, `pi` and `gemini` read files the other program already wrote and
+`jetbrains`, `windsurf` and `pi` read files the other program already wrote and
 open no socket. `jetbrains` and `windsurf` produce ordinary metered quota rows
 (`details.recordedAt` says when the file was last written, since both only
 update while the program runs). `pi` uses the shared local-activity shape
 (`details.stats`, non-metered period rows, no `historyValues` or
 `chartWindows`) and leaves `costStatus` `unavailable`: Pi records an API-rate
-price even on subscription logins, so it is never presented as spend. `gemini`
-behaves the same way, for the same reason.
+price even on subscription logins, so it is never presented as spend.
 
 `kilo` and `zed` make the vendor's own request with the vendor's own login (or
 an API key for `kilo`); `coderabbit` runs `coderabbit usage` and exposes only a

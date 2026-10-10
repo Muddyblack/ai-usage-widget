@@ -14,7 +14,7 @@ from _support import IsolatedHomeTest
 from aiusage import detect
 from aiusage.http import HttpResult
 from aiusage.normalize import normalize
-from aiusage.providers import coderabbit, gemini, jetbrains, kilo, openrouter, pi, windsurf, zed
+from aiusage.providers import coderabbit, jetbrains, kilo, openrouter, pi, windsurf, zed
 
 NOW = 1790841600
 OPTIONS = ".config/JetBrains/IntelliJIdea2025.3/options/AIAssistantQuotaManager2.xml"
@@ -172,56 +172,6 @@ class PiTest(IsolatedHomeTest):
     def test_no_sessions_is_unavailable(self):
         result = normalized("pi", pi.usage_snapshot())
         self.assertFalse(result["ok"])
-
-
-class GeminiTest(IsolatedHomeTest):
-    def reply(self, id_, **tokens):
-        counts = {"input": 1000, "output": 200, "cached": 400, "thoughts": 50, "tool": 10, "total": 1260}
-        counts.update(tokens)
-        return {"id": id_, "timestamp": "2026-10-01T08:00:00.000Z", "type": "gemini", "content": "SECRET", "tokens": counts, "model": "gemini-test"}
-
-    def chat(self, name, messages, project="demo", session="s1", jsonl=False):
-        header = {"sessionId": session, "startTime": "2026-10-01T08:00:00.000Z", "lastUpdated": "2026-10-01T09:00:00.000Z"}
-        path = f".gemini/tmp/{project}/chats/{name}"
-        if jsonl:
-            return self.write(path, "\n".join(json.dumps(row) for row in [header, *messages]))
-        return self.write(path, json.dumps({**header, "messages": messages}))
-
-    def stats(self):
-        return normalized("gemini", gemini.usage_snapshot())["details"]["stats"]
-
-    def test_counts_replies_once_with_cache_and_reasoning_split_out(self):
-        user = {"id": "u1", "type": "user", "content": "hi", "tokens": {"input": 99999}}
-        self.chat("session-2026-10-01T08-00-aaaa.json", [user, self.reply("a1"), self.reply("a1"), self.reply("a2")])
-        stats = self.stats()
-        # (1000 - 400 cached + 10 tool) input + (200 + 50 thoughts) output + 400 cached, twice.
-        self.assertEqual((stats["totalTokens"], stats["totalCachedTokens"], stats["totalSessions"]), (2520, 800, 1))
-        self.assertEqual(stats["totalCostUSD"], 0)
-        self.assertEqual(stats["topWorkspaces"][0]["name"], "demo")
-        self.assertNotIn("SECRET", json.dumps(normalized("gemini", gemini.usage_snapshot())))
-
-    def test_jsonl_chats_and_the_same_session_in_two_projects(self):
-        self.chat("session-2026-10-01T08-00-bbbb.jsonl", [self.reply("a1")], jsonl=True)
-        self.chat("session-2026-10-01T08-00-bbbb.json", [self.reply("a1")], project="copy")
-        self.assertEqual(self.stats()["totalSessions"], 1)
-
-    def test_hashed_project_folder_has_no_name(self):
-        self.chat("session-2026-10-01T08-00-cccc.json", [self.reply("a1")], project="0" * 64)
-        self.assertEqual(gemini.read_sessions()[0]["directory"], "")
-
-    def test_bad_counts_and_unreadable_files_are_ignored(self):
-        self.chat(
-            "session-2026-10-01T08-00-dddd.json",
-            [
-                self.reply("a1", input=-5, output=True, cached="many", thoughts=0, tool=0),
-                self.reply("a2", input=7, output=0, cached=0, thoughts=0, tool=0),
-            ],
-        )
-        self.write(".gemini/tmp/demo/chats/session-2026-10-01T08-00-eeee.json", "{not json")
-        self.assertEqual(self.stats()["totalTokens"], 7)
-
-    def test_no_sessions_is_unavailable(self):
-        self.assertFalse(normalized("gemini", gemini.usage_snapshot())["ok"])
 
 
 def trpc(credits=None, sub=None):

@@ -48,7 +48,6 @@ The backend constant `AUTO_DETECT_PROVIDERS` is the complete allowlist:
 | `junie` | `junie` executable |
 | `windsurf` | `windsurf` executable, or the Windsurf desktop app |
 | `pi` | `pi` or `omp` executable |
-| `gemini` | `gemini` executable |
 | `kilo` | `kilo` executable |
 | `coderabbit` | `coderabbit` executable |
 

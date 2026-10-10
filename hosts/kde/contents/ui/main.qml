@@ -158,11 +158,11 @@ PlasmoidItem {
             // Over the whole dialog, edge to edge: out past Plasma's own frame
             // padding too, not just this item's margin, or the tint and glass
             // stop short of the frame and read as a second, inner border.
-            anchors.margins: app.ownGlass ? 0 : -20
+            anchors.margins: -20
             // Plasma already draws the popup's blurred card; this adds only
             // the tint and decoration so it stays one layer, not a card in a card.
-            translucent: !app.ownGlass
-            radius: app.ownGlass ? 12 : 0
+            translucent: true
+            radius: 0
             shell: app
         }
 

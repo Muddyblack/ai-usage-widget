@@ -30,7 +30,6 @@ AUTO_DETECT_PROVIDERS = (
     "junie",
     "windsurf",
     "pi",
-    "gemini",
     "kilo",
     "coderabbit",
 )
@@ -52,7 +51,6 @@ _EXECUTABLES = {
     "junie": ("junie",),
     "windsurf": ("windsurf",),
     "pi": ("pi", "omp"),
-    "gemini": ("gemini",),
     "kilo": ("kilo",),
     "coderabbit": ("coderabbit",),
 }

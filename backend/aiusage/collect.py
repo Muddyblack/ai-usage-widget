@@ -25,7 +25,6 @@ from .providers.copilot import get_copilot_usage
 from .providers.copilot_stats import get_copilot_stats
 from .providers.cursor import get_cursor_usage
 from .providers.deepseek import get_deepseek_balance
-from .providers.gemini import usage_snapshot as get_gemini_usage
 from .providers.grok import get_grok_usage
 from .providers.jetbrains import get_jetbrains_usage
 from .providers.junie import usage_snapshot as get_junie_usage
@@ -282,7 +281,6 @@ _SIMPLE = {
     "jetbrains": get_jetbrains_usage,
     "windsurf": get_windsurf_usage,
     "pi": get_pi_usage,
-    "gemini": get_gemini_usage,
     "kilo": get_kilo_usage,
     "coderabbit": get_coderabbit_usage,
     "zed": get_zed_usage,

@@ -34,7 +34,6 @@ Switch between tabs in the popup for each service:
 [*] [b]JetBrains AI[/b] — Monthly AI credits, top-up credits and refill date, read from the IDE's own quota file; no key or network
 [*] [b]Windsurf[/b] — Daily and weekly quota from the editor's local cache; no key or network
 [*] [b]Pi / OMP[/b] — Local token activity and model breakdowns from the agents' session files
-[*] [b]Gemini CLI[/b] — Local token activity and model breakdowns from the CLI's chat files
 [*] [b]Kilo[/b] — Prepaid credit balance and Kilo Pass usage via an API key or the kilo CLI login
 [*] [b]CodeRabbit[/b] — Review count and reset date from the CodeRabbit CLI
 [*] [b]Zed[/b] [i](untested, macOS)[/i] — Plan and edit-prediction usage via the editor's Keychain login
