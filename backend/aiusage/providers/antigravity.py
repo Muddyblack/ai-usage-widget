@@ -14,6 +14,7 @@ says what is missing rather than claiming Antigravity is not running.
 import datetime
 import json
 import os
+import re
 import shutil
 import ssl
 import subprocess
@@ -452,7 +453,53 @@ SOURCES = (
 )
 
 
+_REMOTE_TAIL = 128 * 1024
+_REMOTE_EVENTS = re.compile(r"RemoteControlEnabled value: (true|false)|Connection status: (Connected)|(Connection loop exited|Connection ended)")
+
+
+def _remote_log_paths():
+    return [os.path.join(base, "Antigravity", "logs", "language_server.log") for base in paths.electron_app_data_dirs()]
+
+
+def remote_control(log_paths=None):
+    """Whether Antigravity 2's Remote Control is on and linked, from the tail of
+    its language-server log; None when the log is not there.
+
+    The log is read from the last 128 KiB only, so a refresh costs one small
+    read. The device name and the other devices are held by Google and are not
+    on disk, so they are not reported."""
+    for path in log_paths or _remote_log_paths():
+        try:
+            size = os.path.getsize(path)
+            with open(path, "rb") as f:
+                f.seek(max(0, size - _REMOTE_TAIL))
+                text = f.read().decode("utf-8", "replace")
+        except OSError:
+            continue
+        enabled, connected, seen = False, False, False
+        for match in _REMOTE_EVENTS.finditer(text):
+            seen = True
+            if match.group(1):
+                enabled = match.group(1) == "true"
+                connected = connected and enabled
+            elif match.group(2):
+                connected = True
+            else:
+                connected = False
+        return {"enabled": enabled, "connected": enabled and connected} if seen else None
+    return None
+
+
 def get_antigravity_usage():
+    usage = _get_antigravity_usage()
+    if isinstance(usage, dict) and usage and "error" not in usage:
+        remote = remote_control()
+        if remote is not None:
+            usage = {**usage, "remote": remote}
+    return usage
+
+
+def _get_antigravity_usage():
     order = sources.candidates("antigravity", ("aiu", "server", "agy"))
     found_any_process = False
     for source in order:

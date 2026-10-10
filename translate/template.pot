@@ -944,7 +944,10 @@ msgid ""
 msgstr ""
 
 #: ui/SettingsPage.qml
-msgid "KWin blurs the desktop behind the widget."
+msgid ""
+"On: Plasma draws the widget's frame and KWin blurs the desktop behind it. "
+"Off: no frame, no blur; the widget draws its own glass, so Popup tint, Glass "
+"opacity and Frost apply."
 msgstr ""
 
 #: ui/SettingsPage.qml
@@ -1739,6 +1742,24 @@ msgid "⚠ Quota exhausted"
 msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
+msgid "Remote"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid ""
+"Remote Control is on and this device is online. Manage it at "
+"antigravity.google.com"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote offline"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control is on, but this device is not connected right now"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
 msgid "Antigravity not configured"
 msgstr ""
 
@@ -1768,6 +1789,18 @@ msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
 msgid "Model Quotas"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Online"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Offline"
 msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py

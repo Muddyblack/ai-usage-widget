@@ -464,13 +464,13 @@ ColumnLayout {
                         }
                     }
 
-                    // Tint and glass are this popup's own fill. On Plasma the
-                    // frame is the background and a fill shows as an inner
-                    // border (see PopupBackground.qml), so they are not offered.
+                    // The tint is laid over the popup on every host, Plasma
+                    // included. Glass opacity and frost are this popup's own
+                    // fill; on Plasma the frame is the background, so only
+                    // those two are not offered there.
                     StudioRow {
                         label: page.shell.i18n("Popup tint")
                         dot: page.shell.settings.popupBgColor || "#64748b"
-                        visible: !page.shell.backgroundStyleAvailable
                         Row {
                             spacing: 12
                             // A few presets; any #rrggbb can be typed in the field.
@@ -505,7 +505,6 @@ ColumnLayout {
                         label: page.shell.i18n("Tint strength")
                         desc: page.shell.i18n("How much of the tint colour is laid over the glass.")
                         dot: Tone.c(palette, "#94a3b8")
-                        visible: !page.shell.backgroundStyleAvailable
                         StudioPercent {
                             value: Number(page.shell.settings.popupBgOpacity || 0)
                             onChosen: v => page.shell.setSetting2("popupBgOpacity", v)
@@ -582,7 +581,7 @@ ColumnLayout {
                                 onCommitted: v => page.shell.setSetting2("cardBgColor", v)
                             }
                             StudioPercent {
-                                value: page.shell.settings.cardBgOpacity === undefined ? 0.9 : Number(page.shell.settings.cardBgOpacity)
+                                value: page.shell.settings.cardBgOpacity === undefined ? 0.1 : Number(page.shell.settings.cardBgOpacity)
                                 onChosen: v => page.shell.setSetting2("cardBgOpacity", v)
                             }
                         }

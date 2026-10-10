@@ -495,7 +495,7 @@ Item {
     // Fill of the chart card.
     readonly property color cardColor: {
         var c = Qt.color(root.settings.cardBgColor || "#100a1a");
-        var a = root.settings.cardBgOpacity === undefined ? 0.9 : Number(root.settings.cardBgOpacity);
+        var a = root.settings.cardBgOpacity === undefined ? 0.1 : Number(root.settings.cardBgOpacity);
         // Light under the light theme, like every other neutral (Tone.js).
         return Tone.c({
             window: root.windowColor

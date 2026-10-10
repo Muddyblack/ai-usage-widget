@@ -994,8 +994,14 @@ msgstr ""
 "règle de calque."
 
 #: ui/SettingsPage.qml
-msgid "KWin blurs the desktop behind the widget."
-msgstr "KWin floute le bureau derrière le widget."
+msgid ""
+"On: Plasma draws the widget's frame and KWin blurs the desktop behind it. "
+"Off: no frame, no blur; the widget draws its own glass, so Popup tint, Glass "
+"opacity and Frost apply."
+msgstr ""
+"Activé : Plasma dessine le cadre du widget et KWin floute le bureau "
+"derrière. Désactivé : ni cadre ni flou ; le widget dessine son propre verre, "
+"donc la teinte de la fenêtre, l’opacité du verre et le givre s’appliquent."
 
 #: ui/SettingsPage.qml
 msgid ""
@@ -1861,6 +1867,28 @@ msgid "⚠ Quota exhausted"
 msgstr "⚠ Quota épuisé"
 
 #: backend/aiusage/normalize/antigravity.py
+msgid "Remote"
+msgstr "À distance"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid ""
+"Remote Control is on and this device is online. Manage it at "
+"antigravity.google.com"
+msgstr ""
+"Le contrôle à distance est activé et cet appareil est en ligne. Gérez-le sur "
+"antigravity.google.com"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote offline"
+msgstr "À distance hors ligne"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control is on, but this device is not connected right now"
+msgstr ""
+"Le contrôle à distance est activé, mais cet appareil n’est pas connecté pour "
+"le moment"
+
+#: backend/aiusage/normalize/antigravity.py
 msgid "Antigravity not configured"
 msgstr "Antigravity n'est pas configuré"
 
@@ -1891,6 +1919,18 @@ msgstr "Quota global"
 #: backend/aiusage/normalize/antigravity.py
 msgid "Model Quotas"
 msgstr "Quotas par modèle"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control"
+msgstr "Contrôle à distance"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Online"
+msgstr "En ligne"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Offline"
+msgstr "Hors ligne"
 
 #: backend/aiusage/normalize/antigravity.py
 msgid "Average quota usage across Gemini models"

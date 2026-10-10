@@ -5,6 +5,8 @@ from ..contract import (
     chip,
     compact_tokens,
     epoch_of,
+    fact,
+    facts_section,
     flat_window,
     jround,
     monthly_window,
@@ -45,6 +47,14 @@ def _model_tooltip(m):
 
 def _avg(values):
     return (sum(values) / len(values)) if values else 0
+
+
+def _remote_chip(remote):
+    if not remote or not remote.get("enabled"):
+        return None
+    if remote.get("connected"):
+        return chip(tr("Remote"), "good", tr("Remote Control is on and this device is online. Manage it at antigravity.google.com"))
+    return chip(tr("Remote offline"), "warn", tr("Remote Control is on, but this device is not connected right now"))
 
 
 def normalize_antigravity(raw):
@@ -111,9 +121,13 @@ def normalize_antigravity(raw):
 
     r = provider_base("antigravity", "Antigravity", "#4285f4", now)
     r["summary"] = {"pct": pct, "text": f"{jround(pct)}%", "detail": plan, "hasChart": True}
+    remote = res.get("remote") if isinstance(res.get("remote"), dict) else None
     r["account"] = account(
         res.get("email") or tr("Gemini Code Assist"),
-        [chip(plan, "muted" if str(plan).lower() == "free" else "good", color="" if str(plan).lower() == "free" else "#34a853")] if plan else [],
+        [
+            chip(plan, "muted" if str(plan).lower() == "free" else "good", color="" if str(plan).lower() == "free" else "#34a853") if plan else None,
+            _remote_chip(remote),
+        ],
     )
     # A family holding several models gets a header over per-model bars (the
     # IDE's "Gemini Models" / "Claude & GPT Models" grouping); a family of one
@@ -166,6 +180,9 @@ def normalize_antigravity(raw):
             title=tr("Model Quotas"),
         )
         if per_model
+        else None,
+        facts_section([fact(tr("Remote Control"), tr("Online") if remote["connected"] else tr("Offline"), "good" if remote["connected"] else "warn")])
+        if remote and remote.get("enabled")
         else None,
         note_section(tr("Average quota usage across Gemini models")) if False else None,
     )

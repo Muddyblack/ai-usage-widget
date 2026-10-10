@@ -103,6 +103,10 @@ class AntigravityCacheTest(unittest.TestCase):
         self.scan = mock.patch.object(antigravity, "_scan_processes", return_value=[("1", "", "")])
         self.scan.start()
         self.addCleanup(self.scan.stop)
+        # The real Remote Control log of whoever runs the tests must not leak in.
+        remote = mock.patch.object(antigravity, "remote_control", return_value=None)
+        remote.start()
+        self.addCleanup(remote.stop)
 
     @staticmethod
     def _which(name):
