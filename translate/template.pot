@@ -272,6 +272,10 @@ msgid "Stats"
 msgstr ""
 
 #: ui/PopupContent.qml
+msgid "Remote"
+msgstr ""
+
+#: ui/PopupContent.qml
 #, no-javascript-format
 msgid "Used: %1%"
 msgstr ""
@@ -486,6 +490,10 @@ msgstr ""
 
 #: ui/ProviderSections.qml
 msgid "resets in %1"
+msgstr ""
+
+#: ui/RemotePage.qml
+msgid "working"
 msgstr ""
 
 #: ui/SessionsPage.qml
@@ -1742,21 +1750,39 @@ msgid "⚠ Quota exhausted"
 msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
-msgid "Remote"
+msgid "Remote Control is online"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "This device can be reached from your other devices."
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control is offline"
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control is on, but this device is not connected right now."
+msgstr ""
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control is off"
 msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
 msgid ""
-"Remote Control is on and this device is online. Manage it at "
-"antigravity.google.com"
+"Turn it on in Antigravity's settings to work with local agents from another "
+"device."
 msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
-msgid "Remote offline"
+msgid "Open antigravity.google.com ↗"
 msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
-msgid "Remote Control is on, but this device is not connected right now"
+msgid ""
+"The device name and your other devices are kept by Google, so they are only "
+"listed on that page."
 msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
@@ -1789,18 +1815,6 @@ msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
 msgid "Model Quotas"
-msgstr ""
-
-#: backend/aiusage/normalize/antigravity.py
-msgid "Remote Control"
-msgstr ""
-
-#: backend/aiusage/normalize/antigravity.py
-msgid "Online"
-msgstr ""
-
-#: backend/aiusage/normalize/antigravity.py
-msgid "Offline"
 msgstr ""
 
 #: backend/aiusage/normalize/antigravity.py
@@ -1893,6 +1907,28 @@ msgstr ""
 
 #: backend/aiusage/normalize/claude.py
 msgid "Extended thinking (dream mode): OFF"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "%1 session open to other devices"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "%1 sessions open to other devices"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid ""
+"Started with /remote-control in Claude Code. Continue them from your phone "
+"or the browser."
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "Open claude.ai/code ↗"
+msgstr ""
+
+#: backend/aiusage/normalize/claude.py
+msgid "Claude Code session"
 msgstr ""
 
 #: backend/aiusage/normalize/claude.py

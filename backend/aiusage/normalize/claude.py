@@ -7,6 +7,7 @@ from ..contract import (
     provider_base,
     provider_error,
     quota_window,
+    remote_info,
     rolling_windows,
     unavailable_window,
     window_value,
@@ -107,6 +108,31 @@ def claude_windows(u):
         sd = u["seven_day"]
         weekly = window_value(sd.get("utilization"), sd.get("resets_at"), True)
     return {"session": session, "weekly": weekly, "scoped": scoped}
+
+
+def _remote(sessions):
+    """The Remote tab: the Claude Code sessions open to other devices, or None
+    when there are none (the tab is then not shown)."""
+    rows = [s for s in sessions or [] if isinstance(s, dict) and s.get("url")]
+    if not rows:
+        return None
+    return remote_info(
+        "online",
+        tr("%1 session open to other devices", len(rows)) if len(rows) == 1 else tr("%1 sessions open to other devices", len(rows)),
+        tr("Started with /remote-control in Claude Code. Continue them from your phone or the browser."),
+        "https://claude.ai/code",
+        tr("Open claude.ai/code ↗"),
+        "",
+        [
+            {
+                "name": s.get("name") or s.get("folder") or tr("Claude Code session"),
+                "detail": s.get("folder") or "",
+                "state": "busy" if s.get("status") == "busy" else "idle",
+                "url": s["url"],
+            }
+            for s in rows
+        ],
+    )
 
 
 def normalize_claude(raw):
@@ -218,6 +244,7 @@ def normalize_claude(raw):
         extra_tokens = num(extra.get("token_limit"))
     r["details"] = {
         **base_details,
+        "remote": _remote(inp.get("remote")),
         "session": {**w["session"], "tokensUsed": s_tokens, "tokenLimit": s_limit},
         "weekly": {**w["weekly"], "tokensUsed": w_tokens, "tokenLimit": w_limit},
         "scopedWeekly": [

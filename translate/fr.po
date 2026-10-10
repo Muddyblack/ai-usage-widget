@@ -275,6 +275,10 @@ msgid "Stats"
 msgstr "Statistiques"
 
 #: ui/PopupContent.qml
+msgid "Remote"
+msgstr "À distance"
+
+#: ui/PopupContent.qml
 #, no-javascript-format
 msgid "Used: %1%"
 msgstr "Utilisé : %1 %"
@@ -509,6 +513,10 @@ msgstr "· réinitialisation…"
 #: ui/ProviderSections.qml
 msgid "resets in %1"
 msgstr "réinitialisé dans %1"
+
+#: ui/RemotePage.qml
+msgid "working"
+msgstr "en cours"
 
 #: ui/SessionsPage.qml
 msgid "All sources"
@@ -1867,26 +1875,46 @@ msgid "⚠ Quota exhausted"
 msgstr "⚠ Quota épuisé"
 
 #: backend/aiusage/normalize/antigravity.py
-msgid "Remote"
-msgstr "À distance"
+msgid "Remote Control is online"
+msgstr "Le contrôle à distance est en ligne"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "This device can be reached from your other devices."
+msgstr "Cet appareil est joignable depuis vos autres appareils."
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control is offline"
+msgstr "Le contrôle à distance est hors ligne"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control is on, but this device is not connected right now."
+msgstr ""
+"Le contrôle à distance est activé, mais cet appareil n’est pas connecté pour "
+"le moment."
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control is off"
+msgstr "Le contrôle à distance est désactivé"
 
 #: backend/aiusage/normalize/antigravity.py
 msgid ""
-"Remote Control is on and this device is online. Manage it at "
-"antigravity.google.com"
+"Turn it on in Antigravity's settings to work with local agents from another "
+"device."
 msgstr ""
-"Le contrôle à distance est activé et cet appareil est en ligne. Gérez-le sur "
-"antigravity.google.com"
+"Activez-le dans les paramètres d’Antigravity pour travailler avec des agents "
+"locaux depuis un autre appareil."
 
 #: backend/aiusage/normalize/antigravity.py
-msgid "Remote offline"
-msgstr "À distance hors ligne"
+msgid "Open antigravity.google.com ↗"
+msgstr "Ouvrir antigravity.google.com ↗"
 
 #: backend/aiusage/normalize/antigravity.py
-msgid "Remote Control is on, but this device is not connected right now"
+msgid ""
+"The device name and your other devices are kept by Google, so they are only "
+"listed on that page."
 msgstr ""
-"Le contrôle à distance est activé, mais cet appareil n’est pas connecté pour "
-"le moment"
+"Le nom de l’appareil et vos autres appareils sont conservés par Google ; ils "
+"ne sont listés que sur cette page."
 
 #: backend/aiusage/normalize/antigravity.py
 msgid "Antigravity not configured"
@@ -1919,18 +1947,6 @@ msgstr "Quota global"
 #: backend/aiusage/normalize/antigravity.py
 msgid "Model Quotas"
 msgstr "Quotas par modèle"
-
-#: backend/aiusage/normalize/antigravity.py
-msgid "Remote Control"
-msgstr "Contrôle à distance"
-
-#: backend/aiusage/normalize/antigravity.py
-msgid "Online"
-msgstr "En ligne"
-
-#: backend/aiusage/normalize/antigravity.py
-msgid "Offline"
-msgstr "Hors ligne"
 
 #: backend/aiusage/normalize/antigravity.py
 msgid "Average quota usage across Gemini models"
@@ -2025,6 +2041,30 @@ msgstr ""
 #: backend/aiusage/normalize/claude.py
 msgid "Extended thinking (dream mode): OFF"
 msgstr "Réflexion étendue (mode dream) : DÉSACTIVÉE"
+
+#: backend/aiusage/normalize/claude.py
+msgid "%1 session open to other devices"
+msgstr "%1 session ouverte aux autres appareils"
+
+#: backend/aiusage/normalize/claude.py
+msgid "%1 sessions open to other devices"
+msgstr "%1 sessions ouvertes aux autres appareils"
+
+#: backend/aiusage/normalize/claude.py
+msgid ""
+"Started with /remote-control in Claude Code. Continue them from your phone "
+"or the browser."
+msgstr ""
+"Démarrées avec /remote-control dans Claude Code. Reprenez-les depuis votre "
+"téléphone ou le navigateur."
+
+#: backend/aiusage/normalize/claude.py
+msgid "Open claude.ai/code ↗"
+msgstr "Ouvrir claude.ai/code ↗"
+
+#: backend/aiusage/normalize/claude.py
+msgid "Claude Code session"
+msgstr "Session Claude Code"
 
 #: backend/aiusage/normalize/claude.py
 msgid "OAuth missing — API stats only"

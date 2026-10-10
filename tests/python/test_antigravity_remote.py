@@ -35,12 +35,16 @@ class RemoteControlTest(unittest.TestCase):
         self.assertIsNone(self.read("nothing relevant\n"))
         self.assertIsNone(antigravity.remote_control([os.path.join(tempfile.gettempdir(), "no-such-agy.log")]))
 
-    def test_shown_on_the_tab(self):
+    def test_reported_in_details_for_the_tab(self):
         usage = {"models": [], "planType": "Starter", "remote": {"enabled": True, "connected": True}}
         result = normalize_antigravity({"now": 1, "inputs": {"usage": usage}})
-        self.assertIn("Remote", [c["text"] for c in result["account"]["chips"]])
-        rows = [row for s in result["sections"] if s["kind"] == "facts" for row in s["rows"]]
-        self.assertEqual([(r["label"], r["value"]) for r in rows], [("Remote Control", "Online")])
+        remote = result["details"]["remote"]
+        self.assertEqual((remote["state"], remote["url"]), ("online", "https://antigravity.google.com/"))
+        self.assertEqual([c["text"] for c in result["account"]["chips"]], ["Starter"])
+
+    def test_no_log_means_no_remote_tab(self):
+        result = normalize_antigravity({"now": 1, "inputs": {"usage": {"models": [], "planType": "Starter"}}})
+        self.assertIsNone(result["details"]["remote"])
 
 
 if __name__ == "__main__":

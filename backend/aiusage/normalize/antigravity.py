@@ -5,8 +5,6 @@ from ..contract import (
     chip,
     compact_tokens,
     epoch_of,
-    fact,
-    facts_section,
     flat_window,
     jround,
     monthly_window,
@@ -15,10 +13,13 @@ from ..contract import (
     pct_clamp,
     provider_base,
     provider_error,
+    remote_info,
     sections,
 )
 from ..messages import lines, tr
 from ..stats import antigravity_stats
+
+REMOTE_URL = "https://antigravity.google.com/"
 
 
 def _family(m):
@@ -49,12 +50,25 @@ def _avg(values):
     return (sum(values) / len(values)) if values else 0
 
 
-def _remote_chip(remote):
-    if not remote or not remote.get("enabled"):
+def _remote(remote):
+    if not remote:
         return None
     if remote.get("connected"):
-        return chip(tr("Remote"), "good", tr("Remote Control is on and this device is online. Manage it at antigravity.google.com"))
-    return chip(tr("Remote offline"), "warn", tr("Remote Control is on, but this device is not connected right now"))
+        state, title, detail = "online", tr("Remote Control is online"), tr("This device can be reached from your other devices.")
+    elif remote.get("enabled"):
+        state, title, detail = "offline", tr("Remote Control is offline"), tr("Remote Control is on, but this device is not connected right now.")
+    else:
+        state = "off"
+        title = tr("Remote Control is off")
+        detail = tr("Turn it on in Antigravity's settings to work with local agents from another device.")
+    return remote_info(
+        state,
+        title,
+        detail,
+        REMOTE_URL,
+        tr("Open antigravity.google.com ↗"),
+        tr("The device name and your other devices are kept by Google, so they are only listed on that page."),
+    )
 
 
 def normalize_antigravity(raw):
@@ -124,10 +138,7 @@ def normalize_antigravity(raw):
     remote = res.get("remote") if isinstance(res.get("remote"), dict) else None
     r["account"] = account(
         res.get("email") or tr("Gemini Code Assist"),
-        [
-            chip(plan, "muted" if str(plan).lower() == "free" else "good", color="" if str(plan).lower() == "free" else "#34a853") if plan else None,
-            _remote_chip(remote),
-        ],
+        [chip(plan, "muted" if str(plan).lower() == "free" else "good", color="" if str(plan).lower() == "free" else "#34a853")] if plan else [],
     )
     # A family holding several models gets a header over per-model bars (the
     # IDE's "Gemini Models" / "Claude & GPT Models" grouping); a family of one
@@ -181,9 +192,6 @@ def normalize_antigravity(raw):
         )
         if per_model
         else None,
-        facts_section([fact(tr("Remote Control"), tr("Online") if remote["connected"] else tr("Offline"), "good" if remote["connected"] else "warn")])
-        if remote and remote.get("enabled")
-        else None,
         note_section(tr("Average quota usage across Gemini models")) if False else None,
     )
     r["slots"] = [
@@ -208,6 +216,9 @@ def normalize_antigravity(raw):
         history_values["age"] = epct
     r["historyValues"] = history_values
     r["details"] = {
+        # Present only where Antigravity 2 keeps a Remote Control log; the tab
+        # for it shows up with it.
+        "remote": _remote(remote),
         "email": res.get("email") or "",
         "planType": plan,
         "promptCreditsMonthly": num(credits.get("monthly")),

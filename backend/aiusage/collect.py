@@ -15,6 +15,7 @@ from .http import as_json, fetch_json, http_error_text
 from .pricing import get_pricing
 from .providers.antigravity import get_antigravity_usage
 from .providers.claude_credentials import get_claude_credentials
+from .providers.claude_remote import remote_sessions
 from .providers.cline import get_cline_sessions
 from .providers.coderabbit import get_coderabbit_usage
 from .providers.codex_rate_limits import get_codex_rate_limits
@@ -151,6 +152,7 @@ def collect_claude(now):
             "settings": settings or {},
             "stats": stats or {},
             "status": status,
+            "remote": remote_sessions(),
         },
     }
 

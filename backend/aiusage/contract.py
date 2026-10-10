@@ -458,6 +458,22 @@ def short_model_name(name):
     return out
 
 
+def remote_info(state, title, detail, url="", open_label="", note="", instances=()):
+    """What a provider's Remote tab shows. ``state`` is online, offline or off;
+    ``instances`` are the sessions that can be opened from another device, each
+    ``{name, detail, state, url}``. The wording comes from the provider, so the
+    frontends carry none of it."""
+    return {
+        "state": state if state in ("online", "offline", "off") else "off",
+        "title": title,
+        "detail": detail,
+        "url": url,
+        "openLabel": open_label,
+        "note": note,
+        "instances": [dict(i) for i in instances],
+    }
+
+
 def fact(label, value, tone=""):
     """One label/value line of a facts section. ``tone``: "", plan, good, warn, danger."""
     return {"label": label, "value": value, "tone": tone}
