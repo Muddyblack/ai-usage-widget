@@ -30,6 +30,22 @@ class LastSnapshotTest(IsolatedHomeTest):
     def test_no_snapshot_reads_as_empty_object(self):
         self.assertEqual(_run(["--last-snapshot"]), (0, "{}\n"))
 
+    def test_old_snapshot_drops_removed_providers_and_updates_icons(self):
+        old = {
+            "active": "gemini",
+            "providers": [
+                {"id": "gemini", "icon": "gemini.svg"},
+                {"id": "antigravity", "icon": "google-color.svg", "summary": {"pct": 42}},
+            ],
+        }
+        widget_state._write_private(widget_state.snapshot_path(), old)
+        result = widget_state.last_snapshot()
+        self.assertEqual(result["active"], "antigravity")
+        self.assertEqual(result["providers"], [{"id": "antigravity", "icon": "antigravity-color.svg", "summary": {"pct": 42}}])
+        widget_state.save_snapshot(GOOD)
+        with open(widget_state.snapshot_path(), encoding="utf-8") as stream:
+            self.assertEqual([p["id"] for p in json.load(stream)["providers"]], ["antigravity", "claude"])
+
     def test_good_envelope_is_kept_privately_outside_the_config(self):
         self.assertTrue(widget_state.save_snapshot(GOOD))
         path = widget_state.snapshot_path()

@@ -164,7 +164,30 @@ On each refresh cycle the widget reads `~/.claude/.credentials.json` to get the 
 
 ## Antigravity
 
-The widget reads credentials from the `antigravity-usage` CLI configuration (stored in `~/.config/antigravity-usage/` or `~/Library/Application Support/antigravity-usage/`), then calls the Google Cloud Code API to fetch quota information for all available models.
+Quota sources are the `antigravity-usage` CLI, a running IDE's local language
+server, and the `agy` CLI's `/usage` report, in that order unless a source is
+selected explicitly.
+
+The Remote tab reads the account's named desktop and CLI devices using the
+existing Antigravity sign-in. Linux needs `secret-tool` (libsecret, included by
+the Nix package); macOS uses Keychain. Both read service `gemini`, account
+`antigravity`. The CLI's `antigravity-oauth-token` file in
+`~/.gemini/antigravity/` or `~/.gemini/antigravity-cli/` is a fallback; Windows
+currently requires that file. Refreshes use the OAuth client configuration
+shipped in agy 1.3.1 and keep credentials in memory, without rewriting its login.
+
+No separate `agy remote-control` daemon is needed: its status describes only
+the CLI daemon, not the Antigravity desktop app. Device rows show names,
+connection status, and the server's status-update time. Each row opens that
+device directly at `https://antigravity.google.com/r/<instance-id>`, using the
+same link format as agy. The bottom button opens the complete device list.
+If credentials or Google's private device-list API are
+unavailable, the tab falls back to the desktop app's local log status.
+
+The `GET /v1internal:listInstances` protocol and credential layout were inspected
+in agy 1.3.1. Mocked tests cover requests, parsing, refresh, account mismatch,
+and fallback. The account-wide device list has also been confirmed in the
+running widget; direct links follow agy's inspected link builder.
 
 ## OpenAI
 

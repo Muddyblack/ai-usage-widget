@@ -20,6 +20,7 @@ import tempfile
 from contextlib import contextmanager
 
 from . import config, paths
+from .contract import PROVIDER_ICONS
 from .historyio import _acquire, _unlock
 
 SNAPSHOT_FILENAME = "last-snapshot.json"
@@ -88,6 +89,21 @@ def _read_object(path):
     return data if isinstance(data, dict) else None
 
 
+def _current_providers(providers):
+    """An older install's snapshot can contain removed providers or icons."""
+    if not isinstance(providers, list):
+        return []
+    result = []
+    for provider in providers:
+        if not isinstance(provider, dict) or provider.get("id") not in config.ALL_PROVIDERS:
+            continue
+        provider = dict(provider)
+        if "icon" in provider:
+            provider["icon"] = PROVIDER_ICONS.get(provider["id"], "")
+        result.append(provider)
+    return result
+
+
 def save_snapshot(envelope):
     """Fold the providers that answered in ``envelope`` into the last good one.
 
@@ -99,13 +115,13 @@ def save_snapshot(envelope):
     providers = envelope.get("providers") if isinstance(envelope, dict) else None
     if not isinstance(providers, list):
         return False
-    good = [p for p in providers if isinstance(p, dict) and isinstance(p.get("id"), str) and not p.get("error")]
+    good = [p for p in _current_providers(providers) if not p.get("error")]
     if not good:
         return False
     path = snapshot_path()
     with _locked(path):
         stored = _read_object(path) or {}
-        by_id = {p["id"]: p for p in stored.get("providers") or [] if isinstance(p, dict) and isinstance(p.get("id"), str)}
+        by_id = {p["id"]: p for p in _current_providers(stored.get("providers"))}
         for provider in good:
             by_id[provider["id"]] = provider
         merged = dict(envelope)
@@ -115,7 +131,12 @@ def save_snapshot(envelope):
 
 def last_snapshot():
     """The last good envelope, or an empty object when there is none."""
-    return _read_object(snapshot_path()) or {}
+    stored = _read_object(snapshot_path()) or {}
+    if "providers" in stored:
+        stored["providers"] = _current_providers(stored["providers"])
+        if stored.get("active") and stored["active"] not in config.ALL_PROVIDERS:
+            stored["active"] = next((p["id"] for p in stored["providers"]), "")
+    return stored
 
 
 def merge_shared_settings(patch):

@@ -486,6 +486,8 @@ Item {
     property bool systemLight: false
     // A host whose popup background is the desktop's own (Plasma's dialog,
     // which the widget cannot recolour) always follows it: no setting there.
+    // (Flipping palette.window live under Plasma's layout crashed Qt in
+    // QQuickPaletteProvider::updateChildrenPalettes, so KDE has no override.)
     property bool appearanceFollowsHost: false
     readonly property bool light: root.appearanceFollowsHost ? root.systemLight : (root.settings.appearance === "light" || (root.settings.appearance !== "dark" && root.systemLight))
     // What a host sets as its popup's palette.window. ui/js/Tone.js reads the
@@ -495,7 +497,7 @@ Item {
     // Fill of the chart card.
     readonly property color cardColor: {
         var c = Qt.color(root.settings.cardBgColor || "#100a1a");
-        var a = root.settings.cardBgOpacity === undefined ? 0.1 : Number(root.settings.cardBgOpacity);
+        var a = root.settings.cardBgOpacity === undefined ? 0 : Number(root.settings.cardBgOpacity);
         // Light under the light theme, like every other neutral (Tone.js).
         return Tone.c({
             window: root.windowColor
@@ -508,6 +510,10 @@ Item {
     // backgroundHints only for a widget on the desktop; a panel popup always
     // takes the theme's dialog frame, blurred by KWin if the theme allows.
     property bool backgroundStyleApplies: backgroundStyleAvailable
+    // The popup draws its own glass (ui/PopupBackground.qml) instead of
+    // Plasma's frame: every host without a frame style, and a Plasma desktop
+    // widget with Blur off (backgroundHints 0, no frame, so no KWin blur).
+    readonly property bool ownGlass: !backgroundStyleAvailable || (backgroundStyleApplies && Number(root.settingValue("backgroundHints")) === 0)
     // A host whose compositor can blur behind the popup on request (Quickshell
     // on Hyprland, via hosts/quickshell/glass.conf): settings.compositorGlass.
     property bool compositorGlassAvailable: false

@@ -127,7 +127,7 @@ Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on ma
 | Service | What the widget shows | Support status |
 |---|---|---|
 | Claude (Anthropic) | Subscription windows reported by Anthropic, reset times, and local activity stats | Supported |
-| Antigravity / Google AI Studio | Overall quota, per-model Gemini usage, and reset times | Supported |
+| Antigravity / Google AI Studio | Overall quota, per-model Gemini usage, reset times, and named remote devices when accessible | Supported |
 | OpenAI | 30-day API token/cost usage plus Codex/ChatGPT plan limits and account status | Supported |
 | Grok (xAI) | CLI billing credits when exposed, free-tier exhaustion, and local session totals | Free tier tested; paid plans unverified |
 | Kiro | Monthly credits, remaining balance, reset date, overage, and plan — from kiro-cli's login or the Kiro IDE | Supported |

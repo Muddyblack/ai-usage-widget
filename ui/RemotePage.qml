@@ -90,7 +90,7 @@ ColumnLayout {
                     Layout.preferredWidth: 8
                     Layout.preferredHeight: 8
                     radius: 4
-                    color: row.modelData.state === "busy" ? "#fbbc04" : "#34a853"
+                    color: row.modelData.state === "busy" || row.modelData.state === "idle" ? "#fbbc04" : row.modelData.state === "offline" || row.modelData.state === "unknown" ? "#94a3b8" : "#34a853"
                 }
 
                 ColumnLayout {

@@ -53,6 +53,26 @@ def _avg(values):
 def _remote(remote):
     if not remote:
         return None
+    if isinstance(remote.get("instances"), list):
+        instances = []
+        labels = {"online": tr("Online"), "offline": tr("Offline"), "idle": tr("Idle"), "unknown": tr("Unknown")}
+        for device in remote["instances"]:
+            state = device.get("state", "unknown")
+            detail = labels.get(state, labels["unknown"])
+            updated = epoch_of(device.get("updatedAt"))
+            if updated:
+                detail += " · " + tr("Updated %1", _reset_stamp(updated))
+            instances.append({"name": device["name"], "state": state, "detail": detail, "url": device.get("url") or REMOTE_URL})
+        online = sum(row["state"] == "online" for row in instances)
+        return remote_info(
+            "online" if online else "offline",
+            tr("Remote devices"),
+            tr("%1 online · %2 devices", online, len(instances)) if instances else tr("No remote devices registered for this account."),
+            REMOTE_URL,
+            tr("Open antigravity.google.com ↗"),
+            tr("Select a device to open it in Antigravity."),
+            instances=instances,
+        )
     if remote.get("connected"):
         state, title, detail = "online", tr("Remote Control is online"), tr("This device can be reached from your other devices.")
     elif remote.get("enabled"):
@@ -67,7 +87,7 @@ def _remote(remote):
         detail,
         REMOTE_URL,
         tr("Open antigravity.google.com ↗"),
-        tr("The device name and your other devices are kept by Google, so they are only listed on that page."),
+        tr("Device list unavailable. Showing this desktop app's local status; open the website to see all devices."),
     )
 
 

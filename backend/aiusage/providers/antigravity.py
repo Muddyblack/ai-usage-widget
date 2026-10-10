@@ -18,6 +18,7 @@ import re
 import shutil
 import ssl
 import subprocess
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -466,8 +467,8 @@ def remote_control(log_paths=None):
     its language-server log; None when the log is not there.
 
     The log is read from the last 128 KiB only, so a refresh costs one small
-    read. The device name and the other devices are held by Google and are not
-    on disk, so they are not reported."""
+    read. Account-wide device names are fetched separately by antigravity_remote.
+    """
     for path in log_paths or _remote_log_paths():
         try:
             size = os.path.getsize(path)
@@ -491,9 +492,23 @@ def remote_control(log_paths=None):
 
 
 def get_antigravity_usage():
+    # The device list is a separate network round trip; overlap it with the
+    # usage lookup instead of adding to it.
+    from .antigravity_remote import fetch_instances
+
+    box = []
+    worker = threading.Thread(target=lambda: box.append(fetch_instances()), daemon=True)
+    worker.start()
     usage = _get_antigravity_usage()
     if isinstance(usage, dict) and usage and "error" not in usage:
         remote = remote_control()
+        worker.join(timeout=25)
+        account, instances = box[0] if box else ("", None)
+        expected = str(usage.get("email") or "").strip().casefold()
+        if expected and account and expected != account:
+            instances = None
+        if instances is not None:
+            remote = {**(remote or {}), "instances": instances}
         if remote is not None:
             usage = {**usage, "remote": remote}
     return usage

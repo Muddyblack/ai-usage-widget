@@ -30,6 +30,9 @@ STAND_IN = (
 
 class AntigravityScanTest(unittest.TestCase):
     def setUp(self):
+        remote = mock.patch("aiusage.providers.antigravity_remote.fetch_instances", return_value=("", None))
+        remote.start()
+        self.addCleanup(remote.stop)
         self.cache_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.cache_dir.cleanup)
         self.environment = mock.patch.dict(
@@ -92,6 +95,9 @@ class AntigravityScanTest(unittest.TestCase):
 
 class AntigravityCacheTest(unittest.TestCase):
     def setUp(self):
+        devices = mock.patch("aiusage.providers.antigravity_remote.fetch_instances", return_value=("", None))
+        devices.start()
+        self.addCleanup(devices.stop)
         self.cache_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.cache_dir.cleanup)
         self.environment = mock.patch.dict(
