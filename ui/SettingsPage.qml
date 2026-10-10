@@ -31,6 +31,24 @@ ColumnLayout {
     property int pruneDays: 30
     property bool confirmClear: false
 
+    // Settings → Providers: "list", "add" (the search) or "detail" (one
+    // provider's page). Session-only, like the section.
+    property string providerView: "list"
+    property string providerFocus: ""
+
+    function showProvider(id) {
+        page.providerFocus = id;
+        page.providerView = "detail";
+    }
+
+    function providerEntry(id) {
+        var all = page.shell.allProviders || [];
+        for (var i = 0; i < all.length; i++)
+            if (all[i].id === id)
+                return all[i];
+        return null;
+    }
+
     readonly property bool wide: width >= 600
     readonly property color accent: Theme.brand
 
@@ -149,91 +167,36 @@ ColumnLayout {
             spacing: 0
 
             // ── Providers ────────────────────────────────────────────────
+            // Three views of one section: the providers that are on, a search to
+            // add another, and one provider's own page.
             Column {
                 Layout.fillWidth: true
                 visible: page.section === "providers"
                 spacing: 12
 
-                // Detection first: it is what fills the list below on a new install.
-                Row {
-                    spacing: 12
-                    StudioButton {
-                        text: page.shell.providerDetectBusy ? page.shell.i18n("Detecting…") : page.shell.i18n("Detect installed providers")
-                        enabled: !page.shell.providerDetectBusy
-                        onClicked: page.shell.redetectProviders()
-                    }
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Math.min(implicitWidth, 320)
-                        visible: page.shell.providerDetectStatus !== ""
-                        text: page.shell.providerDetectStatus
-                        color: Tone.c(palette, Theme.muted)
-                        font.pixelSize: 10
-                        elide: Text.ElideRight
+                ProviderList {
+                    visible: page.providerView === "list"
+                    shell: page.shell
+                    onAddRequested: page.providerView = "add"
+                    onOpened: id => page.showProvider(id)
+                }
+
+                ProviderPicker {
+                    visible: page.providerView === "add"
+                    shell: page.shell
+                    onBack: page.providerView = "list"
+                    onChosen: id => {
+                        page.shell.setSetting("providers", id, true);
+                        page.shell.refresh();
+                        page.showProvider(id);
                     }
                 }
 
-                StudioCard {
-                    title: page.shell.i18n("Providers")
-                    caption: page.shell.i18n("Expand a provider for its API key and options. Keys are stored in %1; leave one blank to use env vars or an existing CLI login.", page.shell.configPath)
-
-                    // Two columns when there is room, each its own stack so
-                    // unfolding one provider only grows its own column.
-                    Item {
-                        id: providerGrid
-                        width: parent.width
-                        height: Math.max(colA.height, colB.height)
-
-                        // Labels, accents and key names all come from ProviderRegistry.js,
-                        // so adding a provider there is enough to make it configurable here.
-                        readonly property var list: (page.shell.allProviders || []).filter(function (p) {
-                            return p.id !== "selfhosted";
-                        })
-                        readonly property bool two: page.wide
-                        readonly property real gap: 20
-
-                        Column {
-                            id: colA
-                            width: providerGrid.two ? (providerGrid.width - providerGrid.gap) / 2 : providerGrid.width
-                            Repeater {
-                                model: providerGrid.two ? providerGrid.list.filter(function (p, i) {
-                                    return i % 2 === 0;
-                                }) : providerGrid.list
-
-                                ProviderSettingRow {
-                                    required property var modelData
-                                    provider: modelData
-                                    shell: page.shell
-                                }
-                            }
-                        }
-
-                        Column {
-                            id: colB
-                            visible: providerGrid.two
-                            x: colA.width + providerGrid.gap
-                            width: colA.width
-                            Repeater {
-                                model: providerGrid.two ? providerGrid.list.filter(function (p, i) {
-                                    return i % 2 === 1;
-                                }) : []
-
-                                ProviderSettingRow {
-                                    required property var modelData
-                                    provider: modelData
-                                    shell: page.shell
-                                }
-                            }
-                        }
-
-                        Rectangle {
-                            visible: providerGrid.two
-                            x: colA.width + providerGrid.gap / 2
-                            width: 1
-                            height: parent.height
-                            color: Tone.c(palette, Theme.line)
-                        }
-                    }
+                ProviderDetail {
+                    visible: page.providerView === "detail"
+                    shell: page.shell
+                    provider: page.providerEntry(page.providerFocus)
+                    onBack: page.providerView = "list"
                 }
             }
 
@@ -501,13 +464,13 @@ ColumnLayout {
                         }
                     }
 
-                    // Tint and glass are this popup's own fill. On Plasma the
-                    // frame is the background and a fill shows as an inner
-                    // border (see PopupBackground.qml), so they are not offered.
+                    // The tint is laid over the popup on every host, Plasma
+                    // included. Glass opacity and frost are this popup's own
+                    // fill; on Plasma the frame is the background, so only
+                    // those two are not offered there.
                     StudioRow {
                         label: page.shell.i18n("Popup tint")
                         dot: page.shell.settings.popupBgColor || "#64748b"
-                        visible: !page.shell.backgroundStyleAvailable
                         Row {
                             spacing: 12
                             // A few presets; any #rrggbb can be typed in the field.
@@ -542,7 +505,6 @@ ColumnLayout {
                         label: page.shell.i18n("Tint strength")
                         desc: page.shell.i18n("How much of the tint colour is laid over the glass.")
                         dot: Tone.c(palette, "#94a3b8")
-                        visible: !page.shell.backgroundStyleAvailable
                         StudioPercent {
                             value: Number(page.shell.settings.popupBgOpacity || 0)
                             onChosen: v => page.shell.setSetting2("popupBgOpacity", v)
@@ -619,7 +581,7 @@ ColumnLayout {
                                 onCommitted: v => page.shell.setSetting2("cardBgColor", v)
                             }
                             StudioPercent {
-                                value: page.shell.settings.cardBgOpacity === undefined ? 0.9 : Number(page.shell.settings.cardBgOpacity)
+                                value: page.shell.settings.cardBgOpacity === undefined ? 0.1 : Number(page.shell.settings.cardBgOpacity)
                                 onChosen: v => page.shell.setSetting2("cardBgOpacity", v)
                             }
                         }
@@ -843,6 +805,70 @@ ColumnLayout {
                                     onClicked: page.shell.openCli()
                                 }
                             }
+                        }
+                    }
+                }
+
+                // Applied to every request the backend makes, except those to this
+                // machine (local servers never go through a proxy).
+                StudioCard {
+                    title: page.shell.i18n("Network")
+                    caption: page.shell.i18n("Applies on the next refresh, without restarting anything. Requests to this machine never go through it. An environment proxy (HTTPS_PROXY) takes precedence.")
+
+                    StudioRow {
+                        label: page.shell.i18n("Proxy")
+                        desc: page.shell.i18n("System uses the environment as it is; Off ignores any proxy.")
+                        StudioSelect {
+                            options: [["system", page.shell.i18n("System")], ["off", page.shell.i18n("Off")], ["http", "HTTP"]]
+                            value: (page.shell.settings.proxy || {}).mode || "system"
+                            onChosen: v => {
+                                page.shell.setSetting("proxy", "mode", v);
+                                page.shell.refresh();
+                            }
+                        }
+                    }
+                    StudioRow {
+                        visible: ((page.shell.settings.proxy || {}).mode || "system") === "http"
+                        label: page.shell.i18n("Host")
+                        StudioField {
+                            width: 200
+                            mono: true
+                            value: (page.shell.settings.proxy || {}).host || ""
+                            placeholder: "127.0.0.1"
+                            onCommitted: v => {
+                                page.shell.setSetting("proxy", "host", v);
+                                page.shell.refresh();
+                            }
+                        }
+                    }
+                    StudioRow {
+                        visible: ((page.shell.settings.proxy || {}).mode || "system") === "http"
+                        label: page.shell.i18n("Port")
+                        StudioField {
+                            width: 100
+                            mono: true
+                            value: String((page.shell.settings.proxy || {}).port || "")
+                            placeholder: "8080"
+                            onCommitted: v => {
+                                page.shell.setSetting("proxy", "port", v);
+                                page.shell.refresh();
+                            }
+                        }
+                    }
+                }
+
+                StudioCard {
+                    title: page.shell.i18n("Files")
+                    caption: page.shell.i18n("API keys are stored in this file as plain text. Keep it private, and leave a key blank to use an env var or an existing CLI login instead.")
+
+                    StudioRow {
+                        label: page.shell.i18n("Configuration file")
+                        full: true
+                        StudioField {
+                            width: parent.width
+                            readOnly: true
+                            mono: true
+                            value: page.shell.configPath
                         }
                     }
                 }

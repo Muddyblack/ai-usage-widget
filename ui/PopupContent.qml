@@ -18,6 +18,17 @@ ColumnLayout {
 
     property var shell
 
+    // The active provider's Remote Control state, or null where it has none
+    // (Antigravity 2, and Claude Code while a session is open); the Remote sub-tab exists with it.
+    readonly property var activeRemote: {
+        var p = shell.activeIsFeature ? null : shell.activeProvider();
+        return p && p.details && p.details.remote ? p.details.remote : null;
+    }
+    onActiveRemoteChanged: {
+        if (activeRemote === null && shell.activeSubTab === "remote")
+            shell.activeSubTab = "usage";
+    }
+
     spacing: 12
 
     // ── Settings page ────────────────────────────────────────────
@@ -91,17 +102,26 @@ ColumnLayout {
             spacing: 2
 
             Repeater {
-                model: [
-                    {
-                        id: "usage",
-                        label: shell.i18n("Usage")
-                    },
-                    {
-                        id: "stats",
-                        // TRANSLATORS: sub-tab with activity statistics (tokens, sessions, models)
-                        label: shell.i18n("Stats")
-                    }
-                ]
+                model: {
+                    var tabs = [
+                        {
+                            id: "usage",
+                            label: shell.i18n("Usage")
+                        },
+                        {
+                            id: "stats",
+                            // TRANSLATORS: sub-tab with activity statistics (tokens, sessions, models)
+                            label: shell.i18n("Stats")
+                        }
+                    ];
+                    if (content.activeRemote !== null)
+                        // TRANSLATORS: sub-tab for working with the app from another device (Remote Control)
+                        tabs.push({
+                            id: "remote",
+                            label: shell.i18n("Remote")
+                        });
+                    return tabs;
+                }
 
                 Rectangle {
                     required property var modelData
@@ -113,13 +133,27 @@ ColumnLayout {
                     border.width: active ? 1 : 0
                     border.color: Qt.rgba(shell.activeAccent.r, shell.activeAccent.g, shell.activeAccent.b, 0.35)
 
-                    Text {
+                    Row {
                         anchors.centerIn: parent
-                        text: modelData.label
-                        font.pixelSize: 11
-                        font.bold: parent.active
-                        color: parent.active ? shell.activeAccent : Tone.c(palette, "#f8fafc")
-                        opacity: parent.active ? 1.0 : 0.6
+                        spacing: 5
+
+                        // The Remote tab says at a glance whether it is live.
+                        Rectangle {
+                            visible: modelData.id === "remote"
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 7
+                            height: 7
+                            radius: 3.5
+                            color: content.activeRemote !== null && content.activeRemote.state === "online" ? "#34a853" : "#ea4335"
+                        }
+
+                        Text {
+                            text: modelData.label
+                            font.pixelSize: 11
+                            font.bold: parent.parent.active
+                            color: parent.parent.active ? shell.activeAccent : Tone.c(palette, "#f8fafc")
+                            opacity: parent.parent.active ? 1.0 : 0.6
+                        }
                     }
 
                     MouseArea {
@@ -247,6 +281,14 @@ ColumnLayout {
             stats: shell.activeProvider() ? ((shell.activeProvider().details || {}).stats || ({})) : ({})
             accent: shell.activeAccent
         }
+    }
+
+    // ── Remote section ──────────────────────────────────────────
+    RemotePage {
+        visible: !shell.showSettings && !shell.activeIsFeature && content.activeRemote !== null && shell.activeSubTab === "remote"
+        remote: content.activeRemote
+        accent: shell.activeAccent
+        shell: content.shell
     }
 
     // ── Stats section ───────────────────────────────────────────

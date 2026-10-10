@@ -7,6 +7,7 @@ values through WIDGET_* environment variables. Environment always wins.
 import copy
 import json
 import os
+import re
 import tempfile
 
 from . import paths
@@ -155,6 +156,8 @@ def apply_widget_env(cfg):
         if value:
             os.environ[var] = value
 
+    apply_proxy(cfg)
+
     if not os.environ.get("WIDGET_COPILOT_QUOTA"):
         quota = cfg.get("copilotQuota", (cfg.get("keys") or {}).get("copilotQuota", 300))
         try:
@@ -169,6 +172,76 @@ def apply_widget_env(cfg):
     for var, key in (("WIDGET_SELFHOSTED_ENDPOINT", "selfhostedEndpoint"), ("WIDGET_SELFHOSTED_ENGINE", "selfhostedEngine")):
         if not os.environ.get(var) and cfg.get(key):
             os.environ[var] = str(cfg[key])
+
+
+# Requests to this machine (the Antigravity language server, Ollama, vLLM…) must
+# never be sent to a proxy, which could not reach them anyway.
+_LOOPBACK = "127.0.0.1,localhost,::1"
+_PROXY_HOST = re.compile(r"^(?:[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?|\[[0-9A-Fa-f:]+\])$")
+PROXY_MODES = ("system", "off", "http")
+
+
+def proxy_settings(cfg):
+    """``(mode, url)`` from the ``proxy`` setting.
+
+    ``system`` (the default) leaves whatever the environment says alone, ``off``
+    ignores it, ``http`` sends requests through ``host:port``. An ``http`` proxy
+    with a host or port that is not valid is treated as ``system``: a typo in
+    settings must not silently route traffic somewhere else.
+    """
+    proxy = cfg.get("proxy")
+    proxy = proxy if isinstance(proxy, dict) else {}
+    mode = proxy.get("mode") if proxy.get("mode") in PROXY_MODES else "system"
+    if mode != "http":
+        return mode, ""
+    host = re.sub(r"^https?://", "", str(proxy.get("host") or "").strip()).rstrip("/")
+    try:
+        port = int(str(proxy.get("port") or "").strip())
+    except ValueError:
+        return "system", ""
+    if not _PROXY_HOST.match(host) or not 0 < port < 65536:
+        return "system", ""
+    return "http", f"http://{host}:{port}"
+
+
+# What apply_proxy exported, so a long-lived host that applies settings again
+# after the user changed them takes back its own values — and only its own.
+_PROXY_EXPORTED = {}
+
+
+def _forget_proxy():
+    for name, (value, previous) in _PROXY_EXPORTED.items():
+        for variant in (name, name.lower()):
+            if os.environ.get(variant) == value:
+                if previous is None:
+                    del os.environ[variant]
+                else:
+                    os.environ[variant] = previous
+    _PROXY_EXPORTED.clear()
+
+
+def _export_proxy(name, value):
+    previous = os.environ.get(name) or os.environ.get(name.lower())
+    os.environ[name] = os.environ[name.lower()] = value
+    _PROXY_EXPORTED[name] = (value, previous)
+
+
+def apply_proxy(cfg):
+    """Export the proxy setting the way urllib, gh and every other child process
+    already read it. As with keys, an environment that already names a proxy
+    wins."""
+    _forget_proxy()
+    mode, url = proxy_settings(cfg)
+    if mode == "system":
+        return
+    if mode == "off":
+        _export_proxy("NO_PROXY", "*")
+        return
+    for name in ("HTTP_PROXY", "HTTPS_PROXY"):
+        if not os.environ.get(name) and not os.environ.get(name.lower()):
+            _export_proxy(name, url)
+    existing = os.environ.get("NO_PROXY") or os.environ.get("no_proxy") or ""
+    _export_proxy("NO_PROXY", ",".join(part for part in (existing, _LOOPBACK) if part))
 
 
 def muse_quota_enabled():

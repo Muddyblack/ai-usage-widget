@@ -48,6 +48,7 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across 25 provider s
 
 ## Features
 
+- **Add providers from a search, pick how each is read** — Settings → Providers shows what is on and how it is being read; a provider's page lists its sources (CLI, IDE, local server, API key) with a working indicator, and an optional HTTP proxy is under Advanced
 - **Multi-service support** — 25 providers in one popup, each on its own tab
 - **Panel view** — Compact percentage readouts in the taskbar, color-coded by usage level, with an inline spark-line trend
 - **Popup view** — Segmented bars showing exact fill level with reset times and live countdowns that show "resetting..." when a window flips
@@ -126,7 +127,7 @@ Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on ma
 | Service | What the widget shows | Support status |
 |---|---|---|
 | Claude (Anthropic) | Subscription windows reported by Anthropic, reset times, and local activity stats | Supported |
-| Antigravity / Google AI Studio | Overall quota, per-model Gemini usage, and reset times | Supported |
+| Antigravity / Google AI Studio | Overall quota, per-model Gemini usage, reset times, and named remote devices when accessible | Supported |
 | OpenAI | 30-day API token/cost usage plus Codex/ChatGPT plan limits and account status | Supported |
 | Grok (xAI) | CLI billing credits when exposed, free-tier exhaustion, and local session totals | Free tier tested; paid plans unverified |
 | Kiro | Monthly credits, remaining balance, reset date, overage, and plan — from kiro-cli's login or the Kiro IDE | Supported |

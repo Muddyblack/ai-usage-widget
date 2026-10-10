@@ -1,3 +1,4 @@
+from .. import sources
 from ..contract import provider_error, status_summary
 from .antigravity import normalize_antigravity
 from .claude import normalize_claude
@@ -66,4 +67,7 @@ def normalize(raw):
     # status chip from it without a provider table of their own.
     if isinstance(r.get("details"), dict):
         r["details"]["status"] = status_summary((raw.get("inputs") or {}).get("status"), id_)
+    # Same reasoning: every provider that can be read more than one way says how,
+    # error states included, so the settings page can show what is set up.
+    sources.attach(id_, raw.get("inputs"), r)
     return r

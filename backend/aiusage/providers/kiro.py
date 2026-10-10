@@ -26,7 +26,7 @@ import re
 import sqlite3
 import time
 
-from .. import paths
+from .. import paths, sources
 from ..contract import epoch_of, num
 from ..http import as_json, clean_credential, fetch_json, http_error_text
 from ..messages import tr
@@ -310,17 +310,24 @@ def _cli_usage():
     return parse_cli_usage(as_json(result.body))
 
 
+SOURCES = (
+    sources.Source("cli", "cli", tr("kiro-cli"), tr("The kiro-cli login, read live"), lambda: os.path.isfile(_cli_db())),
+    sources.Source("ide", "ide", tr("Kiro IDE"), tr("The usage snapshot the IDE caches"), lambda: os.path.isfile(_ide_db())),
+)
+
+_READERS = {"cli": lambda: _cli_usage(), "ide": lambda: _ide_usage()}
+
+
 def get_kiro_usage():
-    cli = _cli_usage()
-    if cli is not None and cli.get("error") is None:
-        return cli
-    ide = _ide_usage()
-    if ide is not None and ide.get("error") is None:
-        return ide
-    # Neither answered: the kiro-cli problem is the actionable one when the
-    # CLI is set up (an expired login), the IDE's otherwise.
-    if cli is not None:
-        return cli
-    if ide is not None:
-        return ide
+    answers = {}
+    order = sources.candidates("kiro", tuple(_READERS))
+    for source in order:
+        answers[source] = _READERS[source]()
+        if answers[source] is not None and answers[source].get("error") is None:
+            return answers[source]
+    # None answered: the first that has something to say is the actionable one
+    # (an expired kiro-cli login, say), in the order they were tried.
+    for source in order:
+        if answers[source] is not None:
+            return answers[source]
     return {"error": tr("No Kiro state found — sign in to Kiro IDE or kiro-cli once")}

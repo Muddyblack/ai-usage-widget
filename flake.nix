@@ -49,7 +49,10 @@
               substituteInPlace "$root/contents/backend/sh/python-interp.sh" \
                 --replace-fail 'PY_DEFAULT="python3"' \
                                'PY_DEFAULT="${pkgs.python3}/bin/python3"'
-
+              # Remote devices reuse Antigravity's Secret Service credential.
+              substituteInPlace "$root/contents/backend/aiusage/providers/antigravity_remote.py" \
+                --replace-fail 'SECRET_TOOL = "secret-tool"' \
+                               'SECRET_TOOL = "${pkgs.libsecret}/bin/secret-tool"'
 
               # Register icon in hicolor theme so Plasma Widget Explorer picks it up
               mkdir -p "$out/share/icons/hicolor/scalable/apps"
@@ -129,7 +132,7 @@
             type = "app";
             program = toString (pkgs.writeShellScript "ai-usage-cli" ''
               set -eu
-              export PATH=${pkgs.lib.makeBinPath [ pkgs.python3 ]}:"$PATH"
+              export PATH=${pkgs.lib.makeBinPath [ pkgs.python3 pkgs.libsecret ]}:"$PATH"
               exec ${self}/backend/sh/ai-usage-cli "$@"
             '');
           };
@@ -141,6 +144,7 @@
                 pkgs.bash
                 pkgs.coreutils
                 pkgs.python3
+                pkgs.libsecret
               ]}:"$PATH"
               # The repo root, not hosts/quickshell/ — Quickshell roots its QML sandbox at
               # the entry point's directory, and hosts/quickshell/ cannot reach the shared
@@ -180,6 +184,7 @@
               pre-commit
               zip
               python3
+              libsecret
               ruff
               jq
               nodejs

@@ -1,6 +1,7 @@
 import QtQuick
 import QtCore
 import "js/ProviderRegistry.js" as ProviderRegistry
+import "js/ProviderSources.js" as ProviderSources
 import "js/Format.js" as Format
 import "js/FeatureTabs.js" as FeatureTabs
 import "js/RefreshCoalescer.js" as RefreshCoalescer
@@ -121,6 +122,8 @@ Item {
     property var settings: ({
             providers: {},
             keys: {},
+            sources: {},
+            proxy: {},
             pollSec: 300,
             showChart: true,
             museQuota: false,
@@ -150,6 +153,8 @@ Item {
         var s = Object.assign({}, d);
         s.providers = d.providers || {};
         s.keys = d.keys || {};
+        s.sources = d.sources || {};
+        s.proxy = d.proxy || {};
         s.pollSec = d.pollSec || 300;
         s.showChart = d.showChart !== false;
         s.museQuota = d.museQuota === true;
@@ -233,6 +238,45 @@ Item {
 
     function providerEnabled(id) {
         return ProviderRegistry.enabled(root.settings, id);
+    }
+
+    // ── Provider sources ─────────────────────────────────────────────────────
+    // A provider that can be read more than one way (a CLI, an IDE, a local
+    // server, an API key…) reports its ways in its snapshot's `sources` block;
+    // which one is used is the user's choice, "auto" meaning the first that works.
+    // The backend honours the choice from the settings file (aiusage/sources.py).
+    function sourceChoice(id) {
+        return (root.settings.sources || {})[id] || ProviderSources.AUTO;
+    }
+
+    function chooseSource(id, source) {
+        root.setSetting("sources", id, source);
+        root.refresh();
+    }
+
+    // The one line a provider's row shows: which source is answering, or what
+    // is wrong. ProviderSources.statusLine decides; this words it.
+    function providerStatusText(id) {
+        var line = ProviderSources.statusLine(root.providerById(id));
+        switch (line.code) {
+        case "using":
+            return root.i18n("Using %1", line.label);
+        case "failing":
+            return line.text !== "" ? line.label + ": " + line.text : root.i18n("%1 is not working", line.label);
+        case "unset":
+            return root.i18n("Not set up");
+        case "ok":
+            return root.i18n("Working");
+        case "error":
+            return line.text;
+        }
+        return root.i18n("Waiting for data");
+    }
+
+    // "ok" | "bad" | "muted", for colouring that line.
+    function providerStatusTone(id) {
+        var line = ProviderSources.statusLine(root.providerById(id));
+        return line.code === "using" || line.code === "ok" ? "ok" : line.code === "failing" || line.code === "error" ? "bad" : "muted";
     }
 
     // ── Provider defaults ────────────────────────────────────────────────────
@@ -442,6 +486,8 @@ Item {
     property bool systemLight: false
     // A host whose popup background is the desktop's own (Plasma's dialog,
     // which the widget cannot recolour) always follows it: no setting there.
+    // (Flipping palette.window live under Plasma's layout crashed Qt in
+    // QQuickPaletteProvider::updateChildrenPalettes, so KDE has no override.)
     property bool appearanceFollowsHost: false
     readonly property bool light: root.appearanceFollowsHost ? root.systemLight : (root.settings.appearance === "light" || (root.settings.appearance !== "dark" && root.systemLight))
     // What a host sets as its popup's palette.window. ui/js/Tone.js reads the
@@ -451,7 +497,7 @@ Item {
     // Fill of the chart card.
     readonly property color cardColor: {
         var c = Qt.color(root.settings.cardBgColor || "#100a1a");
-        var a = root.settings.cardBgOpacity === undefined ? 0.9 : Number(root.settings.cardBgOpacity);
+        var a = root.settings.cardBgOpacity === undefined ? 0 : Number(root.settings.cardBgOpacity);
         // Light under the light theme, like every other neutral (Tone.js).
         return Tone.c({
             window: root.windowColor
@@ -464,6 +510,10 @@ Item {
     // backgroundHints only for a widget on the desktop; a panel popup always
     // takes the theme's dialog frame, blurred by KWin if the theme allows.
     property bool backgroundStyleApplies: backgroundStyleAvailable
+    // The popup draws its own glass (ui/PopupBackground.qml) instead of
+    // Plasma's frame: every host without a frame style, and a Plasma desktop
+    // widget with Blur off (backgroundHints 0, no frame, so no KWin blur).
+    readonly property bool ownGlass: !backgroundStyleAvailable || (backgroundStyleApplies && Number(root.settingValue("backgroundHints")) === 0)
     // A host whose compositor can blur behind the popup on request (Quickshell
     // on Hyprland, via hosts/quickshell/glass.conf): settings.compositorGlass.
     property bool compositorGlassAvailable: false

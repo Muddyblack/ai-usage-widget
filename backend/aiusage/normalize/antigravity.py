@@ -13,10 +13,13 @@ from ..contract import (
     pct_clamp,
     provider_base,
     provider_error,
+    remote_info,
     sections,
 )
 from ..messages import lines, tr
 from ..stats import antigravity_stats
+
+REMOTE_URL = "https://antigravity.google.com/"
 
 
 def _family(m):
@@ -45,6 +48,47 @@ def _model_tooltip(m):
 
 def _avg(values):
     return (sum(values) / len(values)) if values else 0
+
+
+def _remote(remote):
+    if not remote:
+        return None
+    if isinstance(remote.get("instances"), list):
+        instances = []
+        labels = {"online": tr("Online"), "offline": tr("Offline"), "idle": tr("Idle"), "unknown": tr("Unknown")}
+        for device in remote["instances"]:
+            state = device.get("state", "unknown")
+            detail = labels.get(state, labels["unknown"])
+            updated = epoch_of(device.get("updatedAt"))
+            if updated:
+                detail += " · " + tr("Updated %1", _reset_stamp(updated))
+            instances.append({"name": device["name"], "state": state, "detail": detail, "url": device.get("url") or REMOTE_URL})
+        online = sum(row["state"] == "online" for row in instances)
+        return remote_info(
+            "online" if online else "offline",
+            tr("Remote devices"),
+            tr("%1 online · %2 devices", online, len(instances)) if instances else tr("No remote devices registered for this account."),
+            REMOTE_URL,
+            tr("Open antigravity.google.com ↗"),
+            tr("Select a device to open it in Antigravity."),
+            instances=instances,
+        )
+    if remote.get("connected"):
+        state, title, detail = "online", tr("Remote Control is online"), tr("This device can be reached from your other devices.")
+    elif remote.get("enabled"):
+        state, title, detail = "offline", tr("Remote Control is offline"), tr("Remote Control is on, but this device is not connected right now.")
+    else:
+        state = "off"
+        title = tr("Remote Control is off")
+        detail = tr("Turn it on in Antigravity's settings to work with local agents from another device.")
+    return remote_info(
+        state,
+        title,
+        detail,
+        REMOTE_URL,
+        tr("Open antigravity.google.com ↗"),
+        tr("Device list unavailable. Showing this desktop app's local status; open the website to see all devices."),
+    )
 
 
 def normalize_antigravity(raw):
@@ -111,6 +155,7 @@ def normalize_antigravity(raw):
 
     r = provider_base("antigravity", "Antigravity", "#4285f4", now)
     r["summary"] = {"pct": pct, "text": f"{jround(pct)}%", "detail": plan, "hasChart": True}
+    remote = res.get("remote") if isinstance(res.get("remote"), dict) else None
     r["account"] = account(
         res.get("email") or tr("Gemini Code Assist"),
         [chip(plan, "muted" if str(plan).lower() == "free" else "good", color="" if str(plan).lower() == "free" else "#34a853")] if plan else [],
@@ -191,6 +236,9 @@ def normalize_antigravity(raw):
         history_values["age"] = epct
     r["historyValues"] = history_values
     r["details"] = {
+        # Present only where Antigravity 2 keeps a Remote Control log; the tab
+        # for it shows up with it.
+        "remote": _remote(remote),
         "email": res.get("email") or "",
         "planType": plan,
         "promptCreditsMonthly": num(credits.get("monthly")),

@@ -1,2 +1,6 @@
-<!-- Monogram for Pi (the π glyph), drawn for this widget; not official artwork. -->
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="#d4d4d8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3.5 7h17M9 7v10.5c0 1.4-.8 2-2 2M15.5 7v9.5c0 1.8.9 3 3 3"/></svg>
+<!-- Pi logo. Source: https://pi.dev/logo.svg, 2026-10-10. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <path fill="#F09082" d="M165.29 165.29H517.36V400H400V282.65H165.29Z"/>
+  <path fill="#4D9ABF" d="M165.29 282.65H282.65V400H400V517.36H282.65V634.72H165.29Z"/>
+  <path fill="#F1BE58" d="M517.36 400H634.72V634.72H517.36Z"/>
+</svg>

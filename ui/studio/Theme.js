@@ -26,3 +26,8 @@ var bad = "#f87171";
 var noteBg = "#1a4f9dde";
 var noteBorder = "#334f9dde";
 var noteText = "#c9ddf0";
+
+// A colour by the tone name the shared logic uses (ProviderSources.stateTone).
+function tone(name) {
+    return name === "ok" ? ok : name === "bad" ? bad : name === "warn" ? warn : name === "dim" ? dim : muted;
+}

@@ -53,6 +53,26 @@ msgstr[0] "%1 démarrage"
 msgstr[1] "%1 démarrages"
 
 #: ui/AppState.qml
+msgid "Using %1"
+msgstr "Utilise %1"
+
+#: ui/AppState.qml
+msgid "%1 is not working"
+msgstr "%1 ne fonctionne pas"
+
+#: ui/AppState.qml
+msgid "Not set up"
+msgstr "Non configuré"
+
+#: ui/AppState.qml ui/SourceChoice.qml
+msgid "Working"
+msgstr "Fonctionne"
+
+#: ui/AppState.qml
+msgid "Waiting for data"
+msgstr "En attente de données"
+
+#: ui/AppState.qml
 msgid "No data"
 msgstr "Aucune donnée"
 
@@ -255,6 +275,10 @@ msgid "Stats"
 msgstr "Statistiques"
 
 #: ui/PopupContent.qml
+msgid "Remote"
+msgstr "À distance"
+
+#: ui/PopupContent.qml
 #, no-javascript-format
 msgid "Used: %1%"
 msgstr "Utilisé : %1 %"
@@ -380,6 +404,108 @@ msgstr "Enregistrer en SVG"
 msgid "Pinned on panel"
 msgstr "Épinglé sur le panneau"
 
+#: ui/ProviderDetail.qml
+msgid "Remove provider"
+msgstr "Retirer le fournisseur"
+
+#: ui/ProviderList.qml
+msgid "Detecting…"
+msgstr "Détection…"
+
+#: ui/ProviderList.qml
+msgid "Detect installed providers"
+msgstr "Détecter les fournisseurs installés"
+
+#: ui/ProviderList.qml ui/ProviderPicker.qml
+msgid "Add provider"
+msgstr "Ajouter un fournisseur"
+
+#: ui/ProviderList.qml ui/SettingsPage.qml ui/SpendPage.qml
+msgid "Providers"
+msgstr "Fournisseurs"
+
+#: ui/ProviderList.qml
+msgid ""
+"Keys are stored in %1; leave one blank to use env vars or an existing CLI "
+"login."
+msgstr ""
+"Les clés sont stockées dans %1 ; laissez-en une vide pour utiliser des "
+"variables d’environnement ou une connexion CLI existante."
+
+#: ui/ProviderList.qml
+msgid ""
+"No providers yet. Use Add provider, or Detect installed providers to switch "
+"on what is installed."
+msgstr ""
+"Aucun fournisseur pour le moment. Utilisez Ajouter un fournisseur, ou "
+"Détecter les fournisseurs installés pour activer ce qui est installé."
+
+#: ui/ProviderOptions.qml ui/SourceChoice.qml
+msgid "API key"
+msgstr "Clé API"
+
+#: ui/ProviderOptions.qml
+msgid "A key is set."
+msgstr "Une clé est définie."
+
+#: ui/ProviderOptions.qml
+msgid "Optional where a login or an environment variable already covers it."
+msgstr ""
+"Facultative lorsqu’une connexion ou une variable d’environnement la remplace "
+"déjà."
+
+#: ui/ProviderOptions.qml
+msgid "Plan quota"
+msgstr "Quota du forfait"
+
+#: ui/ProviderOptions.qml
+msgid "Plan windows"
+msgstr "Fenêtres du forfait"
+
+#: ui/ProviderOptions.qml
+msgid ""
+"Live: plan windows come from a billed model call (~130 tokens per refresh, "
+"cached 30 min)."
+msgstr ""
+"En direct : les fenêtres de plan proviennent d'un appel modélisé facturé "
+"(~130 jetons par actualisation, mis en cache 30 min)."
+
+#: ui/ProviderOptions.qml
+msgid ""
+"Local: read from Muse's own files, free. Meta reports plan windows only on a "
+"billed call — that is what Live buys."
+msgstr ""
+"Local : lecture depuis les fichiers de Muse, gratuit. Meta ne signale les "
+"fenêtres de plan que lors d'un appel facturé — c'est ce qu'achète En direct."
+
+#: ui/ProviderOptions.qml
+msgid "Local"
+msgstr "Local"
+
+#: ui/ProviderOptions.qml
+msgid "Live"
+msgstr "En direct"
+
+#: ui/ProviderOptions.qml
+msgid "Quota"
+msgstr "Quota"
+
+#: ui/ProviderOptions.qml
+msgid "fallback if the plan reports none"
+msgstr "valeur de repli si le plan n'en indique aucun"
+
+#: ui/ProviderPicker.qml
+msgid "Search providers"
+msgstr "Rechercher des fournisseurs"
+
+#: ui/ProviderPicker.qml
+msgid "Every provider is already on."
+msgstr "Tous les fournisseurs sont déjà activés."
+
+#: ui/ProviderPicker.qml
+msgid "No provider matches “%1”."
+msgstr "Aucun fournisseur ne correspond à « %1 »."
+
 #: ui/ProviderSections.qml
 msgid "· resetting…"
 msgstr "· réinitialisation…"
@@ -388,61 +514,9 @@ msgstr "· réinitialisation…"
 msgid "resets in %1"
 msgstr "réinitialisé dans %1"
 
-#: ui/ProviderSettingRow.qml
-msgid "key set"
-msgstr "clé définie"
-
-#: ui/ProviderSettingRow.qml ui/SettingsPage.qml
-msgid "Off"
-msgstr "Désactivé"
-
-#: ui/ProviderSettingRow.qml
-msgid "Local"
-msgstr "Local"
-
-#: ui/ProviderSettingRow.qml
-msgid "Live"
-msgstr "En direct"
-
-#: ui/ProviderSettingRow.qml
-msgid "API key"
-msgstr "Clé API"
-
-#: ui/ProviderSettingRow.qml
-msgid "Server URL"
-msgstr "URL du serveur"
-
-#: ui/ProviderSettingRow.qml
-msgid "Server URLs, separated by commas"
-msgstr "URLs du serveur, séparées par des virgules"
-
-#: ui/ProviderSettingRow.qml ui/SettingsPage.qml
-msgid "Engine"
-msgstr "Moteur"
-
-#: ui/ProviderSettingRow.qml
-msgid ""
-"Live: plan windows come from a billed model call (~130 tokens per refresh, "
-"cached 30 min)."
-msgstr ""
-"En direct : les fenêtres de plan proviennent d'un appel modélisé facturé "
-"(~130 jetons par actualisation, mis en cache 30 min)."
-
-#: ui/ProviderSettingRow.qml
-msgid ""
-"Local: read from Muse's own files, free. Meta reports plan windows only on a "
-"billed call — that is what Live buys."
-msgstr ""
-"Local : lecture depuis les fichiers de Muse, gratuit. Meta ne signale les "
-"fenêtres de plan que lors d'un appel facturé — c'est ce qu'achète En direct."
-
-#: ui/ProviderSettingRow.qml
-msgid "Quota"
-msgstr "Quota"
-
-#: ui/ProviderSettingRow.qml
-msgid "fallback if the plan reports none"
-msgstr "valeur de repli si le plan n'en indique aucun"
+#: ui/RemotePage.qml
+msgid "working"
+msgstr "en cours"
 
 #: ui/SessionsPage.qml
 msgid "All sources"
@@ -588,10 +662,6 @@ msgstr "Coût : $%1 (exact)"
 msgid "Cost: $%1 (partial)"
 msgstr "Coût : $%1 (partiel)"
 
-#: ui/SettingsPage.qml ui/SpendPage.qml
-msgid "Providers"
-msgstr "Fournisseurs"
-
 #: ui/SettingsPage.qml
 msgid "Local Models"
 msgstr "Modèles locaux"
@@ -639,23 +709,6 @@ msgid "No pricing rates available; try again."
 msgstr "Aucun tarif disponible ; réessayez."
 
 #: ui/SettingsPage.qml
-msgid "Detecting…"
-msgstr "Détection…"
-
-#: ui/SettingsPage.qml
-msgid "Detect installed providers"
-msgstr "Détecter les fournisseurs installés"
-
-#: ui/SettingsPage.qml
-msgid ""
-"Expand a provider for its API key and options. Keys are stored in %1; leave "
-"one blank to use env vars or an existing CLI login."
-msgstr ""
-"Dépliez un fournisseur pour sa clé API et ses options. Les clés sont "
-"stockées dans %1 ; laissez-en une vide pour utiliser les variables "
-"d'environnement ou une connexion CLI existante."
-
-#: ui/SettingsPage.qml
 msgid ""
 "Token counters reflect usage since server start. GPU VRAM tracking is "
 "enabled automatically where supported."
@@ -683,6 +736,10 @@ msgstr ""
 #: ui/SettingsPage.qml
 msgid "e.g. http://127.0.0.1:11434, http://127.0.0.1:8000"
 msgstr "p. ex. http://127.0.0.1:11434, http://127.0.0.1:8000"
+
+#: ui/SettingsPage.qml
+msgid "Engine"
+msgstr "Moteur"
 
 #: ui/SettingsPage.qml
 msgid "Bearer Token (optional)"
@@ -826,6 +883,10 @@ msgstr ""
 "panneau, quel que soit l'onglet affiché."
 
 #: ui/SettingsPage.qml
+msgid "Off"
+msgstr "Désactivé"
+
+#: ui/SettingsPage.qml
 msgid "30 seconds"
 msgstr "30 secondes"
 
@@ -873,7 +934,7 @@ msgstr "Thème"
 msgid "Auto follows the system's light or dark appearance."
 msgstr "Auto suit l'apparence claire ou sombre du système."
 
-#: ui/SettingsPage.qml
+#: ui/SettingsPage.qml ui/SourceChoice.qml
 msgid "Auto"
 msgstr "Auto"
 
@@ -1149,6 +1210,110 @@ msgstr "Copier"
 msgid "Open in terminal"
 msgstr "Ouvrir dans le terminal"
 
+#: ui/SettingsPage.qml
+msgid "Network"
+msgstr "Réseau"
+
+#: ui/SettingsPage.qml
+msgid ""
+"Applies on the next refresh, without restarting anything. Requests to this "
+"machine never go through it. An environment proxy (HTTPS_PROXY) takes "
+"precedence."
+msgstr ""
+"S’applique à la prochaine actualisation, sans rien redémarrer. Les requêtes "
+"vers cette machine ne passent jamais par le proxy. Un proxy d’environnement "
+"(HTTPS_PROXY) est prioritaire."
+
+#: ui/SettingsPage.qml
+msgid "Proxy"
+msgstr "Proxy"
+
+#: ui/SettingsPage.qml
+msgid "System uses the environment as it is; Off ignores any proxy."
+msgstr ""
+"Système utilise l’environnement tel quel ; Désactivé ignore tout proxy."
+
+#: ui/SettingsPage.qml
+msgid "System"
+msgstr "Système"
+
+#: ui/SettingsPage.qml
+msgid "Host"
+msgstr "Hôte"
+
+#: ui/SettingsPage.qml
+msgid "Port"
+msgstr "Port"
+
+#: ui/SettingsPage.qml
+msgid "Files"
+msgstr "Fichiers"
+
+#: ui/SettingsPage.qml
+msgid ""
+"API keys are stored in this file as plain text. Keep it private, and leave a "
+"key blank to use an env var or an existing CLI login instead."
+msgstr ""
+"Les clés API sont stockées en clair dans ce fichier. Gardez-le privé, et "
+"laissez une clé vide pour utiliser une variable d’environnement ou une "
+"connexion CLI existante."
+
+#: ui/SettingsPage.qml
+msgid "Configuration file"
+msgstr "Fichier de configuration"
+
+#: ui/SourceChoice.qml
+msgid "CLI"
+msgstr "CLI"
+
+#: ui/SourceChoice.qml
+msgid "IDE"
+msgstr "IDE"
+
+#: ui/SourceChoice.qml
+msgid "Server"
+msgstr "Serveur"
+
+#: ui/SourceChoice.qml
+msgid "Browser"
+msgstr "Navigateur"
+
+#: ui/SourceChoice.qml
+msgid "Local files"
+msgstr "Fichiers locaux"
+
+#: ui/SourceChoice.qml
+msgid "Not working"
+msgstr "Ne fonctionne pas"
+
+#: ui/SourceChoice.qml
+msgid "Ready"
+msgstr "Prêt"
+
+#: ui/SourceChoice.qml
+msgid "Not found"
+msgstr "Introuvable"
+
+#: ui/SourceChoice.qml
+msgid "Authentication"
+msgstr "Authentification"
+
+#: ui/SourceChoice.qml
+msgid ""
+"Choose where this provider is read from. Auto uses the first source that "
+"works."
+msgstr ""
+"Choisissez d’où ce fournisseur est lu. Auto utilise la première source qui "
+"fonctionne."
+
+#: ui/SourceChoice.qml
+msgid "Everything this provider is read from. All of it is used."
+msgstr "Tout ce dont ce fournisseur est lu. Tout est utilisé."
+
+#: ui/SourceChoice.qml
+msgid "The first source below that works"
+msgstr "La première source ci-dessous qui fonctionne"
+
 #: ui/SpendPage.qml
 msgid "Could not read model pricing."
 msgstr "Impossible de lire la tarification des modèles."
@@ -1325,6 +1490,15 @@ msgid "No local Junie token usage yet. Run a CLI session to see activity."
 msgstr ""
 "Aucune utilisation locale de jetons Junie pour le moment. Lancez une session "
 "CLI pour voir l’activité."
+
+#: ui/StatsSection.qml
+msgid ""
+"No Pi or OMP sessions yet.\n"
+"Run Pi or OMP and the token usage in its session files will appear here."
+msgstr ""
+"Aucune session Pi ou OMP pour le moment.\n"
+"Lancez Pi ou OMP : l’utilisation de jetons de ses fichiers de session "
+"apparaîtra ici."
 
 #: ui/StatsSection.qml
 msgid "No local MiMo Code usage yet. Account quota is unavailable."
@@ -1686,12 +1860,83 @@ msgstr "%1 HTTP %2"
 #: backend/aiusage/normalize/muse.py backend/aiusage/normalize/ollama.py
 #: backend/aiusage/normalize/opencode.py
 #: backend/aiusage/normalize/selfhosted.py
+#: backend/aiusage/normalize/windsurf.py
 msgid "%1% used"
 msgstr "%1% utilisé"
 
 #: backend/aiusage/normalize/antigravity.py
 msgid "⚠ Quota exhausted"
 msgstr "⚠ Quota épuisé"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Online"
+msgstr "En ligne"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Offline"
+msgstr "Hors ligne"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Updated %1"
+msgstr "Mis à jour %1"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote devices"
+msgstr "Appareils distants"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "%1 online · %2 devices"
+msgstr "%1 en ligne · %2 appareils"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "No remote devices registered for this account."
+msgstr "Aucun appareil distant enregistré pour ce compte."
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Open antigravity.google.com ↗"
+msgstr "Ouvrir antigravity.google.com ↗"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Select a device to open it in Antigravity."
+msgstr "Sélectionnez un appareil pour l’ouvrir dans Antigravity."
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control is online"
+msgstr "Le contrôle à distance est en ligne"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "This device can be reached from your other devices."
+msgstr "Cet appareil est joignable depuis vos autres appareils."
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control is offline"
+msgstr "Le contrôle à distance est hors ligne"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control is on, but this device is not connected right now."
+msgstr ""
+"Le contrôle à distance est activé, mais cet appareil n’est pas connecté pour "
+"le moment."
+
+#: backend/aiusage/normalize/antigravity.py
+msgid "Remote Control is off"
+msgstr "Le contrôle à distance est désactivé"
+
+#: backend/aiusage/normalize/antigravity.py
+msgid ""
+"Turn it on in Antigravity's settings to work with local agents from another "
+"device."
+msgstr ""
+"Activez-le dans les paramètres d’Antigravity pour travailler avec des agents "
+"locaux depuis un autre appareil."
+
+#: backend/aiusage/normalize/antigravity.py
+msgid ""
+"Device list unavailable. Showing this desktop app's local status; open the "
+"website to see all devices."
+msgstr ""
+"Liste des appareils indisponible. État local de cette application de bureau "
+"affiché ; ouvrez le site web pour voir tous les appareils."
 
 #: backend/aiusage/normalize/antigravity.py
 msgid "Antigravity not configured"
@@ -1734,7 +1979,8 @@ msgid "Gemini (Google) quota: %1%"
 msgstr "Quota Gemini (Google) : %1%"
 
 #: backend/aiusage/normalize/antigravity.py backend/aiusage/normalize/cursor.py
-#: backend/aiusage/normalize/kiro.py
+#: backend/aiusage/normalize/kiro.py backend/aiusage/normalize/windsurf.py
+#: backend/aiusage/normalize/zed.py
 msgid "Plan: %1"
 msgstr "Forfait : %1"
 
@@ -1819,6 +2065,30 @@ msgid "Extended thinking (dream mode): OFF"
 msgstr "Réflexion étendue (mode dream) : DÉSACTIVÉE"
 
 #: backend/aiusage/normalize/claude.py
+msgid "%1 session open to other devices"
+msgstr "%1 session ouverte aux autres appareils"
+
+#: backend/aiusage/normalize/claude.py
+msgid "%1 sessions open to other devices"
+msgstr "%1 sessions ouvertes aux autres appareils"
+
+#: backend/aiusage/normalize/claude.py
+msgid ""
+"Started with /remote-control in Claude Code. Continue them from your phone "
+"or the browser."
+msgstr ""
+"Démarrées avec /remote-control dans Claude Code. Reprenez-les depuis votre "
+"téléphone ou le navigateur."
+
+#: backend/aiusage/normalize/claude.py
+msgid "Open claude.ai/code ↗"
+msgstr "Ouvrir claude.ai/code ↗"
+
+#: backend/aiusage/normalize/claude.py
+msgid "Claude Code session"
+msgstr "Session Claude Code"
+
+#: backend/aiusage/normalize/claude.py
 msgid "OAuth missing — API stats only"
 msgstr "OAuth absent — statistiques API uniquement"
 
@@ -1858,10 +2128,47 @@ msgstr "Cline : aucune session pour l'instant — lancez cline une fois"
 msgid "last 30 days"
 msgstr "30 derniers jours"
 
-#: backend/aiusage/normalize/cline.py
+#: backend/aiusage/normalize/cline.py backend/aiusage/normalize/kilo.py
 #: backend/aiusage/normalize/local_activity.py
+#: backend/aiusage/normalize/windsurf.py backend/aiusage/normalize/zed.py
 msgid "%1: %2"
 msgstr "%1 : %2"
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "CodeRabbit: CLI not found"
+msgstr "CodeRabbit : CLI introuvable"
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "CodeRabbit: %1"
+msgstr "CodeRabbit : %1"
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "reviews this period"
+msgstr "revues sur cette période"
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "Your reviews"
+msgstr "Vos revues"
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "Your reviews: %1"
+msgstr "Vos revues : %1"
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "User"
+msgstr "Utilisateur"
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid "Usage billing"
+msgstr "Facturation à l’usage"
+
+#: backend/aiusage/normalize/coderabbit.py
+msgid ""
+"Read by running the CodeRabbit CLI's own usage report. CodeRabbit publishes "
+"a count, not a quota."
+msgstr ""
+"Lu en exécutant le rapport d’utilisation du CLI CodeRabbit. CodeRabbit "
+"publie un nombre de revues, pas un quota."
 
 #: backend/aiusage/normalize/copilot.py
 msgid "Copilot: no token configured"
@@ -1967,10 +2274,6 @@ msgstr "24 h glissantes"
 msgid "Grok CLI"
 msgstr "Grok CLI"
 
-#: backend/aiusage/normalize/grok.py
-msgid "CLI"
-msgstr "CLI"
-
 #: backend/aiusage/normalize/grok.py backend/aiusage/normalize/openrouter.py
 msgid "Credit usage"
 msgstr "Utilisation des crédits"
@@ -1999,6 +2302,53 @@ msgstr "Crédits Grok : %1% utilisé"
 msgid "Grok CLI connected; billing quota is not exposed"
 msgstr "Grok CLI connecté ; le quota de facturation n'est pas exposé"
 
+#: backend/aiusage/normalize/jetbrains.py
+msgid ""
+"Open a JetBrains IDE signed in to JetBrains AI once so it records your quota."
+msgstr ""
+"Ouvrez une fois un IDE JetBrains connecté à JetBrains AI pour qu’il "
+"enregistre votre quota."
+
+#: backend/aiusage/normalize/jetbrains.py
+msgid "JetBrains AI: no IDE quota file found"
+msgstr "JetBrains AI : aucun fichier de quota d’IDE trouvé"
+
+#: backend/aiusage/normalize/jetbrains.py
+msgid "JetBrains AI: %1"
+msgstr "JetBrains AI : %1"
+
+#: backend/aiusage/normalize/jetbrains.py backend/aiusage/normalize/kiro.py
+msgid "%1 / %2 credits"
+msgstr "%1 / %2 crédits"
+
+#: backend/aiusage/normalize/jetbrains.py backend/aiusage/normalize/kiro.py
+msgid "Monthly credits"
+msgstr "Crédits mensuels"
+
+#: backend/aiusage/normalize/jetbrains.py backend/aiusage/normalize/kiro.py
+msgid "Credits: %1"
+msgstr "Crédits : %1"
+
+#: backend/aiusage/normalize/jetbrains.py
+msgid "Top-up credits: %1"
+msgstr "Crédits de recharge : %1"
+
+#: backend/aiusage/normalize/jetbrains.py backend/aiusage/normalize/kiro.py
+msgid "Remaining"
+msgstr "Restant"
+
+#: backend/aiusage/normalize/jetbrains.py
+msgid "Top-up credits"
+msgstr "Crédits de recharge"
+
+#: backend/aiusage/normalize/jetbrains.py
+msgid ""
+"Read from the IDE's own quota file. No key or network request needed; it "
+"updates while an IDE is running."
+msgstr ""
+"Lu depuis le fichier de quota de l’IDE. Aucune clé ni requête réseau "
+"nécessaire ; il se met à jour pendant qu’un IDE est ouvert."
+
 #: backend/aiusage/normalize/junie.py
 msgid ""
 "Junie (untested): no recorded token usage yet. Run a session using /account "
@@ -2006,6 +2356,43 @@ msgid ""
 msgstr ""
 "Junie (non testé) : aucune utilisation de jetons enregistrée. Lancez une "
 "session avec /account ou junie --provider google."
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Kilo: no API key or CLI login found"
+msgstr "Kilo : aucune clé API ni connexion CLI trouvée"
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Kilo: %1"
+msgstr "Kilo : %1"
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Credits"
+msgstr "Crédits"
+
+#: backend/aiusage/normalize/kilo.py backend/aiusage/normalize/windsurf.py
+#: backend/aiusage/normalize/zed.py
+msgid "%1 / %2"
+msgstr "%1 / %2"
+
+#: backend/aiusage/normalize/kilo.py
+msgid "%1 (incl. %2 bonus)"
+msgstr "%1 (dont %2 de bonus)"
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Kilo Pass"
+msgstr "Kilo Pass"
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Credit balance"
+msgstr "Solde de crédits"
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Read with your Kilo CLI login."
+msgstr "Lu avec votre connexion CLI Kilo."
+
+#: backend/aiusage/normalize/kilo.py
+msgid "Read with your Kilo API key."
+msgstr "Lu avec votre clé API Kilo."
 
 #: backend/aiusage/normalize/kiro.py
 msgid ""
@@ -2027,10 +2414,6 @@ msgid "Kiro: %1"
 msgstr "Kiro : %1"
 
 #: backend/aiusage/normalize/kiro.py
-msgid "%1 / %2 credits"
-msgstr "%1 / %2 crédits"
-
-#: backend/aiusage/normalize/kiro.py
 msgid "Kiro: usage snapshot is empty"
 msgstr "Kiro : l'instantané d'utilisation est vide"
 
@@ -2041,10 +2424,6 @@ msgstr "Utilisation actuelle"
 #: backend/aiusage/normalize/kiro.py
 msgid "%1 %2"
 msgstr "%1 %2"
-
-#: backend/aiusage/normalize/kiro.py
-msgid "Remaining"
-msgstr "Restant"
 
 #: backend/aiusage/normalize/kiro.py
 msgid "Overage"
@@ -2064,14 +2443,6 @@ msgid ""
 msgstr ""
 "Lu localement depuis l'état de l'application Kiro. Aucune clé API ni requête "
 "réseau requise."
-
-#: backend/aiusage/normalize/kiro.py
-msgid "Monthly credits"
-msgstr "Crédits mensuels"
-
-#: backend/aiusage/normalize/kiro.py
-msgid "Credits: %1"
-msgstr "Crédits : %1"
 
 #: backend/aiusage/normalize/local_activity.py
 msgid "%1 tokens · %2 session · %3"
@@ -2323,6 +2694,31 @@ msgstr ""
 msgid "OpenRouter: no API key configured"
 msgstr "OpenRouter : aucune clé API configurée"
 
+#: backend/aiusage/normalize/openrouter.py
+msgid "Balance"
+msgstr "Solde"
+
+#: backend/aiusage/normalize/openrouter.py backend/aiusage/normalize/zai.py
+msgid "Today"
+msgstr "Aujourd'hui"
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "This week"
+msgstr "Cette semaine"
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "This month"
+msgstr "Ce mois-ci"
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "Key spend"
+msgstr "Dépenses de la clé"
+
+#: backend/aiusage/normalize/pi.py
+msgid "Pi: no recorded token usage yet. Run a Pi or OMP session."
+msgstr ""
+"Pi : aucune utilisation de jetons enregistrée. Lancez une session Pi ou OMP."
+
 #: backend/aiusage/normalize/selfhosted.py
 msgid "All local model servers offline"
 msgstr "Tous les serveurs de modèles locaux sont hors ligne"
@@ -2383,9 +2779,54 @@ msgstr "%1 jetons depuis le démarrage du serveur"
 msgid "Loaded models"
 msgstr "Modèles chargés"
 
-#: backend/aiusage/normalize/zai.py
-msgid "Today"
-msgstr "Aujourd'hui"
+#: backend/aiusage/normalize/windsurf.py
+msgid "Open Windsurf and sign in once so it caches your plan."
+msgstr ""
+"Ouvrez Windsurf et connectez-vous une fois pour qu’il mette votre forfait en "
+"cache."
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Windsurf: no local data found"
+msgstr "Windsurf : aucune donnée locale trouvée"
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Windsurf: %1"
+msgstr "Windsurf : %1"
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Daily quota"
+msgstr "Quota quotidien"
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Weekly quota"
+msgstr "Quota hebdomadaire"
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Messages"
+msgstr "Messages"
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Flow actions"
+msgstr "Actions Flow"
+
+#: backend/aiusage/normalize/windsurf.py
+msgid "Windsurf: the cached plan has no quota figures"
+msgstr "Windsurf : le forfait en cache ne contient aucun chiffre de quota"
+
+#: backend/aiusage/normalize/windsurf.py
+msgid ""
+"Read from Windsurf's local cache, last written %1. It only updates while "
+"Windsurf is running."
+msgstr ""
+"Lu depuis le cache local de Windsurf, écrit pour la dernière fois le %1. Il "
+"ne se met à jour que lorsque Windsurf est ouvert."
+
+#: backend/aiusage/normalize/windsurf.py
+msgid ""
+"Read from Windsurf's local cache. It only updates while Windsurf is running."
+msgstr ""
+"Lu depuis le cache local de Windsurf. Il ne se met à jour que lorsque "
+"Windsurf est ouvert."
 
 #: backend/aiusage/normalize/zai.py
 msgid "Today (%1 %2)"
@@ -2431,6 +2872,83 @@ msgstr "Jetons Z.AI (7 j) : %1 %"
 msgid "Z.AI tools: %1%"
 msgstr "Outils Z.AI : %1 %"
 
+#: backend/aiusage/normalize/zed.py
+msgid "Zed (untested): the editor login can only be read on macOS"
+msgstr ""
+"Zed (non testé) : la connexion de l’éditeur n’est lisible que sous macOS"
+
+#: backend/aiusage/normalize/zed.py
+msgid "Zed (untested): sign in to the Zed editor first"
+msgstr "Zed (non testé) : connectez-vous d’abord à l’éditeur Zed"
+
+#: backend/aiusage/normalize/zed.py
+msgid "Zed (untested): %1"
+msgstr "Zed (non testé) : %1"
+
+#: backend/aiusage/normalize/zed.py
+msgid "Edit predictions"
+msgstr "Prédictions d’édition"
+
+#: backend/aiusage/normalize/zed.py
+msgid "Unlimited"
+msgstr "Illimité"
+
+#: backend/aiusage/normalize/zed.py
+msgid "Zed (untested): no usage figures in the account response"
+msgstr ""
+"Zed (non testé) : aucun chiffre d’utilisation dans la réponse du compte"
+
+#: backend/aiusage/normalize/zed.py
+msgid "Overdue invoices on this account — check your Zed billing page."
+msgstr ""
+"Factures en retard sur ce compte — consultez votre page de facturation Zed."
+
+#: backend/aiusage/normalize/zed.py
+msgid ""
+"Read with the Zed editor's own login from the macOS Keychain. Untested "
+"against a live account."
+msgstr ""
+"Lu avec la connexion de l’éditeur Zed depuis le trousseau macOS. Non testé "
+"avec un compte réel."
+
+#: backend/aiusage/providers/antigravity.py
+msgid "antigravity-usage"
+msgstr "antigravity-usage"
+
+#: backend/aiusage/providers/antigravity.py
+msgid "The antigravity-usage CLI"
+msgstr "Le CLI antigravity-usage"
+
+#: backend/aiusage/providers/antigravity.py
+msgid "IDE language server"
+msgstr "Serveur de langage de l’IDE"
+
+#: backend/aiusage/providers/antigravity.py
+msgid "The local server a running Antigravity IDE or extension exposes"
+msgstr ""
+"Le serveur local qu’expose un IDE ou une extension Antigravity en cours "
+"d’exécution"
+
+#: backend/aiusage/providers/antigravity.py
+msgid "agy session"
+msgstr "Session agy"
+
+#: backend/aiusage/providers/antigravity.py
+msgid "The agy CLI's own /usage report"
+msgstr "Le rapport /usage du CLI agy"
+
+#: backend/aiusage/providers/antigravity.py
+msgid "The antigravity-usage CLI did not answer"
+msgstr "Le CLI antigravity-usage n’a pas répondu"
+
+#: backend/aiusage/providers/antigravity.py
+msgid "Antigravity language server not reachable - open the IDE"
+msgstr "Serveur de langage Antigravity injoignable - ouvrez l’IDE"
+
+#: backend/aiusage/providers/antigravity.py
+msgid "agy did not answer - run agy once"
+msgstr "agy n’a pas répondu - lancez agy une fois"
+
 #: backend/aiusage/providers/antigravity.py
 msgid "Antigravity language server found but could not connect to API"
 msgstr ""
@@ -2449,6 +2967,30 @@ msgid "Antigravity is not running. Please open your IDE."
 msgstr "Antigravity n'est pas lancé. Ouvrez votre IDE."
 
 #: backend/aiusage/providers/copilot.py
+msgid "Access token"
+msgstr "Jeton d’accès"
+
+#: backend/aiusage/providers/copilot.py
+msgid "A token from settings, $GITHUB_TOKEN or $GH_TOKEN"
+msgstr "Un jeton des paramètres, de $GITHUB_TOKEN ou de $GH_TOKEN"
+
+#: backend/aiusage/providers/copilot.py
+msgid "Copilot editor login"
+msgstr "Connexion de l’éditeur Copilot"
+
+#: backend/aiusage/providers/copilot.py
+msgid "The login your editor's Copilot plugin stored"
+msgstr "La connexion enregistrée par le plugin Copilot de votre éditeur"
+
+#: backend/aiusage/providers/copilot.py
+msgid "GitHub CLI"
+msgstr "CLI GitHub"
+
+#: backend/aiusage/providers/copilot.py
+msgid "The token `gh auth token` prints"
+msgstr "Le jeton affiché par `gh auth token`"
+
+#: backend/aiusage/providers/copilot.py
 msgid "Invalid GitHub token"
 msgstr "Jeton GitHub invalide"
 
@@ -2464,6 +3006,22 @@ msgstr ""
 #: backend/aiusage/providers/copilot.py
 msgid "GitHub Copilot invalid JSON"
 msgstr "GitHub Copilot : JSON invalide"
+
+#: backend/aiusage/providers/cursor.py
+msgid "cursor-agent"
+msgstr "cursor-agent"
+
+#: backend/aiusage/providers/cursor.py
+msgid "The login cursor-agent keeps"
+msgstr "La connexion conservée par cursor-agent"
+
+#: backend/aiusage/providers/cursor.py
+msgid "Cursor app"
+msgstr "Application Cursor"
+
+#: backend/aiusage/providers/cursor.py
+msgid "The Cursor editor's local session database"
+msgstr "La base de session locale de l’éditeur Cursor"
 
 #: backend/aiusage/providers/cursor.py
 msgid "login expired — run cursor-agent login"
@@ -2500,6 +3058,18 @@ msgstr "Authentification Grok expirée — lancez grok --oauth"
 #: backend/aiusage/providers/grok.py
 msgid "Billing HTTP %1"
 msgstr "Facturation HTTP %1"
+
+#: backend/aiusage/providers/kilo.py
+msgid "A key from settings or $KILO_API_KEY"
+msgstr "Une clé des paramètres ou de $KILO_API_KEY"
+
+#: backend/aiusage/providers/kilo.py
+msgid "Kilo CLI"
+msgstr "CLI Kilo"
+
+#: backend/aiusage/providers/kilo.py
+msgid "The login `kilo auth login` stored"
+msgstr "La connexion enregistrée par `kilo auth login`"
 
 #: backend/aiusage/providers/kimi_code.py
 msgid "Kimi Code usage response could not be parsed"
@@ -2553,6 +3123,22 @@ msgstr ""
 "Connexion kiro-cli refusée — lancez kiro-cli une fois pour la renouveler"
 
 #: backend/aiusage/providers/kiro.py
+msgid "kiro-cli"
+msgstr "kiro-cli"
+
+#: backend/aiusage/providers/kiro.py
+msgid "The kiro-cli login, read live"
+msgstr "La connexion kiro-cli, lue en direct"
+
+#: backend/aiusage/providers/kiro.py
+msgid "Kiro IDE"
+msgstr "IDE Kiro"
+
+#: backend/aiusage/providers/kiro.py
+msgid "The usage snapshot the IDE caches"
+msgstr "L’instantané d’utilisation mis en cache par l’IDE"
+
+#: backend/aiusage/providers/kiro.py
 msgid "No Kiro state found — sign in to Kiro IDE or kiro-cli once"
 msgstr ""
 "Aucun état Kiro trouvé — connectez-vous une fois à Kiro IDE ou kiro-cli"
@@ -2596,6 +3182,18 @@ msgstr "Kimi : JSON invalide"
 #: backend/aiusage/providers/moonshot.py
 msgid "Kimi unexpected response"
 msgstr "Kimi : réponse inattendue"
+
+#: backend/aiusage/providers/ollama.py
+msgid "A key from settings or $OLLAMA_API_KEY"
+msgstr "Une clé des paramètres ou de $OLLAMA_API_KEY"
+
+#: backend/aiusage/providers/ollama.py
+msgid "OpenCode login"
+msgstr "Connexion OpenCode"
+
+#: backend/aiusage/providers/ollama.py
+msgid "The ollama-cloud key OpenCode stored"
+msgstr "La clé ollama-cloud enregistrée par OpenCode"
 
 #: backend/aiusage/providers/ollama.py
 msgid "Ollama Cloud: invalid API key characters"
@@ -2648,179 +3246,3 @@ msgstr "Z.AI : erreur de l'API"
 #: backend/aiusage/providers/zai.py
 msgid "Z.AI unexpected response"
 msgstr "Z.AI : réponse inattendue"
-
-#: backend/aiusage/normalize/*.py
-msgid "Open a JetBrains IDE signed in to JetBrains AI once so it records your quota."
-msgstr "Ouvrez une fois un IDE JetBrains connecté à JetBrains AI pour qu’il enregistre votre quota."
-
-#: backend/aiusage/normalize/*.py
-msgid "JetBrains AI: no IDE quota file found"
-msgstr "JetBrains AI : aucun fichier de quota d’IDE trouvé"
-
-#: backend/aiusage/normalize/*.py
-msgid "JetBrains AI: %1"
-msgstr "JetBrains AI : %1"
-
-#: backend/aiusage/normalize/*.py
-msgid "Top-up credits: %1"
-msgstr "Crédits de recharge : %1"
-
-#: backend/aiusage/normalize/*.py
-msgid "Top-up credits"
-msgstr "Crédits de recharge"
-
-#: backend/aiusage/normalize/*.py
-msgid "Read from the IDE's own quota file. No key or network request needed; it updates while an IDE is running."
-msgstr "Lu depuis le fichier de quota de l’IDE. Aucune clé ni requête réseau nécessaire ; il se met à jour pendant qu’un IDE est ouvert."
-
-#: backend/aiusage/normalize/*.py
-msgid "Open Windsurf and sign in once so it caches your plan."
-msgstr "Ouvrez Windsurf et connectez-vous une fois pour qu’il mette votre forfait en cache."
-
-#: backend/aiusage/normalize/*.py
-msgid "Windsurf: no local data found"
-msgstr "Windsurf : aucune donnée locale trouvée"
-
-#: backend/aiusage/normalize/*.py
-msgid "Windsurf: %1"
-msgstr "Windsurf : %1"
-
-#: backend/aiusage/normalize/*.py
-msgid "Daily quota"
-msgstr "Quota quotidien"
-
-#: backend/aiusage/normalize/*.py
-msgid "Weekly quota"
-msgstr "Quota hebdomadaire"
-
-#: backend/aiusage/normalize/*.py
-msgid "Flow actions"
-msgstr "Actions Flow"
-
-#: backend/aiusage/normalize/*.py
-msgid "Windsurf: the cached plan has no quota figures"
-msgstr "Windsurf : le forfait en cache ne contient aucun chiffre de quota"
-
-#: backend/aiusage/normalize/*.py
-msgid "Read from Windsurf's local cache, last written %1. It only updates while Windsurf is running."
-msgstr "Lu depuis le cache local de Windsurf, écrit pour la dernière fois le %1. Il ne se met à jour que lorsque Windsurf est ouvert."
-
-#: backend/aiusage/normalize/*.py
-msgid "Read from Windsurf's local cache. It only updates while Windsurf is running."
-msgstr "Lu depuis le cache local de Windsurf. Il ne se met à jour que lorsque Windsurf est ouvert."
-
-#: backend/aiusage/normalize/*.py
-msgid "Kilo: no API key or CLI login found"
-msgstr "Kilo : aucune clé API ni connexion CLI trouvée"
-
-#: backend/aiusage/normalize/*.py
-msgid "Kilo: %1"
-msgstr "Kilo : %1"
-
-#: backend/aiusage/normalize/*.py
-msgid "%1 (incl. %2 bonus)"
-msgstr "%1 (dont %2 de bonus)"
-
-#: backend/aiusage/normalize/*.py
-msgid "Kilo Pass"
-msgstr "Kilo Pass"
-
-#: backend/aiusage/normalize/*.py
-msgid "Credit balance"
-msgstr "Solde de crédits"
-
-#: backend/aiusage/normalize/*.py
-msgid "Read with your Kilo CLI login."
-msgstr "Lu avec votre connexion CLI Kilo."
-
-#: backend/aiusage/normalize/*.py
-msgid "Read with your Kilo API key."
-msgstr "Lu avec votre clé API Kilo."
-
-#: backend/aiusage/normalize/*.py
-msgid "CodeRabbit: CLI not found"
-msgstr "CodeRabbit : CLI introuvable"
-
-#: backend/aiusage/normalize/*.py
-msgid "CodeRabbit: %1"
-msgstr "CodeRabbit : %1"
-
-#: backend/aiusage/normalize/*.py
-msgid "reviews this period"
-msgstr "revues sur cette période"
-
-#: backend/aiusage/normalize/*.py
-msgid "Your reviews"
-msgstr "Vos revues"
-
-#: backend/aiusage/normalize/*.py
-msgid "Your reviews: %1"
-msgstr "Vos revues : %1"
-
-#: backend/aiusage/normalize/*.py
-msgid "Usage billing"
-msgstr "Facturation à l’usage"
-
-#: backend/aiusage/normalize/*.py
-msgid "Read by running the CodeRabbit CLI's own usage report. CodeRabbit publishes a count, not a quota."
-msgstr "Lu en exécutant le rapport d’utilisation du CLI CodeRabbit. CodeRabbit publie un nombre de revues, pas un quota."
-
-#: backend/aiusage/normalize/*.py
-msgid "Zed (untested): the editor login can only be read on macOS"
-msgstr "Zed (non testé) : la connexion de l’éditeur n’est lisible que sous macOS"
-
-#: backend/aiusage/normalize/*.py
-msgid "Zed (untested): sign in to the Zed editor first"
-msgstr "Zed (non testé) : connectez-vous d’abord à l’éditeur Zed"
-
-#: backend/aiusage/normalize/*.py
-msgid "Zed (untested): %1"
-msgstr "Zed (non testé) : %1"
-
-#: backend/aiusage/normalize/*.py
-msgid "Edit predictions"
-msgstr "Prédictions d’édition"
-
-#: backend/aiusage/normalize/*.py
-msgid "Unlimited"
-msgstr "Illimité"
-
-#: backend/aiusage/normalize/*.py
-msgid "Zed (untested): no usage figures in the account response"
-msgstr "Zed (non testé) : aucun chiffre d’utilisation dans la réponse du compte"
-
-#: backend/aiusage/normalize/*.py
-msgid "Overdue invoices on this account — check your Zed billing page."
-msgstr "Factures en retard sur ce compte — consultez votre page de facturation Zed."
-
-#: backend/aiusage/normalize/*.py
-msgid "Read with the Zed editor's own login from the macOS Keychain. Untested against a live account."
-msgstr "Lu avec la connexion de l’éditeur Zed depuis le trousseau macOS. Non testé avec un compte réel."
-
-#: backend/aiusage/normalize/*.py
-msgid "Pi: no recorded token usage yet. Run a Pi or OMP session."
-msgstr "Pi : aucune utilisation de jetons enregistrée. Lancez une session Pi ou OMP."
-
-#: backend/aiusage/normalize/openrouter.py
-msgid "Balance"
-msgstr "Solde"
-
-#: backend/aiusage/normalize/openrouter.py
-msgid "This week"
-msgstr "Cette semaine"
-
-#: backend/aiusage/normalize/openrouter.py
-msgid "This month"
-msgstr "Ce mois-ci"
-
-#: backend/aiusage/normalize/openrouter.py
-msgid "Key spend"
-msgstr "Dépenses de la clé"
-
-#: ui/StatsSection.qml
-msgid ""
-"No Pi or OMP sessions yet.\n"
-"Run Pi or OMP and the token usage in its session files will appear here."
-msgstr ""
-"Aucune session Pi ou OMP pour le moment.\n"
-"Lancez Pi ou OMP : l’utilisation de jetons de ses fichiers de session apparaîtra ici."

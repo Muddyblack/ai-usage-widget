@@ -8,6 +8,7 @@ This request never invokes a model or spends inference credits.
 import json
 import os
 
+from .. import sources
 from ..http import as_json, clean_credential, fetch_json
 from ..messages import tr
 
@@ -29,8 +30,28 @@ def _opencode_key():
     return ""
 
 
+def _own_key():
+    return clean_credential(os.environ.get("WIDGET_OLLAMA_API_KEY")) or clean_credential(os.environ.get("OLLAMA_API_KEY"))
+
+
+SOURCES = (
+    sources.Source("key", "api", tr("API key"), tr("A key from settings or $OLLAMA_API_KEY"), lambda: bool(_own_key())),
+    sources.Source("opencode", "file", tr("OpenCode login"), tr("The ollama-cloud key OpenCode stored"), lambda: bool(_opencode_key())),
+)
+
+_KEYS = {"key": lambda: _own_key(), "opencode": lambda: _opencode_key()}
+
+
+def _resolve_key():
+    for source in sources.candidates("ollama", tuple(_KEYS)):
+        key = _KEYS[source]()
+        if key:
+            return key, source
+    return "", ""
+
+
 def get_ollama_usage():
-    key = clean_credential(os.environ.get("WIDGET_OLLAMA_API_KEY")) or clean_credential(os.environ.get("OLLAMA_API_KEY")) or _opencode_key()
+    key, source = _resolve_key()
     if not key:
         return {}
     if any(ord(ch) < 32 or ord(ch) == 127 for ch in key):
@@ -53,4 +74,5 @@ def get_ollama_usage():
     body = as_json(result.body)
     if not isinstance(body, dict) or not body or body.get("error"):
         return {"error": tr("Ollama Cloud: invalid usage response")}
+    body["source"] = source
     return body

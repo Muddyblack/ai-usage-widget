@@ -30,6 +30,9 @@ STAND_IN = (
 
 class AntigravityScanTest(unittest.TestCase):
     def setUp(self):
+        remote = mock.patch("aiusage.providers.antigravity_remote.fetch_instances", return_value=("", None))
+        remote.start()
+        self.addCleanup(remote.stop)
         self.cache_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.cache_dir.cleanup)
         self.environment = mock.patch.dict(
@@ -92,6 +95,9 @@ class AntigravityScanTest(unittest.TestCase):
 
 class AntigravityCacheTest(unittest.TestCase):
     def setUp(self):
+        devices = mock.patch("aiusage.providers.antigravity_remote.fetch_instances", return_value=("", None))
+        devices.start()
+        self.addCleanup(devices.stop)
         self.cache_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.cache_dir.cleanup)
         self.environment = mock.patch.dict(
@@ -103,6 +109,10 @@ class AntigravityCacheTest(unittest.TestCase):
         self.scan = mock.patch.object(antigravity, "_scan_processes", return_value=[("1", "", "")])
         self.scan.start()
         self.addCleanup(self.scan.stop)
+        # The real Remote Control log of whoever runs the tests must not leak in.
+        remote = mock.patch.object(antigravity, "remote_control", return_value=None)
+        remote.start()
+        self.addCleanup(remote.stop)
 
     @staticmethod
     def _which(name):
@@ -134,6 +144,7 @@ class AntigravityCacheTest(unittest.TestCase):
         self._write_cache(cached, time.time())
         expected = dict(cached)
         expected["email"] = "account@example.com"
+        expected["source"] = "agy"
         with (
             mock.patch.object(antigravity.shutil, "which", side_effect=self._which),
             mock.patch.object(antigravity, "_run_agy_usage", side_effect=AssertionError("fresh cache must skip agy")),
@@ -220,7 +231,7 @@ class AntigravityCacheTest(unittest.TestCase):
             mock.patch.object(antigravity, "_format_agy_usage", return_value=live),
         ):
             result = antigravity.get_antigravity_usage()
-        self.assertEqual(result, live)
+        self.assertEqual(result, {**live, "source": "agy"})
         run_agy.assert_called_once_with("/usr/bin/agy")
         with open(os.path.join(self.cache_dir.name, "antigravity.json"), encoding="utf-8") as stream:
             self.assertIsNone(json.load(stream)["usage"]["email"])

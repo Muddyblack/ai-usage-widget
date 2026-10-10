@@ -4,6 +4,29 @@ What each provider tab reads, where it looks for credentials, and what the
 underlying API does or does not expose. For the JSON model these all produce,
 see [`provider-contract.md`](provider-contract.md).
 
+## Adding providers and choosing sources
+
+Settings → Providers lists only the providers that are switched on, each with
+how it is being read ("Using agy session", "Not set up", or its error). **Add
+provider** opens a search over the rest; picking one switches it on and opens its
+page. A provider's page shows every way it can be read — a CLI, an IDE, a local
+server, an API key — with whether each works on this machine (Working, Ready,
+Not working, Not found), then its API key and extras.
+
+Where the ways are alternatives you choose one, or leave **Auto**, which uses the
+first that works. An explicit choice is strict: only that source is tried, so
+what the tab says it uses is what it uses. The choice is stored as
+`sources: {"<provider>": "<source id>"}` in the shared settings file (or
+`$WIDGET_SOURCE_<PROVIDER>`). Today Cursor (`cli`, `ide`), Kiro (`cli`, `ide`),
+Antigravity (`aiu`, `server`, `agy`), Copilot (`key`, `editor`, `cli`), Kilo
+(`key`, `cli`) and Ollama Cloud (`key`, `opencode`) have a choice; the others
+are read one way.
+
+**Network → Proxy** (Settings → Advanced) sends the backend's requests through an
+HTTP proxy, ignores any proxy (Off), or leaves the environment alone (System, the
+default). Requests to this machine never go through it, and a proxy already in the
+environment (`HTTPS_PROXY`) takes precedence. SOCKS is not supported.
+
 ## Token cost estimates
 
 Organization and local token estimates use the [models.dev JSON pricing
@@ -141,7 +164,30 @@ On each refresh cycle the widget reads `~/.claude/.credentials.json` to get the 
 
 ## Antigravity
 
-The widget reads credentials from the `antigravity-usage` CLI configuration (stored in `~/.config/antigravity-usage/` or `~/Library/Application Support/antigravity-usage/`), then calls the Google Cloud Code API to fetch quota information for all available models.
+Quota sources are the `antigravity-usage` CLI, a running IDE's local language
+server, and the `agy` CLI's `/usage` report, in that order unless a source is
+selected explicitly.
+
+The Remote tab reads the account's named desktop and CLI devices using the
+existing Antigravity sign-in. Linux needs `secret-tool` (libsecret, included by
+the Nix package); macOS uses Keychain. Both read service `gemini`, account
+`antigravity`. The CLI's `antigravity-oauth-token` file in
+`~/.gemini/antigravity/` or `~/.gemini/antigravity-cli/` is a fallback; Windows
+currently requires that file. Refreshes use the OAuth client configuration
+shipped in agy 1.3.1 and keep credentials in memory, without rewriting its login.
+
+No separate `agy remote-control` daemon is needed: its status describes only
+the CLI daemon, not the Antigravity desktop app. Device rows show names,
+connection status, and the server's status-update time. Each row opens that
+device directly at `https://antigravity.google.com/r/<instance-id>`, using the
+same link format as agy. The bottom button opens the complete device list.
+If credentials or Google's private device-list API are
+unavailable, the tab falls back to the desktop app's local log status.
+
+The `GET /v1internal:listInstances` protocol and credential layout were inspected
+in agy 1.3.1. Mocked tests cover requests, parsing, refresh, account mismatch,
+and fallback. The account-wide device list has also been confirmed in the
+running widget; direct links follow agy's inspected link builder.
 
 ## OpenAI
 

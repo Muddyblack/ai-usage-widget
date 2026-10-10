@@ -14,9 +14,10 @@ import json
 import os
 import urllib.parse
 
-from .. import paths
+from .. import paths, sources
 from ..contract import epoch_of, finite_number
 from ..http import as_json, clean_credential, fetch_json, http_error_text, resolve_key
+from ..messages import tr
 
 _BASE = "https://app.kilo.ai/api/trpc"
 _PROCEDURES = ("user.getCreditBlocks", "kiloPass.getState")
@@ -25,9 +26,7 @@ _RESET_KEYS = ("nextBillingAt", "nextRenewalAt", "renewsAt", "renewAt")
 
 
 def _cli_token():
-    explicit = os.environ.get("KILO_AUTH_PATH")
-    candidates = [explicit] if explicit else [os.path.join(base, "kilo", "auth.json") for base in paths.data_home_dirs()]
-    for path in candidates:
+    for path in _cli_auth_files():
         try:
             with open(path, encoding="utf-8") as f:
                 data = as_json(f.read())
@@ -106,10 +105,26 @@ def _fetch(token):
     )
 
 
+def _own_key():
+    return resolve_key("WIDGET_KILO_API_KEY", "KILO_API_KEY")
+
+
+def _cli_auth_files():
+    explicit = os.environ.get("KILO_AUTH_PATH")
+    return [explicit] if explicit else [os.path.join(base, "kilo", "auth.json") for base in paths.data_home_dirs()]
+
+
+SOURCES = (
+    sources.Source("key", "api", tr("API key"), tr("A key from settings or $KILO_API_KEY"), lambda: bool(_own_key())),
+    sources.Source("cli", "cli", tr("Kilo CLI"), tr("The login `kilo auth login` stored"), lambda: any(os.path.isfile(p) for p in _cli_auth_files())),
+)
+
+_TOKENS = {"key": lambda: _own_key(), "cli": lambda: _cli_token()}
+
+
 def get_kilo_usage():
-    key = resolve_key("WIDGET_KILO_API_KEY", "KILO_API_KEY")
-    cli = _cli_token()
-    tokens = [(t, source) for t, source in ((key, "key"), (cli, "cli")) if t]
+    # A refused key falls back to the CLI login (unless the user chose one).
+    tokens = [(token, source) for source in sources.candidates("kilo", tuple(_TOKENS)) if (token := _TOKENS[source]())]
     if not tokens:
         return {}
     result, source = None, ""
