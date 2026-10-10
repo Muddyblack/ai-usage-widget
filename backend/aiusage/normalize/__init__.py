@@ -2,11 +2,14 @@ from ..contract import provider_error, status_summary
 from .antigravity import normalize_antigravity
 from .claude import normalize_claude
 from .cline import normalize_cline
+from .coderabbit import normalize_coderabbit
 from .copilot import normalize_copilot
 from .cursor import normalize_cursor
 from .deepseek import normalize_deepseek
 from .grok import normalize_grok
+from .jetbrains import normalize_jetbrains
 from .junie import normalize_junie
+from .kilo import normalize_kilo
 from .kiro import normalize_kiro
 from .mimo import normalize_mimo
 from .mistral import normalize_mistral
@@ -16,8 +19,11 @@ from .ollama import normalize_ollama
 from .openai import normalize_openai
 from .opencode import normalize_opencode
 from .openrouter import normalize_openrouter
+from .pi import normalize_pi
 from .selfhosted import normalize_selfhosted
+from .windsurf import normalize_windsurf
 from .zai import normalize_zai
+from .zed import normalize_zed
 
 _DISPATCH = {
     "claude": normalize_claude,
@@ -39,6 +45,12 @@ _DISPATCH = {
     "opencode": normalize_opencode,
     "mimo": normalize_mimo,
     "junie": normalize_junie,
+    "jetbrains": normalize_jetbrains,
+    "windsurf": normalize_windsurf,
+    "pi": normalize_pi,
+    "kilo": normalize_kilo,
+    "coderabbit": normalize_coderabbit,
+    "zed": normalize_zed,
 }
 
 

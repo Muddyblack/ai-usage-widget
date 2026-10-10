@@ -1,0 +1,23 @@
+{
+  "id": "windsurf",
+  "now": 1790841600,
+  "inputs": {
+    "usage": {
+      "plan": "Free",
+      "expiresAt": 1793433600,
+      "dailyUsedPct": null,
+      "weeklyUsedPct": null,
+      "dailyResetAt": 0,
+      "weeklyResetAt": 0,
+      "messages": {
+        "used": 30,
+        "total": 100
+      },
+      "flowActions": {
+        "used": 10,
+        "total": 200
+      },
+      "recordedAt": 1790800000
+    }
+  }
+}

@@ -67,9 +67,9 @@ provider (for example `ollama-cloud::opencode`).
 
 ## Defaults and setup per provider
 
-There are 19 provider IDs in the backend. New shared settings are zero based.
-The one-shot initializer can enable only the 12 providers in the backend's
-`AUTO_DETECT_PROVIDERS` allowlist when local evidence exists. The other 7 are
+There are 25 provider IDs in the backend. New shared settings are zero based.
+The one-shot initializer can enable only the 16 providers in the backend's
+`AUTO_DETECT_PROVIDERS` allowlist when local evidence exists. The other 9 are
 manual-only and need an explicit choice, key, or endpoint. Detection does not
 prove authentication or usability. Each service has its own setup requirement:
 
@@ -94,6 +94,12 @@ The local provider only reads health, model, slot, and metrics endpoints. It nev
 | Muse | Nothing to configure for the local stats — `muse login` is enough. The optional plan quota additionally uses `$META_API_KEY` or the key `muse login` stored |
 | Cursor | cursor-agent signed in (`cursor-agent login`), or the Cursor IDE signed in. No API key |
 | Cline | The Cline CLI, run at least once. Nothing to configure |
+| JetBrains AI | A JetBrains IDE signed in to JetBrains AI, opened at least once. Nothing to configure; manual-only |
+| Windsurf | The Windsurf editor, signed in and opened at least once. Nothing to configure |
+| Pi / OMP | Pi or OMP, run at least once. Nothing to configure |
+| Kilo | The `kilo` CLI login (`kilo auth login`), or a Kilo API key from widget settings or `$KILO_API_KEY` |
+| CodeRabbit | The `coderabbit` CLI, signed in |
+| Zed | macOS only: the Zed editor signed in. Untested; manual-only |
 
 All configuration is done in the widget's settings panel (right-click the widget
 → *Configure*).
@@ -189,7 +195,12 @@ The widget validates the configured API key against the Mistral API and lists av
 
 ## OpenRouter *(untested)*
 
-The widget fetches credit usage and limit from the OpenRouter API using the configured key. The popup shows USD spent, the credit limit (if any), and the account label. The usage bar reflects spend as a percentage of the limit; if no limit is set the bar stays empty.
+The widget makes two independent requests with the configured key, so one failing never hides the other:
+
+- `GET /api/v1/key` — the key's spend, its spending cap (if any), the account label and, when OpenRouter reports them, today's / this week's / this month's key spend. The usage bar reflects spend as a percentage of the cap; with no cap the bar stays empty. A cap is a limit on the key, not a balance.
+- `GET /api/v1/credits` — purchased credits and total usage, shown as the account **Balance** (credits minus usage). If the key lookup is refused but this answers, the balance is shown on its own. If it is refused, the key figures are shown without a balance. Only when both fail is the tab an error.
+
+The deprecated `rate_limit` field is kept in `details` but not shown. The 30-day activity endpoint needs a Management key and is not used.
 
 ## Z.AI
 
@@ -403,3 +414,78 @@ Sources: [JetBrains repository](https://github.com/JetBrains/junie),
 The bundled green SVG is the Junie brand mark from
 [the official site](https://junie.jetbrains.com/), fetched on 2026-10-01;
 it remains JetBrains artwork, separate from the LobeHub icon license.
+
+## JetBrains AI
+
+The widget reads the AI Assistant quota that every JetBrains IDE keeps in
+`<config>/JetBrains/<IDE><version>/options/AIAssistantQuotaManager2.xml`
+(`~/.config` on Linux, `~/Library/Application Support` on macOS, `%APPDATA%` on
+Windows; Android Studio is under `Google` instead of `JetBrains`). The file holds
+two JSON documents in XML attributes: `quotaInfo` (monthly credits used and
+maximum, plus top-up credits) and `nextRefill` (the refill date, which is the
+reset). When several IDEs are installed the file written last wins. No socket is
+opened and no credential is read; the figures are as fresh as the last time an
+IDE was running. This provider is manual-only: IDE installs are too varied for
+the stat-only detection rules. `JETBRAINS_QUOTA_FILE` points at one file
+explicitly.
+
+## Windsurf
+
+Windsurf caches its plan in the editor's `state.vscdb` (SQLite) under
+`User/globalStorage`, key `windsurf.settings.cachedPlanInfo`. The widget opens
+it read-only. Newer caches carry daily and weekly **remaining** percentages with
+reset stamps (shown here as used percentages); older ones carry message and
+flow-action counters, which are used when the percentages are missing. The cache
+is only rewritten while Windsurf runs, so the tab says when it was last written.
+`WINDSURF_STATE_DB` overrides the path.
+
+## Pi / OMP
+
+Both coding agents write one JSONL transcript per session under
+`~/.pi/agent/sessions` and `~/.omp/agent/sessions`. `PI_CODING_AGENT_DIR` (its
+`sessions` folder) and `PI_CODING_AGENT_SESSION_DIR` override the locations.
+Token counters come from assistant `message` entries and stand-alone `usage`
+entries; repeated entry ids (forked or resumed sessions) count once. Only
+counters, model ids and the workspace folder name are kept.
+
+Cost is deliberately not shown: Pi records an API-rate price on every turn even
+when the model was reached through a subscription login, so presenting it as
+spend would overstate the bill. The OMP location is the one these agents are
+documented to use; it has not been checked against an OMP install.
+
+## Kilo
+
+Kilo's web app talks to its backend over tRPC. The widget sends one GET batch
+to `https://app.kilo.ai/api/trpc` for `user.getCreditBlocks` (prepaid credit,
+summed from `creditBlocks`) and `kiloPass.getState` (the subscription period:
+usage against base + bonus credits, and the renewal date). The credential is the
+widget setting / `$KILO_API_KEY`, then the `kilo.access` token the `kilo` CLI
+stores in `~/.local/share/kilo/auth.json`; a refused key falls back to the CLI
+login. An empty prepaid balance is shown as exhausted. The request shape follows
+Kilo's own web API and has not been verified against a live account.
+
+## CodeRabbit
+
+The widget runs `coderabbit usage` (20-second timeout) and parses its labelled
+text report: organization, plan, user, usage billing, the review count and the
+period reset date. CodeRabbit publishes a count, not a quota, so the tab shows
+meterless rows. The widget never handles a CodeRabbit key; the CLI makes its own
+request with its own login.
+
+## Zed *(untested)*
+
+On macOS the Zed editor keeps its sign-in as an internet-password item in the
+login Keychain (server `https://zed.dev`, or the `credentials_url` /
+`server_url` in `~/.config/zed/settings.json`; the account is the Zed user id).
+The widget reads it through `/usr/bin/security` and sends it to Zed's own cloud
+API (`GET /client/users/me`) the way the editor does, then shows the plan and the
+edit-prediction usage and the billing-period end. A custom server must use HTTPS.
+On Linux and Windows the login is in the system secret store, which this package
+has no safe way to read, so the tab explains that. Response field names are read
+defensively and the whole path is untested against a live account.
+
+Artwork: `jetbrains.svg` and `zed.svg` come from the
+[simple-icons](https://github.com/simple-icons/simple-icons) set (CC0), fetched
+on 2026-10-10 — the marks themselves remain their owners' trademarks. The
+`windsurf`, `pi`, `kilo` and `coderabbit` icons are simple monograms drawn for
+this widget, not official artwork.

@@ -28,6 +28,10 @@ AUTO_DETECT_PROVIDERS = (
     "opencode",
     "mimo",
     "junie",
+    "windsurf",
+    "pi",
+    "kilo",
+    "coderabbit",
 )
 
 # Command names each provider's tools install. A desktop application (see
@@ -45,6 +49,10 @@ _EXECUTABLES = {
     "opencode": ("opencode",),
     "mimo": ("mimo",),
     "junie": ("junie",),
+    "windsurf": ("windsurf",),
+    "pi": ("pi", "omp"),
+    "kilo": ("kilo",),
+    "coderabbit": ("coderabbit",),
 }
 
 # Desktop application names: the .desktop id on Linux, the bundle name on
@@ -54,6 +62,7 @@ _APPS = {
     "kiro": ("kiro", "Kiro"),
     "cursor": ("cursor", "Cursor"),
     "openai": ("codex", "Codex"),
+    "windsurf": ("windsurf", "Windsurf"),
 }
 
 # The desktop session that starts plasmashell (or a tray app) usually has a far

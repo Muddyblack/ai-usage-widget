@@ -31,6 +31,12 @@ Switch between tabs in the popup for each service:
 [*] [b]Cursor[/b] [i](free plan tested)[/i] — Included usage, Auto/API split and on-demand spend, via the cursor-agent or Cursor IDE login
 [*] [b]OpenCode[/b] — Local token usage, costs and sessions in Zen mode; account usage windows in Go mode
 [*] [b]Junie (untested)[/b] — Local CLI token activity, model breakdowns and resumable sessions; account quota and billed spend are unavailable
+[*] [b]JetBrains AI[/b] — Monthly AI credits, top-up credits and refill date, read from the IDE's own quota file; no key or network
+[*] [b]Windsurf[/b] — Daily and weekly quota from the editor's local cache; no key or network
+[*] [b]Pi / OMP[/b] — Local token activity and model breakdowns from the agents' session files
+[*] [b]Kilo[/b] — Prepaid credit balance and Kilo Pass usage via an API key or the kilo CLI login
+[*] [b]CodeRabbit[/b] — Review count and reset date from the CodeRabbit CLI
+[*] [b]Zed[/b] [i](untested, macOS)[/i] — Plan and edit-prediction usage via the editor's Keychain login
 [*] [b]MiMo Code[/b] — Local token usage, model breakdowns, session history and recorded or estimated costs
 [*] [b]Ollama Cloud[/b] — Cloud usage windows, including weekly limits in the panel
 [*] [b]Local Models[/b] — Monitor Ollama, vLLM and llama.cpp servers, with automatic endpoint discovery and runtime or GPU metrics where available

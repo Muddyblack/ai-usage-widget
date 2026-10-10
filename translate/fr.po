@@ -2648,3 +2648,179 @@ msgstr "Z.AI : erreur de l'API"
 #: backend/aiusage/providers/zai.py
 msgid "Z.AI unexpected response"
 msgstr "Z.AI : réponse inattendue"
+
+#: backend/aiusage/normalize/*.py
+msgid "Open a JetBrains IDE signed in to JetBrains AI once so it records your quota."
+msgstr "Ouvrez une fois un IDE JetBrains connecté à JetBrains AI pour qu’il enregistre votre quota."
+
+#: backend/aiusage/normalize/*.py
+msgid "JetBrains AI: no IDE quota file found"
+msgstr "JetBrains AI : aucun fichier de quota d’IDE trouvé"
+
+#: backend/aiusage/normalize/*.py
+msgid "JetBrains AI: %1"
+msgstr "JetBrains AI : %1"
+
+#: backend/aiusage/normalize/*.py
+msgid "Top-up credits: %1"
+msgstr "Crédits de recharge : %1"
+
+#: backend/aiusage/normalize/*.py
+msgid "Top-up credits"
+msgstr "Crédits de recharge"
+
+#: backend/aiusage/normalize/*.py
+msgid "Read from the IDE's own quota file. No key or network request needed; it updates while an IDE is running."
+msgstr "Lu depuis le fichier de quota de l’IDE. Aucune clé ni requête réseau nécessaire ; il se met à jour pendant qu’un IDE est ouvert."
+
+#: backend/aiusage/normalize/*.py
+msgid "Open Windsurf and sign in once so it caches your plan."
+msgstr "Ouvrez Windsurf et connectez-vous une fois pour qu’il mette votre forfait en cache."
+
+#: backend/aiusage/normalize/*.py
+msgid "Windsurf: no local data found"
+msgstr "Windsurf : aucune donnée locale trouvée"
+
+#: backend/aiusage/normalize/*.py
+msgid "Windsurf: %1"
+msgstr "Windsurf : %1"
+
+#: backend/aiusage/normalize/*.py
+msgid "Daily quota"
+msgstr "Quota quotidien"
+
+#: backend/aiusage/normalize/*.py
+msgid "Weekly quota"
+msgstr "Quota hebdomadaire"
+
+#: backend/aiusage/normalize/*.py
+msgid "Flow actions"
+msgstr "Actions Flow"
+
+#: backend/aiusage/normalize/*.py
+msgid "Windsurf: the cached plan has no quota figures"
+msgstr "Windsurf : le forfait en cache ne contient aucun chiffre de quota"
+
+#: backend/aiusage/normalize/*.py
+msgid "Read from Windsurf's local cache, last written %1. It only updates while Windsurf is running."
+msgstr "Lu depuis le cache local de Windsurf, écrit pour la dernière fois le %1. Il ne se met à jour que lorsque Windsurf est ouvert."
+
+#: backend/aiusage/normalize/*.py
+msgid "Read from Windsurf's local cache. It only updates while Windsurf is running."
+msgstr "Lu depuis le cache local de Windsurf. Il ne se met à jour que lorsque Windsurf est ouvert."
+
+#: backend/aiusage/normalize/*.py
+msgid "Kilo: no API key or CLI login found"
+msgstr "Kilo : aucune clé API ni connexion CLI trouvée"
+
+#: backend/aiusage/normalize/*.py
+msgid "Kilo: %1"
+msgstr "Kilo : %1"
+
+#: backend/aiusage/normalize/*.py
+msgid "%1 (incl. %2 bonus)"
+msgstr "%1 (dont %2 de bonus)"
+
+#: backend/aiusage/normalize/*.py
+msgid "Kilo Pass"
+msgstr "Kilo Pass"
+
+#: backend/aiusage/normalize/*.py
+msgid "Credit balance"
+msgstr "Solde de crédits"
+
+#: backend/aiusage/normalize/*.py
+msgid "Read with your Kilo CLI login."
+msgstr "Lu avec votre connexion CLI Kilo."
+
+#: backend/aiusage/normalize/*.py
+msgid "Read with your Kilo API key."
+msgstr "Lu avec votre clé API Kilo."
+
+#: backend/aiusage/normalize/*.py
+msgid "CodeRabbit: CLI not found"
+msgstr "CodeRabbit : CLI introuvable"
+
+#: backend/aiusage/normalize/*.py
+msgid "CodeRabbit: %1"
+msgstr "CodeRabbit : %1"
+
+#: backend/aiusage/normalize/*.py
+msgid "reviews this period"
+msgstr "revues sur cette période"
+
+#: backend/aiusage/normalize/*.py
+msgid "Your reviews"
+msgstr "Vos revues"
+
+#: backend/aiusage/normalize/*.py
+msgid "Your reviews: %1"
+msgstr "Vos revues : %1"
+
+#: backend/aiusage/normalize/*.py
+msgid "Usage billing"
+msgstr "Facturation à l’usage"
+
+#: backend/aiusage/normalize/*.py
+msgid "Read by running the CodeRabbit CLI's own usage report. CodeRabbit publishes a count, not a quota."
+msgstr "Lu en exécutant le rapport d’utilisation du CLI CodeRabbit. CodeRabbit publie un nombre de revues, pas un quota."
+
+#: backend/aiusage/normalize/*.py
+msgid "Zed (untested): the editor login can only be read on macOS"
+msgstr "Zed (non testé) : la connexion de l’éditeur n’est lisible que sous macOS"
+
+#: backend/aiusage/normalize/*.py
+msgid "Zed (untested): sign in to the Zed editor first"
+msgstr "Zed (non testé) : connectez-vous d’abord à l’éditeur Zed"
+
+#: backend/aiusage/normalize/*.py
+msgid "Zed (untested): %1"
+msgstr "Zed (non testé) : %1"
+
+#: backend/aiusage/normalize/*.py
+msgid "Edit predictions"
+msgstr "Prédictions d’édition"
+
+#: backend/aiusage/normalize/*.py
+msgid "Unlimited"
+msgstr "Illimité"
+
+#: backend/aiusage/normalize/*.py
+msgid "Zed (untested): no usage figures in the account response"
+msgstr "Zed (non testé) : aucun chiffre d’utilisation dans la réponse du compte"
+
+#: backend/aiusage/normalize/*.py
+msgid "Overdue invoices on this account — check your Zed billing page."
+msgstr "Factures en retard sur ce compte — consultez votre page de facturation Zed."
+
+#: backend/aiusage/normalize/*.py
+msgid "Read with the Zed editor's own login from the macOS Keychain. Untested against a live account."
+msgstr "Lu avec la connexion de l’éditeur Zed depuis le trousseau macOS. Non testé avec un compte réel."
+
+#: backend/aiusage/normalize/*.py
+msgid "Pi: no recorded token usage yet. Run a Pi or OMP session."
+msgstr "Pi : aucune utilisation de jetons enregistrée. Lancez une session Pi ou OMP."
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "Balance"
+msgstr "Solde"
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "This week"
+msgstr "Cette semaine"
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "This month"
+msgstr "Ce mois-ci"
+
+#: backend/aiusage/normalize/openrouter.py
+msgid "Key spend"
+msgstr "Dépenses de la clé"
+
+#: ui/StatsSection.qml
+msgid ""
+"No Pi or OMP sessions yet.\n"
+"Run Pi or OMP and the token usage in its session files will appear here."
+msgstr ""
+"Aucune session Pi ou OMP pour le moment.\n"
+"Lancez Pi ou OMP : l’utilisation de jetons de ses fichiers de session apparaîtra ici."

@@ -21,7 +21,7 @@
   <img src="https://img.shields.io/badge/Started-May_2026-9c27b0?style=for-the-badge" alt="Project started May 2026" />
 </p>
 
-A KDE Plasma 6 panel widget for tracking AI API quota usage across 19 provider services. Monitor subscription windows, account balances, local activity, and per-model usage through the shared backend, with animated segmented bars, live countdown timers, and account status.
+A KDE Plasma 6 panel widget for tracking AI API quota usage across 25 provider services. Monitor subscription windows, account balances, local activity, and per-model usage through the shared backend, with animated segmented bars, live countdown timers, and account status.
 
 
 ## Screenshots
@@ -48,7 +48,7 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across 19 provider s
 
 ## Features
 
-- **Multi-service support** — 19 providers in one popup, each on its own tab
+- **Multi-service support** — 25 providers in one popup, each on its own tab
 - **Panel view** — Compact percentage readouts in the taskbar, color-coded by usage level, with an inline spark-line trend
 - **Popup view** — Segmented bars showing exact fill level with reset times and live countdowns that show "resetting..." when a window flips
 - **Usage chart** — Smooth, glowing area chart of historical usage with availability-aware 5H / 24H / 7D choices and hover-scrub
@@ -131,7 +131,7 @@ Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on ma
 | Grok (xAI) | CLI billing credits when exposed, free-tier exhaustion, and local session totals | Free tier tested; paid plans unverified |
 | Kiro | Monthly credits, remaining balance, reset date, overage, and plan — from kiro-cli's login or the Kiro IDE | Supported |
 | Mistral AI | Key status, available models, and local vibe CLI cost/token statistics | Supported |
-| OpenRouter | Spend, credit limit, usage percentage, and account label | Untested |
+| OpenRouter | Account balance, key spend (today / week / month), credit limit, usage percentage, and account label | Untested |
 | Local Models | Telemetry from configured Ollama, vLLM, or llama.cpp servers without generation requests | Supported |
 | Z.AI | 5-hour token quota, monthly tools quota, reset countdowns, model details, and today's token consumption | Supported |
 | Ollama Cloud | Account usage limits and recent activity cost via API key or OpenCode login | Supported |
@@ -143,13 +143,19 @@ Also runs [on Hyprland](docs/hyprland.md), [on Windows](docs/windows.md), [on ma
 | Cline | Tokens, sessions and spend for today / 7 / 30 days, plus all-time stats per model and workspace, from the CLI's own session logs | Supported (local stats; account balance not yet shown) |
 | Junie | Local CLI tokens, cache counts, model activity, and resumable sessions | Untested; account quota and billed spend unavailable |
 | MiMo Code | Local tokens, model breakdowns, session history and recorded or estimated costs | Local database verified; live subscription quota unavailable |
+| JetBrains AI | Monthly AI credits, top-up credits and refill date, read from the IDE's own quota file — no key, no network | Reads the format the IDE writes; not yet verified on every IDE |
+| Windsurf | Daily and weekly quota (or message / flow-action counters on older plans) from the editor's local cache — no key, no network | Reads the cache the editor writes; only as fresh as the last Windsurf run |
+| Pi / OMP | Local token activity, model breakdowns and workspaces from the agents' session files | Local files only; spend is not shown (see below) |
+| Kilo | Prepaid credit balance and Kilo Pass period usage, via an API key or the `kilo` CLI login | Request shape from Kilo's web API; not yet verified against a live account |
+| CodeRabbit | Review count and reset date from `coderabbit usage` | Supported where the CLI is signed in; CodeRabbit publishes a count, not a quota |
+| Zed | Plan and edit-prediction usage, via the editor's macOS Keychain login | Untested; macOS only |
 
 What each provider needs signed in, and what it reads, is in
 **[docs/providers.md](docs/providers.md)**.
 
 Provider startup is zero based. On first start the widget enables the providers
 whose tools are installed (a CLI or desktop app — old logs don't count), while
-seven providers remain manual-only. Settings → Providers → **Detect installed
+nine providers remain manual-only. Settings → Providers → **Detect installed
 providers** re-syncs later: it turns on newly installed tools and turns off
 uninstalled ones unless you gave them an API key. Several Plasma widgets (other
 panels or screens) share their settings; each keeps its own pins. The complete

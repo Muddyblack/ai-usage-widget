@@ -94,6 +94,7 @@ function localSourceLabel(source) {
         opencode: "OpenCode",
         mimo: "MiMo Code",
         junie: "Junie",
+        pi: "Pi",
         claude: "Claude Code",
         "claude-code": "Claude Code",
         openai: "Codex",
@@ -149,7 +150,13 @@ function providerAccent(provider) {
         cline: "#e6e6e6",
         opencode: "#B7B1B1",
         mimo: "#E8E8E8",
-        junie: "#48e054"
+        junie: "#48e054",
+        jetbrains: "#e6e6e6",
+        windsurf: "#34e8bb",
+        pi: "#d4d4d8",
+        kilo: "#f4e04d",
+        coderabbit: "#ff7a3d",
+        zed: "#e6e6e6"
     };
     var key = localSourceKey(provider);
     return colors[key] || "#34d399";

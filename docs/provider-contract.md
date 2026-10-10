@@ -405,6 +405,10 @@ after wake-up (`UsageHistory.withResets`).
 | `age` | Antigravity External / rest |
 | `kr` | Kiro credits |
 | `or` | OpenRouter credit usage |
+| `jb` | JetBrains AI monthly credits pct |
+| `ws` | Windsurf highest of daily / weekly quota pct |
+| `kl` | Kilo highest of credits / Kilo Pass pct |
+| `zd` | Zed edit predictions pct (limited plans only) |
 | `mv` | Mistral vibe spend (absolute USD, auto-scaled by the chart) |
 | `gr` | Grok credits |
 | `za` | Z.AI tokens |
@@ -752,3 +756,20 @@ The stored `cost` lacks a currency and historical billing route, so
 `costStatus` stays `unavailable`, with no USD session cost or spend contribution.
 Session reopening uses `junie --session-id <id>` through an opaque resume key.
 See [Junie provider details](providers.md#junie-cli-untested) for paths and sources.
+
+### Local-file and CLI providers
+
+`jetbrains`, `windsurf` and `pi` read files the other program already wrote and
+open no socket. `jetbrains` and `windsurf` produce ordinary metered quota rows
+(`details.recordedAt` says when the file was last written, since both only
+update while the program runs). `pi` uses the shared local-activity shape
+(`details.stats`, non-metered period rows, no `historyValues` or
+`chartWindows`) and leaves `costStatus` `unavailable`: Pi records an API-rate
+price even on subscription logins, so it is never presented as spend.
+
+`kilo` and `zed` make the vendor's own request with the vendor's own login (or
+an API key for `kilo`); `coderabbit` runs `coderabbit usage` and exposes only a
+review count in non-metered rows. `zed` carries `details.untested: true`.
+`openrouter` adds `details.balanceUSD`, `creditsTotalUSD`, `creditsUsedUSD`,
+`usageDailyUSD`, `usageWeeklyUSD`, `usageMonthlyUSD` and `keyUnavailable`; any
+of them is `null` when OpenRouter did not report it.

@@ -1,0 +1,17 @@
+{
+  "id": "jetbrains",
+  "now": 1790841600,
+  "inputs": {
+    "usage": {
+      "ide": "IntelliJ IDEA 2025.3",
+      "state": "Available",
+      "used": 7.5,
+      "maximum": 10,
+      "available": 2.5,
+      "topUpAvailable": 5,
+      "topUpMaximum": 10,
+      "resetAt": 1793433600,
+      "recordedAt": 1790800000
+    }
+  }
+}
