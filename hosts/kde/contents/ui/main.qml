@@ -148,6 +148,7 @@ PlasmoidItem {
         implicitHeight: Math.min(Screen.desktopAvailableHeight > 0 ? Screen.desktopAvailableHeight - 100 : 740, popupHeader.implicitHeight + 12 + mainColumn.implicitHeight + margin * 2)
         Layout.minimumWidth: implicitWidth
         Layout.preferredWidth: implicitWidth
+        Layout.maximumWidth: implicitWidth
         Layout.minimumHeight: implicitHeight
         Layout.preferredHeight: implicitHeight
         Layout.maximumHeight: implicitHeight
