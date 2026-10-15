@@ -1,8 +1,12 @@
 """Release manifests must describe the assets we actually ship."""
 
+import ast
+import glob
 import hashlib
 import importlib.util
 import json
+import os
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -71,3 +75,31 @@ class PackageManifestsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "must contain"):
             manifests.generate("3.2.1", self.assets, self.output)
         self.assertFalse(self.output.exists())
+
+
+class WindowsBundleDataTest(unittest.TestCase):
+    def test_bundle_contains_every_shared_ui_asset(self):
+        spec = Path(REPO) / "hosts/windows/ai-usage.spec"
+        tree = ast.parse(spec.read_text(encoding="utf-8"))
+        statements = []
+        for statement in tree.body:
+            if isinstance(statement, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "a" for target in statement.targets):
+                break
+            if not isinstance(statement, (ast.Import, ast.ImportFrom)):
+                statements.append(statement)
+        scope = {"SPECPATH": str(spec.parent), "os": os, "sys": sys, "glob": glob}
+        original_path = sys.path[:]
+        try:
+            exec(compile(ast.Module(body=statements, type_ignores=[]), str(spec), "exec"), scope)
+        finally:
+            sys.path[:] = original_path
+        bundled = set()
+        for source, destination in scope["datas"]:
+            source = Path(source)
+            if source.is_dir():
+                bundled.update((Path(destination) / path.relative_to(source)).as_posix() for path in source.rglob("*") if path.is_file())
+            else:
+                bundled.add((Path(destination) / source.name).as_posix())
+        for path in (Path(REPO) / "ui").rglob("*"):
+            if path.is_file():
+                self.assertIn(path.relative_to(REPO).as_posix(), bundled)

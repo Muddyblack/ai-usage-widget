@@ -70,6 +70,7 @@ Window {
         id: pillWindow
 
         objectName: "floatingPill"
+        readonly property string placementMode: app.settings.desktopPillPlacement || "free"
         property bool taskbarDocked: false
         property bool taskbarLight: false
         // Declared inside the popup, a Window would be its transient child, and
@@ -91,7 +92,7 @@ Window {
             id: pillSave
             interval: 800
             onTriggered: {
-                if (pillWindow.visible && !pillWindow.taskbarDocked)
+                if (pillWindow.visible && !pillWindow.taskbarDocked && pillWindow.placementMode === "free")
                     app.setSetting2("pillPosition", {
                         x: pillWindow.x,
                         y: pillWindow.y
@@ -136,6 +137,7 @@ Window {
                         pillWindow.taskbarDocked = false;
                         app.setSetting2("windowsTaskbar", false);
                     }
+                    app.setSetting2("desktopPillPlacement", "free");
                     pillWindow.startSystemMove();
                 }
             }

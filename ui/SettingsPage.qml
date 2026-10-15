@@ -355,11 +355,12 @@ ColumnLayout {
 
                 StudioCard {
                     title: page.shell.i18n("Pill")
-                    visible: page.shell.pillControls
+                    visible: page.shell.pillControls || page.shell.trayOptions
 
                     StudioRow {
                         // TRANSLATORS: the small rounded usage readout floating on the desktop edge
                         label: page.shell.i18n("Pill")
+                        visible: page.shell.pillControls
                         dot: Tone.isLight(Appearance.Palette) ? "#64748b" : "#e2e8f0"
                         StudioSelect {
                             options: page.zip(["always", "hover", "tray"], [page.shell.i18n("Always"), page.shell.i18n("Edge hover"), page.shell.i18n("Tray only")])
@@ -371,13 +372,18 @@ ColumnLayout {
                         label: page.shell.i18n("Position")
                         dot: "#7dd3fc"
                         StudioSelect {
-                            options: page.zip(["top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right"], [page.shell.i18n("Top left"), page.shell.i18n("Top center"), page.shell.i18n("Top right"), page.shell.i18n("Bottom left"), page.shell.i18n("Bottom center"), page.shell.i18n("Bottom right")])
-                            value: page.shell.settings.position || "top-right"
-                            onChosen: v => page.shell.setSetting2("position", v)
+                            options: page.zip(["top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right", "free"], [page.shell.i18n("Top left"), page.shell.i18n("Top center"), page.shell.i18n("Top right"), page.shell.i18n("Bottom left"), page.shell.i18n("Bottom center"), page.shell.i18n("Bottom right"), page.shell.i18n("Free move")])
+                            value: page.shell.trayOptions ? (page.shell.settings.desktopPillPlacement || "free") : (page.shell.settings.position || "top-right")
+                            onChosen: v => {
+                                if (page.shell.trayOptions)
+                                    page.shell.setSetting2("windowsTaskbar", false);
+                                page.shell.setSetting2(page.shell.trayOptions ? "desktopPillPlacement" : "position", v);
+                            }
                         }
                     }
                     StudioRow {
                         label: page.shell.i18n("Monitor")
+                        visible: page.shell.pillControls
                         dot: "#a78bfa"
                         StudioSelect {
                             // The connected outputs are appended live, so the list reflects what is

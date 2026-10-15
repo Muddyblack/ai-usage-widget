@@ -25,15 +25,12 @@ def tree(src, dest):
 
 datas = []
 datas += tree(os.path.join(ROOT, "hosts", "desktop", "qml"), os.path.join("hosts", "desktop", "qml"))
-datas += tree(os.path.join(ROOT, "ui", "js"), os.path.join("ui", "js"))
-datas += tree(os.path.join(ROOT, "ui", "studio"), os.path.join("ui", "studio"))
+# Include the complete shared UI tree, including local QML modules (theme).
+datas += tree(os.path.join(ROOT, "ui"), "ui")
 datas += tree(os.path.join(ROOT, "assets", "icons"), os.path.join("assets", "icons"))
 datas += [(os.path.join(ROOT, "assets", "icon.png"), "assets")]
 # The translation catalogs: app.py picks one, Main.qml parses it with I18n.js.
 datas += [(path, "translate") for path in glob.glob(os.path.join(ROOT, "translate", "*.po"))]
-# The shared UI (QML and JS); every host reads it from ui/.
-for path in glob.glob(os.path.join(ROOT, "ui", "*.qml")) + glob.glob(os.path.join(ROOT, "ui", "*.js")):
-    datas.append((path, "ui"))
 
 a = Analysis(  # noqa: F821
     [os.path.join(ROOT, "hosts", "desktop", "app.py")],

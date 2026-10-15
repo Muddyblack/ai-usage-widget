@@ -106,20 +106,9 @@ Rectangle {
             radius: 3
             color: pill.dangerColor
             Layout.alignment: Qt.AlignVCenter
-            SequentialAnimation on opacity {
-                running: pill.anyError
-                loops: Animation.Infinite
-                NumberAnimation {
-                    to: 0.3
-                    duration: 800
-                    easing.type: Easing.InOutSine
-                }
-                NumberAnimation {
-                    to: 1.0
-                    duration: 800
-                    easing.type: Easing.InOutSine
-                }
-            }
+            // Static on purpose: an endless opacity animation redraws the pill
+            // window every frame for as long as any provider has an error.
+            opacity: 0.85
         }
 
         Repeater {

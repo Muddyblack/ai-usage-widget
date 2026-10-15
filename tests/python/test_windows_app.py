@@ -46,6 +46,12 @@ class TrayAppTest(unittest.TestCase):
         result = self.selftest(dict(ALL_OFF, floatingPill=True))
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_pill_placement_modes_load_cleanly(self):
+        for mode in ("free", "top-left", "bottom-right"):
+            with self.subTest(mode=mode):
+                result = self.selftest(dict(ALL_OFF, floatingPill=True, desktopPillPlacement=mode))
+                self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_loads_cleanly_translated(self):
         # translate/fr.po parsed by I18n.js: a bad catalog or a shell.i18n call
         # the QML cannot resolve shows up as a warning, which fails the selftest.

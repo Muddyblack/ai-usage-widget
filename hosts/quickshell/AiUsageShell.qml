@@ -113,9 +113,10 @@ ShellRoot {
     property bool trayPillRevealed: false
     readonly property string pillMode: app.settings.pillMode || "always"
     readonly property string windowPosition: app.settings.position || "top-right"
-    readonly property bool positionTop: root.windowPosition.indexOf("top-") === 0
+    readonly property bool freeMove: root.windowPosition === "free"
+    readonly property bool positionTop: root.freeMove || root.windowPosition.indexOf("top-") === 0
     readonly property bool positionBottom: root.windowPosition.indexOf("bottom-") === 0
-    readonly property bool positionLeft: root.windowPosition.indexOf("-left") !== -1
+    readonly property bool positionLeft: root.freeMove || root.windowPosition.indexOf("-left") !== -1
     readonly property bool positionCenter: root.windowPosition.indexOf("-center") !== -1
     readonly property bool positionRight: root.windowPosition.indexOf("-right") !== -1
 
@@ -230,6 +231,14 @@ ShellRoot {
             screen: modelData
             // Per-instance reveal state — see the comment on trayPillRevealed.
             property bool hoverRevealed: false
+            property real dragX: -1
+            property real dragY: -1
+            readonly property var savedPosition: (app.settings.freePillPositions || {})[panel.screen ? panel.screen.name : ""] || {
+                x: 12,
+                y: 8
+            }
+            readonly property real freeX: Math.max(0, Math.min(dragX >= 0 ? dragX : (Number(savedPosition.x) || 0), panel.screen ? Math.max(0, panel.screen.width - panel.width) : 0))
+            readonly property real freeY: Math.max(0, Math.min(dragY >= 0 ? dragY : (Number(savedPosition.y) || 0), panel.screen ? Math.max(0, panel.screen.height - panel.height) : 0))
             readonly property bool pillShown: root.pillMode === "always" || root.trayPillRevealed || (root.pillMode === "hover" && (panel.hoverRevealed || (root.popupOpen && root.popupOwnedBy(panel.screen))))
             // The popup is a child window, so it must keep this one mapped while open.
             visible: root.pillMode !== "tray" || root.trayPillRevealed || (root.popupOpen && root.popupOwnedBy(panel.screen))
@@ -250,9 +259,9 @@ ShellRoot {
             }
 
             margins {
-                top: root.positionTop ? 8 : 0
+                top: root.freeMove ? panel.freeY : (root.positionTop ? 8 : 0)
                 bottom: root.positionBottom ? 8 : 0
-                left: root.positionLeft ? 12 : (root.positionCenter && panel.screen ? Math.max(0, (panel.screen.width - panel.width) / 2) : 0)
+                left: root.freeMove ? panel.freeX : root.positionLeft ? 12 : (root.positionCenter && panel.screen ? Math.max(0, (panel.screen.width - panel.width) / 2) : 0)
                 right: root.positionRight ? 12 : 0
             }
 
@@ -274,6 +283,50 @@ ShellRoot {
                         root.popupOpen = false;
                     else
                         root.openPopupOn(panel.screen);
+                }
+            }
+
+            // Layer-shell windows move through their margins rather than systemMove.
+            MouseArea {
+                anchors.fill: pill
+                enabled: root.freeMove
+                cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                property point pressedAt
+                property bool moved: false
+                onPressed: mouse => {
+                    pressedAt = Qt.point(mouse.x, mouse.y);
+                    moved = false;
+                }
+                onPositionChanged: mouse => {
+                    if (!pressed)
+                        return;
+                    var dx = mouse.x - pressedAt.x;
+                    var dy = mouse.y - pressedAt.y;
+                    if (!moved && Math.abs(dx) + Math.abs(dy) <= 4)
+                        return;
+                    moved = true;
+                    panel.dragX = Math.max(0, Math.min(panel.freeX + dx, panel.screen.width - panel.width));
+                    panel.dragY = Math.max(0, Math.min(panel.freeY + dy, panel.screen.height - panel.height));
+                }
+                onReleased: {
+                    if (moved) {
+                        var positions = Object.assign({}, app.settings.freePillPositions || {});
+                        positions[panel.screen ? panel.screen.name : ""] = {
+                            x: panel.freeX,
+                            y: panel.freeY
+                        };
+                        app.setSetting2("freePillPositions", positions);
+                    } else if (root.popupOpen && root.popupOwnedBy(panel.screen)) {
+                        root.popupOpen = false;
+                    } else {
+                        root.openPopupOn(panel.screen);
+                    }
+                    panel.dragX = -1;
+                    panel.dragY = -1;
+                }
+                onCanceled: {
+                    panel.dragX = -1;
+                    panel.dragY = -1;
                 }
             }
 
@@ -401,9 +454,9 @@ ShellRoot {
                     right: root.positionRight
                 }
                 margins {
-                    top: root.positionTop ? (panel.pillShown ? 44 : 8) : 0
+                    top: root.freeMove ? Math.max(0, Math.min(panel.freeY + panel.height + 4, popup.screen ? popup.screen.height - popup.height : 0)) : root.positionTop ? (panel.pillShown ? 44 : 8) : 0
                     bottom: root.positionBottom ? (panel.pillShown ? 44 : 8) : 0
-                    left: root.positionLeft ? 12 : (root.positionCenter && popup.screen ? Math.max(0, (popup.screen.width - popup.width) / 2) : 0)
+                    left: root.freeMove ? Math.max(0, Math.min(panel.freeX, popup.screen ? popup.screen.width - popup.width : 0)) : root.positionLeft ? 12 : (root.positionCenter && popup.screen ? Math.max(0, (popup.screen.width - popup.width) / 2) : 0)
                     right: root.positionRight ? 12 : 0
                 }
 
