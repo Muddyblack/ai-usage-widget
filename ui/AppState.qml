@@ -146,6 +146,14 @@ Item {
     // the room. Each host binds its window to this.
     // The settings section on screen, shared by the page and the popup's header.
     property string settingsSection: "providers"
+    property string settingsProviderView: "list"
+
+    function settingsBack() {
+        if (settingsSection === "providers" && settingsProviderView !== "list")
+            settingsProviderView = "list";
+        else
+            showSettings = false;
+    }
     readonly property int popupWidth: showSettings ? 760 : 460
     onSettingsChanged: root.publishTray()
     readonly property string antigravityChartFilter: root.settings.antigravityChartFilter || "both"

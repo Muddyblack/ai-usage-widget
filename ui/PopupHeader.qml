@@ -1,5 +1,6 @@
 import QtQuick
 import "theme" as Appearance
+import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Effects
 import QtQuick.Controls.Basic as QC
@@ -15,6 +16,18 @@ ColumnLayout {
     property var shell
     // What "Save as picture" captures: the whole popup, set by the host.
     property Item snapshotTarget: content
+
+    // Leave Backspace to editable text controls while entering keys or searches.
+    Shortcut {
+        sequence: "Backspace"
+        enabled: content.shell.showSettings && !content.editingText
+        onActivated: content.shell.settingsBack()
+    }
+    readonly property bool editingText: {
+        var window = content.Window.window;
+        var item = window ? window.activeFocusItem : null;
+        return item !== null && typeof item.cursorPosition !== "undefined" && item.readOnly !== true;
+    }
 
     spacing: 12
 
@@ -286,7 +299,12 @@ ColumnLayout {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: shell.showSettings = !shell.showSettings
+                onClicked: {
+                    if (shell.showSettings)
+                        shell.settingsBack();
+                    else
+                        shell.showSettings = true;
+                }
             }
         }
 

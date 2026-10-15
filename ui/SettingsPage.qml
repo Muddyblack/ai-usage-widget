@@ -34,12 +34,11 @@ ColumnLayout {
 
     // Settings → Providers: "list", "add" (the search) or "detail" (one
     // provider's page). Session-only, like the section.
-    property string providerView: "list"
     property string providerFocus: ""
 
     function showProvider(id) {
         page.providerFocus = id;
-        page.providerView = "detail";
+        page.shell.settingsProviderView = "detail";
     }
 
     function providerEntry(id) {
@@ -176,16 +175,16 @@ ColumnLayout {
                 spacing: 12
 
                 ProviderList {
-                    visible: page.providerView === "list"
+                    visible: page.shell.settingsProviderView === "list"
                     shell: page.shell
-                    onAddRequested: page.providerView = "add"
+                    onAddRequested: page.shell.settingsProviderView = "add"
                     onOpened: id => page.showProvider(id)
                 }
 
                 ProviderPicker {
-                    visible: page.providerView === "add"
+                    visible: page.shell.settingsProviderView === "add"
                     shell: page.shell
-                    onBack: page.providerView = "list"
+                    onBack: page.shell.settingsProviderView = "list"
                     onChosen: id => {
                         page.shell.setSetting("providers", id, true);
                         page.shell.refresh();
@@ -194,10 +193,10 @@ ColumnLayout {
                 }
 
                 ProviderDetail {
-                    visible: page.providerView === "detail"
+                    visible: page.shell.settingsProviderView === "detail"
                     shell: page.shell
                     provider: page.providerEntry(page.providerFocus)
-                    onBack: page.providerView = "list"
+                    onBack: page.shell.settingsProviderView = "list"
                 }
             }
 

@@ -26,10 +26,6 @@ Column {
     Item {
         width: parent.width
         height: 30
-        StudioIconButton {
-            icon: "back"
-            onClicked: picker.back()
-        }
         Text {
             anchors.centerIn: parent
             text: picker.shell.i18n("Add provider")

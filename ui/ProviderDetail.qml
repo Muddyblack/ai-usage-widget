@@ -27,10 +27,6 @@ Column {
         height: 96
 
         StudioIconButton {
-            icon: "back"
-            onClicked: detail.back()
-        }
-        StudioIconButton {
             anchors.right: parent.right
             icon: "refresh"
             enabled: !detail.shell.busy
