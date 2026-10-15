@@ -13,8 +13,10 @@ Window {
 
     // Wider while the settings studio is open: it has a sidebar.
     width: app.popupWidth
+    // --screenshot sets this so every capture is the same size.
+    property int fixedHeight: 0
     // As tall as the content, up to the screen's free height.
-    height: Math.min(Screen.desktopAvailableHeight > 0 ? Screen.desktopAvailableHeight - 60 : 720, popupHeader.implicitHeight + 12 + popupContent.height + 28)
+    height: fixedHeight > 0 ? fixedHeight : Math.min(Screen.desktopAvailableHeight > 0 ? Screen.desktopAvailableHeight - 60 : 720, popupHeader.implicitHeight + 12 + popupContent.height + 28)
     visible: false
     color: "transparent"
     flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
@@ -29,7 +31,9 @@ Window {
 
     // Read by app.py (the tray menu's "Settings" and the self-test).
     property alias showSettings: app.showSettings
-    readonly property alias settings: app.settings
+    // Writable so --screenshot can stage pins and the pill without saving them.
+    property alias settings: app.settings
+    property alias activeSubTab: app.activeSubTab
     // Driven by --screenshot DIR, which shoots every tab and settings section.
     property alias activeId: app.activeId
     property alias settingsSection: app.settingsSection

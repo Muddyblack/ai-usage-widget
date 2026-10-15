@@ -3,6 +3,12 @@
 A tray app with the same popup as every other platform — the QML is shared, not
 copied — backed by the same provider package. Preview quality.
 
+## Screenshots
+
+See the [macOS and Windows screenshot gallery](../README.md#macos-and-windows)
+for the popup, sessions, provider settings and appearance settings captured
+on each platform with demo data.
+
 ## Installing it
 
 Download `AI-Usage-Setup-<version>.exe` from a release and run it: no admin

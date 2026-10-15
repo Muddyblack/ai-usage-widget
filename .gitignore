@@ -9,7 +9,6 @@ package
 build/kde/contents/locale/
 notes.md
 plan.md
-docs/readme/opendesktop
 
 
 # Swift / the macOS app
@@ -92,3 +91,17 @@ env.bak/
 venv.bak/
 
 tmp/
+# readme-screenshots writes every tab; only the ones the README shows are kept
+docs/readme/screenshots/*
+!docs/readme/screenshots/pill-claude.png
+!docs/readme/screenshots/pill-antigravity.png
+!docs/readme/screenshots/popup-00-overview.png
+!docs/readme/screenshots/popup-01-spend.png
+!docs/readme/screenshots/popup-02-sessions.png
+!docs/readme/screenshots/popup-03-claude.png
+!docs/readme/screenshots/popup-04-openai.png
+!docs/readme/screenshots/popup-06-antigravity.png
+!docs/readme/screenshots/popup-claude-stats.png
+!docs/readme/screenshots/popup-claude-remote.png
+!docs/readme/screenshots/popup-antigravity-remote.png
+!docs/readme/screenshots/settings-00-providers.png

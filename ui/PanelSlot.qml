@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import "js/PanelColor.js" as PanelColor
 import "js/Tone.js" as Tone
 
@@ -49,39 +48,49 @@ RowLayout {
         Layout.preferredHeight: 16
         Layout.alignment: Qt.AlignVCenter
 
-        Image {
-            id: haloIcon
-            anchors.centerIn: parent
-            width: 16
-            height: 16
-            source: slot.iconSource
-            sourceSize.width: 16
-            sourceSize.height: 16
-            visible: false
-        }
-        MultiEffect {
-            anchors.fill: haloIcon
-            source: haloIcon
-            colorization: 1
-            colorizationColor: slot.readableIcon
-            opacity: 0.22
-        }
+        // Canvas also works with Qt Quick's software renderer, where
+        // MultiEffect cannot render the otherwise hidden source images.
+        Canvas {
+            id: logo
+            anchors.fill: parent
+            property url loadedSource
+            readonly property real rasterScale: Math.max(1, Screen.devicePixelRatio)
+            canvasSize: Qt.size(width * rasterScale, height * rasterScale)
 
-        Image {
-            id: coreIcon
-            anchors.centerIn: parent
-            width: 12
-            height: 12
-            source: slot.iconSource
-            sourceSize.width: 24
-            sourceSize.height: 24
-            visible: false
-        }
-        MultiEffect {
-            anchors.fill: coreIcon
-            source: coreIcon
-            colorization: 1
-            colorizationColor: slot.readableIcon
+            function loadSource() {
+                if (loadedSource && loadedSource.toString() !== "")
+                    unloadImage(loadedSource);
+                loadedSource = slot.iconSource;
+                if (loadedSource.toString() !== "")
+                    loadImage(loadedSource);
+                requestPaint();
+            }
+            Component.onCompleted: loadSource()
+            onImageLoaded: requestPaint()
+            onCanvasSizeChanged: requestPaint()
+            Connections {
+                target: slot
+                function onIconSourceChanged() {
+                    logo.loadSource();
+                }
+                function onReadableIconChanged() {
+                    logo.requestPaint();
+                }
+            }
+            onPaint: {
+                const ctx = getContext("2d");
+                ctx.reset();
+                if (!loadedSource || !isImageLoaded(loadedSource))
+                    return;
+                ctx.scale(rasterScale, rasterScale);
+                ctx.globalAlpha = 0.22;
+                ctx.drawImage(loadedSource, 0, 0, 16, 16);
+                ctx.globalAlpha = 1;
+                ctx.drawImage(loadedSource, 2, 2, 12, 12);
+                ctx.globalCompositeOperation = "source-in";
+                ctx.fillStyle = slot.readableIcon;
+                ctx.fillRect(0, 0, 16, 16);
+            }
         }
     }
 

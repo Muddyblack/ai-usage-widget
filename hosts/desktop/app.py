@@ -708,6 +708,8 @@ class Backend(QObject):
 
     @Slot(result=str)
     def loadSettings(self):
+        if _DEMO_ENVELOPE is not None:
+            return "{}"  # the demo never depends on, or touches, your own setup
         try:
             with open(config.config_path(), encoding="utf-8") as fh:
                 return fh.read()
@@ -794,6 +796,8 @@ class Backend(QObject):
 
     @Slot(str)
     def saveSettings(self, text):
+        if _DEMO_ENVELOPE is not None:
+            return
         path = config.config_path()
         os.makedirs(os.path.dirname(path), exist_ok=True)
         tmp = f"{path}.tmp.{os.getpid()}"
@@ -1628,6 +1632,24 @@ def _flush_stdio():
             stream.flush()
 
 
+CAPTURE_HEIGHT = 780
+
+
+def _crop_to_pill(image):
+    """The pill window is grabbed at the size of the popup: cut it down to the
+    pill itself, the only part with anything drawn."""
+    image = image.convertToFormat(QImage.Format.Format_ARGB32)
+    xs, ys = [], []
+    for y in range(image.height()):
+        for x in range(image.width()):
+            if image.pixel(x, y) >> 24 > 8:
+                xs.append(x)
+                ys.append(y)
+    if not xs:
+        return image
+    return image.copy(min(xs), min(ys), max(xs) - min(xs) + 1, max(ys) - min(ys) + 1)
+
+
 def _run_headless(app, engine, backend, warnings, screenshot, settings):
     """--selftest and --screenshot. Exits the process itself: a provider may
     still be waiting on the network in a worker thread, and a normal shutdown
@@ -1649,6 +1671,8 @@ def _run_headless(app, engine, backend, warnings, screenshot, settings):
 
         if is_dir:
             screenshot_path.mkdir(parents=True, exist_ok=True)
+            # One size for every capture, whatever each tab's content needs.
+            window.setProperty("fixedHeight", CAPTURE_HEIGHT)
 
             # Once the first snapshot is in: every popup tab (feature tabs and
             # each provider, popup-NN-<id>.png), then every settings section
@@ -1664,10 +1688,26 @@ def _run_headless(app, engine, backend, warnings, screenshot, settings):
             def show_tab(tab_id):
                 window.setProperty("showSettings", False)
                 window.setProperty("activeId", tab_id)
+                if tab_id == "spend":
+                    spend = window.findChild(QObject, "spendPage")
+                    if spend is not None:
+                        spend.setProperty("expandedProviders", {"plan-claude": True})
 
             def show_section(section):
                 window.setProperty("showSettings", True)
                 window.setProperty("settingsSection", section)
+
+            def show_sub(tab_id, sub):
+                show_tab(tab_id)
+                window.setProperty("activeSubTab", sub)
+
+            def show_pill(tab_id):
+                # Staged in memory only: assigning settings never saves them.
+                show_tab(tab_id)
+                current = window.property("settings")
+                staged = dict(current.toVariant() if hasattr(current, "toVariant") else current or {})
+                staged.update({"floatingPill": True, "pinnedTabs": [tab_id]})
+                window.setProperty("settings", staged)
 
             def plan():
                 tab_ids = window.property("popupTabIds") or []
@@ -1677,6 +1717,11 @@ def _run_headless(app, engine, backend, warnings, screenshot, settings):
                     pending.append((f"popup-{i:02d}-{slug(tab_id)}.png", lambda t=tab_id: show_tab(t)))
                 for i, section in enumerate(SETTINGS_SECTIONS):
                     pending.append((f"settings-{i:02d}-{section}.png", lambda s=section: show_section(s)))
+                pending.append(("popup-claude-stats.png", lambda: show_sub("claude", "stats")))
+                pending.append(("popup-claude-remote.png", lambda: show_sub("claude", "remote")))
+                pending.append(("popup-antigravity-remote.png", lambda: show_sub("antigravity", "remote")))
+                for tab_id in ("claude", "antigravity"):
+                    pending.append((f"pill-{tab_id}.png", lambda t=tab_id: show_pill(t)))
 
             def next_shot():
                 if not pending:
@@ -1684,11 +1729,28 @@ def _run_headless(app, engine, backend, warnings, screenshot, settings):
                     return
                 name, select = pending.pop(0)
                 select()
-                QTimer.singleShot(800, lambda: grab(name))
+                keep_size()
+                QTimer.singleShot(800, lambda: settle(name))
+
+            def settle(name):
+                keep_size()
+                QTimer.singleShot(300, lambda: grab(name))
+
+            def keep_size():
+                # The platform now and then shrinks the window back to its
+                # content; put it back so every capture is the same height.
+                if window.height() != CAPTURE_HEIGHT:
+                    window.setHeight(CAPTURE_HEIGHT)
 
             def grab(name):
                 out = str(screenshot_path / name)
-                window.grabWindow().save(out)
+                target = window
+                if name.startswith("pill-"):
+                    target = window.findChild(QQuickWindow, "floatingPill") or window
+                image = target.grabWindow()
+                if target is not window:
+                    image = _crop_to_pill(image)
+                image.save(out)
                 print(f"  {name}  ({Path(out).stat().st_size} bytes)")
                 shots_done.append(out)
                 next_shot()

@@ -1,4 +1,4 @@
-.PHONY: new-language test-install format help view view-h view-hyprland hyprland install pack tag test test-py translations check-translations lint-py run-desktop run-windows macos
+.PHONY: readme-screenshots new-language test-install format help view view-h view-hyprland hyprland install pack tag test test-py translations check-translations lint-py run-desktop run-windows macos
 .DEFAULT_GOAL := help
 
 help: ## list targets
@@ -84,8 +84,12 @@ format: ## format and auto-fix the Python (backend, hosts, scripts, tests) with 
 	@if command -v ruff >/dev/null 2>&1; then ruff=ruff; else ruff="nix run .#ruff --"; fi; \
 	  $$ruff format backend/aiusage hosts scripts tests/python && $$ruff check --fix backend/aiusage hosts scripts tests/python
 
-opendesktop: ## rasterize the readme SVGs to PNGs and JPGs in docs/readme/opendesktop (needs `inkscape`)
-	@docs/readme/export_opendesktop.sh
+readme-screenshots: ## capture the real QML UI with demo data into docs/readme/screenshots
+	@if command -v nix >/dev/null 2>&1 && [ -f flake.nix ]; then \
+	  QT_QPA_PLATFORM=offscreen nix develop .\#windows --command python hosts/desktop/app.py --screenshot docs/readme/screenshots --demo; \
+	else \
+	  QT_QPA_PLATFORM=offscreen python3 hosts/desktop/app.py --screenshot docs/readme/screenshots --demo; \
+	fi
 
 
 pack: ## build .plasmoid archive

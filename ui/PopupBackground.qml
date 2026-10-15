@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Effects
 import "theme" as Appearance
 import "js/Tone.js" as Tone
 
@@ -165,7 +164,7 @@ Rectangle {
         anchors.top: parent.top
         anchors.left: parent.left
         opacity: 0.22
-        visible: glass.decoration === 0 || (glass.decoration === 1 && (watermarkImage.source.toString() === "" || watermarkImage.status === Image.Error))
+        visible: glass.decoration === 0 || (glass.decoration === 1 && (watermarkImage.loadedSource.toString() === ""))
         readonly property color accent: glass.shell ? glass.shell.activeAccent : "#cc785c"
         readonly property var signature: [width, height, visible, accent]
         onSignatureChanged: requestPaint()
@@ -186,28 +185,67 @@ Rectangle {
     }
 
     // The active provider's logo as a soft one-colour glow in the accent: the
-    // shape stays recognisable but never competes with the content.
-    Image {
+    // shape stays recognisable but never competes with the content. Drawn on
+    // a Canvas (with a faked blur) because MultiEffect
+    // cannot render hidden source images under the software renderer.
+    Canvas {
         id: watermarkImage
         anchors.top: parent.top
         anchors.left: parent.left
-        width: parent.width * 0.7
-        height: parent.height * 0.7
-        sourceSize.width: 280
-        sourceSize.height: 280
-        fillMode: Image.PreserveAspectFit
+        width: Math.min(parent.width, parent.height) * 0.7
+        height: width
+        // Painted at its on-screen size: the software renderer doesn't rescale
+        // a Canvas whose canvasSize differs from the item size.
+        canvasSize: Qt.size(Math.max(1, width), Math.max(1, height))
+        onCanvasSizeChanged: requestPaint()
         smooth: true
         opacity: glass.providerLogo ? (glass.light ? 0.22 : 0.25) : 0.18
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            colorization: glass.providerLogo ? 1.0 : 0.0
-            colorizationColor: glass.shell ? glass.shell.activeAccent : "#cc785c"
-            blurEnabled: true
-            blurMax: 64
-            blur: 0.8
+        visible: glass.decoration === 1 && loadedSource.toString() !== ""
+        property url loadedSource
+        readonly property url wanted: glass.decoration === 1 ? glass.watermark : ""
+        readonly property color accent: glass.shell ? glass.shell.activeAccent : "#cc785c"
+        readonly property bool tint: glass.providerLogo
+        onWantedChanged: loadSource()
+        onAccentChanged: requestPaint()
+        onTintChanged: requestPaint()
+        onImageLoaded: requestPaint()
+        Component.onCompleted: loadSource()
+
+        function loadSource() {
+            if (loadedSource.toString() !== "")
+                unloadImage(loadedSource);
+            loadedSource = wanted;
+            if (loadedSource.toString() !== "")
+                loadImage(loadedSource);
+            requestPaint();
         }
-        visible: glass.decoration === 1 && source.toString() !== "" && status !== Image.Error
-        source: glass.decoration === 1 ? glass.watermark : ""
+
+        onPaint: {
+            const ctx = getContext("2d");
+            ctx.reset();
+            if (loadedSource.toString() === "" || !isImageLoaded(loadedSource))
+                return;
+            ctx.imageSmoothingEnabled = true;
+            // No blur filter in Canvas: stack a few offset, low-alpha copies
+            // on two rings to get a soft halo around the logo.
+            const side = Math.min(width, height) * 0.8;
+            const o = (Math.min(width, height) - side) / 2;
+            const spread = side * 0.06;
+            // ~0.7 combined peak; a real blur would spread it thinner.
+            ctx.globalAlpha = 0.05;
+            for (let ring = 1; ring <= 2; ring++) {
+                for (let i = 0; i < 12; i++) {
+                    const ang = i * Math.PI / 6;
+                    ctx.drawImage(loadedSource, o + Math.cos(ang) * spread * ring, o + Math.sin(ang) * spread * ring, side, side);
+                }
+            }
+            ctx.globalAlpha = 1;
+            if (tint) {
+                ctx.globalCompositeOperation = "source-in";
+                ctx.fillStyle = accent.toString();
+                ctx.fillRect(0, 0, width, height);
+            }
+        }
     }
 
     Rectangle {

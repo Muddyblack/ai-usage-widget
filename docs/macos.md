@@ -4,6 +4,12 @@ A menu bar app: the active provider's mark and its percentages in the menu
 bar, and the same popup every other host shows under it — quota windows, reset
 countdowns, usage history, sessions, spend and settings.
 
+## Screenshots
+
+See the [macOS and Windows screenshot gallery](../README.md#macos-and-windows)
+for the popup, sessions, provider settings and appearance settings captured
+on each platform with demo data.
+
 ## How it is built
 
 There is one UI for every platform: the QML under `ui/`, with its state in

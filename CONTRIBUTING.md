@@ -30,8 +30,11 @@ Only if you work on that part:
   Setup on Windows. See [`docs/windows.md`](docs/windows.md).
 - **Hyprland / Quickshell** — Quickshell, plus CMake and Qt 6 for the tray helper;
   `nix run .#hyprland` brings them. See [`docs/hyprland.md`](docs/hyprland.md).
-- **README artwork** — Perl for `docs/readme/generate.pl`; `make opendesktop` needs
-  Inkscape.
+- **README screenshots** — `make readme-screenshots` captures the real QML UI with
+  demo data into `docs/readme/screenshots` (popup tabs, Claude stats, panel pills,
+  settings). On Nix it uses the `windows` shell, which includes PySide6; elsewhere
+  install `hosts/desktop/requirements.txt` first. Nothing is drawn by hand, so a QML
+  change needs only a rerun.
 
 ## Development shell
 

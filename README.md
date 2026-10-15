@@ -30,19 +30,36 @@ A KDE Plasma 6 panel widget for tracking AI API quota usage across 25 provider s
 
 | Claude | Antigravity |
 | :---: | :---: |
-| <img src="./docs/readme/claude_pill.svg?v=12" alt="Claude panel pill" width="160"> | <img src="./docs/readme/agy_pill.svg?v=12" alt="Antigravity panel pill" width="165"> |
+| <img src="./docs/readme/screenshots/pill-claude.png" alt="Claude panel pill" height="32"> | <img src="./docs/readme/screenshots/pill-antigravity.png" alt="Antigravity panel pill" height="32"> |
 
 ### Popup
 
-| Claude | Antigravity |
+| Claude | Claude stats |
 | :---: | :---: |
-| <img src="./docs/readme/claude_usage.svg?v=12" alt="Claude usage" width="340"> | <img src="./docs/readme/antigravity_usage.svg?v=12" alt="Antigravity usage" width="340"> |
-| **OpenAI** | **Usage history** |
-| <img src="./docs/readme/openai_usage.svg?v=12" alt="OpenAI usage" width="340"> | <img src="./docs/readme/usage_chart.svg?v=12" alt="Usage history chart" width="340"> |
+| <img src="./docs/readme/screenshots/popup-03-claude.png" alt="Claude usage" width="340"> | <img src="./docs/readme/screenshots/popup-claude-stats.png" alt="Claude stats" width="340"> |
+| **Antigravity** | **OpenAI** |
+| <img src="./docs/readme/screenshots/popup-06-antigravity.png" alt="Antigravity usage" width="340"> | <img src="./docs/readme/screenshots/popup-04-openai.png" alt="OpenAI usage" width="340"> |
+| **Antigravity remote** | **Claude remote** |
+| <img src="./docs/readme/screenshots/popup-antigravity-remote.png" alt="Antigravity remote devices" width="340"> | <img src="./docs/readme/screenshots/popup-claude-remote.png" alt="Claude remote sessions" width="340"> |
 | **Overview** | **Sessions** |
-| <img src="./docs/readme/overview_tab.svg?v=12" alt="Provider overview" width="340"> | <img src="./docs/readme/sessions_tab.svg?v=12" alt="Recent sessions" width="340"> |
+| <img src="./docs/readme/screenshots/popup-00-overview.png" alt="Provider overview" width="340"> | <img src="./docs/readme/screenshots/popup-02-sessions.png" alt="Recent sessions" width="340"> |
 | **Usage & Spend** | **Settings** |
-| <img src="./docs/readme/spend_tab.svg?v=12" alt="Usage and spend" width="340"> | <img src="./docs/readme/settings.svg?v=12" alt="Provider settings" width="340"> |
+| <img src="./docs/readme/screenshots/popup-01-spend.png" alt="Usage and spend" width="340"> | <img src="./docs/readme/screenshots/settings-00-providers.png" alt="Provider settings" width="340"> |
+
+Generated from the real UI with demo data: `make readme-screenshots`.
+
+### macOS and Windows
+
+Real desktop captures from PR #70 (`b92b5ce`), using demo data. Click an image
+for the full-size view, including the native menu bar or taskbar.
+
+| View | macOS | Windows |
+| :--- | :---: | :---: |
+| Sessions | <a href="./docs/readme/macos/desktop-00-sessions.png"><img src="./docs/readme/macos/desktop-00-sessions.png" alt="macOS: sessions on the desktop" width="380"></a> | <a href="./docs/readme/windows/desktop-00-sessions.png"><img src="./docs/readme/windows/desktop-00-sessions.png" alt="Windows: sessions on the desktop" width="380"></a> |
+| Claude usage | <a href="./docs/readme/macos/desktop-01-claude.png"><img src="./docs/readme/macos/desktop-01-claude.png" alt="macOS: claude usage on the desktop" width="380"></a> | <a href="./docs/readme/windows/desktop-01-claude.png"><img src="./docs/readme/windows/desktop-01-claude.png" alt="Windows: claude usage on the desktop" width="380"></a> |
+| OpenAI usage | <a href="./docs/readme/macos/desktop-02-openai.png"><img src="./docs/readme/macos/desktop-02-openai.png" alt="macOS: openai usage on the desktop" width="380"></a> | <a href="./docs/readme/windows/desktop-02-openai.png"><img src="./docs/readme/windows/desktop-02-openai.png" alt="Windows: openai usage on the desktop" width="380"></a> |
+| Provider settings | <a href="./docs/readme/macos/desktop-03-settings-providers.png"><img src="./docs/readme/macos/desktop-03-settings-providers.png" alt="macOS: provider settings on the desktop" width="380"></a> | <a href="./docs/readme/windows/desktop-03-settings-providers.png"><img src="./docs/readme/windows/desktop-03-settings-providers.png" alt="Windows: provider settings on the desktop" width="380"></a> |
+| Appearance settings | <a href="./docs/readme/macos/desktop-04-settings-appearance.png"><img src="./docs/readme/macos/desktop-04-settings-appearance.png" alt="macOS: appearance settings on the desktop" width="380"></a> | <a href="./docs/readme/windows/desktop-04-settings-appearance.png"><img src="./docs/readme/windows/desktop-04-settings-appearance.png" alt="Windows: appearance settings on the desktop" width="380"></a> |
 
 ---
 

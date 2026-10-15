@@ -7,6 +7,7 @@ import "js/Tone.js" as Tone
 
 ColumnLayout {
     id: page
+    objectName: "spendPage"
 
     property var shell
     spacing: 12
