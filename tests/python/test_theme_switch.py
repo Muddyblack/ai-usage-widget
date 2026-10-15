@@ -16,7 +16,13 @@ class ThemeSwitchTests(unittest.TestCase):
             self.skipTest("PySide6 not installed; exercised in Qt CI")
         result = subprocess.run(
             [sys.executable, __file__, "--qml"],
-            env={**os.environ, "QT_QPA_PLATFORM": "offscreen", "QT_QUICK_BACKEND": "software"},
+            env={
+                **os.environ,
+                "QT_QPA_PLATFORM": "offscreen",
+                "QT_QUICK_BACKEND": "software",
+                # Windows Qt sends console.log to the debugger, not stderr.
+                "QT_LOGGING_TO_CONSOLE": "1",
+            },
             capture_output=True,
             text=True,
             timeout=30,
@@ -26,10 +32,12 @@ class ThemeSwitchTests(unittest.TestCase):
 
 
 def check_qml():
-    from PySide6.QtCore import QUrl
+    from PySide6.QtCore import QUrl, qInstallMessageHandler
     from PySide6.QtGui import QGuiApplication
     from PySide6.QtQml import QQmlApplicationEngine
 
+    # Belt and braces for QT_LOGGING_TO_CONSOLE: always reach stderr.
+    qInstallMessageHandler(lambda _mode, _ctx, message: print(message, file=sys.stderr, flush=True))
     app = QGuiApplication([])
     engine = QQmlApplicationEngine()
     warnings = []
