@@ -1,0 +1,52 @@
+name: nixpkgs
+
+# After a release: check that the nixpkgs-style packages build for the new
+# release. The bumped files are uploaded as an artifact for the first nixpkgs
+# submission; after that, the nixpkgs bot (r-ryantm) opens the bumps itself.
+on:
+  # Called by release.yml once the tag and release exist (a tag created by
+  # Actions' own token does not start workflows by itself).
+  workflow_call:
+    inputs:
+      version:
+        description: "Release tag, e.g. v3.4.0"
+        type: string
+        default: ""
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: cachix/install-nix-action@v31
+
+      - name: Use the flake's pinned nixpkgs as <nixpkgs>
+        run: |
+          nixpkgs="$(nix flake metadata --json | jq -r '.locks.nodes.nixpkgs.locked | "github:\(.owner)/\(.repo)/\(.rev)"')"
+          echo "NIX_PATH=nixpkgs=$(nix flake prefetch --json "$nixpkgs" | jq -r .storePath)" >> "$GITHUB_ENV"
+
+      # A manual run builds the version already in the files.
+      - name: Bump the packages to this tag
+        if: inputs.version != ''
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          version="${INPUT_VERSION#v}"
+          nix run nixpkgs#nix-update -- --file nix/nixpkgs --version "$version" ai-usage-widget
+          nix run nixpkgs#nix-update -- --file nix/nixpkgs --version "$version" ai-usage-cli
+          nix run nixpkgs#nix-update -- --file nix/nixpkgs --version "$version" ai-usage-app
+
+      - name: Build all
+        run: |
+          nix-build nix/nixpkgs -A ai-usage-app --no-out-link
+          nix-build nix/nixpkgs -A ai-usage-cli --no-out-link
+          nix-build nix/nixpkgs -A ai-usage-widget --no-out-link
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: nixpkgs-packages
+          path: nix/nixpkgs

@@ -7,6 +7,18 @@
     let
       forAllSystems = f: nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (system: f system);
       metadata = builtins.fromJSON (builtins.readFile ./hosts/kde/metadata.json);
+      quickshellDesktopFor = pkgs: pkgs.makeDesktopItem {
+        name = "org.quickshell";
+        desktopName = "Quickshell";
+        comment = "QtQuick desktop shell runtime";
+        # xdg-desktop-portal resolves this entry in the portal daemon's
+        # environment, where a flake-only Quickshell is not on PATH.
+        exec = "${pkgs.quickshell}/bin/qs";
+        icon = "org.muddyblack.aiUsageWidget";
+        terminal = false;
+        noDisplay = true;
+        categories = [ "Utility" ];
+      };
     in {
       packages = forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};
@@ -76,23 +88,174 @@
             nativeBuildInputs = with pkgs; [ cmake ninja qt6.wrapQtAppsHook ];
             buildInputs = with pkgs; [ qt6.qtbase ];
           };
+
+          # The terminal frontend alone: the Python backend and its launchers, no
+          # Qt and no plasmoid, so a server or a terminal-only setup pulls in
+          # nothing graphical.
+          cli = pkgs.stdenvNoCC.mkDerivation {
+            pname = "ai-usage-cli";
+            version = metadata.KPlugin.Version;
+            src = pkgs.lib.fileset.toSource {
+              root = ./.;
+              fileset = ./backend;
+            };
+            dontConfigure = true;
+            dontBuild = true;
+            installPhase = ''
+              runHook preInstall
+              dest=$out/share/ai-usage-widget
+              mkdir -p "$dest" "$out/bin"
+              cp -r backend "$dest/backend"
+              find "$dest" \( -name '__pycache__' -o -name '*.pyc' \) -prune -exec rm -rf {} +
+              substituteInPlace "$dest/backend/sh/python-interp.sh" \
+                --replace-fail 'PY_DEFAULT="python3"' \
+                               'PY_DEFAULT="${pkgs.python3}/bin/python3"'
+              substituteInPlace "$dest/backend/aiusage/providers/antigravity_remote.py" \
+                --replace-fail 'SECRET_TOOL = "secret-tool"' \
+                               'SECRET_TOOL = "${pkgs.libsecret}/bin/secret-tool"'
+              # The launchers resolve symlinks to find the aiusage package beside them.
+              ln -s "$dest/backend/sh/ai-usage-cli" "$out/bin/ai-usage-cli"
+              ln -s "$dest/backend/sh/get-ai-usage" "$out/bin/get-ai-usage"
+              runHook postInstall
+            '';
+            doInstallCheck = true;
+            installCheckPhase = ''
+              $out/bin/ai-usage-cli --help > /dev/null
+            '';
+            meta = {
+              description = "Terminal frontend of the AI usage widget";
+              license = pkgs.lib.licenses.mit;
+              platforms = pkgs.lib.platforms.linux;
+              mainProgram = "ai-usage-cli";
+            };
+          };
+
+          # The Quickshell panel for Hyprland, with its tray helper: what
+          # `nix run .#hyprland` starts, installable.
+          hyprland = pkgs.stdenv.mkDerivation {
+            pname = "ai-usage-hyprland";
+            version = metadata.KPlugin.Version;
+            src = pkgs.lib.fileset.toSource {
+              root = ./.;
+              fileset = pkgs.lib.fileset.unions [ ./hosts/quickshell ./ui ./backend ./assets ./translate ./shell.qml ];
+            };
+            nativeBuildInputs = with pkgs; [ cmake ninja qt6.wrapQtAppsHook ];
+            buildInputs = with pkgs; [ qt6.qtbase qt6.qtwayland ];
+            cmakeDir = "../hosts/quickshell/tray";
+
+            postInstall = ''
+              root="$out/share/ai-usage-widget"
+              mkdir -p "$root"
+              # shell.qml must sit at the repo root beside hosts/, ui/ and backend/:
+              # Quickshell roots its QML sandbox at the entry point's directory.
+              # assets/ and translate/ are read at runtime; without them every icon
+              # and the watermark fail to load.
+              cp -r ../hosts ../ui ../backend ../assets ../translate ../shell.qml "$root/"
+              substituteInPlace "$root/backend/sh/python-interp.sh" \
+                --replace-fail 'PY_DEFAULT="python3"' \
+                               'PY_DEFAULT="${pkgs.python3}/bin/python3"'
+              substituteInPlace "$root/backend/aiusage/providers/antigravity_remote.py" \
+                --replace-fail 'SECRET_TOOL = "secret-tool"' \
+                               'SECRET_TOOL = "${pkgs.libsecret}/bin/secret-tool"'
+              # xdg-desktop-portal resolves this entry in the portal daemon's
+              # environment, where Quickshell is not on PATH.
+              install -Dm644 ${quickshellDesktopFor pkgs}/share/applications/org.quickshell.desktop \
+                "$out/share/applications/org.quickshell.desktop"
+              install -Dm644 ../assets/icons/org.muddyblack.aiUsageWidget.svg \
+                "$out/share/icons/hicolor/scalable/apps/org.muddyblack.aiUsageWidget.svg"
+
+              cat > "$out/bin/ai-usage-hyprland" <<EOF
+              #!${pkgs.bash}/bin/bash
+              set -eu
+              root=$out/share/ai-usage-widget
+              $out/bin/ai-usage-tray ${pkgs.quickshell}/bin/qs "\$root/shell.qml" "\$root/backend/sh/get-ai-usage" &
+              tray_pid=\$!
+              trap 'kill "\$tray_pid" 2>/dev/null || true' EXIT INT TERM
+              ${pkgs.quickshell}/bin/qs -p "\$root/shell.qml"
+              EOF
+              chmod +x "$out/bin/ai-usage-hyprland"
+            '';
+
+            meta = {
+              description = "Quickshell panel of the AI usage widget for Hyprland";
+              license = pkgs.lib.licenses.mit;
+              platforms = pkgs.lib.platforms.linux;
+              mainProgram = "ai-usage-hyprland";
+            };
+          };
+
+          # The tray app with the floating pill (hosts/desktop): the same popup as
+          # the panel, for any Linux desktop with a tray, with no Plasma and no
+          # Quickshell. It runs the backend in-process.
+          desktop =
+            let
+              python = pkgs.python3.withPackages (ps: [ ps.pyside6 ps.psutil ]);
+            in
+            pkgs.stdenv.mkDerivation {
+              pname = "ai-usage-app";
+              version = metadata.KPlugin.Version;
+              src = pkgs.lib.fileset.toSource {
+                root = ./.;
+                fileset = pkgs.lib.fileset.unions [ ./hosts/desktop ./ui ./backend ./assets ./translate ];
+              };
+              nativeBuildInputs = [ pkgs.makeWrapper pkgs.qt6.wrapQtAppsHook ];
+              buildInputs = [ pkgs.qt6.qtbase pkgs.qt6.qtdeclarative pkgs.qt6.qtsvg pkgs.qt6.qtwayland ];
+              dontWrapQtApps = true;
+              dontConfigure = true;
+              dontBuild = true;
+
+              installPhase = ''
+                runHook preInstall
+                root=$out/share/ai-usage-widget
+                mkdir -p "$root/hosts" "$out/bin"
+                cp -r hosts/desktop "$root/hosts/desktop"
+                cp -r ui backend assets translate "$root/"
+                find "$root" \( -name '__pycache__' -o -name '*.pyc' \) -prune -exec rm -rf {} +
+                substituteInPlace "$root/backend/aiusage/providers/antigravity_remote.py" \
+                  --replace-fail 'SECRET_TOOL = "secret-tool"' \
+                                 'SECRET_TOOL = "${pkgs.libsecret}/bin/secret-tool"'
+                install -Dm644 assets/icons/org.muddyblack.aiUsageWidget.svg \
+                  "$out/share/icons/hicolor/scalable/apps/org.muddyblack.aiUsageWidget.svg"
+
+                # nixpkgs' PySide6 ships no QML modules (QtQuick.Controls ...):
+                # they come from qtdeclarative, the same Qt it runs on.
+                makeWrapper ${python}/bin/python "$out/bin/ai-usage" \
+                  --add-flags "-B $root/hosts/desktop/app.py" \
+                  --prefix QML_IMPORT_PATH : ${pkgs.qt6.qtdeclarative}/lib/qt-6/qml \
+                  --prefix QT_PLUGIN_PATH : ${pkgs.qt6.qtsvg}/lib/qt-6/plugins
+                wrapQtApp "$out/bin/ai-usage"
+                runHook postInstall
+              '';
+
+              doInstallCheck = true;
+              installCheckPhase = ''
+                export HOME=$TMPDIR XDG_RUNTIME_DIR=$TMPDIR QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software
+                $out/bin/ai-usage --selftest
+              '';
+
+              meta = {
+                description = "Tray app with a floating pill for the AI usage widget, for any Linux desktop";
+                license = pkgs.lib.licenses.mit;
+                platforms = pkgs.lib.platforms.linux;
+                mainProgram = "ai-usage";
+              };
+            };
         });
+
+      overlays.default = final: prev: {
+        ai-usage-app = self.packages.${final.stdenv.hostPlatform.system}.desktop;
+        ai-usage-widget = self.packages.${final.stdenv.hostPlatform.system}.default;
+        ai-usage-cli = self.packages.${final.stdenv.hostPlatform.system}.cli;
+        ai-usage-hyprland = self.packages.${final.stdenv.hostPlatform.system}.hyprland;
+      };
+      nixosModules.default = import ./nix/nixos-module.nix self;
+      homeManagerModules.default = import ./nix/home-manager-module.nix self;
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixpkgs-fmt);
 
       apps = forAllSystems (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          quickshellDesktop = pkgs.makeDesktopItem {
-            name = "org.quickshell";
-            desktopName = "Quickshell";
-            comment = "QtQuick desktop shell runtime";
-            # xdg-desktop-portal resolves this entry in the portal daemon's
-            # environment, where a flake-only Quickshell is not on PATH.
-            exec = "${pkgs.quickshell}/bin/qs";
-            icon = "org.muddyblack.aiUsageWidget";
-            terminal = false;
-            noDisplay = true;
-            categories = [ "Utility" ];
-          };
+          quickshellDesktop = quickshellDesktopFor pkgs;
         in rec {
           view = {
             type = "app";

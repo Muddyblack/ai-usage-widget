@@ -131,6 +131,14 @@ jobs:
           files: |
             ${{ steps.info.outputs.artifact }}
 
+  # Check the nixpkgs-style packages build for the new release (the tag exists
+  # now, so nix-update can fetch it).
+  nixpkgs:
+    needs: [prepare, release]
+    uses: ./.github/workflows/nixpkgs.yml
+    with:
+      version: ${{ needs.prepare.outputs.tag }}
+
   # The workflow every push runs — the tests, the build, the built .exe's own
   # selftest, the installer — with the release's version in the file names.
   windows:

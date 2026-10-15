@@ -251,16 +251,25 @@ Or install it from the [KDE Store](https://www.opendesktop.org/p/2361382/).
   outputs = { self, nixpkgs, ai-usage, ... }: {
     nixosConfigurations.mybox = nixpkgs.lib.nixosSystem {
       modules = [
-        ({ pkgs, ... }: {
-          environment.systemPackages = [
-            ai-usage.packages.${pkgs.system}.default
-          ];
-        })
+        ai-usage.nixosModules.default
+        {
+          programs.ai-usage-widget = {
+            enable = true;          # the Plasma widget
+            cli.enable = true;      # optional: ai-usage-cli for the terminal
+            desktop.enable = false; # optional: tray app + pill for non-Plasma desktops
+            hyprland.enable = false; # optional: the Quickshell panel
+          };
+        }
       ];
     };
   };
 }
 ```
+
+Home Manager has the same module (`ai-usage.homeManagerModules.default`), which also links
+the widget into `~/.local/share/plasma/plasmoids`. Packages can be used directly too:
+`ai-usage.packages.${pkgs.system}.{default,cli,hyprland}`. See
+[docs/packaging.md](docs/packaging.md).
 
 </details>
 
@@ -279,6 +288,7 @@ All configuration is done in the widget's settings panel (right-click the widget
 | [docs/windows.md](docs/windows.md) | The Windows tray app: installing, using and building it |
 | [docs/architecture.md](docs/architecture.md) | How the repository is laid out: one backend, one UI, one thin host per platform |
 | [docs/macos.md](docs/macos.md) | The macOS menu bar app: the native menu bar item, where each provider's data is on a Mac, and how to build it |
+| [docs/packaging.md](docs/packaging.md) | The flake, the NixOS and Home Manager modules, and the nixpkgs packages |
 | [docs/provider-contract.md](docs/provider-contract.md) | The JSON model every frontend reads, and the backend architecture behind it |
 | [docs/provider-detection.md](docs/provider-detection.md) | Zero-default detection policy, platform settings, privacy limits, and provider addition checklist |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Development install, tests, packaging, releasing |
