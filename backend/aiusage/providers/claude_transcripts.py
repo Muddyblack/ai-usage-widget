@@ -63,7 +63,9 @@ def parse_transcript(path):
                 message = entry.get("message") or {}
                 if entry.get("type") == "user":
                     content = message.get("content")
-                    tool_result = isinstance(content, list) and content and all(isinstance(b, dict) and b.get("type") == "tool_result" for b in content)
+                    tool_result = (
+                        isinstance(content, list) and content and all(isinstance(b, dict) and b.get("type") == "tool_result" for b in content)
+                    )
                     if entry.get("isMeta") or tool_result:
                         continue
                     day = days.setdefault(stamp[0], {"messages": 0, "tools": 0, "hours": {}, "models": {}})
@@ -193,7 +195,12 @@ def _build(stats, now, home, budget, through):
         if entry.get("top") and cutoff < started and (not through or started <= through):
             sessions += 1
             activity.setdefault(entry["start"], {"sessions": 0})["sessions"] += 1
-        if entry.get("top") and cutoff < started and (not through or started <= through) and (longest is None or entry["duration"] > longest["duration"]):
+        if (
+            entry.get("top")
+            and cutoff < started
+            and (not through or started <= through)
+            and (longest is None or entry["duration"] > longest["duration"])
+        ):
             longest = {"duration": entry["duration"], "messageCount": entry["messages"], "date": entry["start"]}
         for date, day in entry.get("days", {}).items():
             if date <= cutoff or (through and date > through):
@@ -213,7 +220,8 @@ def _build(stats, now, home, budget, through):
         return stats, complete
 
     stats["dailyActivity"] = list(stats.get("dailyActivity") or []) + [
-        {"date": d, "messageCount": r.get("messages", 0), "sessionCount": r["sessions"], "toolCallCount": r.get("tools", 0)} for d, r in sorted(activity.items())
+        {"date": d, "messageCount": r.get("messages", 0), "sessionCount": r["sessions"], "toolCallCount": r.get("tools", 0)}
+        for d, r in sorted(activity.items())
     ]
     stats["dailyModelTokens"] = list(stats.get("dailyModelTokens") or []) + [{"date": d, "tokensByModel": t} for d, t in sorted(tokens.items())]
     merged = {k: dict(v) for k, v in (stats.get("modelUsage") or {}).items() if isinstance(v, dict)}
@@ -241,6 +249,7 @@ def _build(stats, now, home, budget, through):
 # Claude prunes old transcripts, so days rebuilt from them are folded into a
 # file of ours once finished (everything before today); Claude's own
 # stats-cache.json is only read to seed it.
+
 
 def archive_path():
     return os.path.join(paths.data_home(), "kde-ai-usage", "claude-stats.json")
