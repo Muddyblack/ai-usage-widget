@@ -1,4 +1,5 @@
 import QtQuick
+import "../theme" as Appearance
 import "Theme.js" as Theme
 import "../js/Tone.js" as Tone
 
@@ -24,7 +25,7 @@ Item {
     Rectangle {
         width: parent.width
         height: 1
-        color: Tone.c(palette, Theme.line)
+        color: Tone.c(Appearance.Palette, Theme.line)
         visible: row.y > 0
     }
 
@@ -57,7 +58,7 @@ Item {
                 Text {
                     width: parent.width
                     text: row.label
-                    color: Tone.c(palette, Theme.text)
+                    color: Tone.c(Appearance.Palette, Theme.text)
                     font.pixelSize: 12
                     font.weight: Font.Medium
                     wrapMode: Text.WordWrap
@@ -66,7 +67,7 @@ Item {
                     width: parent.width
                     visible: row.desc !== ""
                     text: row.desc
-                    color: Tone.c(palette, Theme.muted)
+                    color: Tone.c(Appearance.Palette, Theme.muted)
                     font.pixelSize: 10
                     lineHeight: 1.2
                     wrapMode: Text.WordWrap

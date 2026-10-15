@@ -195,7 +195,7 @@
       <default>1</default>
     </entry>
     <entry name="popupDecoration" type="Int">
-      <default>0</default>
+      <default>1</default>
     </entry>
   </group>
 </kcfg>

@@ -1,4 +1,5 @@
 import QtQuick
+import "../theme" as Appearance
 import "Theme.js" as Theme
 import "../js/Tone.js" as Tone
 
@@ -7,7 +8,7 @@ Rectangle {
     id: note
 
     property string text: ""
-    property color tone: Tone.c(palette, Theme.noteText)
+    property color tone: Tone.c(Appearance.Palette, Theme.noteText)
 
     width: parent ? parent.width : implicitWidth
     implicitHeight: body.implicitHeight + 22

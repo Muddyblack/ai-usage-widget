@@ -15,6 +15,7 @@ from .http import as_json, fetch_json, http_error_text
 from .pricing import get_pricing
 from .providers.antigravity import get_antigravity_usage
 from .providers.claude_credentials import get_claude_credentials
+from .providers import claude_transcripts
 from .providers.claude_remote import remote_sessions
 from .providers.cline import get_cline_sessions
 from .providers.coderabbit import get_coderabbit_usage
@@ -137,7 +138,8 @@ def collect_claude(now):
             org = as_json(result.body)
 
     settings = read_json_file(os.path.expanduser("~/.claude/settings.json"))
-    stats = read_json_file(os.path.expanduser("~/.claude/stats-cache.json"))
+    # Claude Code no longer refreshes stats-cache.json: the widget keeps its own copy and adds the days from the transcripts.
+    stats = claude_transcripts.load(read_json_file(os.path.expanduser("~/.claude/stats-cache.json")), now)
     status = provider_status("claude")
 
     return {

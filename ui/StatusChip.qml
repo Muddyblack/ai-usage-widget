@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Window
 import QtQuick.Layouts
 import "js/Tone.js" as Tone
@@ -27,7 +28,7 @@ Rectangle {
 
     readonly property color statusColor: {
         if (linkOnly)
-            return Tone.c(palette, Qt.rgba(1, 1, 1, 0.5));
+            return Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.5));
         if (indicator === "critical")
             return Qt.rgba(1.0, 0.3, 0.3, 0.95);
         if (indicator === "major")
@@ -73,7 +74,7 @@ Rectangle {
             Layout.preferredWidth: 6
             Layout.preferredHeight: 6
             radius: 3
-            color: chip.statusColor
+            color: Tone.ink(Appearance.Palette, chip.statusColor)
 
             SequentialAnimation on opacity {
                 objectName: "statusPulse"
@@ -106,7 +107,7 @@ Rectangle {
             }
             font.pixelSize: 10
             font.bold: !chip.linkOnly && chip.indicator !== "none"
-            color: chip.statusColor
+            color: Tone.ink(Appearance.Palette, chip.statusColor)
         }
     }
 
@@ -147,9 +148,9 @@ Rectangle {
         width: 280
         height: tipText.implicitHeight + 16
         radius: 6
-        color: Tone.c(palette, Qt.rgba(0.04, 0.045, 0.06, 0.97))
+        color: Tone.c(Appearance.Palette, Qt.rgba(0.04, 0.045, 0.06, 0.97))
         border.width: 1
-        border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.14))
+        border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.14))
 
         Text {
             id: tipText
@@ -157,7 +158,7 @@ Rectangle {
             y: 8
             width: parent.width - 20
             text: chip.tooltipText
-            color: Tone.c(palette, "#e2e8f0")
+            color: Tone.c(Appearance.Palette, "#e2e8f0")
             font.pixelSize: 11
             wrapMode: Text.Wrap
         }

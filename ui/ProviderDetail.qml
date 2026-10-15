@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import "studio"
 import "studio/Theme.js" as Theme
 import "js/Tone.js" as Tone
@@ -47,7 +48,7 @@ Column {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: detail.provider ? detail.provider.label : ""
-                color: Tone.c(palette, Theme.text)
+                color: Tone.c(Appearance.Palette, Theme.text)
                 font.pixelSize: 13
                 font.weight: Font.DemiBold
             }

@@ -101,5 +101,5 @@ pack: ## build .plasmoid archive
 	  echo "wrote $$out"; \
 	fi
 
-tag: ## bump version, commit, tag, push
+tag: ## open a release PR (bump version); merging it tags + publishes
 	@./scripts/tag.sh

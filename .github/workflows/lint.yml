@@ -11,6 +11,7 @@ on:
       # release.yml, which builds and tests everything again.
       - 'hosts/kde/metadata.json'
       - 'ui/js/ProjectInfo.js'
+      - 'ui/js/ProjectVersion.js'
 
 permissions:
   contents: read

@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Controls.Basic as QQC2
 import QtQuick.Layouts
 import "js/Tone.js" as Tone
@@ -68,9 +69,9 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: noStatsText.implicitHeight + 24
         radius: 8
-        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.03))
+        color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.03))
         border.width: 1
-        border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.07))
+        border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.07))
 
         Text {
             id: noStatsText
@@ -103,7 +104,7 @@ ColumnLayout {
             }
             font.pixelSize: 11
             horizontalAlignment: Text.AlignHCenter
-            color: Tone.c(palette, "#94a3b8")
+            color: Tone.c(Appearance.Palette, "#94a3b8")
             wrapMode: Text.WordWrap
         }
     }
@@ -123,7 +124,7 @@ ColumnLayout {
                 text: statsSectionRoot.shell.i18n("Activity Stats")
                 font.pixelSize: 11
                 font.bold: true
-                color: Tone.c(palette, "#f8fafc")
+                color: Tone.c(Appearance.Palette, "#f8fafc")
                 opacity: 0.85
             }
 
@@ -299,7 +300,7 @@ ColumnLayout {
             Text {
                 text: statsSectionRoot.dailyUnit === "tokens" ? statsSectionRoot.shell.i18n("Tokens / day") : (statsSectionRoot.dailyUnit === "requests" ? statsSectionRoot.shell.i18n("Requests / day") : statsSectionRoot.shell.i18n("Messages / day"))
                 font.pixelSize: 9
-                color: Tone.c(palette, "#94a3b8")
+                color: Tone.c(Appearance.Palette, "#94a3b8")
                 opacity: 0.8
             }
 
@@ -375,7 +376,7 @@ ColumnLayout {
             Text {
                 text: statsSectionRoot.topGroupsLabel
                 font.pixelSize: 9
-                color: Tone.c(palette, "#94a3b8")
+                color: Tone.c(Appearance.Palette, "#94a3b8")
                 opacity: 0.8
             }
 
@@ -390,7 +391,7 @@ ColumnLayout {
                     Text {
                         text: modelData.name
                         font.pixelSize: 10
-                        color: Tone.c(palette, "#f8fafc")
+                        color: Tone.c(Appearance.Palette, "#f8fafc")
                         opacity: 0.85
                         elide: Text.ElideMiddle
                         Layout.fillWidth: true
@@ -415,14 +416,14 @@ ColumnLayout {
                 Layout.fillWidth: true
                 implicitHeight: 1
                 Layout.preferredHeight: 1
-                color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
+                color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08))
             }
 
             Text {
                 text: statsSectionRoot.shell.i18n("Models")
                 font.pixelSize: 11
                 font.bold: true
-                color: Tone.c(palette, "#f8fafc")
+                color: Tone.c(Appearance.Palette, "#f8fafc")
                 opacity: 0.8
             }
 
@@ -451,7 +452,7 @@ ColumnLayout {
                         Text {
                             text: statsSectionRoot.shortenModelName(modelRowCol.modelData)
                             font.pixelSize: 10
-                            color: Tone.c(palette, "#f8fafc")
+                            color: Tone.c(Appearance.Palette, "#f8fafc")
                             opacity: 0.85
                             Layout.preferredWidth: 90
                             elide: Text.ElideRight
@@ -465,7 +466,7 @@ ColumnLayout {
                             visible: (modelRowCol.modelEntry.input !== undefined)
                             text: statsSectionRoot.shell.i18n("%1 in", statsSectionRoot.formatTokens(modelRowCol.modelEntry.input || 0))
                             font.pixelSize: 9
-                            color: Tone.c(palette, "#94a3b8")
+                            color: Tone.c(Appearance.Palette, "#94a3b8")
                             opacity: 0.7
                         }
 
@@ -473,7 +474,7 @@ ColumnLayout {
                             visible: (modelRowCol.modelEntry.output !== undefined)
                             text: statsSectionRoot.shell.i18n("%1 out", statsSectionRoot.formatTokens(modelRowCol.modelEntry.output || 0))
                             font.pixelSize: 9
-                            color: Tone.c(palette, "#94a3b8")
+                            color: Tone.c(Appearance.Palette, "#94a3b8")
                             opacity: 0.7
                         }
 
@@ -481,7 +482,7 @@ ColumnLayout {
                             visible: (modelRowCol.modelEntry.sessions !== undefined && modelRowCol.modelEntry.input === undefined)
                             text: statsSectionRoot.shell.i18nc("abbreviated sessions", "%1 sess", modelRowCol.modelEntry.sessions || 0)
                             font.pixelSize: 9
-                            color: Tone.c(palette, "#94a3b8")
+                            color: Tone.c(Appearance.Palette, "#94a3b8")
                             opacity: 0.7
                         }
 
@@ -497,7 +498,7 @@ ColumnLayout {
                             text: (statsSectionRoot.stats.totalTokens || 0) > 0 ? Math.round((modelRowCol.modelEntry.total || 0) / statsSectionRoot.stats.totalTokens * 100) + "%" : "—"
                             font.pixelSize: 10
                             font.bold: true
-                            color: Tone.c(palette, "#f8fafc")
+                            color: Tone.c(Appearance.Palette, "#f8fafc")
                             Layout.preferredWidth: 36
                             horizontalAlignment: Text.AlignRight
                         }
@@ -512,7 +513,7 @@ ColumnLayout {
                         Rectangle {
                             anchors.fill: parent
                             radius: 1.5
-                            color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
+                            color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.06))
                         }
 
                         Rectangle {
@@ -544,7 +545,7 @@ ColumnLayout {
                 visible: (statsSectionRoot.stats.computedDate || "") !== ""
                 text: statsSectionRoot.shell.i18n("computed %1", (statsSectionRoot.stats.computedDate || "").substring(0, 10))
                 font.pixelSize: 8
-                color: Tone.c(palette, "#94a3b8")
+                color: Tone.c(Appearance.Palette, "#94a3b8")
                 opacity: 0.6
             }
 
@@ -587,9 +588,9 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: 40
         radius: 5
-        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
+        color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.04))
         border.width: 1
-        border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.07))
+        border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.07))
 
         QQC2.ToolTip.visible: tile.tileTip !== "" && tileMA.containsMouse
         QQC2.ToolTip.delay: 300
@@ -617,7 +618,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
                 text: tile.tileLabel + (tile.tileSub ? " · " + tile.tileSub : "")
                 font.pixelSize: 8
-                color: Tone.c(palette, "#94a3b8")
+                color: Tone.c(Appearance.Palette, "#94a3b8")
                 opacity: 0.8
             }
         }

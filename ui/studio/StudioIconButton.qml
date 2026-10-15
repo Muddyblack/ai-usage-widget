@@ -1,4 +1,5 @@
 import QtQuick
+import "../theme" as Appearance
 import "Theme.js" as Theme
 import "../js/Tone.js" as Tone
 
@@ -19,12 +20,12 @@ Rectangle {
     height: implicitHeight
     radius: 8
     opacity: enabled ? 1 : 0.45
-    color: danger ? Qt.rgba(0.97, 0.44, 0.44, area.containsMouse ? 0.3 : 0.16) : area.containsMouse ? Tone.c(palette, "#26ffffff") : Tone.c(palette, Theme.hover)
+    color: danger ? Qt.rgba(0.97, 0.44, 0.44, area.containsMouse ? 0.3 : 0.16) : area.containsMouse ? Tone.c(Appearance.Palette, "#26ffffff") : Tone.c(Appearance.Palette, Theme.hover)
 
     StudioIcon {
         anchors.centerIn: parent
         name: control.icon
-        tint: control.danger ? Theme.bad : area.containsMouse ? Tone.c(palette, Theme.text) : Tone.c(palette, Theme.muted)
+        tint: control.danger ? Tone.ink(Appearance.Palette, Theme.bad) : area.containsMouse ? Tone.c(Appearance.Palette, Theme.text) : Tone.c(Appearance.Palette, Theme.muted)
     }
     MouseArea {
         id: area

@@ -135,10 +135,6 @@ PlasmoidItem {
     fullRepresentation: Item {
         id: popupRoot
 
-        // The popup's light or dark for ui/js/Tone.js: every item below
-        // inherits this palette.
-        palette.window: app.windowColor
-
         // Plasma's own dialog frame already pads this item, so only a little more.
         readonly property int margin: 6
         // Wider while the settings studio is open: it has a sidebar.

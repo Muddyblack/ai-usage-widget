@@ -1,4 +1,5 @@
 import QtQuick
+import "../theme" as Appearance
 import "Theme.js" as Theme
 import "../js/Tone.js" as Tone
 
@@ -43,7 +44,7 @@ Item {
             height: 4
             radius: 2
             anchors.verticalCenter: parent.verticalCenter
-            color: Tone.c(palette, "#1affffff")
+            color: Tone.c(Appearance.Palette, "#1affffff")
             Rectangle {
                 width: parent.width * control.fraction()
                 height: parent.height
@@ -57,9 +58,9 @@ Item {
             width: 14
             height: 14
             radius: 7
-            color: Tone.c(palette, "#f4f6f6")
-            border.width: dragArea.pressed ? 4 : 0
-            border.color: "#554f9dde"
+            color: Tone.isLight(Appearance.Palette) ? "#2879b9" : "#f4f6f6"
+            border.width: dragArea.pressed ? 4 : (Tone.isLight(Appearance.Palette) ? 2 : 0)
+            border.color: dragArea.pressed ? "#554f9dde" : "#f4f6fa"
         }
         MouseArea {
             id: dragArea
@@ -84,16 +85,16 @@ Item {
         width: 66
         height: parent.height
         radius: 8
-        color: Tone.c(palette, Theme.sunk)
+        color: Tone.c(Appearance.Palette, Theme.sunk)
         border.width: 1
-        border.color: input.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.8) : Tone.c(palette, Theme.line2)
+        border.color: input.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.8) : Tone.c(Appearance.Palette, Theme.line2)
 
         TextInput {
             id: input
             x: 10
             width: parent.width - 30
             anchors.verticalCenter: parent.verticalCenter
-            color: Tone.c(palette, Theme.text)
+            color: Tone.c(Appearance.Palette, Theme.text)
             selectionColor: Qt.rgba(0.31, 0.62, 0.87, 0.45)
             font.pixelSize: 11
             horizontalAlignment: TextInput.AlignRight
@@ -137,7 +138,7 @@ Item {
             anchors.rightMargin: 9
             anchors.verticalCenter: parent.verticalCenter
             text: "%"
-            color: Tone.c(palette, Theme.muted)
+            color: Tone.c(Appearance.Palette, Theme.muted)
             font.pixelSize: 11
         }
     }

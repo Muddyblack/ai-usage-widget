@@ -163,5 +163,7 @@ make tag     # or ./scripts/tag.sh
 ```
 
 Prompts for a version bump (patch / minor / major), updates
-`hosts/kde/metadata.json`, commits, tags, and pushes. CI then builds the
-`.plasmoid` and creates a GitHub release automatically.
+`hosts/kde/metadata.json` (the one place the version lives; `ui/js/ProjectVersion.js` is generated from it) on a `release/vX.Y.Z`
+branch, and opens a PR. Nothing is tagged or pushed to `master` by hand:
+merging the PR makes CI create the tag, build the `.plasmoid` and the
+Windows / macOS assets, and publish the GitHub release.

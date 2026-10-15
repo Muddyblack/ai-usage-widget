@@ -1,4 +1,5 @@
 import QtQuick
+import "../theme" as Appearance
 import QtQuick.Controls.Basic as Controls
 import "Theme.js" as Theme
 import "../js/Tone.js" as Tone
@@ -11,25 +12,33 @@ Controls.ComboBox {
     property var value
     signal chosen(var value)
 
+    // The pick is announced once the popup has closed. A choice that restyles
+    // the whole popup is applied after the combo has finished closing.
+    property var pending
+    property bool hasPending: false
+
     model: options
     currentIndex: Math.max(0, options.findIndex(o => String(o[0]) === String(value)))
     displayText: options.length ? (options[currentIndex] ?? options[0])[1] : ""
     implicitWidth: 160
     implicitHeight: 30
     font.pixelSize: 11
-    onActivated: index => control.chosen(options[index][0])
+    onActivated: index => {
+        control.pending = options[index][0];
+        control.hasPending = true;
+    }
 
     background: Rectangle {
         radius: 8
-        color: Tone.c(palette, Theme.sunk)
+        color: Tone.c(Appearance.Palette, Theme.sunk)
         border.width: 1
-        border.color: control.hovered || control.popup.visible ? Tone.c(palette, "#40ffffff") : Tone.c(palette, Theme.line2)
+        border.color: control.hovered || control.popup.visible ? Tone.c(Appearance.Palette, "#40ffffff") : Tone.c(Appearance.Palette, Theme.line2)
     }
     contentItem: Text {
         leftPadding: 10
         rightPadding: 24
         text: control.displayText
-        color: Tone.c(palette, Theme.text)
+        color: Tone.c(Appearance.Palette, Theme.text)
         font: control.font
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
@@ -38,7 +47,7 @@ Controls.ComboBox {
         x: control.width - width - 10
         anchors.verticalCenter: parent.verticalCenter
         text: "▾"
-        color: Tone.c(palette, Theme.muted)
+        color: Tone.c(Appearance.Palette, Theme.muted)
         font.pixelSize: 11
     }
     delegate: Controls.ItemDelegate {
@@ -49,19 +58,23 @@ Controls.ComboBox {
         height: 28
         contentItem: Text {
             text: item.modelData[1]
-            color: item.index === control.currentIndex ? Theme.brandTop : Tone.c(palette, Theme.text)
+            color: item.index === control.currentIndex ? Theme.brandTop : Tone.c(Appearance.Palette, Theme.text)
             font: control.font
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
         }
         background: Rectangle {
             radius: 6
-            color: item.hovered ? Tone.c(palette, "#1affffff") : "transparent"
+            color: item.hovered ? Tone.c(Appearance.Palette, "#1affffff") : "transparent"
         }
     }
     popup: Controls.Popup {
-        // A popup starts a palette of its own; carry the popup's light or dark in.
-        palette.window: control.palette.window
+        onClosed: Qt.callLater(function () {
+            if (!control.hasPending)
+                return;
+            control.hasPending = false;
+            control.chosen(control.pending);
+        })
         y: control.height + 4
         width: control.width
         padding: 4
@@ -73,9 +86,9 @@ Controls.ComboBox {
         }
         background: Rectangle {
             radius: 10
-            color: Tone.c(palette, "#15181d")
+            color: Tone.c(Appearance.Palette, "#15181d")
             border.width: 1
-            border.color: Tone.c(palette, Theme.line2)
+            border.color: Tone.c(Appearance.Palette, Theme.line2)
         }
     }
 }

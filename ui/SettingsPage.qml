@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Layouts
 import "studio"
 import "studio/Theme.js" as Theme
@@ -132,7 +133,7 @@ ColumnLayout {
             return Theme.warn;
         if (status === "refreshed")
             return Theme.ok;
-        return Tone.c(palette, Theme.text);
+        return Tone.c(Appearance.Palette, Theme.text);
     }
 
     // Narrow: the sections as a row of tabs above the cards.
@@ -359,7 +360,7 @@ ColumnLayout {
                     StudioRow {
                         // TRANSLATORS: the small rounded usage readout floating on the desktop edge
                         label: page.shell.i18n("Pill")
-                        dot: Tone.c(palette, "#e2e8f0")
+                        dot: Tone.isLight(Appearance.Palette) ? "#64748b" : "#e2e8f0"
                         StudioSelect {
                             options: page.zip(["always", "hover", "tray"], [page.shell.i18n("Always"), page.shell.i18n("Edge hover"), page.shell.i18n("Tray only")])
                             value: page.shell.settings.pillMode || "always"
@@ -493,7 +494,7 @@ ColumnLayout {
                     StudioRow {
                         label: page.shell.i18n("Glass opacity")
                         desc: page.shell.i18n("How solid the popup's glass is: lower lets the desktop (and the blur, if on) show through.")
-                        dot: Tone.c(palette, "#cbd5e1")
+                        dot: Tone.isLight(Appearance.Palette) ? "#64748b" : "#cbd5e1"
                         visible: !page.shell.backgroundStyleAvailable
                         StudioPercent {
                             from: 0.2
@@ -504,7 +505,7 @@ ColumnLayout {
                     StudioRow {
                         label: page.shell.i18n("Tint strength")
                         desc: page.shell.i18n("How much of the tint colour is laid over the glass.")
-                        dot: Tone.c(palette, "#94a3b8")
+                        dot: Tone.isLight(Appearance.Palette) ? "#64748b" : "#94a3b8"
                         StudioPercent {
                             value: Number(page.shell.settings.popupBgOpacity || 0)
                             onChosen: v => page.shell.setSetting2("popupBgOpacity", v)
@@ -513,7 +514,7 @@ ColumnLayout {
                     StudioRow {
                         label: page.shell.i18n("Frost")
                         desc: page.shell.i18n("A milky, grainy frosted look over the glass; keeps text readable over a busy desktop. Pairs well with Blur.")
-                        dot: Tone.c(palette, "#e2e8f0")
+                        dot: Tone.isLight(Appearance.Palette) ? "#64748b" : "#e2e8f0"
                         visible: !page.shell.backgroundStyleAvailable
                         StudioPercent {
                             value: Number(page.shell.settings.popupFrost || 0)
@@ -548,7 +549,7 @@ ColumnLayout {
                         dot: page.shell.activeAccent
                         StudioSelect {
                             options: [[0, page.shell.i18n("Accent glow")], [1, page.shell.i18n("Provider logo")], [2, page.shell.i18n("None")]]
-                            value: Math.max(0, Math.min(2, Number(page.shell.settings.popupDecoration || 0)))
+                            value: Math.max(0, Math.min(2, Number(page.shell.settings.popupDecoration === undefined ? 1 : page.shell.settings.popupDecoration)))
                             onChosen: v => page.shell.setSetting2("popupDecoration", v)
                         }
                     }
@@ -600,7 +601,7 @@ ColumnLayout {
 
                     StudioRow {
                         label: page.shell.i18n("Refresh")
-                        dot: Tone.c(palette, Theme.dim)
+                        dot: Tone.c(Appearance.Palette, Theme.dim)
                         StudioSelect {
                             width: 130
                             options: page.zip([60, 120, 300, 600, 900, 1800], [page.shell.i18n("1 min"), page.shell.i18n("2 min"), page.shell.i18n("5 min"), page.shell.i18n("10 min"), page.shell.i18n("15 min"), page.shell.i18n("30 min")])
@@ -616,7 +617,7 @@ ColumnLayout {
                     StudioRow {
                         label: page.shell.i18n("Pricing")
                         desc: page.shell.pricingLoading || page.shell.pricingStatus !== "" || page.shell.pricingError !== "" ? page.pricingMessage() : ""
-                        dot: page.shell.pricingLoading ? Theme.warn : page.shell.pricingStatus === "" ? Tone.c(palette, Theme.dim) : page.shell.pricingStatus === "stale-good" ? Theme.warn : page.shell.pricingStatus === "no-cache" ? Theme.bad : Theme.ok
+                        dot: page.shell.pricingLoading ? Theme.warn : page.shell.pricingStatus === "" ? Tone.c(Appearance.Palette, Theme.dim) : page.shell.pricingStatus === "stale-good" ? Theme.warn : page.shell.pricingStatus === "no-cache" ? Theme.bad : Theme.ok
                         StudioButton {
                             text: page.shell.pricingLoading ? page.shell.i18n("Refreshing…") : page.shell.i18n("Refresh pricing")
                             enabled: !page.shell.pricingLoading
@@ -658,7 +659,7 @@ ColumnLayout {
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: page.shell.i18n("days")
-                                color: Tone.c(palette, Theme.muted)
+                                color: Tone.c(Appearance.Palette, Theme.muted)
                                 font.pixelSize: 11
                             }
                             StudioButton {
@@ -670,7 +671,7 @@ ColumnLayout {
                     StudioRow {
                         label: page.shell.i18n("Auto-delete")
                         desc: page.shell.i18n("On every start, delete history older than this many days. 0 keeps everything.")
-                        dot: Tone.c(palette, Theme.dim)
+                        dot: Tone.c(Appearance.Palette, Theme.dim)
                         Row {
                             spacing: 8
                             StudioField {
@@ -687,7 +688,7 @@ ColumnLayout {
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: page.shell.i18n("days")
-                                color: Tone.c(palette, Theme.muted)
+                                color: Tone.c(Appearance.Palette, Theme.muted)
                                 font.pixelSize: 11
                             }
                         }

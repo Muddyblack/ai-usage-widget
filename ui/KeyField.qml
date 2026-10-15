@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Layouts
 import QtQuick.Controls.Basic as QC
 import "js/Tone.js" as Tone
@@ -23,7 +24,7 @@ RowLayout {
     Text {
         text: keyRow.label
         font.pixelSize: 11
-        color: Tone.c(palette, "#f8fafc")
+        color: Tone.c(Appearance.Palette, "#f8fafc")
         Layout.preferredWidth: 90
     }
 
@@ -31,9 +32,9 @@ RowLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: 26
         radius: 5
-        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
+        color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.06))
         border.width: 1
-        border.color: field.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.6) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
+        border.color: field.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.6) : Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.12))
 
         RowLayout {
             anchors.fill: parent
@@ -46,9 +47,9 @@ RowLayout {
                 Layout.fillWidth: true
                 text: keyRow.stored
                 font.pixelSize: 10
-                color: Tone.c(palette, "#f8fafc")
+                color: Tone.c(Appearance.Palette, "#f8fafc")
                 placeholderText: keyRow.placeholder
-                placeholderTextColor: Tone.c(palette, Qt.rgba(1, 1, 1, 0.3))
+                placeholderTextColor: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.3))
                 echoMode: !keyRow.secret || keyRow.revealed ? TextInput.Normal : TextInput.Password
                 verticalAlignment: TextInput.AlignVCenter
                 background: null

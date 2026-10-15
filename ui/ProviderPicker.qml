@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import "studio"
 import "studio/Theme.js" as Theme
 import "js/Tone.js" as Tone
@@ -32,7 +33,7 @@ Column {
         Text {
             anchors.centerIn: parent
             text: picker.shell.i18n("Add provider")
-            color: Tone.c(palette, Theme.text)
+            color: Tone.c(Appearance.Palette, Theme.text)
             font.pixelSize: 13
             font.weight: Font.DemiBold
         }
@@ -71,14 +72,14 @@ Column {
                 Rectangle {
                     width: parent.width
                     height: 1
-                    color: Tone.c(palette, Theme.line)
+                    color: Tone.c(Appearance.Palette, Theme.line)
                     visible: row.index > 0
                 }
                 Rectangle {
                     anchors.fill: parent
                     anchors.topMargin: 1
                     radius: 8
-                    color: Tone.c(palette, Theme.hover)
+                    color: Tone.c(Appearance.Palette, Theme.hover)
                     visible: area.containsMouse
                 }
                 MouseArea {
@@ -106,7 +107,7 @@ Column {
                     Text {
                         width: parent.width
                         text: row.modelData.label
-                        color: Tone.c(palette, Theme.text)
+                        color: Tone.c(Appearance.Palette, Theme.text)
                         font.pixelSize: 12
                         font.weight: Font.Medium
                         elide: Text.ElideRight
@@ -114,7 +115,7 @@ Column {
                     Text {
                         width: parent.width
                         text: row.modelData.id
-                        color: Tone.c(palette, Theme.dim)
+                        color: Tone.c(Appearance.Palette, Theme.dim)
                         font.pixelSize: 10
                         elide: Text.ElideRight
                     }

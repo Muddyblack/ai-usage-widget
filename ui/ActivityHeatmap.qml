@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Controls.Basic as QQC2
 import QtQuick.Layouts
 import "js/Tone.js" as Tone
@@ -95,7 +96,7 @@ ColumnLayout {
     }
     function shade(lv) {
         if (lv === 0)
-            return Tone.c(palette, Qt.rgba(1, 1, 1, 0.06));
+            return Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.06));
         return Qt.rgba(accent.r, accent.g, accent.b, [0, 0.28, 0.5, 0.75, 1][lv]);
     }
 
@@ -109,7 +110,7 @@ ColumnLayout {
         Text {
             text: heat.shell.i18n("Activity")
             font.pixelSize: 9
-            color: Tone.c(palette, "#94a3b8")
+            color: Tone.c(Appearance.Palette, "#94a3b8")
             opacity: 0.8
         }
         Item {
@@ -118,7 +119,7 @@ ColumnLayout {
         Text {
             text: heat.shell.i18np("%1 active day in the last %2 weeks", "%1 active days in the last %2 weeks", heat.activeShown, heat.weeks)
             font.pixelSize: 9
-            color: Tone.c(palette, "#94a3b8")
+            color: Tone.c(Appearance.Palette, "#94a3b8")
             opacity: 0.6
         }
     }
@@ -145,7 +146,7 @@ ColumnLayout {
                     x: index * (heat.cell + heat.gap)
                     text: first ? Qt.locale().monthName(first.date.getMonth(), Locale.ShortFormat) : ""
                     font.pixelSize: 8
-                    color: Tone.c(palette, "#94a3b8")
+                    color: Tone.c(Appearance.Palette, "#94a3b8")
                     opacity: 0.7
                 }
             }
@@ -161,7 +162,7 @@ ColumnLayout {
                 // Locale day 1 is Monday.
                 text: Qt.locale().dayName((modelData + 1) % 7, Locale.ShortFormat)
                 font.pixelSize: 8
-                color: Tone.c(palette, "#94a3b8")
+                color: Tone.c(Appearance.Palette, "#94a3b8")
                 opacity: 0.7
                 elide: Text.ElideRight
             }
@@ -187,7 +188,7 @@ ColumnLayout {
                     visible: !day.future
                     color: heat.shade(heat.level(day.value, heat.dayMax))
                     border.width: gridHover.index === index ? 1 : 0
-                    border.color: Tone.c(palette, "#f8fafc")
+                    border.color: Tone.c(Appearance.Palette, "#f8fafc")
                 }
             }
 
@@ -206,8 +207,6 @@ ColumnLayout {
             }
 
             QQC2.ToolTip {
-                // A popup starts a palette of its own; carry the popup's light or dark in.
-                palette.window: heat.palette.window
                 visible: gridHover.index >= 0
                 x: gridHover.index >= 0 ? Math.min(grid.width - width, Math.floor(gridHover.index / 7) * (heat.cell + heat.gap)) : 0
                 y: gridHover.index >= 0 ? (gridHover.index % 7) * (heat.cell + heat.gap) - height - 4 : 0
@@ -231,7 +230,7 @@ ColumnLayout {
         Text {
             text: heat.shell.i18n("Hour of day")
             font.pixelSize: 9
-            color: Tone.c(palette, "#94a3b8")
+            color: Tone.c(Appearance.Palette, "#94a3b8")
             opacity: 0.8
         }
 
@@ -253,7 +252,7 @@ ColumnLayout {
                     color: heat.shade(heat.level(v, heat.hourMax))
                     // The busiest hour, outlined.
                     border.width: v > 0 && v === heat.hourMax || hourHover.index === index ? 1 : 0
-                    border.color: Tone.c(palette, "#f8fafc")
+                    border.color: Tone.c(Appearance.Palette, "#f8fafc")
                 }
             }
 
@@ -270,8 +269,6 @@ ColumnLayout {
             }
 
             QQC2.ToolTip {
-                // A popup starts a palette of its own; carry the popup's light or dark in.
-                palette.window: heat.palette.window
                 visible: hourHover.index >= 0
                 x: hourHover.index >= 0 ? Math.min(strip.width - width, hourHover.index * (strip.cellW + 2)) : 0
                 y: -height - 4
@@ -291,7 +288,7 @@ ColumnLayout {
                     x: modelData * (strip.cellW + 2)
                     text: heat.pad(modelData) + ":00"
                     font.pixelSize: 8
-                    color: Tone.c(palette, "#94a3b8")
+                    color: Tone.c(Appearance.Palette, "#94a3b8")
                     opacity: 0.7
                 }
             }

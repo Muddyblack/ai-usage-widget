@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtCore
 import "js/ProviderRegistry.js" as ProviderRegistry
 import "js/ProviderSources.js" as ProviderSources
@@ -486,13 +487,15 @@ Item {
     property bool systemLight: false
     // A host whose popup background is the desktop's own (Plasma's dialog,
     // which the widget cannot recolour) always follows it: no setting there.
-    // (Flipping palette.window live under Plasma's layout crashed Qt in
-    // QQuickPaletteProvider::updateChildrenPalettes, so KDE has no override.)
     property bool appearanceFollowsHost: false
     readonly property bool light: root.appearanceFollowsHost ? root.systemLight : (root.settings.appearance === "light" || (root.settings.appearance !== "dark" && root.systemLight))
-    // What a host sets as its popup's palette.window. ui/js/Tone.js reads the
-    // light or dark of every shared colour off it.
+    // Tone.js reads ordinary colour properties instead of Qt item palettes.
     readonly property color windowColor: root.light ? "#f4f6fa" : "#10141c"
+    Binding {
+        target: Appearance.Palette
+        property: "window"
+        value: root.windowColor
+    }
 
     // Fill of the chart card.
     readonly property color cardColor: {

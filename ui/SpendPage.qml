@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Controls.Basic as QC
 import QtQuick.Layouts
 import "js/FeatureTabs.js" as FeatureTabs
@@ -143,9 +144,9 @@ ColumnLayout {
                 Layout.preferredWidth: subTabLabel.implicitWidth + 18
                 Layout.preferredHeight: 24
                 radius: 5
-                color: chosen ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.14)) : (subTabMouse.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.07)) : "transparent")
+                color: chosen ? Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.14)) : (subTabMouse.containsMouse ? Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.07)) : "transparent")
                 border.width: chosen ? 1 : 0
-                border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.18))
+                border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.18))
 
                 Text {
                     id: subTabLabel
@@ -153,7 +154,7 @@ ColumnLayout {
                     text: parent.modelData.label
                     font.pixelSize: 11
                     font.bold: parent.chosen
-                    color: Tone.c(palette, "#f8fafc")
+                    color: Tone.c(Appearance.Palette, "#f8fafc")
                     opacity: parent.chosen ? 1 : 0.65
                 }
                 MouseArea {
@@ -176,7 +177,7 @@ ColumnLayout {
             text: (page.rateUnit !== "" ? page.rateUnit : "") + (FeatureTabs.rateAge(page.rateFetchedAt, shell.i18n) !== "" ? " · " + FeatureTabs.rateAge(page.rateFetchedAt, shell.i18n) : "")
             font.pixelSize: 9
             opacity: 0.45
-            color: Tone.c(palette, "#f8fafc")
+            color: Tone.c(Appearance.Palette, "#f8fafc")
         }
 
         Repeater {
@@ -205,9 +206,9 @@ ColumnLayout {
                 Layout.preferredWidth: timeframeLabel.implicitWidth + 14
                 Layout.preferredHeight: 22
                 radius: 4
-                color: chosen ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.14)) : (timeframeMouse.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.08)) : "transparent")
+                color: chosen ? Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.14)) : (timeframeMouse.containsMouse ? Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08)) : "transparent")
                 border.width: 1
-                border.color: Tone.c(palette, Qt.rgba(1, 1, 1, chosen ? 0.22 : 0.08))
+                border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, chosen ? 0.22 : 0.08))
 
                 Text {
                     id: timeframeLabel
@@ -215,7 +216,7 @@ ColumnLayout {
                     text: parent.modelData.label
                     font.pixelSize: 10
                     font.bold: parent.chosen
-                    color: Tone.c(palette, "#f8fafc")
+                    color: Tone.c(Appearance.Palette, "#f8fafc")
                     opacity: parent.chosen ? 1 : 0.65
                 }
                 MouseArea {
@@ -240,7 +241,7 @@ ColumnLayout {
         wrapMode: Text.WordWrap
         font.pixelSize: 10
         opacity: 0.45
-        color: Tone.c(palette, "#f8fafc")
+        color: Tone.c(Appearance.Palette, "#f8fafc")
     }
 
     Text {
@@ -249,7 +250,7 @@ ColumnLayout {
         text: shell.i18n("No cost figures yet. Enable providers that report spend, or use them until local logs appear.")
         wrapMode: Text.WordWrap
         opacity: 0.55
-        color: Tone.c(palette, "#f8fafc")
+        color: Tone.c(Appearance.Palette, "#f8fafc")
         font.pixelSize: 11
     }
 
@@ -266,9 +267,9 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: body.implicitHeight + 14 + (canExpand && isExpanded ? detail.implicitHeight + 10 : 0)
             radius: 8
-            color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
+            color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.04))
             border.width: 1
-            border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
+            border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08))
             clip: true
 
             Behavior on implicitHeight {
@@ -327,7 +328,7 @@ ColumnLayout {
                             text: modelData.label
                             font.bold: true
                             font.pixelSize: 12
-                            color: Tone.c(palette, "#f8fafc")
+                            color: Tone.c(Appearance.Palette, "#f8fafc")
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
                             maximumLineCount: 1
@@ -339,7 +340,7 @@ ColumnLayout {
                             text: shell.i18n(modelData.note)
                             font.pixelSize: 10
                             opacity: 0.45
-                            color: Tone.c(palette, "#f8fafc")
+                            color: Tone.c(Appearance.Palette, "#f8fafc")
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
                             maximumLineCount: 1
@@ -353,7 +354,7 @@ ColumnLayout {
                         text: rowCard.isExpanded ? "▾" : "▸"
                         font.pixelSize: 11
                         opacity: 0.5
-                        color: Tone.c(palette, "#f8fafc")
+                        color: Tone.c(Appearance.Palette, "#f8fafc")
                         Layout.alignment: Qt.AlignVCenter
                     }
 
@@ -366,7 +367,7 @@ ColumnLayout {
                         // advances the decimal points line up across rows.
                         font.family: "monospace"
                         font.pixelSize: 12
-                        color: Tone.c(palette, "#f8fafc")
+                        color: Tone.c(Appearance.Palette, "#f8fafc")
                     }
                 }
 
@@ -399,9 +400,9 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: 28
             radius: 6
-            color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
+            color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.04))
             border.width: 1
-            border.color: rateFilterInput.activeFocus ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.22)) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
+            border.color: rateFilterInput.activeFocus ? Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.22)) : Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08))
 
             TextInput {
                 id: rateFilterInput
@@ -410,7 +411,7 @@ ColumnLayout {
                 anchors.rightMargin: 8
                 verticalAlignment: TextInput.AlignVCenter
                 clip: true
-                color: Tone.c(palette, "#f8fafc")
+                color: Tone.c(Appearance.Palette, "#f8fafc")
                 font.pixelSize: 11
                 selectByMouse: true
                 onTextChanged: page.rateFilter = text
@@ -422,7 +423,7 @@ ColumnLayout {
                     text: shell.i18n("Filter by provider or model\u2026")
                     font.pixelSize: 11
                     opacity: 0.35
-                    color: Tone.c(palette, "#f8fafc")
+                    color: Tone.c(Appearance.Palette, "#f8fafc")
                 }
             }
         }
@@ -439,9 +440,9 @@ ColumnLayout {
                 implicitWidth: 26
                 implicitHeight: 26
                 radius: 6
-                color: prevAreaTop.containsMouse && usable ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.12)) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
+                color: prevAreaTop.containsMouse && usable ? Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.12)) : Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.04))
                 border.width: 1
-                border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
+                border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08))
                 opacity: usable ? 1 : 0.35
 
                 Text {
@@ -449,7 +450,7 @@ ColumnLayout {
                     text: "‹"
                     font.bold: true
                     font.pixelSize: 14
-                    color: Tone.c(palette, "#f8fafc")
+                    color: Tone.c(Appearance.Palette, "#f8fafc")
                 }
 
                 MouseArea {
@@ -469,7 +470,7 @@ ColumnLayout {
                 font.pixelSize: 10
                 font.family: "monospace"
                 opacity: 0.7
-                color: Tone.c(palette, "#f8fafc")
+                color: Tone.c(Appearance.Palette, "#f8fafc")
                 Layout.leftMargin: 2
                 Layout.rightMargin: 2
             }
@@ -480,9 +481,9 @@ ColumnLayout {
                 implicitWidth: 26
                 implicitHeight: 26
                 radius: 6
-                color: nextAreaTop.containsMouse && usable ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.12)) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
+                color: nextAreaTop.containsMouse && usable ? Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.12)) : Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.04))
                 border.width: 1
-                border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
+                border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08))
                 opacity: usable ? 1 : 0.35
 
                 Text {
@@ -490,7 +491,7 @@ ColumnLayout {
                     text: "›"
                     font.bold: true
                     font.pixelSize: 14
-                    color: Tone.c(palette, "#f8fafc")
+                    color: Tone.c(Appearance.Palette, "#f8fafc")
                 }
 
                 MouseArea {
@@ -528,7 +529,7 @@ ColumnLayout {
             text: shell.i18n("Model")
             font.pixelSize: 9
             opacity: 0.45
-            color: Tone.c(palette, "#f8fafc")
+            color: Tone.c(Appearance.Palette, "#f8fafc")
         }
         Repeater {
             model: [shell.i18n("In"), shell.i18n("Out"), shell.i18n("Cached")]
@@ -539,7 +540,7 @@ ColumnLayout {
                 text: modelData
                 font.pixelSize: 9
                 opacity: 0.45
-                color: Tone.c(palette, "#f8fafc")
+                color: Tone.c(Appearance.Palette, "#f8fafc")
             }
         }
     }
@@ -562,13 +563,13 @@ ColumnLayout {
             contentItem: Rectangle {
                 implicitWidth: 6
                 radius: 3
-                color: Tone.c(palette, "#f8fafc")
+                color: Tone.c(Appearance.Palette, "#f8fafc")
                 opacity: rateScrollBar.pressed ? 0.6 : (rateScrollBar.hovered ? 0.4 : 0.22)
             }
             background: Rectangle {
                 implicitWidth: 8
                 radius: 4
-                color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
+                color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.04))
             }
         }
 
@@ -587,7 +588,7 @@ ColumnLayout {
                     Layout.minimumWidth: 0
                     text: modelData.model || ""
                     font.pixelSize: 11
-                    color: Tone.c(palette, "#f8fafc")
+                    color: Tone.c(Appearance.Palette, "#f8fafc")
                     maximumLineCount: 1
                     elide: Text.ElideRight
                     wrapMode: Text.NoWrap
@@ -598,7 +599,7 @@ ColumnLayout {
                     text: modelData.provider || ""
                     font.pixelSize: 9
                     opacity: 0.45
-                    color: Tone.c(palette, "#f8fafc")
+                    color: Tone.c(Appearance.Palette, "#f8fafc")
                     maximumLineCount: 1
                     elide: Text.ElideRight
                     wrapMode: Text.NoWrap
@@ -615,7 +616,7 @@ ColumnLayout {
                     font.family: "monospace"
                     font.pixelSize: 10
                     opacity: typeof modelData === "number" ? 0.9 : 0.3
-                    color: Tone.c(palette, "#f8fafc")
+                    color: Tone.c(Appearance.Palette, "#f8fafc")
                 }
             }
         }
@@ -632,7 +633,7 @@ ColumnLayout {
             text: shell.i18n("%1 of %2", page.ratePage, page.ratePages)
             font.pixelSize: 10
             opacity: 0.5
-            color: Tone.c(palette, "#f8fafc")
+            color: Tone.c(Appearance.Palette, "#f8fafc")
         }
 
         Item {
@@ -659,9 +660,9 @@ ColumnLayout {
                 implicitWidth: pagerLabel.implicitWidth + 16
                 implicitHeight: 22
                 radius: 6
-                color: pagerArea.containsMouse && usable ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.1)) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
+                color: pagerArea.containsMouse && usable ? Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.1)) : Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.04))
                 border.width: 1
-                border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
+                border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08))
                 opacity: usable ? 1 : 0.35
 
                 Text {
@@ -669,7 +670,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: modelData.label
                     font.pixelSize: 10
-                    color: Tone.c(palette, "#f8fafc")
+                    color: Tone.c(Appearance.Palette, "#f8fafc")
                 }
 
                 MouseArea {

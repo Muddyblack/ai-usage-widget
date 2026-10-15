@@ -1,4 +1,6 @@
 import QtQuick
+import "theme" as Appearance
+import "js/Tone.js" as Tone
 import QtQuick.Layouts
 
 // The panel item. Mirrors the Plasma compact representation: one PanelSlot per
@@ -51,7 +53,8 @@ Rectangle {
     // false inside a desktop panel (KDE) that already draws the frame: only a
     // faint hover tint remains.
     property bool framed: true
-    property color textColor: "#f8fafc"
+    readonly property bool light: Tone.isLight(Appearance.Palette)
+    property color textColor: framed && light ? "#172033" : "#f8fafc"
 
     signal clicked
 
@@ -81,9 +84,9 @@ Rectangle {
             easing.type: Easing.OutCubic
         }
     }
-    color: !framed ? (mouse.containsMouse || active ? Qt.rgba(1, 1, 1, 0.08) : "transparent") : (mouse.containsMouse || active ? Qt.rgba(0.10, 0.11, 0.14, 0.92) : Qt.rgba(0.06, 0.07, 0.09, 0.86))
+    color: framed && light ? (mouse.containsMouse || active ? "#f4f6fa" : "#e8edf3") : !framed ? (mouse.containsMouse || active ? Qt.rgba(1, 1, 1, 0.08) : "transparent") : (mouse.containsMouse || active ? Qt.rgba(0.10, 0.11, 0.14, 0.92) : Qt.rgba(0.06, 0.07, 0.09, 0.86))
     border.width: framed ? 1 : 0
-    border.color: Qt.rgba(1, 1, 1, 0.12)
+    border.color: light && framed ? "#b8c1cd" : Qt.rgba(1, 1, 1, 0.12)
 
     Behavior on color {
         ColorAnimation {
@@ -140,6 +143,7 @@ Rectangle {
                     stale: modelData.stale
                     iconSource: modelData.icon
                     textColor: pill.textColor
+                    surfaceColor: pill.framed ? pill.color : (pill.textColor.hslLightness < 0.5 ? "#f4f6fa" : "#10141c")
                 }
 
                 Rectangle {

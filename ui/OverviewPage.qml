@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Layouts
 import "js/FeatureTabs.js" as FeatureTabs
 import "js/Tone.js" as Tone
@@ -24,7 +25,7 @@ ColumnLayout {
         text: shell.i18n("Enable a provider in Settings to see it here.")
         wrapMode: Text.WordWrap
         opacity: 0.55
-        color: Tone.c(palette, "#f8fafc")
+        color: Tone.c(Appearance.Palette, "#f8fafc")
         font.pixelSize: 11
     }
 
@@ -36,9 +37,9 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: body.implicitHeight + 16
             radius: 8
-            color: rowMouse.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.08)) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
+            color: rowMouse.containsMouse ? Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08)) : Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.04))
             border.width: 1
-            border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
+            border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08))
 
             readonly property real pct: {
                 var s = modelData.summary || {};
@@ -67,7 +68,7 @@ ColumnLayout {
                     Layout.preferredWidth: 28
                     Layout.preferredHeight: 28
                     radius: 6
-                    color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
+                    color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.06))
                     Image {
                         anchors.centerIn: parent
                         width: 16
@@ -97,7 +98,7 @@ ColumnLayout {
                             text: modelData.label || modelData.id
                             font.bold: true
                             font.pixelSize: 12
-                            color: Tone.c(palette, "#f8fafc")
+                            color: Tone.c(Appearance.Palette, "#f8fafc")
                         }
                         Item {
                             Layout.fillWidth: true
@@ -115,7 +116,7 @@ ColumnLayout {
                         implicitHeight: 6
                         Layout.preferredHeight: 6
                         radius: 3
-                        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
+                        color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08))
                         visible: pct >= 0
                         Rectangle {
                             width: parent.width * Math.max(0, Math.min(1, pct / 100))
@@ -129,7 +130,7 @@ ColumnLayout {
                         text: page.shell.tr(modelData.summary, "detail")
                         font.pixelSize: 10
                         opacity: 0.5
-                        color: Tone.c(palette, "#f8fafc")
+                        color: Tone.c(Appearance.Palette, "#f8fafc")
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }

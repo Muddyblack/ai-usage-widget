@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Layouts
 import "js/Tone.js" as Tone
 
@@ -42,7 +43,7 @@ ColumnLayout {
                 spacing: 4
                 Text {
                     text: page.shell.i18n("TOTAL SPEND · VIBE CLI")
-                    color: Tone.c(palette, "#94a3b8")
+                    color: Tone.c(Appearance.Palette, "#94a3b8")
                     font.pixelSize: 9
                     font.bold: true
                 }
@@ -57,7 +58,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignBottom
                 text: page.shell.i18np("%1 session", "%1 sessions", page.vibe.sessionCount || 0) + "\n" + page.shell.i18n("%1 tokens", page.tokens(page.vibe.totalTokens))
                 horizontalAlignment: Text.AlignRight
-                color: Tone.c(palette, "#b8c2d0")
+                color: Tone.c(Appearance.Palette, "#b8c2d0")
                 font.pixelSize: 11
             }
         }
@@ -95,21 +96,21 @@ ColumnLayout {
                 Layout.preferredWidth: 1
                 implicitHeight: 44
                 radius: 8
-                color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
-                border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
+                color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.04))
+                border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08))
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 10
                     spacing: 2
                     Text {
                         text: metric.modelData.label
-                        color: Tone.c(palette, "#94a3b8")
+                        color: Tone.c(Appearance.Palette, "#94a3b8")
                         font.pixelSize: 9
                     }
                     RowLayout {
                         Text {
                             text: metric.modelData.value
-                            color: Tone.c(palette, "#f8fafc")
+                            color: Tone.c(Appearance.Palette, "#f8fafc")
                             font.pixelSize: 14
                             font.bold: true
                         }
@@ -135,7 +136,7 @@ ColumnLayout {
         }
         Text {
             text: page.shell.i18n("RECENT SESSIONS")
-            color: Tone.c(palette, "#94a3b8")
+            color: Tone.c(Appearance.Palette, "#94a3b8")
             font.pixelSize: 9
             font.bold: true
         }
@@ -144,7 +145,7 @@ ColumnLayout {
         }
         Text {
             text: page.shell.i18n("%1 of %2", (page.vibe.recent || []).length, page.vibe.sessionCount || 0)
-            color: Tone.c(palette, "#64748b")
+            color: Tone.c(Appearance.Palette, "#64748b")
             font.pixelSize: 9
         }
     }
@@ -153,8 +154,8 @@ ColumnLayout {
         implicitHeight: recentColumn.implicitHeight + 8
         visible: (page.vibe.recent || []).length > 0
         radius: 8
-        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
-        border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
+        color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.04))
+        border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08))
         ColumnLayout {
             id: recentColumn
             anchors.left: parent.left
@@ -174,7 +175,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 1
                         visible: session.index > 0
-                        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
+                        color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.06))
                     }
                     RowLayout {
                         Layout.fillWidth: true
@@ -186,14 +187,14 @@ ColumnLayout {
                                 Layout.fillWidth: true
                                 text: page.shell.tr(session.modelData, "title")
                                 elide: Text.ElideRight
-                                color: Tone.c(palette, "#e2e8f0")
+                                color: Tone.c(Appearance.Palette, "#e2e8f0")
                                 font.pixelSize: 11
                             }
                             Text {
                                 Layout.fillWidth: true
                                 text: (session.modelData.project || "") + (session.modelData.branch ? "  ⎇ " + session.modelData.branch : "")
                                 elide: Text.ElideRight
-                                color: Tone.c(palette, "#64748b")
+                                color: Tone.c(Appearance.Palette, "#64748b")
                                 font.pixelSize: 9
                             }
                         }
@@ -209,7 +210,7 @@ ColumnLayout {
                             Text {
                                 Layout.alignment: Qt.AlignRight
                                 text: page.age(session.modelData.start)
-                                color: Tone.c(palette, "#64748b")
+                                color: Tone.c(Appearance.Palette, "#64748b")
                                 font.pixelSize: 9
                             }
                         }
@@ -221,7 +222,7 @@ ColumnLayout {
     Text {
         Layout.fillWidth: true
         text: page.shell.i18n("Mistral has no billing API — figures come from local vibe CLI logs.")
-        color: Tone.c(palette, "#64748b")
+        color: Tone.c(Appearance.Palette, "#64748b")
         font.pixelSize: 9
         wrapMode: Text.WordWrap
     }

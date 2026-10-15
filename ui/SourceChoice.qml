@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import "studio"
 import "studio/Theme.js" as Theme
 import "js/Tone.js" as Tone
@@ -81,14 +82,14 @@ Item {
                 spacing: 2
                 Text {
                     text: choice.shell.i18n("Auto")
-                    color: Tone.c(palette, Theme.text)
+                    color: Tone.c(Appearance.Palette, Theme.text)
                     font.pixelSize: 12
                     font.weight: Font.Medium
                 }
                 Text {
                     width: parent.width
                     text: choice.shell.i18n("The first source below that works")
-                    color: Tone.c(palette, Theme.muted)
+                    color: Tone.c(Appearance.Palette, Theme.muted)
                     font.pixelSize: 10
                     elide: Text.ElideRight
                 }
@@ -111,7 +112,7 @@ Item {
                 Rectangle {
                     width: parent.width
                     height: 1
-                    color: Tone.c(palette, Theme.line)
+                    color: Tone.c(Appearance.Palette, Theme.line)
                     visible: row.index > 0 || choice.choosable
                 }
                 MouseArea {
@@ -136,21 +137,21 @@ Item {
                         spacing: 8
                         Text {
                             text: row.modelData.label
-                            color: Tone.c(palette, Theme.text)
+                            color: Tone.c(Appearance.Palette, Theme.text)
                             font.pixelSize: 12
                             font.weight: Font.Medium
                         }
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             text: choice.kindLabel(row.modelData.kind)
-                            color: Tone.c(palette, Theme.dim)
+                            color: Tone.c(Appearance.Palette, Theme.dim)
                             font.pixelSize: 10
                         }
                     }
                     Text {
                         width: parent.width
                         text: row.modelData.detail
-                        color: Tone.c(palette, Theme.muted)
+                        color: Tone.c(Appearance.Palette, Theme.muted)
                         font.pixelSize: 10
                         elide: Text.ElideRight
                     }
@@ -163,14 +164,14 @@ Item {
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: choice.stateLabel(row.modelData.state)
-                        color: Tone.c(palette, Theme.tone(ProviderSources.stateTone(row.modelData.state)))
+                        color: Tone.ink(Appearance.Palette, Theme.tone(ProviderSources.stateTone(row.modelData.state)))
                         font.pixelSize: 11
                     }
                     StudioIcon {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: row.modelData.state === "working"
                         name: "check"
-                        tint: Theme.ok
+                        tint: Tone.ink(Appearance.Palette, Theme.ok)
                         width: 14
                         height: 14
                     }
@@ -189,7 +190,7 @@ Item {
         radius: 8
         color: "transparent"
         border.width: 1.5
-        border.color: on ? Theme.brand : Tone.c(palette, Theme.line2)
+        border.color: on ? Theme.brand : Tone.c(Appearance.Palette, Theme.line2)
         Rectangle {
             anchors.centerIn: parent
             width: 8

@@ -23,9 +23,7 @@ Window {
 
     // Set by app.py when the macOS or Windows system backdrop succeeds.
     property bool nativeBlur: false
-    // The popup's light or dark, for ui/js/Tone.js (every item inherits the
-    // window's palette) and for app.py, which matches the macOS blur to it.
-    palette.window: app.windowColor
+    // app.py matches the macOS blur to the shared appearance.
     readonly property bool light: app.light
     onLightChanged: backend.setPopupLight(light)
 
@@ -114,7 +112,7 @@ Window {
             hasError: app.pillHasError
             groups: app.panelGroups
             framed: !pillWindow.taskbarDocked
-            textColor: pillWindow.taskbarDocked && pillWindow.taskbarLight ? "#172033" : "#f8fafc"
+            textColor: (pillWindow.taskbarDocked ? pillWindow.taskbarLight : app.light) ? "#172033" : "#f8fafc"
         }
 
         // A press that moves drags the window; one that does not is a click.

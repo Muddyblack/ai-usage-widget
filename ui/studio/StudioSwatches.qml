@@ -1,4 +1,5 @@
 import QtQuick
+import "../theme" as Appearance
 import "Theme.js" as Theme
 import "../js/Tone.js" as Tone
 
@@ -28,14 +29,14 @@ Flow {
                 visible: swatch.chosen
                 color: "transparent"
                 border.width: 2
-                border.color: Tone.c(palette, Theme.text)
+                border.color: Tone.c(Appearance.Palette, Theme.text)
             }
             Rectangle {
                 anchors.fill: parent
                 radius: 10
                 color: swatch.modelData
                 border.width: 1
-                border.color: Tone.c(palette, "#33ffffff")
+                border.color: Tone.c(Appearance.Palette, "#33ffffff")
             }
             MouseArea {
                 anchors.fill: parent

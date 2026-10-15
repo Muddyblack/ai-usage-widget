@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
 import "js/PanelColor.js" as PanelColor
+import "js/Tone.js" as Tone
 
 // Compact panel readout, mirroring the Plasma PanelSlot: layered tinted icon +
 // animated % (or cost text) that rolls up/down when the value changes.
@@ -18,6 +19,9 @@ RowLayout {
     property string iconSource: ""
     // The normal-level text colour; a host on a light panel passes its theme's.
     property color textColor: "#f8fafc"
+    property color surfaceColor: "#10141c"
+    readonly property color readableIcon: Tone.onSurface(iconColor, surfaceColor)
+    readonly property bool lightSurface: surfaceColor.hslLightness > 0.5
 
     readonly property color dangerColor: "#ff4d4d"
     readonly property color warningColor: "#ffa64d"
@@ -59,7 +63,7 @@ RowLayout {
             anchors.fill: haloIcon
             source: haloIcon
             colorization: 1
-            colorizationColor: slot.iconColor
+            colorizationColor: slot.readableIcon
             opacity: 0.22
         }
 
@@ -69,15 +73,15 @@ RowLayout {
             width: 12
             height: 12
             source: slot.iconSource
-            sourceSize.width: 12
-            sourceSize.height: 12
+            sourceSize.width: 24
+            sourceSize.height: 24
             visible: false
         }
         MultiEffect {
             anchors.fill: coreIcon
             source: coreIcon
             colorization: 1
-            colorizationColor: slot.iconColor
+            colorizationColor: slot.readableIcon
         }
     }
 
@@ -85,7 +89,16 @@ RowLayout {
         text: slot.costText !== "" ? slot.costText : Math.round(slot.displayPct) + "%"
         font.pixelSize: 12
         font.bold: true
-        color: slot.costText !== "" ? slot.iconColor : PanelColor.colorFor(slot.pct, slot.textColor)
+        color: {
+            if (slot.lightSurface && slot.costText === "") {
+                var level = PanelColor.level(slot.pct);
+                if (level === "danger")
+                    return "#c62828";
+                if (level === "warning")
+                    return "#c2410c";
+            }
+            return Tone.onSurface(slot.costText !== "" ? slot.iconColor : PanelColor.colorFor(slot.pct, slot.textColor), slot.surfaceColor);
+        }
         Layout.alignment: Qt.AlignVCenter
     }
 }

@@ -231,7 +231,8 @@ ShellRoot {
             // Per-instance reveal state — see the comment on trayPillRevealed.
             property bool hoverRevealed: false
             readonly property bool pillShown: root.pillMode === "always" || root.trayPillRevealed || (root.pillMode === "hover" && (panel.hoverRevealed || (root.popupOpen && root.popupOwnedBy(panel.screen))))
-            visible: root.pillMode !== "tray" || root.trayPillRevealed
+            // The popup is a child window, so it must keep this one mapped while open.
+            visible: root.pillMode !== "tray" || root.trayPillRevealed || (root.popupOpen && root.popupOwnedBy(panel.screen))
             implicitWidth: panel.pillShown ? pill.implicitWidth + 12 : 72
             implicitHeight: panel.pillShown ? 42 : 4
             color: "transparent"
@@ -412,9 +413,6 @@ ShellRoot {
                 Item {
                     id: popupBody
                     anchors.fill: parent
-                    // The popup's light or dark for ui/js/Tone.js: every item
-                    // below inherits this palette.
-                    palette.window: app.windowColor
 
                     // The shared glass (ui/PopupBackground.qml), with its tint and decoration.
                     PopupBackground {

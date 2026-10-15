@@ -1211,7 +1211,9 @@ test("the installed version shown in the UI matches metadata.json", () => {
     const root = path.join(__dirname, "..");
     const metadata = JSON.parse(fs.readFileSync(path.join(root, "hosts/kde/metadata.json"), "utf8"));
     const projectInfo = fs.readFileSync(path.join(root, "ui/js/ProjectInfo.js"), "utf8");
-    const match = /^var currentVersion = "([^"]+)";$/m.exec(projectInfo);
-    assert.ok(match, "ui/js/ProjectInfo.js declares currentVersion");
+    const generated = fs.readFileSync(path.join(root, "ui/js/ProjectVersion.js"), "utf8");
+    const match = /^var current = "([^"]+)";$/m.exec(generated);
+    assert.ok(match, "ui/js/ProjectVersion.js declares current");
     assert.equal(match[1], metadata.KPlugin.Version);
+    assert.match(projectInfo, /^var currentVersion = Version\.current;$/m);
 });

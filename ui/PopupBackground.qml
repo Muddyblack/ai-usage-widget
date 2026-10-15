@@ -1,4 +1,6 @@
 import QtQuick
+import QtQuick.Effects
+import "theme" as Appearance
 import "js/Tone.js" as Tone
 
 // The popup's glass, drawn the same by every host: a translucent gradient,
@@ -9,7 +11,7 @@ import "js/Tone.js" as Tone
 // Settings (Settings → Appearance):
 //   popupBgColor     tint colour, "#rrggbb"           (default black)
 //   popupBgOpacity   tint strength, 0–1               (default 0: no tint)
-//   popupDecoration  0 accent glow, 1 provider logo watermark, 2 none
+//   popupDecoration  0 accent glow, 1 provider logo glow (default), 2 none
 Rectangle {
     id: glass
 
@@ -28,9 +30,8 @@ Rectangle {
     // `translucent` host, whose frame is the background (see the tint below).
     readonly property real glassOpacity: Math.max(0.2, Math.min(1, settings.popupGlassOpacity === undefined ? 1 : Number(settings.popupGlassOpacity)))
     readonly property real fillScale: (blurred ? 0.62 : 1) * glassOpacity
-    // Settings → Appearance → Theme, as the host set it on the palette
-    // (AppState.light; ui/js/Tone.js).
-    readonly property bool light: Tone.isLight(palette)
+    // Settings → Appearance → Theme (AppState.light; ui/js/Tone.js).
+    readonly property bool light: Tone.isLight(Appearance.Palette)
     // The glass colour at gradient stop 0, 1 or 2, for opacity scale `s`:
     // blue-tinged and dark, or milky and light.
     function glassStop(i, s) {
@@ -43,12 +44,19 @@ Rectangle {
     radius: 12
 
     readonly property var settings: shell ? shell.settings : ({})
-    readonly property int decoration: settings.popupDecoration === undefined ? 0 : Number(settings.popupDecoration)
+    readonly property int decoration: settings.popupDecoration === undefined ? 1 : Number(settings.popupDecoration)
     readonly property real tintOpacity: Math.max(0, Math.min(1, Number(settings.popupBgOpacity || 0)))
     readonly property color tint: {
         var c = Qt.color(settings.popupBgColor || "#000000");
+        // Keep the selected hue, but keep the background in the theme's
+        // luminance range so strong tints cannot hide the foreground text.
+        if (glass.light)
+            c = Qt.hsla(Math.max(0, c.hslHue), c.hslSaturation, Math.max(0.88, c.hslLightness), 1);
         return Qt.rgba(c.r, c.g, c.b, glass.tintOpacity);
     }
+    // Settings and feature tabs blur the widget's own multicolour icon in its own colours; only
+    // a provider's logo is turned into a one-colour glow.
+    readonly property bool providerLogo: !!shell && !shell.showSettings && !shell.activeIsFeature
     readonly property string watermark: {
         if (!shell)
             return "";
@@ -79,7 +87,7 @@ Rectangle {
     // The KDE dialog frame already draws an edge; a second one reads as a
     // double layer.
     border.width: glass.translucent ? 0 : 1
-    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
+    border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.12))
     clip: true
 
     // Frost (Settings → Appearance → Frost, popupFrost 0–1): a milky wash,
@@ -150,28 +158,35 @@ Rectangle {
 
     // Soft glow in the top-left in the active tab's accent — also the
     // fallback while a watermark logo is missing.
-    Rectangle {
+    Canvas {
         id: glow
         width: parent.width * 0.7
         height: parent.height * 0.7
         anchors.top: parent.top
         anchors.left: parent.left
-        radius: width / 2
-        opacity: 0.12
+        opacity: 0.22
         visible: glass.decoration === 0 || (glass.decoration === 1 && (watermarkImage.source.toString() === "" || watermarkImage.status === Image.Error))
-        gradient: Gradient {
-            GradientStop {
-                position: 0
-                color: glass.shell ? glass.shell.activeAccent : "#cc785c"
-            }
-            GradientStop {
-                position: 1
-                color: "transparent"
-            }
+        readonly property color accent: glass.shell ? glass.shell.activeAccent : "#cc785c"
+        readonly property var signature: [width, height, visible, accent]
+        onSignatureChanged: requestPaint()
+        onPaint: {
+            var ctx = getContext("2d");
+            ctx.reset();
+            if (!visible || width <= 0 || height <= 0)
+                return;
+            // Paint in normalized coordinates for an elliptical glow that
+            // reaches full transparency before any of its bounds.
+            ctx.scale(width, height);
+            var fade = ctx.createRadialGradient(0.35, 0.3, 0, 0.35, 0.3, 0.65);
+            fade.addColorStop(0, accent.toString());
+            fade.addColorStop(1, "transparent");
+            ctx.fillStyle = fade;
+            ctx.fillRect(0, 0, 1, 1);
         }
     }
 
-    // The active provider's logo, large and faint.
+    // The active provider's logo as a soft one-colour glow in the accent: the
+    // shape stays recognisable but never competes with the content.
     Image {
         id: watermarkImage
         anchors.top: parent.top
@@ -182,7 +197,15 @@ Rectangle {
         sourceSize.height: 280
         fillMode: Image.PreserveAspectFit
         smooth: true
-        opacity: 0.12
+        opacity: glass.providerLogo ? (glass.light ? 0.22 : 0.25) : 0.18
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            colorization: glass.providerLogo ? 1.0 : 0.0
+            colorizationColor: glass.shell ? glass.shell.activeAccent : "#cc785c"
+            blurEnabled: true
+            blurMax: 64
+            blur: 0.8
+        }
         visible: glass.decoration === 1 && source.toString() !== "" && status !== Image.Error
         source: glass.decoration === 1 ? glass.watermark : ""
     }

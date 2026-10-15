@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import "studio"
 import "studio/Theme.js" as Theme
 import "js/Tone.js" as Tone
@@ -43,7 +44,7 @@ Column {
                 width: Math.min(implicitWidth, 260)
                 visible: list.shell.providerDetectStatus !== ""
                 text: list.shell.providerDetectStatus
-                color: Tone.c(palette, Theme.muted)
+                color: Tone.c(Appearance.Palette, Theme.muted)
                 font.pixelSize: 10
                 elide: Text.ElideRight
             }
@@ -86,7 +87,7 @@ Column {
                 Rectangle {
                     width: parent.width
                     height: 1
-                    color: Tone.c(palette, Theme.line)
+                    color: Tone.c(Appearance.Palette, Theme.line)
                     visible: row.index > 0
                 }
                 MouseArea {
@@ -114,7 +115,7 @@ Column {
                     Text {
                         width: parent.width
                         text: row.modelData.label
-                        color: Tone.c(palette, Theme.text)
+                        color: Tone.c(Appearance.Palette, Theme.text)
                         font.pixelSize: 12
                         font.weight: Font.Medium
                         elide: Text.ElideRight
@@ -122,7 +123,7 @@ Column {
                     Text {
                         width: parent.width
                         text: list.shell.providerStatusText(row.modelData.id)
-                        color: Tone.c(palette, Theme.tone(list.shell.providerStatusTone(row.modelData.id)))
+                        color: Tone.ink(Appearance.Palette, Theme.tone(list.shell.providerStatusTone(row.modelData.id)))
                         font.pixelSize: 10
                         elide: Text.ElideRight
                     }
