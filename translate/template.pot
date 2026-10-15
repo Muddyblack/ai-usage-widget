@@ -813,6 +813,10 @@ msgid "Bottom right"
 msgstr ""
 
 #: ui/SettingsPage.qml
+msgid "Free move"
+msgstr ""
+
+#: ui/SettingsPage.qml
 msgid "Monitor"
 msgstr ""
 
