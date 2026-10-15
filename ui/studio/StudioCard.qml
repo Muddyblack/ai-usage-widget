@@ -1,4 +1,5 @@
 import QtQuick
+import "../theme" as Appearance
 import "Theme.js" as Theme
 import "../js/Tone.js" as Tone
 
@@ -18,7 +19,7 @@ Column {
         visible: group.title !== ""
         width: parent.width
         text: group.title.toUpperCase()
-        color: Tone.c(palette, Theme.sectionTitle)
+        color: Tone.c(Appearance.Palette, Theme.sectionTitle)
         font.pixelSize: 10
         font.weight: Font.DemiBold
         font.letterSpacing: 1.2
@@ -30,9 +31,9 @@ Column {
         width: parent.width
         height: body.height + 4
         radius: 12
-        color: Tone.c(palette, Theme.card)
+        color: Tone.c(Appearance.Palette, Theme.card)
         border.width: 1
-        border.color: Tone.c(palette, Theme.line)
+        border.color: Tone.c(Appearance.Palette, Theme.line)
 
         Column {
             id: body
@@ -46,7 +47,7 @@ Column {
         visible: group.caption !== ""
         width: parent.width
         text: group.caption
-        color: Tone.c(palette, Theme.dim)
+        color: Tone.c(Appearance.Palette, Theme.dim)
         font.pixelSize: 10
         wrapMode: Text.WordWrap
         leftPadding: 2

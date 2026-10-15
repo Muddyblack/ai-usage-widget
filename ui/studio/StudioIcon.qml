@@ -1,4 +1,5 @@
 import QtQuick
+import "../theme" as Appearance
 import "Theme.js" as Theme
 import "../js/Tone.js" as Tone
 
@@ -21,7 +22,7 @@ Canvas {
         })
     // A name from `paths`, or a path of its own.
     property string name: ""
-    property color tint: Tone.c(palette, Theme.muted)
+    property color tint: Tone.c(Appearance.Palette, Theme.muted)
     property real stroke: 1.8
 
     readonly property string path: paths[name] !== undefined ? paths[name] : name

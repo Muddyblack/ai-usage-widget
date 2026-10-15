@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Layouts
 import "js/Tone.js" as Tone
 
@@ -15,7 +16,7 @@ ColumnLayout {
     property var points: []
     property color costColor: "#34d399"
     property color tokenColor: "#7dd3fc"
-    property color textColor: Tone.c(palette, "#f8fafc")
+    property color textColor: Tone.c(Appearance.Palette, "#f8fafc")
     property int windowDays: 0
     // A host with its own range selector (the OpenCode chart) hides these.
     property bool showWindowPills: true
@@ -92,7 +93,7 @@ ColumnLayout {
                 implicitWidth: costLegend.implicitWidth + 18
                 implicitHeight: 18
                 radius: 5
-                color: costLegendArea.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                color: costLegendArea.containsMouse ? Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08)) : "transparent"
 
                 RowLayout {
                     id: costLegend
@@ -136,7 +137,7 @@ ColumnLayout {
                 implicitWidth: tokenLegend.implicitWidth + 18
                 implicitHeight: 18
                 radius: 5
-                color: tokenLegendArea.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                color: tokenLegendArea.containsMouse ? Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08)) : "transparent"
 
                 RowLayout {
                     id: tokenLegend
@@ -206,9 +207,9 @@ ColumnLayout {
                 implicitWidth: pillLabel.implicitWidth + 14
                 implicitHeight: 20
                 radius: 6
-                color: chart.windowDays === modelData.days ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.14)) : (pillArea.containsMouse ? Tone.c(palette, Qt.rgba(1, 1, 1, 0.08)) : "transparent")
+                color: chart.windowDays === modelData.days ? Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.14)) : (pillArea.containsMouse ? Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08)) : "transparent")
                 border.width: 1
-                border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.1))
+                border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.1))
 
                 Text {
                     id: pillLabel
@@ -304,7 +305,7 @@ ColumnLayout {
             onDrawCostChanged: requestPaint()
             onDrawTokensChanged: requestPaint()
             // Tone.css colours flip with the popup's light or dark (ui/js/Tone.js).
-            readonly property bool lightTone: Tone.isLight(palette)
+            readonly property bool lightTone: Tone.isLight(Appearance.Palette)
             onLightToneChanged: requestPaint()
 
             function buildPath(ctx, yFor, key) {
@@ -350,7 +351,7 @@ ColumnLayout {
                 // dashed baseline
                 ctx.save();
                 ctx.setLineDash([3, 5]);
-                ctx.strokeStyle = Tone.css(palette, Qt.rgba(1, 1, 1, 0.08));
+                ctx.strokeStyle = Tone.css(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08));
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo(padLeft, padTop + plotH);
@@ -366,7 +367,7 @@ ColumnLayout {
                 if (scrubIndex >= 0 && scrubIndex < points.length) {
                     var sx = xFor(scrubIndex);
                     ctx.save();
-                    ctx.strokeStyle = Tone.css(palette, Qt.rgba(1, 1, 1, 0.18));
+                    ctx.strokeStyle = Tone.css(Appearance.Palette, Qt.rgba(1, 1, 1, 0.18));
                     ctx.lineWidth = 1;
                     ctx.beginPath();
                     ctx.moveTo(sx, padTop);
@@ -426,9 +427,9 @@ ColumnLayout {
                     width: tipRow.implicitWidth + 16
                     height: tipRow.implicitHeight + 10
                     radius: 6
-                    color: Tone.c(palette, Qt.rgba(0, 0, 0, 0.78))
+                    color: Tone.c(Appearance.Palette, Qt.rgba(0, 0, 0, 0.78))
                     border.width: 1
-                    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
+                    border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.12))
                     z: 5
 
                     // Above the higher of the two dots, centred on the cursor's day
@@ -454,7 +455,7 @@ ColumnLayout {
                         Text {
                             text: scrubTip.point ? scrubTip.point.date || "" : ""
                             font.pixelSize: 11
-                            color: Tone.c(palette, "#f8fafc")
+                            color: Tone.c(Appearance.Palette, "#f8fafc")
                             opacity: 0.8
                         }
                         Text {

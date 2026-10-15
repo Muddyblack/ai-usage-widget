@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Layouts
 import "js/Tone.js" as Tone
 
@@ -65,7 +66,7 @@ ColumnLayout {
                     visible: (block.modelData.title || "") !== ""
                     Layout.fillWidth: true
                     Layout.preferredHeight: 1
-                    color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
+                    color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08))
                 }
                 Text {
                     visible: (block.modelData.title || "") !== ""
@@ -73,7 +74,7 @@ ColumnLayout {
                     font.bold: true
                     font.pixelSize: 11
                     opacity: 0.7
-                    color: Tone.c(palette, "#f8fafc")
+                    color: Tone.c(Appearance.Palette, "#f8fafc")
                 }
 
                 Repeater {
@@ -104,14 +105,14 @@ ColumnLayout {
                                 font.pixelSize: 10
                                 font.bold: true
                                 opacity: 0.85
-                                color: Tone.c(palette, "#f8fafc")
+                                color: Tone.c(Appearance.Palette, "#f8fafc")
                             }
                             Text {
                                 visible: group.countdown !== ""
                                 text: group.countdown === "resetting..." ? sections.shell.i18n("· resetting…") : "· " + sections.shell.i18n("resets in %1", group.countdown)
                                 font.pixelSize: 9
                                 opacity: 0.45
-                                color: Tone.c(palette, "#f8fafc")
+                                color: Tone.c(Appearance.Palette, "#f8fafc")
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
@@ -157,7 +158,7 @@ ColumnLayout {
                                     Text {
                                         text: sections.shell.tr(barRow.modelData, "label")
                                         font.pixelSize: 10
-                                        color: barRow.modelData.exhausted ? sections.dangerColor : Tone.c(palette, "#f8fafc")
+                                        color: barRow.modelData.exhausted ? sections.dangerColor : Tone.c(Appearance.Palette, "#f8fafc")
                                         opacity: barRow.modelData.exhausted ? 1.0 : 0.65
                                         Layout.preferredWidth: 120
                                         elide: Text.ElideRight
@@ -166,9 +167,9 @@ ColumnLayout {
                                         Layout.fillWidth: true
                                         Layout.preferredHeight: 6
                                         radius: 3
-                                        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
+                                        color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.06))
                                         border.width: 1
-                                        border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.10))
+                                        border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.10))
                                         Rectangle {
                                             anchors.left: parent.left
                                             anchors.top: parent.top
@@ -202,15 +203,15 @@ ColumnLayout {
                                     width: barTip.implicitWidth + 16
                                     height: barTip.implicitHeight + 10
                                     radius: 5
-                                    color: Tone.c(palette, Qt.rgba(0.04, 0.045, 0.06, 0.96))
+                                    color: Tone.c(Appearance.Palette, Qt.rgba(0.04, 0.045, 0.06, 0.96))
                                     border.width: 1
-                                    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.14))
+                                    border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.14))
                                     Text {
                                         id: barTip
                                         anchors.centerIn: parent
                                         text: barRow.tip
                                         font.pixelSize: 11
-                                        color: Tone.c(palette, "#e2e8f0")
+                                        color: Tone.c(Appearance.Palette, "#e2e8f0")
                                     }
                                 }
                             }
@@ -231,16 +232,16 @@ ColumnLayout {
                     font.bold: true
                     font.pixelSize: 11
                     opacity: 0.7
-                    color: Tone.c(palette, "#f8fafc")
+                    color: Tone.c(Appearance.Palette, "#f8fafc")
                 }
 
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: factColumn.implicitHeight + (block.modelData.boxed === false ? 0 : 20)
                     radius: 8
-                    color: block.modelData.boxed === false ? "transparent" : (block.modelData.tinted ? Qt.rgba(sections.accent.r, sections.accent.g, sections.accent.b, 0.08) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.04)))
+                    color: block.modelData.boxed === false ? "transparent" : (block.modelData.tinted ? Qt.rgba(sections.accent.r, sections.accent.g, sections.accent.b, 0.08) : Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.04)))
                     border.width: block.modelData.boxed === false ? 0 : 1
-                    border.color: block.modelData.tinted ? Qt.rgba(sections.accent.r, sections.accent.g, sections.accent.b, 0.22) : Tone.c(palette, Qt.rgba(1, 1, 1, 0.08))
+                    border.color: block.modelData.tinted ? Qt.rgba(sections.accent.r, sections.accent.g, sections.accent.b, 0.22) : Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.08))
 
                     ColumnLayout {
                         id: factColumn
@@ -262,7 +263,7 @@ ColumnLayout {
                                     text: sections.shell.tr(factRow.modelData, "label")
                                     font.pixelSize: 11
                                     opacity: 0.75
-                                    color: Tone.c(palette, "#f8fafc")
+                                    color: Tone.c(Appearance.Palette, "#f8fafc")
                                     elide: Text.ElideRight
                                     Layout.fillWidth: true
                                 }
@@ -270,7 +271,7 @@ ColumnLayout {
                                     text: sections.shell.tr(factRow.modelData, "value")
                                     font.pixelSize: 11
                                     font.bold: true
-                                    color: sections.toneColor(factRow.modelData.tone || "", Tone.c(palette, "#f8fafc"))
+                                    color: sections.toneColor(factRow.modelData.tone || "", Tone.c(Appearance.Palette, "#f8fafc"))
                                     horizontalAlignment: Text.AlignRight
                                     elide: Text.ElideLeft
                                     Layout.maximumWidth: 260
@@ -287,7 +288,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 text: sections.shell.tr(block.modelData, "text")
                 font.pixelSize: 9
-                color: Tone.c(palette, "#94a3b8")
+                color: Tone.c(Appearance.Palette, "#94a3b8")
                 opacity: 0.85
                 wrapMode: Text.WordWrap
             }

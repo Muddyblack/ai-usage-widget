@@ -29,6 +29,7 @@ Run from the repository root:
 
 ```sh
 python3 -m unittest discover -s tests/python -p test_frontend_behavior.py
+python3 -m unittest discover -s tests/python -p test_theme_switch.py
 node --test tests/frontend-behavior.test.js
 ```
 
@@ -36,3 +37,8 @@ Qt requires PySide6 (`nix develop .#windows` supplies it). The portable suite
 skips Qt when absent; the Windows/Linux CI matrix sets `REQUIRE_FRONTEND_QT=1`
 so missing Qt fails that job. Screenshot artifacts
 remain available for visual review; these behavioral tests do not replace them.
+
+`ThemeSwitchHarness.qml` exercises 80 Light/Auto/Dark transitions with the
+production settings layout, panel pill and an open dropdown. It checks both
+system appearances in Auto and verifies that the detached dropdown follows the
+theme. The Python test runs it in a separate process so a Qt crash fails the test.

@@ -1,4 +1,5 @@
 import QtQuick
+import "../theme" as Appearance
 import "Theme.js" as Theme
 import "../js/Tone.js" as Tone
 
@@ -19,7 +20,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: height / 2
-        color: Tone.c(palette, Theme.switchOff)
+        color: Tone.c(Appearance.Palette, Theme.switchOff)
         gradient: control.checked ? onGradient : null
         Gradient {
             id: onGradient
@@ -39,7 +40,7 @@ Item {
         radius: 7.5
         y: 3
         x: control.checked ? 18 : 3
-        color: control.checked ? Tone.c(palette, "#ffffff") : Tone.c(palette, Theme.knob)
+        color: control.checked ? Tone.c(Appearance.Palette, "#ffffff") : Tone.c(Appearance.Palette, Theme.knob)
         Behavior on x {
             NumberAnimation {
                 duration: 200

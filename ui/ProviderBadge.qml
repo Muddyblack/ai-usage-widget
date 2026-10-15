@@ -1,4 +1,7 @@
 import QtQuick
+import "theme" as Appearance
+import QtQuick.Effects
+import "js/Tone.js" as Tone
 import "studio/Theme.js" as Theme
 
 // A provider's mark: its logo on a tinted tile, or its colour as a dot where
@@ -30,6 +33,10 @@ Rectangle {
         sourceSize.width: 64
         sourceSize.height: 64
         fillMode: Image.PreserveAspectFit
+        layer.enabled: Tone.isLight(Appearance.Palette) && Tone.paleLogo(source)
+        layer.effect: MultiEffect {
+            brightness: -0.8
+        }
         opacity: badge.dim ? 0.45 : 1
         visible: source.toString() !== "" && status !== Image.Error
     }

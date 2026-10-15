@@ -23,9 +23,7 @@ Window {
 
     // Set by app.py when the macOS or Windows system backdrop succeeds.
     property bool nativeBlur: false
-    // The popup's light or dark, for ui/js/Tone.js (every item inherits the
-    // window's palette) and for app.py, which matches the macOS blur to it.
-    palette.window: app.windowColor
+    // app.py matches the macOS blur to the shared appearance.
     readonly property bool light: app.light
     onLightChanged: backend.setPopupLight(light)
 
@@ -72,6 +70,7 @@ Window {
         id: pillWindow
 
         objectName: "floatingPill"
+        readonly property string placementMode: app.settings.desktopPillPlacement || "free"
         property bool taskbarDocked: false
         property bool taskbarLight: false
         // Declared inside the popup, a Window would be its transient child, and
@@ -93,7 +92,7 @@ Window {
             id: pillSave
             interval: 800
             onTriggered: {
-                if (pillWindow.visible && !pillWindow.taskbarDocked)
+                if (pillWindow.visible && !pillWindow.taskbarDocked && pillWindow.placementMode === "free")
                     app.setSetting2("pillPosition", {
                         x: pillWindow.x,
                         y: pillWindow.y
@@ -114,7 +113,7 @@ Window {
             hasError: app.pillHasError
             groups: app.panelGroups
             framed: !pillWindow.taskbarDocked
-            textColor: pillWindow.taskbarDocked && pillWindow.taskbarLight ? "#172033" : "#f8fafc"
+            textColor: (pillWindow.taskbarDocked ? pillWindow.taskbarLight : app.light) ? "#172033" : "#f8fafc"
         }
 
         // A press that moves drags the window; one that does not is a click.
@@ -138,6 +137,7 @@ Window {
                         pillWindow.taskbarDocked = false;
                         app.setSetting2("windowsTaskbar", false);
                     }
+                    app.setSetting2("desktopPillPlacement", "free");
                     pillWindow.startSystemMove();
                 }
             }

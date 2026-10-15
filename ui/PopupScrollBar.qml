@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Controls.Basic as QC
 import "js/Tone.js" as Tone
 
@@ -16,7 +17,7 @@ QC.ScrollBar {
     contentItem: Rectangle {
         implicitWidth: bar.hovered || bar.pressed ? 6 : 3
         radius: width / 2
-        color: Tone.c(palette, Qt.rgba(1, 1, 1, bar.pressed ? 0.45 : bar.hovered ? 0.32 : 0.2))
+        color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, bar.pressed ? 0.45 : bar.hovered ? 0.32 : 0.2))
         opacity: bar.active || bar.hovered ? 1 : 0
         Behavior on opacity {
             NumberAnimation {

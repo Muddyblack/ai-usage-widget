@@ -1141,6 +1141,7 @@ class TrayApp:
             self._taskbar_timer.start(1000)
         if self.pill is not None:
             self.pill.visibleChanged.connect(self._on_pill_visible)
+            self.pill.placementModeChanged.connect(self._on_pill_placement_changed)
             self.pill.widthChanged.connect(self._keep_pill_on_screen)
             # An open popup travels with the pill while it is dragged.
             self.pill.xChanged.connect(self._follow_pill)
@@ -1277,6 +1278,12 @@ class TrayApp:
         except (ValueError, TypeError, KeyError, AttributeError):
             return None
 
+    def _on_pill_placement_changed(self):
+        if self.pill.property("placementMode") == "free":
+            return
+        self._pill_placed = False
+        self._on_pill_visible()
+
     def _on_pill_visible(self):
         if not self._dock_pill():
             self._place_floating_pill()
@@ -1289,6 +1296,20 @@ class TrayApp:
             return
         self._pill_placed = True
         w, h = self.pill.width(), self.pill.height()
+        mode = self.pill.property("placementMode") or "free"
+        if mode != "free":
+            screen = self.pill.screen() or QGuiApplication.primaryScreen()
+            area = screen.availableGeometry()
+            x = (
+                area.x() + 12
+                if mode.endswith("-left")
+                else area.x() + (area.width() - w) // 2
+                if mode.endswith("-center")
+                else area.x() + area.width() - w - 12
+            )
+            y = area.y() + 8 if mode.startswith("top-") else area.y() + area.height() - h - 8
+            self.pill.setPosition(x, y)
+            return
         saved = self._saved_pill_position()
         if saved and any(s.availableGeometry().intersects(QRect(saved[0], saved[1], w, h)) for s in QGuiApplication.screens()):
             self.pill.setPosition(*saved)
@@ -1300,6 +1321,10 @@ class TrayApp:
         """The pill widens with the number of values; it must not grow off the
         edge it was dragged against."""
         if self._dock_pill() or not self.pill.isVisible():
+            return
+        if self.pill.property("placementMode") not in (None, "free"):
+            self._pill_placed = False
+            self._place_floating_pill()
             return
         screen = QGuiApplication.screenAt(self.pill.geometry().center()) or QGuiApplication.primaryScreen()
         right = screen.availableGeometry().right()

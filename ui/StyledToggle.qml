@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Controls.Basic as QC
 import "js/Tone.js" as Tone
 
@@ -15,9 +16,9 @@ QC.Switch {
         x: 0
         y: (sw.height - height) / 2
         radius: 10
-        color: sw.checked ? "#4f9dde" : Tone.c(palette, Qt.rgba(1, 1, 1, 0.10))
+        color: sw.checked ? "#4f9dde" : Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.10))
         border.width: 1
-        border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.18))
+        border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.18))
 
         Behavior on color {
             ColorAnimation {
@@ -31,7 +32,7 @@ QC.Switch {
             radius: 8
             y: 2
             x: sw.checked ? parent.width - width - 2 : 2
-            color: Tone.c(palette, "#f8fafc")
+            color: Tone.c(Appearance.Palette, "#f8fafc")
 
             Behavior on x {
                 NumberAnimation {

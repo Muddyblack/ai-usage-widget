@@ -1,4 +1,5 @@
 import QtQuick
+import "../theme" as Appearance
 import "Theme.js" as Theme
 import "../js/Tone.js" as Tone
 
@@ -16,9 +17,9 @@ Rectangle {
     width: implicitWidth
     height: implicitHeight
     radius: 8
-    color: Tone.c(palette, Theme.sunk)
+    color: Tone.c(Appearance.Palette, Theme.sunk)
     border.width: 1
-    border.color: Tone.c(palette, Theme.line2)
+    border.color: Tone.c(Appearance.Palette, Theme.line2)
 
     Row {
         id: row
@@ -34,12 +35,12 @@ Rectangle {
                 height: 24
                 width: label.implicitWidth + 20
                 radius: 6
-                color: on ? Qt.rgba(control.accent.r, control.accent.g, control.accent.b, 0.28) : segArea.containsMouse ? Tone.c(palette, Theme.hover) : "transparent"
+                color: on ? Qt.rgba(control.accent.r, control.accent.g, control.accent.b, 0.28) : segArea.containsMouse ? Tone.c(Appearance.Palette, Theme.hover) : "transparent"
                 Text {
                     id: label
                     anchors.centerIn: parent
                     text: seg.modelData[1]
-                    color: seg.on ? Tone.c(palette, Theme.text) : Tone.c(palette, Theme.muted)
+                    color: seg.on ? Tone.c(Appearance.Palette, Theme.text) : Tone.c(Appearance.Palette, Theme.muted)
                     font.pixelSize: 11
                     font.weight: seg.on ? Font.DemiBold : Font.Normal
                 }

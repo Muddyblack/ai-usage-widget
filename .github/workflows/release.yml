@@ -1,18 +1,64 @@
 name: Release
 
 on:
+  # Merging a release PR (scripts/tag.sh / make tag) bumps the version in
+  # hosts/kde/metadata.json on master. That push is the release: the tag does not exist yet,
+  # this workflow creates it together with the GitHub release.
   push:
-    tags:
-      - "v*"
+    branches: [master]
+    paths: [hosts/kde/metadata.json]
+  workflow_dispatch:
+
+# One release at a time, and never cancel a half-published one.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 # Read-only unless a job asks for more; only the jobs that publish do.
 permissions:
   contents: read
 
 jobs:
+  # Reads the version from hosts/kde/metadata.json and works out whether it still needs a
+  # release. Pushes that touch the file without bumping the version (or that
+  # re-run an already released one) stop here.
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
+      new: ${{ steps.v.outputs.new }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Work out the version and whether it is released
+        id: v
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          VERSION="$(jq -r .KPlugin.Version hosts/kde/metadata.json)"
+          TAG="v${VERSION}"
+          NEW=true
+          if [ "$GITHUB_REF_NAME" != "$DEFAULT_BRANCH" ]; then
+            echo "::notice::Releases are only cut from $DEFAULT_BRANCH."
+            NEW=false
+          elif git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "::notice::${TAG} is already released."
+            NEW=false
+          fi
+          {
+            echo "version=$VERSION"
+            echo "tag=$TAG"
+            echo "new=$NEW"
+          } >> "$GITHUB_OUTPUT"
+
   # The .plasmoid release goes out on its own, so a broken Windows build cannot
   # hold it back; the Windows files are attached to it once they have passed.
   release:
+    needs: prepare
+    if: needs.prepare.outputs.new == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -21,17 +67,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      # hosts/kde/metadata.json is the version's one source (scripts/tag.sh
-      # bumps it); a tag pushed by hand without the bump would ship a package
-      # that reports the old version.
-      - name: Check the tag matches metadata.json
-        run: |
-          META="$(jq -r .KPlugin.Version hosts/kde/metadata.json)"
-          if [ "${GITHUB_REF_NAME#v}" != "$META" ]; then
-            echo "::error::tag $GITHUB_REF_NAME does not match metadata.json version $META"
-            exit 1
-          fi
 
       # make pack compiles the translations (msgfmt) before zipping.
       - name: Install gettext
@@ -43,7 +78,7 @@ jobs:
       - name: Get version and artifact path
         id: info
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${{ needs.prepare.outputs.version }}"
           NAME="$(basename "$PWD")"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "artifact=${NAME}-${VERSION}.plasmoid" >> "$GITHUB_OUTPUT"
@@ -58,7 +93,7 @@ jobs:
       - name: Generate release notes
         id: notes
         run: |
-          PREV_TAG="$(git tag --sort=-creatordate | grep -E '^v' | sed -n '2p')"
+          PREV_TAG="$(git tag --sort=-creatordate | grep -E '^v' | sed -n '1p')"
           if [ -n "$PREV_TAG" ]; then
             NOTES="$(git log "${PREV_TAG}..HEAD" --pretty=format:'- %s' --no-merges)"
           else
@@ -73,6 +108,8 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           name: ${{ steps.info.outputs.version }}
           body: |
             ## Changes
@@ -98,6 +135,8 @@ jobs:
   # selftest, the installer — with the release's version in the file names.
   windows:
     uses: ./.github/workflows/windows.yml
+    needs: prepare
+    if: needs.prepare.outputs.new == 'true'
     # windows.yml's screenshots-comment job needs these; a reusable workflow's
     # jobs can't be granted more than the caller job passes down, even for a
     # job whose `if:` is never true on a tag push.
@@ -105,10 +144,10 @@ jobs:
       contents: write
       pull-requests: write
     with:
-      version: ${{ github.ref_name }}
+      version: ${{ needs.prepare.outputs.tag }}
 
   windows-assets:
-    needs: [release, windows]
+    needs: [prepare, release, windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -121,6 +160,8 @@ jobs:
       - name: Attach the Windows build to the release
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           files: |
             ai-usage-windows-*.zip
             AI-Usage-Setup-*.exe
@@ -132,6 +173,8 @@ jobs:
   # so unlike windows.yml it needs no version input).
   macos:
     uses: ./.github/workflows/macos.yml
+    needs: prepare
+    if: needs.prepare.outputs.new == 'true'
     # macos.yml's screenshots-comment job needs these; a reusable workflow's
     # jobs can't be granted more than the caller job passes down, even for a
     # job whose `if:` is never true on a tag push.
@@ -145,7 +188,7 @@ jobs:
     secrets: inherit
 
   macos-assets:
-    needs: [release, macos]
+    needs: [prepare, release, macos]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -160,6 +203,8 @@ jobs:
       - name: Attach the macOS build to the release
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           files: |
             ai-usage-macos-*.zip
             ai-usage-macos-*.dmg

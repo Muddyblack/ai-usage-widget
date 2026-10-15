@@ -845,6 +845,10 @@ msgid "Bottom right"
 msgstr "En bas à droite"
 
 #: ui/SettingsPage.qml
+msgid "Free move"
+msgstr "Déplacement libre"
+
+#: ui/SettingsPage.qml
 msgid "Monitor"
 msgstr "Écran"
 

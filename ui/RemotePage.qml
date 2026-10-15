@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Layouts
 import "js/Tone.js" as Tone
 
@@ -25,9 +26,9 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: stateRow.implicitHeight + 24
         radius: 8
-        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.03))
+        color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.03))
         border.width: 1
-        border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.07))
+        border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.07))
 
         RowLayout {
             id: stateRow
@@ -51,7 +52,7 @@ ColumnLayout {
                     text: (remotePage.remote && remotePage.remote.title) || ""
                     font.pixelSize: 13
                     font.bold: true
-                    color: Tone.c(palette, "#f8fafc")
+                    color: Tone.c(Appearance.Palette, "#f8fafc")
                     wrapMode: Text.WordWrap
                 }
 
@@ -59,7 +60,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: (remotePage.remote && remotePage.remote.detail) || ""
                     font.pixelSize: 11
-                    color: Tone.c(palette, "#94a3b8")
+                    color: Tone.c(Appearance.Palette, "#94a3b8")
                     wrapMode: Text.WordWrap
                 }
             }
@@ -76,9 +77,9 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: 40
             radius: 8
-            color: Tone.c(palette, Qt.rgba(1, 1, 1, rowArea.containsMouse ? 0.06 : 0.03))
+            color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, rowArea.containsMouse ? 0.06 : 0.03))
             border.width: 1
-            border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.07))
+            border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.07))
 
             RowLayout {
                 anchors.fill: parent
@@ -102,7 +103,7 @@ ColumnLayout {
                         text: row.modelData.name
                         font.pixelSize: 12
                         font.bold: true
-                        color: Tone.c(palette, "#f8fafc")
+                        color: Tone.c(Appearance.Palette, "#f8fafc")
                         elide: Text.ElideRight
                     }
 
@@ -111,7 +112,7 @@ ColumnLayout {
                         visible: text !== ""
                         text: (row.modelData.detail || "") + (row.modelData.state === "busy" ? "  ·  " + remotePage.shell.i18n("working") : "")
                         font.pixelSize: 10
-                        color: Tone.c(palette, "#94a3b8")
+                        color: Tone.c(Appearance.Palette, "#94a3b8")
                         elide: Text.ElideRight
                     }
                 }
@@ -164,7 +165,7 @@ ColumnLayout {
         Layout.fillWidth: true
         text: (remotePage.remote && remotePage.remote.note) || ""
         font.pixelSize: 10
-        color: Tone.c(palette, "#64748b")
+        color: Tone.c(Appearance.Palette, "#64748b")
         wrapMode: Text.WordWrap
     }
 }

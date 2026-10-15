@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Layouts
 import "js/Tone.js" as Tone
 
@@ -18,9 +19,9 @@ Rectangle {
     Layout.fillWidth: true
     Layout.preferredHeight: 26
     radius: 6
-    color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
+    color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.04))
     border.width: 1
-    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.07))
+    border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.07))
 
     RowLayout {
         anchors.fill: parent
@@ -48,7 +49,7 @@ Rectangle {
                     text: parent.modelData.label
                     font.pixelSize: 10
                     font.bold: parent.active
-                    color: parent.active ? bar.accent : Tone.c(palette, "#f8fafc")
+                    color: parent.active ? Tone.ink(Appearance.Palette, bar.accent) : Tone.c(Appearance.Palette, "#f8fafc")
                     opacity: parent.active ? 1.0 : 0.6
                     elide: Text.ElideRight
                 }

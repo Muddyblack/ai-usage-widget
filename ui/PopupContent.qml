@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Layouts
 import QtQuick.Effects
 import QtQuick.Controls.Basic as QC
@@ -68,7 +69,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: errText.implicitHeight + 18
         radius: 6
-        color: Qt.rgba(0.45, 0.06, 0.06, 0.32)
+        color: Tone.isLight(Appearance.Palette) ? "#fee2e2" : Qt.rgba(0.45, 0.06, 0.06, 0.32)
         border.width: 1
         border.color: Qt.rgba(0.95, 0.30, 0.30, 0.32)
 
@@ -80,7 +81,7 @@ ColumnLayout {
                 var p = shell.activeProvider();
                 return p ? shell.tr(p, "error") : "";
             }
-            color: "#fecaca"
+            color: Tone.isLight(Appearance.Palette) ? "#7f1d1d" : "#fecaca"
             font.pixelSize: 12
             wrapMode: Text.WordWrap
         }
@@ -92,9 +93,9 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: 26
         radius: 6
-        color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.04))
+        color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.04))
         border.width: 1
-        border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.07))
+        border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.07))
 
         RowLayout {
             anchors.fill: parent
@@ -151,7 +152,7 @@ ColumnLayout {
                             text: modelData.label
                             font.pixelSize: 11
                             font.bold: parent.parent.active
-                            color: parent.parent.active ? shell.activeAccent : Tone.c(palette, "#f8fafc")
+                            color: parent.parent.active ? Tone.ink(Appearance.Palette, shell.activeAccent) : Tone.c(Appearance.Palette, "#f8fafc")
                             opacity: parent.parent.active ? 1.0 : 0.6
                         }
                     }
@@ -259,7 +260,7 @@ ColumnLayout {
                 return "";
             }
             font.pixelSize: 9
-            color: Tone.c(palette, "#94a3b8")
+            color: Tone.c(Appearance.Palette, "#94a3b8")
             opacity: 0.8
             wrapMode: Text.WordWrap
         }
@@ -269,7 +270,7 @@ ColumnLayout {
             visible: shell.activeId === "muse" && shell.activeProvider() && (shell.activeProvider().details.quotaError || "") === "" && !(shell.activeProvider().details.current || {}).available && !(shell.activeProvider().details.weekly || {}).available
             text: shell.i18n("No plan windows on this account — pay-as-you-go has none.")
             font.pixelSize: 9
-            color: Tone.c(palette, "#94a3b8")
+            color: Tone.c(Appearance.Palette, "#94a3b8")
             opacity: 0.8
             wrapMode: Text.WordWrap
         }
@@ -354,7 +355,7 @@ ColumnLayout {
         Text {
             visible: shell.updatedAt > 0 && shell.errorText === ""
             text: shell.replaying ? shell.i18n("last known %1 · refreshing…", new Date(shell.updatedAt * 1000).toLocaleTimeString(Qt.locale(), Locale.ShortFormat)) : shell.i18n("updated %1", new Date(shell.updatedAt * 1000).toLocaleTimeString(Qt.locale(), Locale.ShortFormat))
-            color: Tone.c(palette, "#f8fafc")
+            color: Tone.c(Appearance.Palette, "#f8fafc")
             opacity: 0.45
             font.pixelSize: 10
         }
@@ -377,7 +378,7 @@ ColumnLayout {
             width: content.width
             height: exportBackdrop.y + exportBackdrop.height
             radius: 12
-            color: Tone.c(palette, "#0d0f14")
+            color: Tone.c(Appearance.Palette, "#0d0f14")
         }
     }
 }

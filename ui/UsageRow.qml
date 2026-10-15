@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import QtQuick.Layouts
 import "js/Tone.js" as Tone
 
@@ -19,8 +20,8 @@ ColumnLayout {
     // Shown in a bubble while the row is hovered (name, used share, reset time).
     property string tooltipText: ""
 
-    readonly property color dangerColor: "#ff4d4d"
-    readonly property color warningColor: "#ffa64d"
+    readonly property color dangerColor: Tone.isLight(Appearance.Palette) ? "#c62828" : "#ff4d4d"
+    readonly property color warningColor: Tone.isLight(Appearance.Palette) ? "#c2410c" : "#ffa64d"
     readonly property int segmentCount: 20
 
     Layout.fillWidth: true
@@ -44,7 +45,7 @@ ColumnLayout {
             text: row.label
             font.bold: true
             font.pixelSize: 13
-            color: Tone.c(palette, "#f8fafc")
+            color: Tone.c(Appearance.Palette, "#f8fafc")
         }
 
         Text {
@@ -52,7 +53,7 @@ ColumnLayout {
             text: "· " + row.resetText
             font.pixelSize: 11
             opacity: 0.5
-            color: Tone.c(palette, "#f8fafc")
+            color: Tone.c(Appearance.Palette, "#f8fafc")
         }
 
         Item {
@@ -64,9 +65,9 @@ ColumnLayout {
             Layout.preferredHeight: 20
             Layout.preferredWidth: cdLabel.implicitWidth + 14
             radius: 4
-            color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
+            color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.06))
             border.width: 1
-            border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.12))
+            border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.12))
             Layout.alignment: Qt.AlignVCenter
 
             Text {
@@ -74,7 +75,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 text: row.countdownText
                 font.pixelSize: 11
-                color: Tone.c(palette, "#f8fafc")
+                color: Tone.c(Appearance.Palette, "#f8fafc")
                 opacity: 0.8
             }
         }
@@ -88,7 +89,7 @@ ColumnLayout {
             text: Math.round(row.displayValue) + "%"
             font.bold: true
             font.pixelSize: 14
-            color: row.value >= 90 ? row.dangerColor : row.value >= 70 ? row.warningColor : row.barColor
+            color: row.value >= 90 ? row.dangerColor : row.value >= 70 ? row.warningColor : Tone.ink(Appearance.Palette, row.barColor)
             Layout.alignment: Qt.AlignVCenter
         }
     }
@@ -118,9 +119,9 @@ ColumnLayout {
                             return 0.0;
                         return (row.value - prevThresh) / (100 / row.segmentCount);
                     }
-                    color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.06))
+                    color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.06))
                     border.width: 1
-                    border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.10))
+                    border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.10))
 
                     Rectangle {
                         anchors {
@@ -158,7 +159,7 @@ ColumnLayout {
         visible: row.detail !== ""
         Layout.fillWidth: true
         text: row.detail
-        color: Tone.c(palette, "#94a3b8")
+        color: Tone.c(Appearance.Palette, "#94a3b8")
         font.pixelSize: 11
         wrapMode: Text.WordWrap
     }
@@ -167,7 +168,7 @@ ColumnLayout {
         visible: row.note !== ""
         Layout.fillWidth: true
         text: row.note
-        color: Tone.c(palette, "#94a3b8")
+        color: Tone.c(Appearance.Palette, "#94a3b8")
         font.pixelSize: 10
         wrapMode: Text.WordWrap
     }
@@ -211,15 +212,15 @@ ColumnLayout {
             width: tipText.implicitWidth + 18
             height: tipText.implicitHeight + 12
             radius: 6
-            color: Tone.c(palette, Qt.rgba(0.04, 0.045, 0.06, 0.96))
+            color: Tone.c(Appearance.Palette, Qt.rgba(0.04, 0.045, 0.06, 0.96))
             border.width: 1
-            border.color: Tone.c(palette, Qt.rgba(1, 1, 1, 0.14))
+            border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.14))
             Text {
                 id: tipText
                 anchors.centerIn: parent
                 text: row.tooltipText
                 font.pixelSize: 11
-                color: Tone.c(palette, "#e2e8f0")
+                color: Tone.c(Appearance.Palette, "#e2e8f0")
             }
         }
     }

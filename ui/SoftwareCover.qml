@@ -1,4 +1,5 @@
 import QtQuick
+import "theme" as Appearance
 import "js/Tone.js" as Tone
 
 // Paint once at display resolution, then fit the backing canvas to the cover.
@@ -44,7 +45,7 @@ Item {
         onWidthChanged: requestPaint()
         onHeightChanged: requestPaint()
         // Tone.css colours flip with the popup's light or dark (ui/js/Tone.js).
-        readonly property bool lightTone: Tone.isLight(palette)
+        readonly property bool lightTone: Tone.isLight(Appearance.Palette)
         onLightToneChanged: requestPaint()
         Connections {
             target: cover
@@ -78,7 +79,7 @@ Item {
             ctx.drawImage(cover.source, (w - iw * fit) / 2, (h - ih * fit) / 2, iw * fit, ih * fit);
             if (cover.grayed) {
                 ctx.globalCompositeOperation = "source-atop";
-                ctx.fillStyle = Tone.css(palette, Qt.rgba(0, 0, 0, 0.25));
+                ctx.fillStyle = Tone.css(Appearance.Palette, Qt.rgba(0, 0, 0, 0.25));
                 ctx.fillRect(0, 0, w, h);
             }
         }

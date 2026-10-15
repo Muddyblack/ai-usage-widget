@@ -1,4 +1,5 @@
 import QtQuick
+import "../theme" as Appearance
 import "Theme.js" as Theme
 import "../js/Tone.js" as Tone
 
@@ -32,9 +33,9 @@ Rectangle {
     width: implicitWidth
     height: implicitHeight
     radius: 8
-    color: Tone.c(palette, Theme.sunk)
+    color: Tone.c(Appearance.Palette, Theme.sunk)
     border.width: 1
-    border.color: input.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.8) : area.containsMouse ? Tone.c(palette, "#40ffffff") : Tone.c(palette, Theme.line2)
+    border.color: input.activeFocus ? Qt.rgba(0.31, 0.62, 0.87, 0.8) : area.containsMouse ? Tone.c(Appearance.Palette, "#40ffffff") : Tone.c(Appearance.Palette, Theme.line2)
 
     function commit() {
         var t = input.text.trim();
@@ -64,7 +65,7 @@ Rectangle {
         x: 10
         width: parent.width - 20 - (control.secret ? 22 : 0)
         anchors.verticalCenter: parent.verticalCenter
-        color: Tone.c(palette, Theme.text)
+        color: Tone.c(Appearance.Palette, Theme.text)
         selectionColor: Qt.rgba(0.31, 0.62, 0.87, 0.45)
         font.pixelSize: 11
         font.family: control.mono ? "monospace" : defaultFont.font.family
@@ -97,7 +98,7 @@ Rectangle {
         verticalAlignment: Text.AlignVCenter
         visible: input.text === "" && !input.activeFocus
         text: control.placeholder
-        color: Tone.c(palette, Theme.dim)
+        color: Tone.c(Appearance.Palette, Theme.dim)
         font: input.font
         elide: Text.ElideRight
     }
