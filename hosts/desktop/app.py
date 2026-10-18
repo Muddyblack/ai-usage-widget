@@ -712,9 +712,14 @@ class Backend(QObject):
             return "{}"  # the demo never depends on, or touches, your own setup
         try:
             with open(config.config_path(), encoding="utf-8") as fh:
-                return fh.read()
-        except OSError:
-            return "{}"
+                settings = json.load(fh)
+            if not isinstance(settings, dict):
+                settings = {}
+        except (OSError, ValueError):
+            settings = {}
+        if paths.IS_WINDOWS:
+            settings.setdefault("popupBgOpacity", 1)
+        return json.dumps(settings)
 
     @Slot()
     def requestLastSnapshot(self):

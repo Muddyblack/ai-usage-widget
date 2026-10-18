@@ -28,23 +28,31 @@ Both target x64 Windows and keep settings/history in the locations below.
 
 ### Scoop
 
-With [Scoop](https://scoop.sh/) installed, run in PowerShell:
+With [Scoop](https://scoop.sh/) installed, add this repository as a bucket and
+install from it:
 
 ```powershell
-scoop install https://github.com/Muddyblack/ai-usage-widget/releases/latest/download/ai-usage.json
+scoop bucket add ai-usage https://github.com/Muddyblack/ai-usage-widget
+scoop install ai-usage/ai-usage
 ```
 
 Launch **AI Usage** from the Start menu. Quit the tray app before updating:
 
 ```powershell
+scoop update
 scoop update ai-usage
 ```
 
-Scoop remembers the manifest URL, so installing from the `latest/download`
-URL follows subsequent releases. Installing a version-specific manifest pins
-that source to that release. The manifest also includes `checkver` and
-`autoupdate` for maintainers who want to add it to a Scoop bucket; this
-repository does not currently publish a bucket.
+`bucket/ai-usage.json` follows the latest stable release; the
+`scoop-bucket.yml` workflow copies the manifest the Windows build generated
+into it. Without the bucket, the release's own manifest installs directly:
+
+```powershell
+scoop install https://github.com/Muddyblack/ai-usage-widget/releases/latest/download/ai-usage.json
+```
+
+Scoop remembers that URL, so it follows subsequent releases too. A
+version-specific manifest pins the install to that release.
 
 Before `scoop uninstall ai-usage`, switch off **Start with Windows** in the
 app and quit it. Settings and history survive uninstall. Use one installation

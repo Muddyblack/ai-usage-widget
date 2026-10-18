@@ -166,15 +166,21 @@ Window {
         onActivated: root.hide()
     }
 
-    // The panel drags from anywhere a control does not claim the press — its
-    // background, headings, text. Buttons, tabs, the chart's scrub and the
-    // settings fields keep their presses. The floating pill comes along
-    // (app.py, TrayApp._on_panel_moved; the KWin script on Plasma Wayland).
-    DragHandler {
-        target: null
-        onActiveChanged: {
-            if (active)
-                root.startSystemMove();
+    // Only the title row moves the popup. A handler on the whole window can
+    // steal slider and scrolling gestures from the settings below it.
+    Item {
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 44
+        DragHandler {
+            target: null
+            acceptedButtons: Qt.LeftButton
+            grabPermissions: PointerHandler.TakeOverForbidden
+            onActiveChanged: {
+                if (active)
+                    root.startSystemMove();
+            }
         }
     }
 

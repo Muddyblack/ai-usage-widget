@@ -89,6 +89,26 @@ Rectangle {
     border.color: Tone.c(Appearance.Palette, Qt.rgba(1, 1, 1, 0.12))
     clip: true
 
+    // Item.clip is rectangular even on a rounded Rectangle. Clip canvas
+    // decorations to the actual glass outline so they cannot fill its corners.
+    function clipDecoration(ctx) {
+        var w = glass.width;
+        var h = glass.height;
+        var r = Math.min(glass.radius, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(r, 0);
+        ctx.lineTo(w - r, 0);
+        ctx.quadraticCurveTo(w, 0, w, r);
+        ctx.lineTo(w, h - r);
+        ctx.quadraticCurveTo(w, h, w - r, h);
+        ctx.lineTo(r, h);
+        ctx.quadraticCurveTo(0, h, 0, h - r);
+        ctx.lineTo(0, r);
+        ctx.quadraticCurveTo(0, 0, r, 0);
+        ctx.closePath();
+        ctx.clip();
+    }
+
     // Frost (Settings → Appearance → Frost, popupFrost 0–1): a milky wash,
     // brighter at the top, and fine grain — the frosted-glass look of the
     // Glassy System Monitor's cards. It is drawn, not sampled: no window can
@@ -129,6 +149,7 @@ Rectangle {
             ctx.reset();
             if (!visible || width <= 0 || height <= 0)
                 return;
+            glass.clipDecoration(ctx);
             var seed = 1234567;
             function rnd() {
                 seed = (seed * 1103515245 + 12345) % 2147483648;
@@ -225,6 +246,7 @@ Rectangle {
             ctx.reset();
             if (loadedSource.toString() === "" || !isImageLoaded(loadedSource))
                 return;
+            glass.clipDecoration(ctx);
             ctx.imageSmoothingEnabled = true;
             // No blur filter in Canvas: stack a few offset, low-alpha copies
             // on two rings to get a soft halo around the logo.
@@ -253,7 +275,9 @@ Rectangle {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: 1
+        anchors.topMargin: 1
+        anchors.leftMargin: glass.radius
+        anchors.rightMargin: glass.radius
         height: 1
         color: Qt.rgba(1, 1, 1, 0.18)
     }

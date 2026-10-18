@@ -261,7 +261,7 @@ ColumnLayout {
         Rectangle {
             id: rowCard
             required property var modelData
-            readonly property bool canExpand: !!((modelData.dailyCost && modelData.dailyCost.length > 1) || (modelData.dailyTokens && modelData.dailyTokens.length > 1))
+            readonly property bool canExpand: !!((modelData.dailyCost && modelData.dailyCost.length > 0) || (modelData.dailyTokens && modelData.dailyTokens.length > 0))
             readonly property bool isExpanded: page.expandedProviders[modelData.id] === true
             readonly property int windowDays: page.expandedWindowDays[modelData.id] !== undefined ? page.expandedWindowDays[modelData.id] : page.windowDays
 

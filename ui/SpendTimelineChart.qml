@@ -50,7 +50,7 @@ ColumnLayout {
     readonly property bool drawCost: chart.hasCost && chart.showCost
     readonly property bool drawTokens: chart.hasTokens && chart.showTokens
 
-    visible: chart.points.length > 1 && (chart.hasCost || chart.hasTokens)
+    visible: chart.points.length > 0 && (chart.hasCost || chart.hasTokens)
 
     // "2026-09-14" -> "Sep 14". Axis ticks name the range without the reader
     // having to hover, so the chart says *when* on its own.
@@ -322,6 +322,13 @@ ColumnLayout {
             // matching UsageChart.qml's line style so every trend chart in
             // the app reads the same way.
             function strokePath(ctx, yFor, key, r, g, b) {
+                if (points.length === 1) {
+                    ctx.beginPath();
+                    ctx.arc(xFor(0), yFor(points[0][key] || 0), 4, 0, Math.PI * 2);
+                    ctx.fillStyle = Qt.rgba(r, g, b, 1);
+                    ctx.fill();
+                    return;
+                }
                 if (points.length < 2)
                     return;
                 function rgba(a) {
@@ -345,7 +352,7 @@ ColumnLayout {
             onPaint: {
                 var ctx = getContext("2d");
                 ctx.clearRect(0, 0, width, height);
-                if (points.length < 2)
+                if (points.length === 0)
                     return;
 
                 // dashed baseline
@@ -398,7 +405,7 @@ ColumnLayout {
                 anchors.fill: parent
                 hoverEnabled: true
                 onPositionChanged: mouse => {
-                    if (canvas.points.length < 2)
+                    if (canvas.points.length === 0)
                         return;
                     // Nearest point by actual x position, not by a uniform
                     // fraction-of-count guess — points are not evenly spaced
@@ -502,7 +509,7 @@ ColumnLayout {
     Text {
         Layout.fillWidth: true
         visible: chart.points.length > 0 && chart.points.length < 5
-        text: shell.i18n("Limited history (%1 days recorded) — dashed line, not a smoothed trend.", chart.points.length)
+        text: chart.points.length === 1 ? shell.i18n("One day recorded — more history will appear as you use this provider.") : shell.i18n("Limited history (%1 days recorded) — dashed line, not a smoothed trend.", chart.points.length)
         font.pixelSize: 9
         opacity: 0.4
         color: chart.textColor
