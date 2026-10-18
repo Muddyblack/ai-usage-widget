@@ -41,8 +41,11 @@ class AntigravityScanTest(unittest.TestCase):
         )
         self.environment.start()
         self.addCleanup(self.environment.stop)
+        # A Windows venv's python.exe is a launcher that spawns the real
+        # interpreter; the socket would belong to the child, not to this pid.
+        interpreter = getattr(sys, "_base_executable", sys.executable) if sys.prefix != sys.base_prefix else sys.executable
         self.proc = subprocess.Popen(
-            [sys.executable, "-c", STAND_IN, "antigravity-language-server", "--csrf_token", "tok123"],
+            [interpreter, "-c", STAND_IN, "antigravity-language-server", "--csrf_token", "tok123"],
             stdout=subprocess.PIPE,
             text=True,
         )

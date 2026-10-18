@@ -24,6 +24,21 @@ def _row(title: str, provider: str, activity: int) -> dict[str, str | int]:
 
 
 class SessionCacheFreshnessTest(unittest.TestCase):
+    def test_existing_unscanned_database_does_not_delay_first_refresh(self):
+        with tempfile.TemporaryDirectory() as directory:
+            index = SessionIndex(f"{directory}/sessions.sqlite3")
+            index.query()
+            with (
+                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch.object(session_cache, "build_manifests", side_effect=AssertionError("query scanned manifests")),
+                mock.patch.object(sessions, "collect_source", side_effect=AssertionError("query collected")),
+            ):
+                result = sessions.collect_sessions()
+
+        self.assertEqual(result["cacheStatus"], "no-cache")
+        self.assertIsNone(result["cacheAgeSeconds"])
+        self.assertFalse(result["totalExact"])
+
     def test_query_reports_no_cache_without_building_or_collecting(self):
         with tempfile.TemporaryDirectory() as directory:
             with (

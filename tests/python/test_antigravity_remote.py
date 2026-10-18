@@ -19,6 +19,15 @@ CLOSED = "[remote-control-x-v2] Connection loop exited: WebChannel connection cl
 
 
 class RemoteControlTest(unittest.TestCase):
+    def test_windows_remote_credentials_use_agy_generic_credential(self):
+        stored = {"token": {"access_token": "test-access"}}
+        with (
+            mock.patch.object(antigravity_remote.paths, "IS_WINDOWS", True),
+            mock.patch.object(antigravity_remote.windows_credentials, "password", return_value=json.dumps(stored)) as read,
+        ):
+            self.assertEqual(antigravity_remote._stored_credentials(), stored)
+        read.assert_called_once_with("gemini:antigravity")
+
     def read(self, text):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "language_server.log")

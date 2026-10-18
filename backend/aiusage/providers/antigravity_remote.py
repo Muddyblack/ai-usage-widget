@@ -15,7 +15,7 @@ import subprocess
 import time
 import urllib.parse
 
-from .. import paths
+from .. import paths, windows_credentials
 from ..http import as_json, fetch_json
 
 INSTANCE_URL = "https://jetski-webchannel.googleapis.com/v1internal:listInstances"
@@ -28,6 +28,10 @@ def _stored_credentials():
     # agy uses service=gemini, username=antigravity in go-keyring. Its file
     # fallback lives in the application's data directory, without a suffix.
     command = None
+    if paths.IS_WINDOWS:
+        stored = as_json(windows_credentials.password("gemini:antigravity"))
+        if isinstance(stored, dict) and isinstance(stored.get("token"), dict):
+            return stored
     if paths.IS_MACOS:
         command = ["security", "find-generic-password", "-s", "gemini", "-a", "antigravity", "-w"]
     elif not paths.IS_WINDOWS and shutil.which(SECRET_TOOL):

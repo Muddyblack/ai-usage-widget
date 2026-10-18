@@ -5,6 +5,7 @@ docstring: a key is either a fresh digest of a real target or the call fails
 closed, and it never leaks a path or session id in its (user-visible) message.
 """
 
+import posixpath
 import unittest
 from unittest import mock
 
@@ -132,6 +133,8 @@ class OpenSessionResolvesAndSpawnsTest(unittest.TestCase):
             mock.patch.dict("os.environ", {"TERMINAL": "fake-term --profile work"}, clear=False),
             mock.patch.object(sessions.shutil, "which", side_effect=fake_which),
             mock.patch.object(sessions.subprocess, "Popen", side_effect=fake_popen),
+            # The fake paths are POSIX; ntpath would not call "/usr/bin/x" absolute.
+            mock.patch.object(sessions.os.path, "isabs", posixpath.isabs),
         ):
             ok, _message = sessions.open_session(target_key)
 

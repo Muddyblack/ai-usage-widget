@@ -86,6 +86,10 @@ class SessionCache:
         source_count = self._source_count()
         if source_count == 0:
             result["cacheStatus"] = "no-cache"
+            # Other cache readers can create the schema before any collector
+            # runs. Its fresh file timestamp is not evidence of a session scan.
+            result["cacheAgeSeconds"] = None
+            result["totalExact"] = False
         elif result["total"] == 0:
             result["cacheStatus"] = "empty"
         else:
