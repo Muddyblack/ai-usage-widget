@@ -9,7 +9,7 @@ name: PR release flag
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
-    branches: [master]
+    branches: [main]
 
 permissions: {}
 
@@ -68,7 +68,7 @@ jobs:
             const mine = comments.find((c) => c.body && c.body.includes(MARKER));
 
             if (bumped) {
-              const body = `${MARKER}\n> [!IMPORTANT]\n> **This PR is a release.** It bumps the version \`${base}\` → \`${head}\`. Merging it into \`master\` publishes \`v${head}\` automatically.`;
+              const body = `${MARKER}\n> [!IMPORTANT]\n> **This PR is a release.** It bumps the version \`${base}\` → \`${head}\`. Merging it into \`main\` publishes \`v${head}\` automatically.`;
               try {
                 await github.rest.issues.addLabels({ owner, repo, issue_number: pr.number, labels: [LABEL] });
               } catch (e) {

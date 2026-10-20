@@ -167,6 +167,6 @@ make tag     # or ./scripts/tag.sh
 
 Prompts for a version bump (patch / minor / major), updates
 `hosts/kde/metadata.json` (the one place the version lives) on a `release/vX.Y.Z`
-branch, and opens a PR. Nothing is tagged or pushed to `master` by hand:
+branch, and opens a PR. Nothing is tagged or pushed to `main` by hand:
 merging the PR makes CI create the tag, build the `.plasmoid` and the
 Windows / macOS assets, and publish the GitHub release.

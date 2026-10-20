@@ -50,7 +50,7 @@ The NixOS module takes the same options, minus `plasmoid.enable` (Plasma finds t
 ## Once, by hand (the first submission)
 
 1. Fork `NixOS/nixpkgs`. Add yourself to `maintainers/maintainer-list.nix` (alphabetical, in its own commit `maintainers: add muddyblack`) unless it is already there, then set `maintainers = [ lib.maintainers.muddyblack ];` in all package files. Only in the fork: here the files keep `maintainers = [ ];`.
-2. Copy the three `package.nix` files (from the workflow's `nixpkgs-packages` artifact, which already has the new version and hash) to `pkgs/by-name/ai/tidesi/`, `pkgs/by-name/ai/tidesi-app/` and `pkgs/by-name/ai/tidesi-cli/`.
+2. Copy the three `package.nix` files (from the workflow's `nixpkgs-packages` artifact, which already has the new version and hash) to `pkgs/by-name/ti/tidesi/`, `pkgs/by-name/ti/tidesi-app/` and `pkgs/by-name/ti/tidesi-cli/`.
 3. Check in the fork: `nix-build -A tidesi -A tidesi-app -A tidesi-cli`, `nixfmt` the files, and run `nixpkgs-review wip`. Add the widget to a Plasma session once.
 4. Open one pull request per package, titled `tidesi: init at X.Y.Z`, `tidesi-app: init at X.Y.Z` and `tidesi-cli: init at X.Y.Z`, using the nixpkgs PR template.
 

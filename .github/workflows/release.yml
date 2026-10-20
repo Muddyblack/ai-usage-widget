@@ -2,10 +2,10 @@ name: Release
 
 on:
   # Merging a release PR (scripts/tag.sh / make tag) bumps the version in
-  # hosts/kde/metadata.json on master. That push is the release: the tag does not exist yet,
+  # hosts/kde/metadata.json on main. That push is the release: the tag does not exist yet,
   # this workflow creates it together with the GitHub release.
   push:
-    branches: [master]
+    branches: [main]
     paths: [hosts/kde/metadata.json]
   workflow_dispatch:
 
