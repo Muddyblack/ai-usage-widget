@@ -1416,6 +1416,10 @@ msgid "tok"
 msgstr "jet."
 
 #: ui/SpendTimelineChart.qml
+msgid "One day recorded — more history will appear as you use this provider."
+msgstr "Un jour enregistré — l'historique s'étoffera avec l'usage."
+
+#: ui/SpendTimelineChart.qml
 msgid "Limited history (%1 days recorded) — dashed line, not a smoothed trend."
 msgstr ""
 "Historique limité (%1 jours enregistrés) — ligne pointillée, pas une "
