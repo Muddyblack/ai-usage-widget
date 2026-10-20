@@ -58,7 +58,7 @@ def generate(version, assets, output):
     # deliberately plain so WinGet's restricted parser can read it.
     common = f'PackageIdentifier: {PACKAGE_ID}\nPackageVersion: "{version}"\n'
     manifests = {
-        f"{PACKAGE_ID}.yaml": common + "DefaultLocale: en-US\nManifestType: version\nManifestVersion: 1.6.0\n",
+        f"{PACKAGE_ID}.yaml": common + "DefaultLocale: en-US\nManifestType: version\nManifestVersion: 1.12.0\n",
         f"{PACKAGE_ID}.locale.en-US.yaml": common
         + f"""PackageLocale: en-US
 Publisher: Muddyblack
@@ -71,7 +71,7 @@ LicenseUrl: {HOMEPAGE}/blob/v{version}/LICENSE
 ShortDescription: {DESCRIPTION}
 Moniker: tidesi
 ManifestType: defaultLocale
-ManifestVersion: 1.6.0
+ManifestVersion: 1.12.0
 """,
         f"{PACKAGE_ID}.installer.yaml": common
         + f"""InstallerType: inno
@@ -90,7 +90,7 @@ Installers:
         DisplayVersion: "{version}"
         ProductCode: '{PRODUCT_CODE}'
 ManifestType: installer
-ManifestVersion: 1.6.0
+ManifestVersion: 1.12.0
 """,
     }
     manifest_dir = output / "winget" / "manifests" / "m" / "Muddyblack" / "Tidesi" / version
