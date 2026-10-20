@@ -3,7 +3,7 @@
 #   pip install -r hosts/windows/build-requirements.txt
 #   pyinstaller --noconfirm hosts/windows/tidesi.spec
 #
-# Produces dist/Tidesi/Tidesi.exe (one folder: starts faster than a
+# Produces dist/tideSI/tideSI.exe (one folder: starts faster than a
 # one-file build, which unpacks itself on every launch). The QML and the icons
 # keep the repository's layout inside the bundle, so hosts/desktop/qml/Main.qml finds
 # ../../../ui and ../../../package exactly as it does in a checkout.
@@ -36,7 +36,7 @@ datas += [(path, "translate") for path in glob.glob(os.path.join(ROOT, "translat
 a = Analysis(  # noqa: F821
     [os.path.join(ROOT, "hosts", "desktop", "app.py")],
     pathex=[TOOLS, os.path.join(ROOT, "hosts", "windows")],
-    hiddenimports=collect_submodules("tidesi") + ["psutil", "backdrop", "taskbar"],
+    hiddenimports=collect_submodules("tidesi") + ["psutil", "backdrop", "taskbar", "startuptask"],
     datas=datas,
     excludes=["tkinter"],
 )
@@ -49,8 +49,8 @@ exe = EXE(  # noqa: F821
     # its encodings itself; this covers anything that does not.
     [("X utf8", None, "OPTION")],
     exclude_binaries=True,
-    name="Tidesi",
+    name="tideSI",
     console=False,
     icon=os.path.join(ROOT, "assets", "icon.png"),
 )
-coll = COLLECT(exe, a.binaries, a.datas, name="Tidesi")  # noqa: F821
+coll = COLLECT(exe, a.binaries, a.datas, name="tideSI")  # noqa: F821

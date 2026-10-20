@@ -14,3 +14,8 @@ pefile==2024.8.26
 pywin32-ctypes==0.2.3
 setuptools==84.0.0
 pillow==12.3.0
+# WinRT StartupTask: start at sign-in for the Microsoft Store (MSIX) build.
+winrt-runtime==3.2.1
+winrt-Windows.ApplicationModel==3.2.1
+winrt-Windows.Foundation==3.2.1
+winrt-Windows.Foundation.Collections==3.2.1

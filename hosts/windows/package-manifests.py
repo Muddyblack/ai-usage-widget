@@ -30,13 +30,13 @@ def generate(version, assets, output):
     version = version.removeprefix("v")
     if not re.fullmatch(r"\d+\.\d+\.\d+", version):
         raise ValueError("Expected a stable version such as 3.2.0 or v3.2.0")
-    portable = f"tidesi-windows-{version}.zip"
-    installer = f"Tidesi-Setup-{version}.exe"
+    portable = f"tideSI-windows-{version}.zip"
+    installer = f"tideSI-Setup-{version}.exe"
     portable_hash = sha256(assets / portable)
     installer_hash = sha256(assets / installer)
     with zipfile.ZipFile(assets / portable) as archive:
-        if "Tidesi/Tidesi.exe" not in archive.namelist():
-            raise ValueError("Portable ZIP must contain Tidesi/Tidesi.exe")
+        if "tideSI/tideSI.exe" not in archive.namelist():
+            raise ValueError("Portable ZIP must contain tideSI/tideSI.exe")
     base = f"{HOMEPAGE}/releases/download/v{version}"
     output.mkdir(parents=True, exist_ok=True)
     scoop = {
@@ -45,12 +45,12 @@ def generate(version, assets, output):
         "homepage": HOMEPAGE,
         "license": "MIT",
         "architecture": {"64bit": {"url": f"{base}/{portable}", "hash": portable_hash}},
-        "extract_dir": "Tidesi",
-        "shortcuts": [["Tidesi.exe", "tideSI"]],
+        "extract_dir": "tideSI",
+        "shortcuts": [["tideSI.exe", "tideSI"]],
         "notes": "Quit tideSI before updating. Disable Start with Windows in the app before uninstalling. Settings and history are kept.",
         "checkver": "github",
         "autoupdate": {
-            "architecture": {"64bit": {"url": f"{HOMEPAGE}/releases/download/v$version/tidesi-windows-$version.zip"}},
+            "architecture": {"64bit": {"url": f"{HOMEPAGE}/releases/download/v$version/tideSI-windows-$version.zip"}},
         },
     }
     (output / "tidesi.json").write_text(json.dumps(scoop, indent=4) + "\n", encoding="utf-8")

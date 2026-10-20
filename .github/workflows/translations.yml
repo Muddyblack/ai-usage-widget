@@ -1,0 +1,61 @@
+name: Translations
+
+# Keeps translate/template.pot and every translate/*.po in step with the
+# strings in the sources, so nobody has to run `make translations` by hand.
+# After a push to main changes code that has translatable strings, the
+# catalogs are re-extracted; if they drifted, a pull request with the result
+# is opened (or the open one refreshed). Merge it whenever convenient: an
+# out-of-date catalog only shows new strings in English, and lint.yml reports
+# the drift on pull requests without failing them.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ui/**'
+      - 'hosts/**'
+      - 'backend/tidesi/**/*.py'
+      - 'translate/Messages.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: translations
+  cancel-in-progress: true
+
+jobs:
+  update:
+    if: github.repository == 'Muddyblack/tidesi'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: cachix/install-nix-action@v27
+
+      - name: Re-extract the catalogs
+        run: nix develop --command ./translate/Messages.sh
+
+      - name: Open or refresh the catalog pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- translate; then
+            echo "Catalogs are up to date."
+            exit 0
+          fi
+          branch=i18n/update-catalogs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add translate
+          git commit -m "translations: update catalogs from the sources"
+          git push --force origin "$branch"
+          if [ -z "$(gh pr list --head "$branch" --state open --json number --jq '.[].number')" ]; then
+            gh pr create --base main --head "$branch" \
+              --title "translations: update catalogs from the sources" \
+              --body "Automatic: \`translate/Messages.sh\` found strings that changed in the sources. Weblate picks the new ones up after the merge."
+          fi

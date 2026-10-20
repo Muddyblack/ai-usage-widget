@@ -11,11 +11,11 @@ on each platform with demo data.
 
 ## Installing it
 
-Download `Tidesi-Setup-<version>.exe` from a release and run it: no admin
+Download `tideSI-Setup-<version>.exe` from a release and run it: no admin
 rights, a Start menu entry, an optional *Start when I sign in*, and an
 uninstaller under *Installed apps*; running a newer one updates in place. (Or
-take `tidesi-windows-<version>.zip`, unzip it anywhere and run
-`Tidesi.exe`.) The app isn't code-signed yet, so SmartScreen asks once:
+take `tideSI-windows-<version>.zip`, unzip it anywhere and run
+`tideSI.exe`.) The app isn't code-signed yet, so SmartScreen asks once:
 *More info → Run anyway*. Nothing else to install — Python and Qt ship inside
 the folder.
 
@@ -247,7 +247,7 @@ On Windows (PyInstaller does not cross-compile):
 ```powershell
 pip install -r hosts/windows/build-requirements.txt
 pyinstaller --noconfirm hosts/windows/tidesi.spec
-"dist\Tidesi\Tidesi.exe" --selftest
+"dist\tideSI\tideSI.exe" --selftest
 ```
 
 `hosts/windows/build-requirements.txt` pins the exact PySide6, PyInstaller and Pillow
@@ -256,17 +256,17 @@ the releases are built with, so a tag rebuilt later gives the same `.exe`.
 installs those as they come, so a new PySide6 is tried there before a bump of
 the pins ships it.
 
-The result is a folder, `dist\Tidesi\`, rather than a single file: a one-file
+The result is a folder, `dist\tideSI\`, rather than a single file: a one-file
 build unpacks itself to a temp directory on every start. Zip the folder to ship
 it.
 
 The installer wraps that folder (Inno Setup, `hosts/windows/installer.iss`):
 
 ```powershell
-windows\build-installer.ps1 -Version 2.4.0     # → Tidesi-Setup-2.4.0.exe
+windows\build-installer.ps1 -Version 2.4.0     # → tideSI-Setup-2.4.0.exe
 ```
 
-It installs per user (no admin rights) to `%LOCALAPPDATA%\Programs\Tidesi`,
+It installs per user (no admin rights) to `%LOCALAPPDATA%\Programs\tideSI`,
 adds a Start menu entry, optionally a desktop shortcut and *Start when I sign
 in* (the same registry value as the tray menu's switch), stops a running copy
 before replacing it, and registers an uninstaller. Keep its `AppId` as it is:

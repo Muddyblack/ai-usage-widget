@@ -173,7 +173,7 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
-          $p = Start-Process -FilePath "dist/Tidesi/Tidesi.exe" -ArgumentList "--selftest" -Wait -PassThru
+          $p = Start-Process -FilePath "dist/tideSI/tideSI.exe" -ArgumentList "--selftest" -Wait -PassThru
           if ($p.ExitCode -ne 0) {
             # The .exe has no console; its warnings and errors go to tray.log.
             Get-Content "$env:LOCALAPPDATA\tidesi\tray.log" -ErrorAction SilentlyContinue
@@ -182,11 +182,27 @@ jobs:
 
       - name: zip
         shell: pwsh
-        run: Compress-Archive -Path "dist/Tidesi" -DestinationPath "tidesi-windows-$env:VERSION.zip"
+        run: Compress-Archive -Path "dist/tideSI" -DestinationPath "tideSI-windows-$env:VERSION.zip"
 
       - name: installer
         shell: pwsh
         run: hosts/windows/build-installer.ps1 -Version $env:VERSION
+
+      # Unsigned: the Microsoft Store signs it on submission. The identity comes
+      # from repository variables once the app is reserved in Partner Center
+      # (docs/microsoft-store.md); until then placeholders make this a build check.
+      - name: Microsoft Store package
+        shell: pwsh
+        env:
+          STORE_IDENTITY_NAME: ${{ vars.STORE_IDENTITY_NAME }}
+          STORE_PUBLISHER: ${{ vars.STORE_PUBLISHER }}
+          STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.STORE_PUBLISHER_DISPLAY_NAME }}
+        run: |
+          $a = @{ Version = $env:VERSION }
+          if ($env:STORE_IDENTITY_NAME) { $a.IdentityName = $env:STORE_IDENTITY_NAME }
+          if ($env:STORE_PUBLISHER) { $a.Publisher = $env:STORE_PUBLISHER }
+          if ($env:STORE_PUBLISHER_DISPLAY_NAME) { $a.PublisherDisplayName = $env:STORE_PUBLISHER_DISPLAY_NAME }
+          hosts/windows/build-msix.ps1 @a
 
       - name: Package manager manifests (stable releases)
         if: inputs.version != '' && !contains(inputs.version, '-')
@@ -197,8 +213,9 @@ jobs:
         with:
           name: tidesi-windows
           path: |
-            tidesi-windows-*.zip
-            Tidesi-Setup-*.exe
+            tideSI-windows-*.zip
+            tideSI-Setup-*.exe
+            tideSI-*.msix
             dist/package-manifests/tidesi.json
             dist/package-manifests/tidesi-winget-*.zip
           if-no-files-found: error

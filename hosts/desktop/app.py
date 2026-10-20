@@ -67,11 +67,18 @@ if paths.IS_MACOS:
 vibrancy = None
 backdrop = None
 taskbar = None
+startuptask = None
 loginitem = None
 if paths.IS_WINDOWS:
     sys.path.insert(0, str(ROOT / "hosts" / "windows"))
     import backdrop  # noqa: E402
+
+    # The Store build (MSIX) starts at sign-in through a startup task, not the Run key.
+    import startuptask  # noqa: E402
     import taskbar  # noqa: E402
+
+    if not startuptask.is_packaged():
+        startuptask = None
 
 if paths.IS_MACOS:
     try:
@@ -263,6 +270,11 @@ def _launch_command():
 
 
 def autostart_enabled():
+    if startuptask is not None:
+        try:
+            return startuptask.enabled()
+        except Exception:  # WinRT unavailable: report it as off
+            return False
     if loginitem is not None:
         return loginitem.enabled()
     if paths.IS_MACOS:
@@ -280,6 +292,9 @@ def autostart_enabled():
 
 
 def set_autostart(enabled):
+    if startuptask is not None:
+        startuptask.set_enabled(enabled)
+        return
     if loginitem is not None:
         loginitem.set_enabled(enabled)
         return
