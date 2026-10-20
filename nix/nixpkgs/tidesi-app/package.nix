@@ -109,7 +109,7 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     description = "Tray app with a floating pill showing AI provider usage limits, for any desktop with a tray";
     homepage = "https://github.com/Muddyblack/tidesi";
-    changelog = "https://github.com/Muddyblack/tidesi/releases/tag/v${finalAttrs.version}";
+    changelog = "https://github.com/Muddyblack/tidesi/releases/tag/${finalAttrs.src.tag}";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
     mainProgram = "tidesi";

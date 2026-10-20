@@ -77,9 +77,9 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   passthru.updateScript = nix-update-script { };
 
   meta = {
-    description = "Tidesi: multi-provider AI usage limits for KDE Plasma 6";
+    description = "Multi-provider AI usage limits as a KDE Plasma 6 panel widget";
     homepage = "https://github.com/Muddyblack/tidesi";
-    changelog = "https://github.com/Muddyblack/tidesi/releases/tag/v${finalAttrs.version}";
+    changelog = "https://github.com/Muddyblack/tidesi/releases/tag/${finalAttrs.src.tag}";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
     maintainers = [ ];
