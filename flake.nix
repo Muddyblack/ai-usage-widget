@@ -217,6 +217,19 @@
                                  'SECRET_TOOL = "${pkgs.libsecret}/bin/secret-tool"'
                 install -Dm644 assets/icons/org.muddyblack.tidesi.svg \
                   "$out/share/icons/hicolor/scalable/apps/org.muddyblack.tidesi.svg"
+                # Single instance: a menu launch while it runs hands over to the
+                # running one, so this coexists with the autostart entry.
+                install -Dm644 ${pkgs.makeDesktopItem {
+                  name = "org.muddyblack.tidesi";
+                  desktopName = "Tidesi";
+                  genericName = "AI usage monitor";
+                  comment = "Provider limits and usage in the tray";
+                  exec = "tidesi";
+                  icon = "org.muddyblack.tidesi";
+                  categories = [ "Utility" ];
+                  keywords = [ "AI" "quota" "usage" "Claude" "Codex" ];
+                }}/share/applications/org.muddyblack.tidesi.desktop \
+                  "$out/share/applications/org.muddyblack.tidesi.desktop"
 
                 # nixpkgs' PySide6 ships no QML modules (QtQuick.Controls ...):
                 # they come from qtdeclarative, the same Qt it runs on.

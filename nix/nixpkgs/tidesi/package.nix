@@ -1,6 +1,7 @@
 {
   lib,
   stdenvNoCC,
+  bash,
   fetchFromGitHub,
   gettext,
   python3,
@@ -21,6 +22,11 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
   nativeBuildInputs = [ gettext ];
 
+  # strictDeps: patchShebangs only rewrites `#!/usr/bin/env bash` to an
+  # interpreter that is a runtime input.
+  buildInputs = [ bash ];
+  strictDeps = true;
+  __structuredAttrs = true;
   dontConfigure = true;
 
   # The package is assembled from the shared sources, which also compiles the
