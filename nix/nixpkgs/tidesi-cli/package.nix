@@ -1,6 +1,7 @@
 {
   lib,
   stdenvNoCC,
+  bash,
   fetchFromGitHub,
   python3,
   libsecret,
@@ -18,6 +19,11 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     hash = "sha256-RT/x9eEBrnbOpa6ghyDrdntsXrKl4fslxGJahn82CrM=";
   };
 
+  # strictDeps: patchShebangs only rewrites `#!/usr/bin/env bash` to an
+  # interpreter that is a runtime input.
+  buildInputs = [ bash ];
+  strictDeps = true;
+  __structuredAttrs = true;
   dontConfigure = true;
   dontBuild = true;
 

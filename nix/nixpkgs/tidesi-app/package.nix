@@ -2,6 +2,8 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  copyDesktopItems,
+  makeDesktopItem,
   makeWrapper,
   python3,
   qt6,
@@ -27,6 +29,7 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   nativeBuildInputs = [
+    copyDesktopItems
     makeWrapper
     qt6.wrapQtAppsHook
   ];
@@ -39,6 +42,8 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   dontWrapQtApps = true;
+  strictDeps = true;
+  __structuredAttrs = true;
   dontConfigure = true;
   dontBuild = true;
 
@@ -69,6 +74,27 @@ stdenv.mkDerivation (finalAttrs: {
 
     runHook postInstall
   '';
+
+  # One instance per user: launching it again while it runs hands over to the
+  # running one, so the menu entry and an autostart entry can coexist.
+  desktopItems = [
+    (makeDesktopItem {
+      name = "org.muddyblack.tidesi";
+      desktopName = "Tidesi";
+      genericName = "AI usage monitor";
+      comment = finalAttrs.meta.description;
+      exec = "tidesi";
+      icon = "org.muddyblack.tidesi";
+      categories = [ "Utility" ];
+      keywords = [
+        "AI"
+        "quota"
+        "usage"
+        "Claude"
+        "Codex"
+      ];
+    })
+  ];
 
   doInstallCheck = true;
   installCheckPhase = ''
