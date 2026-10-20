@@ -220,7 +220,9 @@ Rectangle {
         canvasSize: Qt.size(Math.max(1, width), Math.max(1, height))
         onCanvasSizeChanged: requestPaint()
         smooth: true
-        opacity: glass.providerLogo ? (glass.light ? 0.22 : 0.25) : 0.18
+        // A host that draws its own glass (not `translucent`) has no blurred
+        // desktop behind the logo to lift it, so it gets a little more weight.
+        opacity: glass.providerLogo ? (glass.light ? (glass.translucent ? 0.22 : 0.27) : (glass.translucent ? 0.25 : 0.33)) : (glass.translucent ? 0.18 : 0.22)
         visible: glass.decoration === 1 && loadedSource.toString() !== ""
         property url loadedSource
         readonly property url wanted: glass.decoration === 1 ? glass.watermark : ""
