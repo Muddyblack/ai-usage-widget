@@ -39,7 +39,7 @@ def shared_settings_path():
         return override
     widget_id = re.sub(r"[^A-Za-z0-9._-]", "", config.env("WIDGET_ID", ""))
     name = f"plasma-shared-settings-{widget_id}.json" if widget_id else SHARED_SETTINGS_FILENAME
-    return os.path.join(paths.config_home(), paths.APP_DIR, name)
+    return os.path.join(paths.config_dir(), name)
 
 
 def _write_private(path, payload):

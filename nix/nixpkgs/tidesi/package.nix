@@ -34,7 +34,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
 
-    root=$out/share/plasma/plasmoids/org.muddyblack.aiUsageWidget
+    root=$out/share/plasma/plasmoids/org.muddyblack.tidesi
     mkdir -p "$root"
     cp -r build/kde/. "$root/"
 
@@ -51,8 +51,8 @@ stdenvNoCC.mkDerivation (finalAttrs: {
                      'SECRET_TOOL = "${lib.getExe' libsecret "secret-tool"}"'
 
     # Register the icon in the hicolor theme so the Widget Explorer finds it.
-    install -Dm644 assets/icons/org.muddyblack.aiUsageWidget.svg \
-      "$out/share/icons/hicolor/scalable/apps/org.muddyblack.aiUsageWidget.svg"
+    install -Dm644 assets/icons/org.muddyblack.tidesi.svg \
+      "$out/share/icons/hicolor/scalable/apps/org.muddyblack.tidesi.svg"
 
     runHook postInstall
   '';
@@ -60,7 +60,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   doInstallCheck = true;
   installCheckPhase = ''
     runHook preInstallCheck
-    root=$out/share/plasma/plasmoids/org.muddyblack.aiUsageWidget
+    root=$out/share/plasma/plasmoids/org.muddyblack.tidesi
     test -f "$root/metadata.json"
     test -f "$root/contents/ui/main.qml"
     # The catalogs are not in git: a pack that skipped them ships English only.

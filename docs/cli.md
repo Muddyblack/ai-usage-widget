@@ -58,7 +58,7 @@ so a missing key does not look like a service you never enabled.
 ## Configuration
 
 Without a widget there is no settings page to write the config, so create it
-once by hand at `~/.config/ai-usage-widget/hyprland-settings.json` (or under
+once by hand at `~/.config/tidesi/hyprland-settings.json` (or under
 `$XDG_CONFIG_HOME`; `TIDESI_CONFIG` overrides the path). Provider defaults are
 zero based. Run `get-ai-usage --initialize-provider-defaults` when you want the
 one-shot local detection policy applied, or set the `providers` booleans

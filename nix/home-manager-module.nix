@@ -3,7 +3,7 @@ self:
 let
   cfg = config.programs.tidesi;
   system = pkgs.stdenv.hostPlatform.system;
-  pluginId = "org.muddyblack.aiUsageWidget";
+  pluginId = "org.muddyblack.tidesi";
 in
 {
   imports = [
@@ -90,7 +90,7 @@ in
         Type=Application
         Name=Tidesi
         Exec=${cfg.desktop.package}/bin/tidesi
-        Icon=org.muddyblack.aiUsageWidget
+        Icon=org.muddyblack.tidesi
         X-GNOME-Autostart-enabled=true
       '';
     };

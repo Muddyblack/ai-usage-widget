@@ -5,7 +5,7 @@
 ; for each release, which release.yml runs that workflow for.
 ;
 ; Per user: no admin rights, installed to %LOCALAPPDATA%\Programs\Tidesi.
-; Settings and history live in %APPDATA% / %LOCALAPPDATA%\ai-usage-widget and
+; Settings and history live in %APPDATA% / %LOCALAPPDATA%\/tidesi and
 ; survive updates and uninstalls alike.
 
 #ifndef AppVersion
@@ -53,6 +53,11 @@ Source: "..\..\dist\Tidesi\*"; DestDir: "{app}"; Flags: ignoreversion recursesub
 ; An update replaces the whole bundle: files a new PyInstaller build no longer
 ; has must not linger next to the ones it does.
 Type: filesandordirs; Name: "{app}\_internal"
+; The app was called "AI Usage" before the rename; the same AppId updates it in
+; place, so its executable and shortcuts are swept away here.
+Type: files; Name: "{app}\AI Usage.exe"
+Type: files; Name: "{autoprograms}\AI Usage.lnk"
+Type: files; Name: "{autodesktop}\AI Usage.lnk"
 
 [Icons]
 Name: "{autoprograms}\Tidesi"; Filename: "{app}\Tidesi.exe"

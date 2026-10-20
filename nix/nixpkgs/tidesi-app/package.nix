@@ -56,8 +56,8 @@ stdenv.mkDerivation (finalAttrs: {
       --replace-fail 'SECRET_TOOL = "secret-tool"' \
                      'SECRET_TOOL = "${lib.getExe' libsecret "secret-tool"}"'
 
-    install -Dm644 assets/icons/org.muddyblack.aiUsageWidget.svg \
-      "$out/share/icons/hicolor/scalable/apps/org.muddyblack.aiUsageWidget.svg"
+    install -Dm644 assets/icons/org.muddyblack.tidesi.svg \
+      "$out/share/icons/hicolor/scalable/apps/org.muddyblack.tidesi.svg"
 
     # PySide6 ships no QML modules (QtQuick.Controls ...): they come from
     # qtdeclarative, the same Qt it runs on.

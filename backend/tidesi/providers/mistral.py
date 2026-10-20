@@ -144,7 +144,7 @@ def _vibe_stats():
     session_dir = _vibe_session_dir()
     if not os.path.isdir(session_dir):
         return {}
-    cache_dir = os.path.join(paths.cache_home(), "kde-ai-usage")
+    cache_dir = paths.cache_dir()
     key = _cache_key(session_dir)
     cache_path = os.path.join(cache_dir, f"vibe-stats-{key}.json")
 

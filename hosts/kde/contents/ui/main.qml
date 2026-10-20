@@ -18,7 +18,7 @@ PlasmoidItem {
 
     // contents/, wherever Plasma installed the package.
     readonly property string contentsDir: Qt.resolvedUrl("..").toString().replace("file://", "").replace(/\/$/, "")
-    readonly property string configPath: StandardPaths.writableLocation(StandardPaths.ConfigLocation).toString().replace("file://", "") + "/ai-usage-widget/hyprland-settings.json"
+    readonly property string configPath: StandardPaths.writableLocation(StandardPaths.ConfigLocation).toString().replace("file://", "") + "/tidesi/hyprland-settings.json"
 
     PlasmaRunner {
         id: runner
@@ -77,7 +77,7 @@ PlasmoidItem {
     }
 
     Plasmoid.backgroundHints: Plasmoid.configuration.backgroundHints
-    Plasmoid.icon: "org.muddyblack.aiUsageWidget"
+    Plasmoid.icon: "org.muddyblack.tidesi"
     toolTipMainText: app.i18n("Tidesi")
     toolTipSubText: {
         var lines = [];

@@ -24,7 +24,7 @@ mkdir -p "$out/contents/ui/shared" "$out/contents/backend" "$out/contents/assets
 cp -r "$root/ui/." "$out/contents/ui/shared/"
 cp -r "$root/backend/." "$out/contents/backend/"
 cp -r "$root/assets/." "$out/contents/assets/"
-cp "$root/assets/icons/org.muddyblack.aiUsageWidget.svg" "$out/contents/icons/"
+cp "$root/assets/icons/org.muddyblack.tidesi.svg" "$out/contents/icons/"
 cp "$root"/translate/*.po "$out/contents/translate/"
 find "$out" \( -name '__pycache__' -o -name '*.pyc' -o -name '*~' -o -name '*.swp' \) -prune -exec rm -rf {} +
 

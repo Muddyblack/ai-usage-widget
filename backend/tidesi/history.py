@@ -1,7 +1,7 @@
 """The on-disk half of the shared usage history.
 
 Both frontends keep the rolling series in
-``~/.local/share/ai-usage-widget/usage-history-latest.json``. Whoever is running
+``~/.local/share/tidesi/usage-history-latest.json``. Whoever is running
 writes it on every poll, and neither can assume it still holds what it last put
 there: the other frontend may have been recording in the meantime, and a second
 Plasma widget instance is a writer too. So a save is a union against what is

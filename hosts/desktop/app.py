@@ -100,7 +100,7 @@ def _server_name():
 
 
 SERVER_NAME = _server_name()
-ICON_PATH = ROOT / "assets" / "icons" / "org.muddyblack.aiUsageWidget.svg"
+ICON_PATH = ROOT / "assets" / "icons" / "org.muddyblack.tidesi.svg"
 MAIN_QML = ROOT / "hosts" / "desktop" / "qml" / "Main.qml"
 # The settings studio's sections, in sidebar order (ui/SettingsPage.qml).
 SETTINGS_SECTIONS = ("providers", "local", "panel", "appearance", "data", "advanced", "info")
@@ -194,7 +194,10 @@ def _restore_environ(saved):
 # start things through their own autostart settings.
 
 _RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
-_LAUNCH_AGENT = Path.home() / "Library" / "LaunchAgents" / "org.muddyblack.aiUsageWidget.plist"
+_LAUNCH_AGENT = Path.home() / "Library" / "LaunchAgents" / "org.muddyblack.tidesi.plist"
+# What the macOS agent and the Windows Run value were called before the rename.
+_LEGACY_LAUNCH_AGENT = Path.home() / "Library" / "LaunchAgents" / "org.muddyblack.aiUsageWidget.plist"
+_LEGACY_RUN_NAME = "AI Usage"
 AUTOSTART_AVAILABLE = paths.IS_WINDOWS or paths.IS_MACOS
 
 
@@ -209,7 +212,7 @@ def _launch_agent_plist():
 
     return plistlib.dumps(
         {
-            "Label": "org.muddyblack.aiUsageWidget",
+            "Label": "org.muddyblack.tidesi",
             "ProgramArguments": _launch_arguments(),
             "RunAtLoad": True,
             "ProcessType": "Interactive",
@@ -218,17 +221,36 @@ def _launch_agent_plist():
 
 
 def migrate_autostart():
-    """Earlier macOS builds started at login through a LaunchAgent plist; the
-    bundled app now uses a login item, so a plist left over becomes one."""
-    if loginitem is None or not _LAUNCH_AGENT.is_file():
+    """Carry "start at login" over from earlier builds.
+
+    macOS: first a LaunchAgent plist (under this id, then the pre-rename one),
+    now a login item. Windows: the Run value was named "AI Usage" and pointed
+    at an executable the installer has since replaced."""
+    if paths.IS_WINDOWS:
+        _migrate_windows_autostart()
+        return
+    agents = [agent for agent in (_LAUNCH_AGENT, _LEGACY_LAUNCH_AGENT) if agent.is_file()]
+    if loginitem is None or not agents:
         return
     try:
         loginitem.set_enabled(True)
     except OSError as exc:
         print(f"Tidesi: could not move start-at-login to a login item: {exc}", file=sys.stderr)
         return
-    with contextlib.suppress(OSError):
-        _LAUNCH_AGENT.unlink()
+    for agent in agents:
+        with contextlib.suppress(OSError):
+            agent.unlink()
+
+
+def _migrate_windows_autostart():
+    import winreg
+
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, _RUN_KEY, 0, winreg.KEY_SET_VALUE) as key:
+            winreg.DeleteValue(key, _LEGACY_RUN_NAME)
+    except OSError:
+        return  # no old value: nothing to carry over
+    set_autostart(True)
 
 
 def _launch_command():
@@ -1573,7 +1595,7 @@ def _kwin_keep_pill_above():
     scripting = QDBusInterface("org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting", bus)
     if not scripting.isValid():
         return None
-    path = os.path.join(paths.cache_home(), paths.APP_DIR, "kwin-pill.js")
+    path = os.path.join(paths.cache_dir(), "kwin-pill.js")
     try:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as fh:

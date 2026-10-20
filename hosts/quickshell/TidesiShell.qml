@@ -24,7 +24,7 @@ ShellRoot {
     readonly property string configPath: {
         var xdg = Quickshell.env("XDG_CONFIG_HOME");
         var base = (xdg && xdg !== "") ? xdg : (Quickshell.env("HOME") + "/.config");
-        return base + "/ai-usage-widget/hyprland-settings.json";
+        return base + "/tidesi/hyprland-settings.json";
     }
 
     ProcessRunner {

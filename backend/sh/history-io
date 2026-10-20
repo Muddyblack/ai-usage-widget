@@ -23,7 +23,18 @@ set -euo pipefail
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/python-interp.sh"
 py_resolve || true
 
-DIR="${XDG_DATA_HOME:-$HOME/.local/share}/ai-usage-widget"
+DIR="${XDG_DATA_HOME:-$HOME/.local/share}/tidesi"
+# The folder was called ai-usage-widget (and kde-ai-usage) before the rename.
+for _old in ai-usage-widget kde-ai-usage; do
+  _old="$(dirname "$DIR")/$_old"
+  if [ -d "$_old" ]; then
+    if [ ! -e "$DIR" ]; then
+      mv "$_old" "$DIR" 2>/dev/null || true
+    else
+      cp -Rn "$_old/." "$DIR/" 2>/dev/null && rm -rf "$_old" || true
+    fi
+  fi
+done
 LATEST="$DIR/usage-history-latest.json"
 LOCK="$DIR/.usage-history.lock"
 mkdir -p "$DIR"

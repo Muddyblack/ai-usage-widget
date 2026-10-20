@@ -55,13 +55,13 @@ class VibeStatsCacheTest(_support.IsolatedHomeTest):
         self.env = {"XDG_CACHE_HOME": self.cache}
 
     def _cache_files(self):
-        directory = os.path.join(self.cache, "kde-ai-usage")
+        directory = os.path.join(self.cache, "tidesi")
         if not os.path.isdir(directory):
             return []
         return [name for name in os.listdir(directory) if name.startswith("vibe-stats-")]
 
     def _cache_payload(self):
-        directory = os.path.join(self.cache, "kde-ai-usage")
+        directory = os.path.join(self.cache, "tidesi")
         name = self._cache_files()[0]
         with open(os.path.join(directory, name), encoding="utf-8") as fh:
             return json.load(fh)
@@ -122,7 +122,7 @@ class VibeStatsCacheTest(_support.IsolatedHomeTest):
         os.makedirs(os.path.join(self.home, ".vibe", "logs", "session"))
         with mock.patch.dict(os.environ, self.env):
             self.assertEqual(mistral._vibe_stats(), {})
-            cache_path = os.path.join(self.cache, "kde-ai-usage", self._cache_files()[0])
+            cache_path = os.path.join(self.cache, "tidesi", self._cache_files()[0])
             before = os.stat(cache_path).st_mtime_ns
             self.assertEqual(mistral._vibe_stats(), {})
             after = os.stat(cache_path).st_mtime_ns
@@ -132,7 +132,7 @@ class VibeStatsCacheTest(_support.IsolatedHomeTest):
         _write_meta(self.home, "sess-a")
         with mock.patch.dict(os.environ, self.env):
             expected = mistral._vibe_stats()
-            cache_path = os.path.join(self.cache, "kde-ai-usage", self._cache_files()[0])
+            cache_path = os.path.join(self.cache, "tidesi", self._cache_files()[0])
             with open(cache_path, "w", encoding="utf-8") as fh:
                 fh.write("{not json")
             self.assertEqual(mistral._vibe_stats(), expected)

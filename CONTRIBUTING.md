@@ -84,7 +84,7 @@ host pick up every `translate/*.po`. `hosts/kde/metadata.json` can carry a
 To remove the test copy:
 
 ```bash
-kpackagetool6 -t Plasma/Applet -r org.muddyblack.aiUsageWidgetTest
+kpackagetool6 -t Plasma/Applet -r org.muddyblack.tidesiTest
 ```
 
 Preview the widget without installing it at all:

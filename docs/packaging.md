@@ -6,7 +6,7 @@ The flake builds from the working tree and exports:
 
 | Output | What |
 | --- | --- |
-| `packages.default` | the Plasma widget (`share/plasma/plasmoids/org.muddyblack.aiUsageWidget`) |
+| `packages.default` | the Plasma widget (`share/plasma/plasmoids/org.muddyblack.tidesi`) |
 | `packages.cli` | `tidesi-cli` and `get-ai-usage`, no Qt, no plasmoid |
 | `packages.desktop` | `tidesi`: the tray app with the floating pill, for any desktop with a tray (GNOME, Sway, XFCE, ...) |
 | `packages.hyprland` | the Quickshell panel and tray helper, started with `tidesi-hyprland` |

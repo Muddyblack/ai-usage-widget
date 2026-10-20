@@ -95,14 +95,14 @@ def config_path():
     # format — renaming it would orphan every existing Hyprland config.
     return env(
         "CONFIG",
-        os.path.join(paths.config_home(), paths.APP_DIR, "hyprland-settings.json"),
+        os.path.join(paths.config_dir(), "hyprland-settings.json"),
     )
 
 
 def cache_dir():
     return env(
         "CACHE_DIR",
-        os.path.join(paths.cache_home(), paths.APP_DIR),
+        paths.cache_dir(),
     )
 
 

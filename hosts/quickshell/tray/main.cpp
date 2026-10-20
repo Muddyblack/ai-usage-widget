@@ -73,7 +73,11 @@ int main(int argc, char **argv) {
         QString base = qEnvironmentVariable("XDG_CONFIG_HOME");
         if (base.isEmpty())
             base = QDir::homePath() + "/.config";
-        QFile file(base + "/ai-usage-widget/hyprland-settings.json");
+        QFile file(base + "/tidesi/hyprland-settings.json");
+        // Before the rename the folder was called ai-usage-widget; the backend
+        // moves it on its first run, so until then read the old place.
+        if (!file.exists())
+            file.setFileName(base + "/ai-usage-widget/hyprland-settings.json");
         if (!file.open(QIODevice::ReadOnly))
             return QString();
         return QJsonDocument::fromJson(file.readAll()).object().value("pythonPath").toString().trimmed();

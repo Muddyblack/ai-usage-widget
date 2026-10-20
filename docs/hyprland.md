@@ -24,7 +24,7 @@ The Hyprland frontend supports the same provider set as the Plasma widget,
 including Z.AI, GitHub Copilot, and DeepSeek. Enable these newer providers and
 enter their credentials in the popup settings page; they default to off. The
 settings are stored locally in
-`~/.config/ai-usage-widget/hyprland-settings.json` (or under
+`~/.config/tidesi/hyprland-settings.json` (or under
 `$XDG_CONFIG_HOME`).
 
 ## Blur behind the popup

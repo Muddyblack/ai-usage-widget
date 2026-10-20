@@ -90,7 +90,7 @@ def _usable_token(token):
 def _cooled_down():
     # Spawning agy costs seconds, so try it at most once per cooldown, whether
     # or not it helped. Refreshes run as separate processes, hence the file.
-    stamp = os.path.join(paths.cache_home(), "ai-usage-widget", "antigravity-remote-refresh")
+    stamp = os.path.join(paths.cache_dir(), "antigravity-remote-refresh")
     try:
         if time.time() - os.path.getmtime(stamp) < REFRESH_COOLDOWN:
             return False

@@ -53,7 +53,7 @@ app = BUNDLE(  # noqa: F821
     coll,
     name="Tidesi.app",
     icon=os.environ.get("TIDESI_ICNS") or None,
-    bundle_identifier="org.muddyblack.aiUsageWidget",
+    bundle_identifier="org.muddyblack.tidesi",
     version=VERSION,
     info_plist={
         "CFBundleDisplayName": "Tidesi",

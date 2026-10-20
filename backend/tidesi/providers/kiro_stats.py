@@ -199,7 +199,7 @@ def _fingerprint(files):
 
 def _cache_path(cli_dir, ide_dir):
     key = hashlib.sha256(os.fsencode(os.path.realpath(cli_dir) + "\0" + ide_dir)).hexdigest()[:24]
-    return os.path.join(paths.cache_home(), "kde-ai-usage", f"kiro-stats-{key}.json")
+    return os.path.join(paths.cache_dir(), f"kiro-stats-{key}.json")
 
 
 def _read_cache(path, fingerprint):

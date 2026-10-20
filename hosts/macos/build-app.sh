@@ -20,9 +20,9 @@ if command -v rsvg-convert >/dev/null 2>&1; then
     ICONSET="$BUILD/AppIcon.iconset"
     rm -rf "$ICONSET"; mkdir -p "$ICONSET"
     for size in 16 32 128 256 512; do
-        rsvg-convert -w "$size" -h "$size" "$ROOT/assets/icons/org.muddyblack.aiUsageWidget.svg" \
+        rsvg-convert -w "$size" -h "$size" "$ROOT/assets/icons/org.muddyblack.tidesi.svg" \
             -o "$ICONSET/icon_${size}x${size}.png"
-        rsvg-convert -w "$((size * 2))" -h "$((size * 2))" "$ROOT/assets/icons/org.muddyblack.aiUsageWidget.svg" \
+        rsvg-convert -w "$((size * 2))" -h "$((size * 2))" "$ROOT/assets/icons/org.muddyblack.tidesi.svg" \
             -o "$ICONSET/icon_${size}x${size}@2x.png"
     done
     iconutil -c icns "$ICONSET" -o "$BUILD/AppIcon.icns"

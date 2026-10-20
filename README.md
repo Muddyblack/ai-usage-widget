@@ -237,7 +237,7 @@ full list of tools for working on the source is in
 To remove:
 
 ```bash
-kpackagetool6 -t Plasma/Applet -r org.muddyblack.aiUsageWidget
+kpackagetool6 -t Plasma/Applet -r org.muddyblack.tidesi
 ```
 
 Or install it from the [KDE Store](https://www.opendesktop.org/p/2361382/).
@@ -282,10 +282,11 @@ All configuration is done in the widget's settings panel (right-click the widget
 
 ## Coming from AI Usage Widget
 
-The project was renamed to Tidesi. Your settings and history carry over untouched.
+The project was renamed to Tidesi. Settings, history and caches are moved to the new `tidesi/` folders the first time it runs, so nothing is lost.
 
-- The KDE widget keeps its plugin id, so it stays in your panel. Only the name changed.
-- Settings and history stay in `ai-usage-widget/` under your config and data folders.
+- **KDE widget:** it has a new id, so Plasma sees it as a new widget. Add **Tidesi** to your panel again (your settings come along) and remove the old one:
+  `kpackagetool6 -t Plasma/Applet -r org.muddyblack.aiUsageWidget`
+- **Start at login** is carried over on macOS and Windows.
 - Nix: `programs.ai-usage-widget` still works as an alias of `programs.tidesi`, and the flake keeps `ai-usage` and `ai-usage-cli` as aliases of `tidesi` and `tidesi-cli`. The flake input is now `github:Muddyblack/tidesi`.
 - Scoop: `scoop install tidesi` (was `ai-usage`).
 - The old repository URL redirects.
@@ -315,4 +316,4 @@ Automatically discovered credentials remain in their original local files. Token
 never leave the backend: the JSON model handed to either frontend carries
 presence flags (`hasApiKey`, `keyValid`, …) but no credential, and a contract
 test enforces that. Usage history (timestamps plus usage values) is written
-locally to `~/.local/share/ai-usage-widget/`.
+locally to `~/.local/share/tidesi/`.

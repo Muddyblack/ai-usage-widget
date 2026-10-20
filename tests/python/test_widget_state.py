@@ -120,14 +120,14 @@ class SharedSettingsTest(IsolatedHomeTest):
             self.assertEqual(stat.S_IMODE(os.stat(widget_state.shared_settings_path()).st_mode), 0o600)
 
     def test_each_widget_id_has_its_own_file(self):
-        with mock.patch.dict(os.environ, {"TIDESI_WIDGET_ID": "org.muddyblack.aiUsageWidgetTest"}):
+        with mock.patch.dict(os.environ, {"TIDESI_WIDGET_ID": "org.muddyblack.tidesiTest"}):
             self._merge({"claudeEnabled": False})
             test_path = widget_state.shared_settings_path()
-        with mock.patch.dict(os.environ, {"TIDESI_WIDGET_ID": "org.muddyblack.aiUsageWidget"}):
+        with mock.patch.dict(os.environ, {"TIDESI_WIDGET_ID": "org.muddyblack.tidesi"}):
             self.assertEqual(self._merge({}), {}, "the test copy must not change the real widget")
             self.assertNotEqual(widget_state.shared_settings_path(), test_path)
         with mock.patch.dict(os.environ, {"TIDESI_WIDGET_ID": "../../etc/x"}):
-            self.assertNotIn("/etc/", widget_state.shared_settings_path().replace(os.sep, "/").split("ai-usage-widget", 1)[1])
+            self.assertNotIn("/etc/", widget_state.shared_settings_path().replace(os.sep, "/").split("tidesi", 1)[1])
 
     def test_malformed_patch_is_rejected(self):
         code, _ = _run(["--shared-settings"], {"WIDGET_SHARED_PATCH": "{not json"})

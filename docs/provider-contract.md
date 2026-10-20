@@ -53,7 +53,7 @@ get-ai-usage --all | tidesi-cli   # render a fetched envelope, no second fetch
 ```
 
 `--all` respects the provider toggles in the shared settings file
-(`$XDG_CONFIG_HOME/ai-usage-widget/hyprland-settings.json`, overridable with
+(`$XDG_CONFIG_HOME/tidesi/hyprland-settings.json`, overridable with
 `TIDESI_CONFIG`). `--provider` fetches exactly what was asked for, because the
 Plasma widget keeps its own toggles in the plasmoid configuration.
 
@@ -102,7 +102,7 @@ separate KConfig store in `Plasmoid.configuration.<id>Enabled`, with its own
 per-provider defaults and user choices. Plasma must not be described as reading
 the shared JSON toggles for its provider tabs. Plasma instances do share their
 settings with each other through `--shared-settings`
-(`$XDG_CONFIG_HOME/ai-usage-widget/plasma-shared-settings-<widget id>.json`,
+(`$XDG_CONFIG_HOME/tidesi/plasma-shared-settings-<widget id>.json`,
 mode 0600, one file per installed widget id): a
 patch names only the keys it changes, so two widgets editing different settings
 never undo each other. Pins, panel rotation, the open tab, chart view state and
@@ -619,7 +619,7 @@ history and formats its own countdowns from `resetText`):
   series and the state machine that saves it, migrating legacy points, and
   replaying quota resets.
 
-`~/.local/share/ai-usage-widget/usage-history-latest.json` is the store, shared
+`~/.local/share/tidesi/usage-history-latest.json` is the store, shared
 by both frontends, and `tools/sh/history-io` owns every access to it. It holds the
 newest `DEFAULT_LIMIT` samples — 10,000, about 40 bytes each, which is a month of
 unbroken 5-minute polling and most of a year on a machine that sleeps. A save

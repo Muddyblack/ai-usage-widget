@@ -299,7 +299,7 @@ def _aggregate(records, cfg_model, cfg_effort):
 def get_codex_stats():
     sessions = os.environ.get("CODEX_SESSIONS_DIR") or os.path.join(codex_home(), "sessions")
     config_file = os.environ.get("CODEX_CONFIG_FILE") or os.path.join(codex_home(), "config.toml")
-    cache_dir = os.path.join(paths.cache_home(), "kde-ai-usage")
+    cache_dir = paths.cache_dir()
     key = _cache_key(sessions, config_file)
     cache_path = os.path.join(cache_dir, f"codex-stats-{key}.json")
 

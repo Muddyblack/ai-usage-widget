@@ -539,7 +539,7 @@ function newHome() {
 }
 
 function fileOf(home) {
-    return JSON.parse(fs.readFileSync(path.join(home, "ai-usage-widget", "usage-history-latest.json"), "utf8"));
+    return JSON.parse(fs.readFileSync(path.join(home, "tidesi", "usage-history-latest.json"), "utf8"));
 }
 
 // What is left of a frontend once the protocol moved into the store: run the
@@ -937,7 +937,7 @@ test("a debounced frontend persists once per window and flushes on exit", () => 
     f.record({ w: 10 }, 1000);
     f.record({ w: 11 }, 61000);
     f.record({ w: 12 }, 121000);
-    const latest = path.join(home, "ai-usage-widget", "usage-history-latest.json");
+    const latest = path.join(home, "tidesi", "usage-history-latest.json");
     assert.equal(fs.existsSync(latest), false, "nothing is written before the window ends");
 
     f.advance(301000);

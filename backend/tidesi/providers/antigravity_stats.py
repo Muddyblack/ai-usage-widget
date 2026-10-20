@@ -177,7 +177,7 @@ def _fingerprint(files, editors):
 
 def _cache_path(root):
     key = hashlib.sha256(os.fsencode(os.path.realpath(root))).hexdigest()[:24]
-    return os.path.join(paths.cache_home(), "kde-ai-usage", f"antigravity-stats-{key}.json")
+    return os.path.join(paths.cache_dir(), f"antigravity-stats-{key}.json")
 
 
 def _read_cache(path, fingerprint):

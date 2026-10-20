@@ -57,7 +57,7 @@ QtObject {
     // the locale), most preferred first.
     property var systemLanguages: []
 
-    readonly property string appIcon: "file://" + assetsDir + "/icons/org.muddyblack.aiUsageWidget.svg"
+    readonly property string appIcon: "file://" + assetsDir + "/icons/org.muddyblack.tidesi.svg"
     readonly property string iconDir: "file://" + assetsDir + "/icons/"
     readonly property bool firstRun: false
     readonly property string defaultTrayStyle: "icons"
@@ -119,7 +119,7 @@ QtObject {
 
     // ── Settings and translations ────────────────────────────────────────────
     function requestSettings() {
-        root.runner.run(["sh", "-c", "cat \"$1\" 2>/dev/null || printf '{}'", "tidesi", root.configPath], function (out) {
+        root.runner.run(["sh", "-c", "cat \"$1\" 2>/dev/null || cat \"$(dirname \"$(dirname \"$1\")\")/ai-usage-widget/$(basename \"$1\")\" 2>/dev/null || printf '{}'", "tidesi", root.configPath], function (out) {
             var text = out || "{}";
             if (typeof root.migrateSettings === "function") {
                 var migrated = root.migrateSettings(text);

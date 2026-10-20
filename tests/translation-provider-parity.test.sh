@@ -39,7 +39,7 @@ else
     cp "$repo/translate/build.sh" "$repo/translate/fr.po" "$tmp/translate/"
     cp "$repo/hosts/kde/metadata.json" "$tmp/hosts/kde/"
     build="$tmp/translate/build.sh"
-    mo="$tmp/build/kde/contents/locale/fr/LC_MESSAGES/plasma_applet_org.muddyblack.aiUsageWidget.mo"
+    mo="$tmp/build/kde/contents/locale/fr/LC_MESSAGES/plasma_applet_org.muddyblack.tidesi.mo"
     mtime() { python3 -c 'import os, sys; print(os.stat(sys.argv[1]).st_mtime_ns)' "$1"; }
 
     # A clean build compiles.

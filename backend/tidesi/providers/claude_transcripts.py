@@ -102,7 +102,7 @@ def parse_transcript(path):
 
 
 def _cache_path():
-    return os.path.join(paths.cache_home(), "kde-ai-usage", "claude-transcripts.json")
+    return os.path.join(paths.cache_dir(), "claude-transcripts.json")
 
 
 def _load_cache():
@@ -252,7 +252,7 @@ def _build(stats, now, home, budget, through):
 
 
 def archive_path():
-    return os.path.join(paths.data_home(), "kde-ai-usage", "claude-stats.json")
+    return os.path.join(paths.data_dir(), "claude-stats.json")
 
 
 def _read(path):

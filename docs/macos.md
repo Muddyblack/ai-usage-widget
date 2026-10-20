@@ -30,7 +30,7 @@ as a login item through `SMAppService` (`hosts/macos/loginitem.py`), so it
 shows by name under **System Settings → General → Login Items**; an older
 build's LaunchAgent plist is moved over on the first start. Run from a
 checkout, which has no app bundle to register, it still writes a per-user
-LaunchAgent (`~/Library/LaunchAgents/org.muddyblack.aiUsageWidget.plist`).
+LaunchAgent (`~/Library/LaunchAgents/org.muddyblack.tidesi.plist`).
 
 The popup is the shared glass panel rather than an `NSPopover`: that is the
 trade for one UI that cannot drift between platforms. It does get the
@@ -100,7 +100,7 @@ Code itself.
 
 ### The widget's own files
 
-`~/.config/ai-usage-widget/` and `~/.local/share/ai-usage-widget/`, the same as
+`~/.config/tidesi/` and `~/.local/share/tidesi/`, the same as
 on Linux — deliberately, not by omission. The settings file and the usage
 history are shared with `tidesi-cli` and with any Linux machine the user syncs
 dotfiles from; moving them to `~/Library/Application Support` on macOS alone

@@ -8,7 +8,7 @@ mkdir -p "$tmp/bin" "$tmp/home" "$tmp/repo/hosts/kde/contents/ui" "$tmp/repo/ass
 cp "$repo/scripts/test_install.sh" "$tmp/repo/scripts/test_install.sh"
 cp "$repo/hosts/kde/metadata.json" "$tmp/repo/hosts/kde/metadata.json"
 cp "$repo/hosts/kde/contents/ui/main.qml" "$tmp/repo/hosts/kde/contents/ui/main.qml"
-cp "$repo/assets/icons/org.muddyblack.aiUsageWidget.svg" "$tmp/repo/assets/icons/"
+cp "$repo/assets/icons/org.muddyblack.tidesi.svg" "$tmp/repo/assets/icons/"
 
 # A stand-in for the real assembly: just the files test_install.sh renames.
 cat > "$tmp/repo/scripts/build-kde-package.sh" <<'FAKE_BUILD'
@@ -18,7 +18,7 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 mkdir -p "$1/contents/ui" "$1/contents/icons"
 cp "$root/hosts/kde/metadata.json" "$1/"
 cp "$root/hosts/kde/contents/ui/main.qml" "$1/contents/ui/"
-cp "$root/assets/icons/org.muddyblack.aiUsageWidget.svg" "$1/contents/icons/"
+cp "$root/assets/icons/org.muddyblack.tidesi.svg" "$1/contents/icons/"
 FAKE_BUILD
 chmod +x "$tmp/repo/scripts/build-kde-package.sh"
 
@@ -27,7 +27,7 @@ cat > "$tmp/bin/kpackagetool6" <<'FAKE_TOOL'
 set -euo pipefail
 printf '%s\n' "$*" >> "$FAKE_KPACKAGE_LOG"
 case " $* " in
-    *" -l "*) if [ -f "$FAKE_INSTALLED" ]; then printf '%s\n' 'org.muddyblack.aiUsageWidgetTest'; fi ;;
+    *" -l "*) if [ -f "$FAKE_INSTALLED" ]; then printf '%s\n' 'org.muddyblack.tidesiTest'; fi ;;
     *" -i "*) touch "$FAKE_INSTALLED" ;;
 esac
 FAKE_TOOL

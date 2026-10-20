@@ -21,14 +21,23 @@ module: those CLIs use ``%USERPROFILE%\\.<name>`` on Windows as well, which is
 exactly what ``os.path.expanduser("~/.<name>")`` resolves to there.
 """
 
+import contextlib
 import os
 import sys
 
 IS_WINDOWS = sys.platform == "win32"
 IS_MACOS = sys.platform == "darwin"
 
-# The folder this tool keeps its own settings, cache and history under.
-APP_DIR = "ai-usage-widget"
+# The folder this tool keeps its own settings, cache and history under, below
+# each of config_home(), data_home() and cache_home().
+APP_DIR = "tidesi"
+
+# Where those lived before the rename. Two names, because the caches and
+# Claude's stats sat in a separate "kde-ai-usage" folder.
+_LEGACY_APP_DIRS = ("ai-usage-widget", "kde-ai-usage")
+# The Plasma widget's id, which names its shared settings file.
+_LEGACY_WIDGET_ID = "org.muddyblack.aiUsageWidget"
+_WIDGET_ID = "org.muddyblack.tidesi"
 
 
 def _windows_known(var, fallback):
@@ -129,9 +138,81 @@ def first_file(candidates):
     return candidates[0] if candidates else ""
 
 
+def _merge_dir(old, new):
+    """Move everything in `old` into `new`, keeping whatever `new` already has.
+
+    A whole-folder rename when `new` does not exist yet, which is the normal
+    case. Both existing happens when a frontend that already looked for the new
+    path wrote there first; its files win and only the missing ones move over.
+    Best effort: a folder that cannot be moved is simply left where it is."""
+    if not os.path.isdir(old) or os.path.realpath(old) == os.path.realpath(new):
+        return
+    try:
+        if not os.path.exists(new):
+            os.rename(old, new)
+            return
+        for name in os.listdir(old):
+            target = os.path.join(new, name)
+            if not os.path.exists(target):
+                os.rename(os.path.join(old, name), target)
+        os.rmdir(old)
+    except OSError:
+        pass
+
+
+def _rename_widget_settings(config_dir):
+    """plasma-shared-settings-<widget id>.json follows the widget's id, which
+    changed with the rename. The "...Test" copy `make install` adds follows too."""
+    try:
+        names = os.listdir(config_dir)
+    except OSError:
+        return
+    for name in names:
+        if _LEGACY_WIDGET_ID in name:
+            target = os.path.join(config_dir, name.replace(_LEGACY_WIDGET_ID, _WIDGET_ID))
+            if not os.path.exists(target):
+                with contextlib.suppress(OSError):
+                    os.rename(os.path.join(config_dir, name), target)
+
+
+_MIGRATED = set()
+
+
+def _migrated(root):
+    """`root`/tidesi, after pulling in what an earlier version left under the
+    old folder names. Once per root and process; the answer is the same path
+    either way."""
+    new = os.path.join(root, APP_DIR)
+    if new not in _MIGRATED:
+        _MIGRATED.add(new)
+        for legacy in _LEGACY_APP_DIRS:
+            _merge_dir(os.path.join(root, legacy), new)
+    return new
+
+
+def config_dir():
+    """This tool's settings folder (see APP_DIR)."""
+    path = _migrated(config_home())
+    key = path + "#widget"
+    if key not in _MIGRATED:
+        _MIGRATED.add(key)
+        _rename_widget_settings(path)
+    return path
+
+
+def data_dir():
+    """This tool's history and stats folder (see APP_DIR)."""
+    return _migrated(data_home())
+
+
+def cache_dir():
+    """This tool's cache folder (see APP_DIR)."""
+    return _migrated(cache_home())
+
+
 def history_dir():
     """Where the shared usage-history file and its snapshots live."""
-    return os.path.join(data_home(), APP_DIR)
+    return data_dir()
 
 
 def no_window():
