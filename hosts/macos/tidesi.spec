@@ -27,6 +27,7 @@ with open(os.path.join(ROOT, "hosts", "kde", "metadata.json"), encoding="utf-8")
 datas = [
     (os.path.join(ROOT, "hosts", "desktop", "qml"), os.path.join("hosts", "desktop", "qml")),
     (os.path.join(ROOT, "ui"), "ui"),
+    (os.path.join(ROOT, "hosts", "kde", "metadata.json"), os.path.join("hosts", "kde")),
     (os.path.join(ROOT, "assets", "icons"), os.path.join("assets", "icons")),
     (os.path.join(ROOT, "assets", "icon.png"), "assets"),
 ]

@@ -27,6 +27,7 @@ datas = []
 datas += tree(os.path.join(ROOT, "hosts", "desktop", "qml"), os.path.join("hosts", "desktop", "qml"))
 # Include the complete shared UI tree, including local QML modules (theme).
 datas += tree(os.path.join(ROOT, "ui"), "ui")
+datas += [(os.path.join(ROOT, "hosts", "kde", "metadata.json"), os.path.join("hosts", "kde"))]
 datas += tree(os.path.join(ROOT, "assets", "icons"), os.path.join("assets", "icons"))
 datas += [(os.path.join(ROOT, "assets", "icon.png"), "assets")]
 # The translation catalogs: app.py picks one, Main.qml parses it with I18n.js.

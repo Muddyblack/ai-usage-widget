@@ -16,7 +16,6 @@ on:
       # release.yml, which builds and tests everything again.
       - 'hosts/kde/metadata.json'
       - 'ui/js/ProjectInfo.js'
-      - 'ui/js/ProjectVersion.js'
   # A build from any branch by hand: Actions → Windows → Run workflow.
   workflow_dispatch:
     inputs:

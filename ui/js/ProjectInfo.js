@@ -1,6 +1,5 @@
 // Shared project links and optional network statistics for Tidesi.
 .import "ProjectFunding.js" as Funding
-.import "ProjectVersion.js" as Version
 var name = "Tidesi";
 var author = "Muddyblack";
 var repository = "https://github.com/Muddyblack/tidesi";
@@ -43,7 +42,6 @@ function contributors(text) {
     } catch (error) { return []; }
 }
 
-var currentVersion = Version.current;
 var latestReleaseUrl = "https://api.github.com/repos/Muddyblack/tidesi/releases/latest";
 var releasesPage = repository + "/releases";
 

@@ -842,6 +842,15 @@ class Backend(QObject):
         return QUrl.fromLocalFile(str(ICON_PATH)).toString()
 
     @Property(str, constant=True)
+    def appVersion(self):
+        # hosts/kde/metadata.json is the one place the version lives.
+        try:
+            with open(ROOT / "hosts" / "kde" / "metadata.json", encoding="utf-8") as fh:
+                return str(json.load(fh)["KPlugin"]["Version"])
+        except (OSError, ValueError, KeyError):
+            return ""
+
+    @Property(str, constant=True)
     def historyDir(self):
         return paths.history_dir()
 
