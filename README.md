@@ -287,6 +287,15 @@ All configuration is done in the widget's settings panel (right-click the widget
 
 ---
 
+## What's new in 4.0.0
+
+- **New name and icon** — AI Usage Widget is now TideSI (Tide + SI, Super Intelligence), with a new tide icon. See [Coming from AI Usage Widget](#coming-from-ai-usage-widget): add the widget to your panel once more.
+- **Six new providers** — JetBrains AI, Windsurf, Pi / OMP, Kilo, CodeRabbit and Zed.
+- **Pick how each provider is read** — add providers from a search in Settings → Providers; each provider's page lists its sources (CLI, IDE, local server, API key) with a working indicator.
+- **Claude stats from transcripts** — Claude stats are read from your local transcripts.
+- **Mistral Vibe 2.x** — session stats and sessions show up again.
+- **Polish** — provider tab icons, consistent settings back navigation with a Backspace shortcut, light theme fixes, and a fix for the tray-only pill.
+
 ## Coming from AI Usage Widget
 
 The project was renamed to TideSI. Settings, history and caches are moved to the new `tidesi/` folders the first time it runs, so nothing is lost.
