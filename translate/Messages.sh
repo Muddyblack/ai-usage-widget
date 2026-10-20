@@ -58,16 +58,16 @@ xgettext \
     --keyword=i18nd:2 --keyword=i18ndc:2c,3 --keyword=i18ndp:2,3 --keyword=i18ndcp:2c,3,4 \
     --keyword=ki18n --keyword=ki18nc:1c,2 --keyword=ki18np:1,2 --keyword=ki18ncp:1c,2,3 \
     --keyword=xi18n --keyword=xi18nc:1c,2 --keyword=xi18np:1,2 --keyword=xi18ncp:1c,2,3 \
-    --package-name="AI Usage Monitor" \
+    --package-name="Tidesi" \
     --package-version="$version" \
     --msgid-bugs-address="$bug_url/issues" \
     --output="$pot" \
     "${sources[@]}"
 
-# The backend words its own rows and errors (backend/aiusage/messages.py):
+# The backend words its own rows and errors (backend/tidesi/messages.py):
 # every tr("…") there is extracted in a second pass with the Python parser and
 # merged in, so backend and UI strings share the one catalog the UI reads.
-mapfile -t py_sources < <(find backend/aiusage -type f -name '*.py' | LC_ALL=C sort)
+mapfile -t py_sources < <(find backend/tidesi -type f -name '*.py' | LC_ALL=C sort)
 py_pot="$(mktemp)"
 xgettext \
     --from-code=UTF-8 \
@@ -75,7 +75,7 @@ xgettext \
     --add-comments=TRANSLATORS \
     --add-location=file \
     --keyword=tr \
-    --package-name="AI Usage Monitor" \
+    --package-name="Tidesi" \
     --package-version="$version" \
     --msgid-bugs-address="$bug_url/issues" \
     --output="$py_pot" \

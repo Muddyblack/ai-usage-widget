@@ -15,7 +15,6 @@ on:
       # release.yml, which builds and tests everything again.
       - 'hosts/kde/metadata.json'
       - 'ui/js/ProjectInfo.js'
-      - 'ui/js/ProjectVersion.js'
   workflow_dispatch:
   workflow_call:
     inputs:
@@ -105,7 +104,7 @@ jobs:
           QT_QPA_PLATFORM: offscreen
           # A throwaway settings file, so the run cannot read or write
           # anything of the runner's.
-          AI_USAGE_CONFIG: ${{ runner.temp }}/settings.json
+          TIDESI_CONFIG: ${{ runner.temp }}/settings.json
         run: python3 hosts/desktop/app.py --selftest
 
       - name: The native macOS modules import
@@ -121,17 +120,17 @@ jobs:
 
       - name: The bundle is built for this CPU
         run: |
-          file "dist/AI Usage.app/Contents/MacOS/AI Usage"
+          file "dist/Tidesi.app/Contents/MacOS/Tidesi"
           case "${{ matrix.arch }}" in
-            apple-silicon) file "dist/AI Usage.app/Contents/MacOS/AI Usage" | grep -q arm64 ;;
-            intel) file "dist/AI Usage.app/Contents/MacOS/AI Usage" | grep -q x86_64 ;;
+            apple-silicon) file "dist/Tidesi.app/Contents/MacOS/Tidesi" | grep -q arm64 ;;
+            intel) file "dist/Tidesi.app/Contents/MacOS/Tidesi" | grep -q x86_64 ;;
           esac
 
       - name: Self-test the bundled app
         env:
           QT_QPA_PLATFORM: offscreen
-          AI_USAGE_CONFIG: ${{ runner.temp }}/bundle-settings.json
-        run: '"dist/AI Usage.app/Contents/MacOS/AI Usage" --selftest'
+          TIDESI_CONFIG: ${{ runner.temp }}/bundle-settings.json
+        run: '"dist/Tidesi.app/Contents/MacOS/Tidesi" --selftest'
 
       # The only screenshots: the real app on the runner's real desktop, full
       # screen shots of a few views (--tour), never offscreen renders. Demo
@@ -139,7 +138,7 @@ jobs:
       - name: Screenshot of the running app on the real desktop
         if: matrix.arch == 'apple-silicon'
         env:
-          AI_USAGE_CONFIG: ${{ runner.temp }}/desktop-settings.json
+          TIDESI_CONFIG: ${{ runner.temp }}/desktop-settings.json
         run: |
           mkdir -p "$RUNNER_TEMP/screens"
           python3 hosts/desktop/app.py --demo --tour "$RUNNER_TEMP/screens"
@@ -201,23 +200,23 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-        run: hosts/macos/notarize.sh dmg ai-usage-macos-*.dmg
+        run: hosts/macos/notarize.sh dmg tidesi-macos-*.dmg
 
       # ditto, not zip: it preserves the app bundle's extended attributes
       # (the codesign signature) the way Finder's own "Compress" does.
       - name: zip
         run: |
           VERSION="$(grep -oE '"Version":[[:space:]]*"[^"]+"' hosts/kde/metadata.json | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
-          ditto -c -k --keepParent "dist/AI Usage.app" "ai-usage-macos-$VERSION-${{ matrix.arch }}.zip"
+          ditto -c -k --keepParent "dist/Tidesi.app" "tidesi-macos-$VERSION-${{ matrix.arch }}.zip"
 
       - uses: actions/upload-artifact@v7
         id: app-upload
         continue-on-error: true
         with:
-          name: ai-usage-macos-${{ matrix.arch }}
+          name: tidesi-macos-${{ matrix.arch }}
           path: |
-            ai-usage-macos-*.zip
-            ai-usage-macos-*.dmg
+            tidesi-macos-*.zip
+            tidesi-macos-*.dmg
           if-no-files-found: error
           # A release has its own copy attached; this one is for trying a build.
           retention-days: 14
@@ -231,10 +230,10 @@ jobs:
         if: steps.app-upload.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
-          name: ai-usage-macos-${{ matrix.arch }}
+          name: tidesi-macos-${{ matrix.arch }}
           path: |
-            ai-usage-macos-*.zip
-            ai-usage-macos-*.dmg
+            tidesi-macos-*.zip
+            tidesi-macos-*.dmg
           if-no-files-found: error
           retention-days: 14
           overwrite: true

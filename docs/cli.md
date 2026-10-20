@@ -1,6 +1,6 @@
 # Terminal frontend
 
-`ai-usage-cli` renders the same provider data as a table, with no Plasma,
+`tidesi-cli` renders the same provider data as a table, with no Plasma,
 Quickshell or compositor involved. It is the way to use this on a desktop the
 widget cannot be installed on — Plasma 5, GNOME, XFCE — as well as over SSH, in
 a shell prompt, or in a status bar.
@@ -12,11 +12,11 @@ a shell prompt, or in a status bar.
 export PATH="$PWD/backend/sh:$PATH"
 
 # … or link just the frontend (it resolves symlinks to find its package)
-ln -s "$PWD/backend/sh/ai-usage-cli" ~/.local/bin/ai-usage-cli
+ln -s "$PWD/backend/sh/tidesi-cli" ~/.local/bin/tidesi-cli
 
 # … or, on NixOS, run it straight from the flake without installing anything
 nix run .#cli
-nix run github:Muddyblack/ai-usage-widget#cli
+nix run github:Muddyblack/tidesi#cli
 ```
 
 If the widget is already installed, its settings page lists the path under
@@ -26,11 +26,11 @@ hunted down by hand.
 ## Usage
 
 ```bash
-ai-usage-cli                        # every enabled provider
-ai-usage-cli --provider claude,zai  # a subset, ignoring the toggles
-ai-usage-cli --compact              # one line, for status bars
-watch -n 300 ai-usage-cli           # refresh in place
-get-ai-usage --all | ai-usage-cli   # render an envelope you already fetched
+tidesi-cli                        # every enabled provider
+tidesi-cli --provider claude,zai  # a subset, ignoring the toggles
+tidesi-cli --compact              # one line, for status bars
+watch -n 300 tidesi-cli           # refresh in place
+get-ai-usage --all | tidesi-cli   # render an envelope you already fetched
 ```
 
 ```
@@ -58,8 +58,8 @@ so a missing key does not look like a service you never enabled.
 ## Configuration
 
 Without a widget there is no settings page to write the config, so create it
-once by hand at `~/.config/ai-usage-widget/hyprland-settings.json` (or under
-`$XDG_CONFIG_HOME`; `AI_USAGE_CONFIG` overrides the path). Provider defaults are
+once by hand at `~/.config/tidesi/hyprland-settings.json` (or under
+`$XDG_CONFIG_HOME`; `TIDESI_CONFIG` overrides the path). Provider defaults are
 zero based. Run `get-ai-usage --initialize-provider-defaults` when you want the
 one-shot local detection policy applied, or set the `providers` booleans
 yourself. Credentials go in `keys`, and the `WIDGET_*` environment variables
@@ -84,6 +84,6 @@ Claude needs no key — a local Claude Code login is enough. See
 
 
 Junie local usage is available with `get-ai-usage --provider junie` and
-`ai-usage-cli --provider junie`. It is marked untested, reads local CLI sessions,
+`tidesi-cli --provider junie`. It is marked untested, reads local CLI sessions,
 and exposes no account quota or billed dollar spend. See
 [Junie setup](providers.md#junie-cli-untested), including Google BYOK commands.

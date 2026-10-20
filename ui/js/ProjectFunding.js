@@ -1,4 +1,4 @@
-// Funding links for AI Usage Monitor
+// Funding links for Tidesi
 var links = [
   {
     "id": "github",

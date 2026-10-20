@@ -5,7 +5,7 @@ everything a user reads, on every platform:
 
 - the UI (`ui/`, `hosts/`): `shell.i18n("…")` / `i18nc` / `i18np` calls;
 - the text the backend words itself — row labels, details, tooltips, errors —
-  written as `tr("…")` in `backend/aiusage` (see `backend/aiusage/messages.py`).
+  written as `tr("…")` in `backend/tidesi` (see `backend/tidesi/messages.py`).
   The envelope carries each such field's template beside it (`labelI18n`,
   `detailI18n`, …) and the UI translates it with the same catalog.
 
@@ -43,10 +43,10 @@ Weblate is free for open-source projects at <https://hosted.weblate.org>
 ("Libre" plan). Repository side, nothing else is needed — the layout below is
 what Weblate expects.
 
-1. Sign in with GitHub, create a project (name: *AI Usage Monitor*, website:
+1. Sign in with GitHub, create a project (name: *Tidesi*, website:
    the GitHub repository) and apply for Libre hosting.
 2. Add one component:
-   - **Source code repository:** `https://github.com/Muddyblack/ai-usage-widget`,
+   - **Source code repository:** `https://github.com/Muddyblack/tidesi`,
      branch `master`; **Repository push URL:** the same, via the Weblate
      GitHub integration (it then opens pull requests instead of pushing).
    - **File format:** *gettext PO file*

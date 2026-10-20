@@ -9,9 +9,9 @@ from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
 
-from aiusage.http import HttpResult
-from aiusage.normalize.antigravity import normalize_antigravity
-from aiusage.providers import antigravity, antigravity_remote
+from tidesi.http import HttpResult
+from tidesi.normalize.antigravity import normalize_antigravity
+from tidesi.providers import antigravity, antigravity_remote
 
 ENABLED = "[RemoteControl] RemoteControlEnabled value: true\n"
 CONNECTED = "[remote-control-x-v2] Connection status: Connected\n"

@@ -2,7 +2,7 @@ import datetime
 import unittest
 
 from _support import REPO  # noqa: F401  (ensures TOOLS is on sys.path)
-from aiusage.stats import opencode_stats
+from tidesi.stats import opencode_stats
 
 NOW = 1_780_000_000
 OWN_DATE = datetime.datetime.fromtimestamp(NOW - 3600).strftime("%Y-%m-%d")

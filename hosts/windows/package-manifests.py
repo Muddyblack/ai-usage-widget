@@ -10,8 +10,8 @@ import re
 import zipfile
 from pathlib import Path
 
-HOMEPAGE = "https://github.com/Muddyblack/ai-usage-widget"
-PACKAGE_ID = "Muddyblack.AIUsage"
+HOMEPAGE = "https://github.com/Muddyblack/tidesi"
+PACKAGE_ID = "Muddyblack.Tidesi"
 PRODUCT_CODE = "{DA55F997-6C64-4B6F-92EB-D3BEB6885B68}_is1"
 DESCRIPTION = "AI usage and quota monitoring in the Windows system tray."
 
@@ -29,13 +29,13 @@ def generate(version, assets, output):
     version = version.removeprefix("v")
     if not re.fullmatch(r"\d+\.\d+\.\d+", version):
         raise ValueError("Expected a stable version such as 3.2.0 or v3.2.0")
-    portable = f"ai-usage-windows-{version}.zip"
-    installer = f"AI-Usage-Setup-{version}.exe"
+    portable = f"tidesi-windows-{version}.zip"
+    installer = f"Tidesi-Setup-{version}.exe"
     portable_hash = sha256(assets / portable)
     installer_hash = sha256(assets / installer)
     with zipfile.ZipFile(assets / portable) as archive:
-        if "AI Usage/AI Usage.exe" not in archive.namelist():
-            raise ValueError("Portable ZIP must contain AI Usage/AI Usage.exe")
+        if "Tidesi/Tidesi.exe" not in archive.namelist():
+            raise ValueError("Portable ZIP must contain Tidesi/Tidesi.exe")
     base = f"{HOMEPAGE}/releases/download/v{version}"
     output.mkdir(parents=True, exist_ok=True)
     scoop = {
@@ -44,15 +44,15 @@ def generate(version, assets, output):
         "homepage": HOMEPAGE,
         "license": "MIT",
         "architecture": {"64bit": {"url": f"{base}/{portable}", "hash": portable_hash}},
-        "extract_dir": "AI Usage",
-        "shortcuts": [["AI Usage.exe", "AI Usage"]],
-        "notes": "Quit AI Usage before updating. Disable Start with Windows in the app before uninstalling. Settings and history are kept.",
+        "extract_dir": "Tidesi",
+        "shortcuts": [["Tidesi.exe", "Tidesi"]],
+        "notes": "Quit Tidesi before updating. Disable Start with Windows in the app before uninstalling. Settings and history are kept.",
         "checkver": "github",
         "autoupdate": {
-            "architecture": {"64bit": {"url": f"{HOMEPAGE}/releases/download/v$version/ai-usage-windows-$version.zip"}},
+            "architecture": {"64bit": {"url": f"{HOMEPAGE}/releases/download/v$version/tidesi-windows-$version.zip"}},
         },
     }
-    (output / "ai-usage.json").write_text(json.dumps(scoop, indent=4) + "\n", encoding="utf-8")
+    (output / "tidesi.json").write_text(json.dumps(scoop, indent=4) + "\n", encoding="utf-8")
 
     # JSON-quoted scalar values are also valid YAML; the surrounding YAML is
     # deliberately plain so WinGet's restricted parser can read it.
@@ -64,12 +64,12 @@ def generate(version, assets, output):
 Publisher: Muddyblack
 PublisherUrl: {HOMEPAGE}
 PublisherSupportUrl: {HOMEPAGE}/issues
-PackageName: AI Usage
+PackageName: Tidesi
 PackageUrl: {HOMEPAGE}
 License: MIT
 LicenseUrl: {HOMEPAGE}/blob/v{version}/LICENSE
 ShortDescription: {DESCRIPTION}
-Moniker: ai-usage
+Moniker: tidesi
 ManifestType: defaultLocale
 ManifestVersion: 1.6.0
 """,
@@ -85,7 +85,7 @@ Installers:
     InstallerSha256: {installer_hash.upper()}
     ProductCode: '{PRODUCT_CODE}'
     AppsAndFeaturesEntries:
-      - DisplayName: AI Usage
+      - DisplayName: Tidesi
         Publisher: Muddyblack
         DisplayVersion: "{version}"
         ProductCode: '{PRODUCT_CODE}'
@@ -93,9 +93,9 @@ ManifestType: installer
 ManifestVersion: 1.6.0
 """,
     }
-    manifest_dir = output / "winget" / "manifests" / "m" / "Muddyblack" / "AIUsage" / version
+    manifest_dir = output / "winget" / "manifests" / "m" / "Muddyblack" / "Tidesi" / version
     manifest_dir.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(output / f"ai-usage-winget-{version}.zip", "w", zipfile.ZIP_DEFLATED) as archive:
+    with zipfile.ZipFile(output / f"tidesi-winget-{version}.zip", "w", zipfile.ZIP_DEFLATED) as archive:
         for name, contents in manifests.items():
             path = manifest_dir / name
             data = contents.encode("utf-8")

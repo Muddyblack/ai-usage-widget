@@ -1,9 +1,9 @@
-"""AI Usage for Windows — a tray icon with the same popup as the Hyprland panel.
+"""Tidesi for Windows — a tray icon with the same popup as the Hyprland panel.
 
 The popup is the shared QML under ui/ (PopupContent.qml, SettingsPage.qml
 and the components they use); qml/Main.qml wraps it in a frameless window and
 implements the `shell` interface they read. The data comes from the same
-aiusage package every other frontend runs, called in-process: there is no
+tidesi package every other frontend runs, called in-process: there is no
 shell on Windows to run tools/sh/* through, and nothing here needs one.
 
 It runs on Linux too, which is how it is developed: `nix develop .#windows`
@@ -44,11 +44,11 @@ FROZEN = getattr(sys, "frozen", False)
 ROOT = Path(getattr(sys, "_MEIPASS", "")) if FROZEN else Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT / "backend"))
 
-from aiusage import config, detect, history, historyio, paths, snapshot_export, widget_state  # noqa: E402
-from aiusage.__main__ import _refresh_pricing, snapshot  # noqa: E402
-from aiusage.sessions import collect_sessions, open_session, refresh_sessions  # noqa: E402
+from tidesi import config, detect, history, historyio, paths, snapshot_export, widget_state  # noqa: E402
+from tidesi.__main__ import _refresh_pricing, snapshot  # noqa: E402
+from tidesi.sessions import collect_sessions, open_session, refresh_sessions  # noqa: E402
 
-APP_NAME = "AI Usage"
+APP_NAME = "Tidesi"
 
 # macOS draws its menu bar item natively (hosts/macos/statusitem.py, PyObjC)
 # instead of through Qt's tray icons; anywhere else this stays None.
@@ -58,7 +58,7 @@ if paths.IS_MACOS:
     try:
         import statusitem  # noqa: E402
     except ImportError as exc:  # PyObjC missing: fall back to Qt's tray icon
-        print(f"AI Usage: native menu bar item unavailable ({exc}); using Qt's", file=sys.stderr)
+        print(f"Tidesi: native menu bar item unavailable ({exc}); using Qt's", file=sys.stderr)
         statusitem = None
 
 # The popup's system blur (hosts/macos/vibrancy.py) and the login item
@@ -77,13 +77,13 @@ if paths.IS_MACOS:
     try:
         import vibrancy  # noqa: E402
     except ImportError as exc:
-        print(f"AI Usage: system blur unavailable ({exc})", file=sys.stderr)
+        print(f"Tidesi: system blur unavailable ({exc})", file=sys.stderr)
     # SMAppService registers an app bundle; run from a checkout, there is none.
     if getattr(sys, "frozen", False) and ".app/Contents/MacOS/" in sys.executable:
         try:
             import loginitem  # noqa: E402
         except ImportError as exc:
-            print(f"AI Usage: login item API unavailable ({exc}); using a LaunchAgent", file=sys.stderr)
+            print(f"Tidesi: login item API unavailable ({exc}); using a LaunchAgent", file=sys.stderr)
 
 
 def _server_name():
@@ -96,11 +96,11 @@ def _server_name():
     except (ImportError, KeyError, OSError):
         user = ""
     user = re.sub(r"[^A-Za-z0-9_.-]", "_", user)
-    return f"ai-usage-widget-tray-{user}" if user else "ai-usage-widget-tray"
+    return f"tidesi-tray-{user}" if user else "tidesi-tray"
 
 
 SERVER_NAME = _server_name()
-ICON_PATH = ROOT / "assets" / "icons" / "org.muddyblack.aiUsageWidget.svg"
+ICON_PATH = ROOT / "assets" / "icons" / "org.muddyblack.tidesi.svg"
 MAIN_QML = ROOT / "hosts" / "desktop" / "qml" / "Main.qml"
 # The settings studio's sections, in sidebar order (ui/SettingsPage.qml).
 SETTINGS_SECTIONS = ("providers", "local", "panel", "appearance", "data", "advanced", "info")
@@ -194,7 +194,10 @@ def _restore_environ(saved):
 # start things through their own autostart settings.
 
 _RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
-_LAUNCH_AGENT = Path.home() / "Library" / "LaunchAgents" / "org.muddyblack.aiUsageWidget.plist"
+_LAUNCH_AGENT = Path.home() / "Library" / "LaunchAgents" / "org.muddyblack.tidesi.plist"
+# What the macOS agent and the Windows Run value were called before the rename.
+_LEGACY_LAUNCH_AGENT = Path.home() / "Library" / "LaunchAgents" / "org.muddyblack.aiUsageWidget.plist"
+_LEGACY_RUN_NAME = "AI Usage"
 AUTOSTART_AVAILABLE = paths.IS_WINDOWS or paths.IS_MACOS
 
 
@@ -209,7 +212,7 @@ def _launch_agent_plist():
 
     return plistlib.dumps(
         {
-            "Label": "org.muddyblack.aiUsageWidget",
+            "Label": "org.muddyblack.tidesi",
             "ProgramArguments": _launch_arguments(),
             "RunAtLoad": True,
             "ProcessType": "Interactive",
@@ -218,17 +221,36 @@ def _launch_agent_plist():
 
 
 def migrate_autostart():
-    """Earlier macOS builds started at login through a LaunchAgent plist; the
-    bundled app now uses a login item, so a plist left over becomes one."""
-    if loginitem is None or not _LAUNCH_AGENT.is_file():
+    """Carry "start at login" over from earlier builds.
+
+    macOS: first a LaunchAgent plist (under this id, then the pre-rename one),
+    now a login item. Windows: the Run value was named "AI Usage" and pointed
+    at an executable the installer has since replaced."""
+    if paths.IS_WINDOWS:
+        _migrate_windows_autostart()
+        return
+    agents = [agent for agent in (_LAUNCH_AGENT, _LEGACY_LAUNCH_AGENT) if agent.is_file()]
+    if loginitem is None or not agents:
         return
     try:
         loginitem.set_enabled(True)
     except OSError as exc:
-        print(f"AI Usage: could not move start-at-login to a login item: {exc}", file=sys.stderr)
+        print(f"Tidesi: could not move start-at-login to a login item: {exc}", file=sys.stderr)
         return
-    with contextlib.suppress(OSError):
-        _LAUNCH_AGENT.unlink()
+    for agent in agents:
+        with contextlib.suppress(OSError):
+            agent.unlink()
+
+
+def _migrate_windows_autostart():
+    import winreg
+
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, _RUN_KEY, 0, winreg.KEY_SET_VALUE) as key:
+            winreg.DeleteValue(key, _LEGACY_RUN_NAME)
+    except OSError:
+        return  # no old value: nothing to carry over
+    set_autostart(True)
 
 
 def _launch_command():
@@ -396,7 +418,7 @@ try:
     import PySide6  # noqa: E402, F401
 except ImportError:
     sys.exit(
-        "AI Usage needs PySide6, which is not installed for this Python.\n"
+        "Tidesi needs PySide6, which is not installed for this Python.\n"
         "  pip install -r hosts/desktop/requirements.txt\n"
         "or, from a Nix checkout: nix develop .#windows   (or: make run-windows)"
     )
@@ -489,7 +511,7 @@ class Backend(QObject):
 
     def __init__(self, first_run=False):
         super().__init__()
-        self._pool = ThreadPoolExecutor(max_workers=3, thread_name_prefix="aiusage")
+        self._pool = ThreadPoolExecutor(max_workers=3, thread_name_prefix="tidesi")
         self._busy = False
         self._pricing_busy = False
         self._sessions_request_id = 0
@@ -576,7 +598,7 @@ class Backend(QObject):
         # Synchronous fallback used by tests and non-GUI callers; QML uses the
         # queued path below so the catalog parse never runs on the GUI thread.
         try:
-            from aiusage import pricing
+            from tidesi import pricing
 
             rows = pricing.catalog_rows(query, limit=limit, offset=offset)
             return json.dumps(rows, separators=(",", ":"), ensure_ascii=False)
@@ -592,7 +614,7 @@ class Backend(QObject):
 
     def _query_rates(self, query, limit, offset, request_id):
         try:
-            from aiusage import pricing
+            from tidesi import pricing
 
             rows = pricing.catalog_rows(query, limit=limit, offset=offset)
             payload = json.dumps(rows, separators=(",", ":"), ensure_ascii=False)
@@ -820,6 +842,15 @@ class Backend(QObject):
         return QUrl.fromLocalFile(str(ICON_PATH)).toString()
 
     @Property(str, constant=True)
+    def appVersion(self):
+        # hosts/kde/metadata.json is the one place the version lives.
+        try:
+            with open(ROOT / "hosts" / "kde" / "metadata.json", encoding="utf-8") as fh:
+                return str(json.load(fh)["KPlugin"]["Version"])
+        except (OSError, ValueError, KeyError):
+            return ""
+
+    @Property(str, constant=True)
     def historyDir(self):
         return paths.history_dir()
 
@@ -936,6 +967,12 @@ def tinted_logo_icon(icon, color):
     tile, keeps the picture: its darkest part takes the colour and its lightest
     goes towards white. A flat fill would turn that tile into a solid block, and
     keeping the logo's own lightness would leave OpenAI's black logo black."""
+    # These brand logos need purpose-made silhouettes: Kiro has a background
+    # tile, and Antigravity uses SVG masks/filters unsupported by some Qt paths.
+    path = QUrl(icon).toLocalFile() if icon.startswith("file:") else icon
+    symbolic = {"antigravity-color.svg": "antigravity-symbolic.svg", "kiro.svg": "kiro-symbolic.svg"}.get(os.path.basename(path))
+    if symbolic:
+        icon = os.path.join(os.path.dirname(path), symbolic)
     size = _ICON_SIZE
     image = QImage(size, size, QImage.Format_ARGB32)
     image.fill(Qt.transparent)
@@ -1093,7 +1130,7 @@ class TrayApp:
             backend.settingRequested.emit(key, json.dumps(value))
 
         self.actions = [
-            action("open", "Open AI Usage", self.toggle),
+            action("open", "Open Tidesi", self.toggle),
             action("refresh", "Refresh", backend.refresh),
             action("settings", "Settings", self.open_settings),
         ]
@@ -1373,7 +1410,7 @@ class TrayApp:
                 self.window.setProperty("nativeBlur", applied)
             except (OSError, AttributeError) as exc:
                 self.window.setProperty("nativeBlur", False)
-                print(f"AI Usage: system backdrop failed: {exc}", file=sys.stderr)
+                print(f"Tidesi: system backdrop failed: {exc}", file=sys.stderr)
             return
         if vibrancy is None:
             return
@@ -1383,7 +1420,7 @@ class TrayApp:
             if self.window.property("nativeBlur"):
                 vibrancy.set_light(self.window, bool(self.window.property("light")))
         except Exception as exc:  # PyObjC raises its own error types
-            print(f"AI Usage: system blur failed: {exc}", file=sys.stderr)
+            print(f"Tidesi: system blur failed: {exc}", file=sys.stderr)
 
     def hide(self):
         self._hidden_at = time.monotonic()
@@ -1481,8 +1518,8 @@ class TrayApp:
 # it is handed over DBus, and this one does all three. Windows needs none of it:
 # there the pill is a topmost tool window and TrayApp._place positions the popup.
 
-KWIN_PLUGIN = "ai-usage-widget-pill"
-PILL_TITLE = "AI Usage pill"  # hosts/desktop/qml/Main.qml, pillWindow.title
+KWIN_PLUGIN = "tidesi-pill"
+PILL_TITLE = "Tidesi pill"  # hosts/desktop/qml/Main.qml, pillWindow.title
 POPUP_TITLE = APP_NAME  # hosts/desktop/qml/Main.qml, the root Window's title
 _KWIN_SCRIPT = """\
 // Loaded by hosts/desktop/app.py for as long as it runs; see _kwin_keep_pill_above().
@@ -1573,7 +1610,7 @@ def _kwin_keep_pill_above():
     scripting = QDBusInterface("org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting", bus)
     if not scripting.isValid():
         return None
-    path = os.path.join(paths.cache_home(), paths.APP_DIR, "kwin-pill.js")
+    path = os.path.join(paths.cache_dir(), "kwin-pill.js")
     try:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as fh:
@@ -1973,7 +2010,7 @@ def main(argv):
         try:
             config.initialize_provider_defaults()
         except OSError as e:
-            print(f"AI Usage: could not initialize provider defaults: {e}", file=sys.stderr)
+            print(f"Tidesi: could not initialize provider defaults: {e}", file=sys.stderr)
         migrate_autostart()
     backend = Backend(first_run)
     engine = QQmlApplicationEngine()

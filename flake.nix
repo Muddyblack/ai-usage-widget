@@ -1,5 +1,5 @@
 {
-  description = "AI usage widget for KDE Plasma 6 and Hyprland/Quickshell";
+  description = "Tidesi: AI usage limits for KDE Plasma 6 and Hyprland/Quickshell";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -14,7 +14,7 @@
         # xdg-desktop-portal resolves this entry in the portal daemon's
         # environment, where a flake-only Quickshell is not on PATH.
         exec = "${pkgs.quickshell}/bin/qs";
-        icon = "org.muddyblack.aiUsageWidget";
+        icon = "org.muddyblack.tidesi";
         terminal = false;
         noDisplay = true;
         categories = [ "Utility" ];
@@ -24,7 +24,7 @@
         let pkgs = nixpkgs.legacyPackages.${system};
         in {
           default = pkgs.stdenvNoCC.mkDerivation {
-            pname = "ai-usage-widget";
+            pname = "tidesi";
             version = metadata.KPlugin.Version;
             # The package is assembled from the shared sources by
             # scripts/build-kde-package.sh, which also compiles the .mo catalogs.
@@ -46,7 +46,7 @@
               runHook preInstall
 
               # Install plasmoid package
-              root=$out/share/plasma/plasmoids/org.muddyblack.aiUsageWidget
+              root=$out/share/plasma/plasmoids/org.muddyblack.tidesi
               mkdir -p "$root"
               cp -r build/kde/. "$root/"
 
@@ -62,27 +62,27 @@
                 --replace-fail 'PY_DEFAULT="python3"' \
                                'PY_DEFAULT="${pkgs.python3}/bin/python3"'
               # Remote devices reuse Antigravity's Secret Service credential.
-              substituteInPlace "$root/contents/backend/aiusage/providers/antigravity_remote.py" \
+              substituteInPlace "$root/contents/backend/tidesi/providers/antigravity_remote.py" \
                 --replace-fail 'SECRET_TOOL = "secret-tool"' \
                                'SECRET_TOOL = "${pkgs.libsecret}/bin/secret-tool"'
 
               # Register icon in hicolor theme so Plasma Widget Explorer picks it up
               mkdir -p "$out/share/icons/hicolor/scalable/apps"
-              cp assets/icons/org.muddyblack.aiUsageWidget.svg "$out/share/icons/hicolor/scalable/apps/org.muddyblack.aiUsageWidget.svg"
+              cp assets/icons/org.muddyblack.tidesi.svg "$out/share/icons/hicolor/scalable/apps/org.muddyblack.tidesi.svg"
 
               runHook postInstall
             '';
 
             meta = with pkgs.lib; {
-              description = "Multi-provider AI usage widget for KDE Plasma 6";
+              description = "Tidesi: multi-provider AI usage limits for KDE Plasma 6";
               license = licenses.mit;
               platforms = platforms.linux;
-              homepage = "https://github.com/Muddyblack/ai-usage-widget";
+              homepage = "https://github.com/Muddyblack/tidesi";
             };
           };
 
           tray-helper = pkgs.stdenv.mkDerivation {
-            pname = "ai-usage-tray";
+            pname = "tidesi-tray";
             version = metadata.KPlugin.Version;
             src = ./hosts/quickshell/tray;
             nativeBuildInputs = with pkgs; [ cmake ninja qt6.wrapQtAppsHook ];
@@ -93,7 +93,7 @@
           # Qt and no plasmoid, so a server or a terminal-only setup pulls in
           # nothing graphical.
           cli = pkgs.stdenvNoCC.mkDerivation {
-            pname = "ai-usage-cli";
+            pname = "tidesi-cli";
             version = metadata.KPlugin.Version;
             src = pkgs.lib.fileset.toSource {
               root = ./.;
@@ -103,37 +103,38 @@
             dontBuild = true;
             installPhase = ''
               runHook preInstall
-              dest=$out/share/ai-usage-widget
+              dest=$out/share/tidesi
               mkdir -p "$dest" "$out/bin"
               cp -r backend "$dest/backend"
               find "$dest" \( -name '__pycache__' -o -name '*.pyc' \) -prune -exec rm -rf {} +
               substituteInPlace "$dest/backend/sh/python-interp.sh" \
                 --replace-fail 'PY_DEFAULT="python3"' \
                                'PY_DEFAULT="${pkgs.python3}/bin/python3"'
-              substituteInPlace "$dest/backend/aiusage/providers/antigravity_remote.py" \
+              substituteInPlace "$dest/backend/tidesi/providers/antigravity_remote.py" \
                 --replace-fail 'SECRET_TOOL = "secret-tool"' \
                                'SECRET_TOOL = "${pkgs.libsecret}/bin/secret-tool"'
-              # The launchers resolve symlinks to find the aiusage package beside them.
-              ln -s "$dest/backend/sh/ai-usage-cli" "$out/bin/ai-usage-cli"
+              # The launchers resolve symlinks to find the tidesi package beside them.
+              ln -s "$dest/backend/sh/tidesi-cli" "$out/bin/tidesi-cli"
               ln -s "$dest/backend/sh/get-ai-usage" "$out/bin/get-ai-usage"
+              ln -s tidesi-cli "$out/bin/ai-usage-cli"  # pre-rename name
               runHook postInstall
             '';
             doInstallCheck = true;
             installCheckPhase = ''
-              $out/bin/ai-usage-cli --help > /dev/null
+              $out/bin/tidesi-cli --help > /dev/null
             '';
             meta = {
-              description = "Terminal frontend of the AI usage widget";
+              description = "Terminal frontend of Tidesi";
               license = pkgs.lib.licenses.mit;
               platforms = pkgs.lib.platforms.linux;
-              mainProgram = "ai-usage-cli";
+              mainProgram = "tidesi-cli";
             };
           };
 
           # The Quickshell panel for Hyprland, with its tray helper: what
           # `nix run .#hyprland` starts, installable.
           hyprland = pkgs.stdenv.mkDerivation {
-            pname = "ai-usage-hyprland";
+            pname = "tidesi-hyprland";
             version = metadata.KPlugin.Version;
             src = pkgs.lib.fileset.toSource {
               root = ./.;
@@ -144,7 +145,7 @@
             cmakeDir = "../hosts/quickshell/tray";
 
             postInstall = ''
-              root="$out/share/ai-usage-widget"
+              root="$out/share/tidesi"
               mkdir -p "$root"
               # shell.qml must sit at the repo root beside hosts/, ui/ and backend/:
               # Quickshell roots its QML sandbox at the entry point's directory.
@@ -154,33 +155,33 @@
               substituteInPlace "$root/backend/sh/python-interp.sh" \
                 --replace-fail 'PY_DEFAULT="python3"' \
                                'PY_DEFAULT="${pkgs.python3}/bin/python3"'
-              substituteInPlace "$root/backend/aiusage/providers/antigravity_remote.py" \
+              substituteInPlace "$root/backend/tidesi/providers/antigravity_remote.py" \
                 --replace-fail 'SECRET_TOOL = "secret-tool"' \
                                'SECRET_TOOL = "${pkgs.libsecret}/bin/secret-tool"'
               # xdg-desktop-portal resolves this entry in the portal daemon's
               # environment, where Quickshell is not on PATH.
               install -Dm644 ${quickshellDesktopFor pkgs}/share/applications/org.quickshell.desktop \
                 "$out/share/applications/org.quickshell.desktop"
-              install -Dm644 ../assets/icons/org.muddyblack.aiUsageWidget.svg \
-                "$out/share/icons/hicolor/scalable/apps/org.muddyblack.aiUsageWidget.svg"
+              install -Dm644 ../assets/icons/org.muddyblack.tidesi.svg \
+                "$out/share/icons/hicolor/scalable/apps/org.muddyblack.tidesi.svg"
 
-              cat > "$out/bin/ai-usage-hyprland" <<EOF
+              cat > "$out/bin/tidesi-hyprland" <<EOF
               #!${pkgs.bash}/bin/bash
               set -eu
-              root=$out/share/ai-usage-widget
-              $out/bin/ai-usage-tray ${pkgs.quickshell}/bin/qs "\$root/shell.qml" "\$root/backend/sh/get-ai-usage" &
+              root=$out/share/tidesi
+              $out/bin/tidesi-tray ${pkgs.quickshell}/bin/qs "\$root/shell.qml" "\$root/backend/sh/get-ai-usage" &
               tray_pid=\$!
               trap 'kill "\$tray_pid" 2>/dev/null || true' EXIT INT TERM
               ${pkgs.quickshell}/bin/qs -p "\$root/shell.qml"
               EOF
-              chmod +x "$out/bin/ai-usage-hyprland"
+              chmod +x "$out/bin/tidesi-hyprland"
             '';
 
             meta = {
-              description = "Quickshell panel of the AI usage widget for Hyprland";
+              description = "Quickshell panel of Tidesi for Hyprland";
               license = pkgs.lib.licenses.mit;
               platforms = pkgs.lib.platforms.linux;
-              mainProgram = "ai-usage-hyprland";
+              mainProgram = "tidesi-hyprland";
             };
           };
 
@@ -192,7 +193,7 @@
               python = pkgs.python3.withPackages (ps: [ ps.pyside6 ps.psutil ]);
             in
             pkgs.stdenv.mkDerivation {
-              pname = "ai-usage-app";
+              pname = "tidesi-app";
               version = metadata.KPlugin.Version;
               src = pkgs.lib.fileset.toSource {
                 root = ./.;
@@ -206,47 +207,48 @@
 
               installPhase = ''
                 runHook preInstall
-                root=$out/share/ai-usage-widget
+                root=$out/share/tidesi
                 mkdir -p "$root/hosts" "$out/bin"
                 cp -r hosts/desktop "$root/hosts/desktop"
                 cp -r ui backend assets translate "$root/"
                 find "$root" \( -name '__pycache__' -o -name '*.pyc' \) -prune -exec rm -rf {} +
-                substituteInPlace "$root/backend/aiusage/providers/antigravity_remote.py" \
+                substituteInPlace "$root/backend/tidesi/providers/antigravity_remote.py" \
                   --replace-fail 'SECRET_TOOL = "secret-tool"' \
                                  'SECRET_TOOL = "${pkgs.libsecret}/bin/secret-tool"'
-                install -Dm644 assets/icons/org.muddyblack.aiUsageWidget.svg \
-                  "$out/share/icons/hicolor/scalable/apps/org.muddyblack.aiUsageWidget.svg"
+                install -Dm644 assets/icons/org.muddyblack.tidesi.svg \
+                  "$out/share/icons/hicolor/scalable/apps/org.muddyblack.tidesi.svg"
 
                 # nixpkgs' PySide6 ships no QML modules (QtQuick.Controls ...):
                 # they come from qtdeclarative, the same Qt it runs on.
-                makeWrapper ${python}/bin/python "$out/bin/ai-usage" \
+                makeWrapper ${python}/bin/python "$out/bin/tidesi" \
                   --add-flags "-B $root/hosts/desktop/app.py" \
                   --prefix QML_IMPORT_PATH : ${pkgs.qt6.qtdeclarative}/lib/qt-6/qml \
                   --prefix QT_PLUGIN_PATH : ${pkgs.qt6.qtsvg}/lib/qt-6/plugins
-                wrapQtApp "$out/bin/ai-usage"
+                wrapQtApp "$out/bin/tidesi"
+                ln -s tidesi "$out/bin/ai-usage"  # pre-rename name
                 runHook postInstall
               '';
 
               doInstallCheck = true;
               installCheckPhase = ''
                 export HOME=$TMPDIR XDG_RUNTIME_DIR=$TMPDIR QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software
-                $out/bin/ai-usage --selftest
+                $out/bin/tidesi --selftest
               '';
 
               meta = {
-                description = "Tray app with a floating pill for the AI usage widget, for any Linux desktop";
+                description = "Tray app with a floating pill for Tidesi, for any Linux desktop";
                 license = pkgs.lib.licenses.mit;
                 platforms = pkgs.lib.platforms.linux;
-                mainProgram = "ai-usage";
+                mainProgram = "tidesi";
               };
             };
         });
 
       overlays.default = final: prev: {
-        ai-usage-app = self.packages.${final.stdenv.hostPlatform.system}.desktop;
-        ai-usage-widget = self.packages.${final.stdenv.hostPlatform.system}.default;
-        ai-usage-cli = self.packages.${final.stdenv.hostPlatform.system}.cli;
-        ai-usage-hyprland = self.packages.${final.stdenv.hostPlatform.system}.hyprland;
+        tidesi-app = self.packages.${final.stdenv.hostPlatform.system}.desktop;
+        tidesi = self.packages.${final.stdenv.hostPlatform.system}.default;
+        tidesi-cli = self.packages.${final.stdenv.hostPlatform.system}.cli;
+        tidesi-hyprland = self.packages.${final.stdenv.hostPlatform.system}.hyprland;
       };
       nixosModules.default = import ./nix/nixos-module.nix self;
       homeManagerModules.default = import ./nix/home-manager-module.nix self;
@@ -293,15 +295,15 @@
           };
           cli = {
             type = "app";
-            program = toString (pkgs.writeShellScript "ai-usage-cli" ''
+            program = toString (pkgs.writeShellScript "tidesi-cli" ''
               set -eu
               export PATH=${pkgs.lib.makeBinPath [ pkgs.python3 pkgs.libsecret ]}:"$PATH"
-              exec ${self}/backend/sh/ai-usage-cli "$@"
+              exec ${self}/backend/sh/tidesi-cli "$@"
             '');
           };
           hyprland = {
             type = "app";
-            program = toString (pkgs.writeShellScript "ai-usage-hyprland" ''
+            program = toString (pkgs.writeShellScript "tidesi-hyprland" ''
               set -eu
               export PATH=${pkgs.lib.makeBinPath [
                 pkgs.bash
@@ -318,7 +320,7 @@
               ${pkgs.coreutils}/bin/install -m 0644 \
                 ${quickshellDesktop}/share/applications/org.quickshell.desktop \
                 "$desktop_dir/org.quickshell.desktop"
-              ${self.packages.${system}.tray-helper}/bin/ai-usage-tray \
+              ${self.packages.${system}.tray-helper}/bin/tidesi-tray \
                 ${pkgs.quickshell}/bin/qs "$config" \
                 ${self}/backend/sh/get-ai-usage &
               tray_pid=$!
@@ -333,7 +335,7 @@
         let pkgs = nixpkgs.legacyPackages.${system};
         in rec {
           default = pkgs.mkShell {
-            name = "ai-usage-widget-dev";
+            name = "tidesi-dev";
             packages = with pkgs; [
               qt6.qtdeclarative
               kdePackages.kirigami
@@ -364,7 +366,7 @@
               # same imports work for CI, pre-commit, and local editor checks.
               export QML_IMPORT_PATH="${pkgs.kdePackages.kirigami.unwrapped}/lib/qt-6/qml:${pkgs.kdePackages.libplasma}/lib/qt-6/qml:${pkgs.kdePackages.plasma5support}/lib/qt-6/qml:${pkgs.kdePackages.ksvg}/lib/qt-6/qml:${pkgs.qt6.qtdeclarative}/lib/qt-6/qml''${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
               pre-commit install -f --install-hooks
-              echo "ai-usage-widget dev shell ready"
+              echo "tidesi dev shell ready"
               echo "  make help        — list targets (view, install, pack, tag)"
             '';
           };
@@ -372,7 +374,7 @@
           # Profilers and debuggers for performance work (`nix develop .#profiling`).
           # Kept out of the default shell, which CI enters on every lint run.
           profiling = pkgs.mkShell {
-            name = "ai-usage-widget-profiling";
+            name = "tidesi-profiling";
             inputsFrom = [ default ];
             packages = with pkgs; [
               (python3.withPackages (ps: [ ps.pyinstrument ps.memory-profiler ]))
@@ -390,7 +392,7 @@
           # developed: `nix develop .#windows`, then `python hosts/desktop/app.py`.
           # Separate because only people working on that app want PySide6.
           windows = pkgs.mkShell {
-            name = "ai-usage-widget-windows";
+            name = "tidesi-windows";
             packages = [
               (pkgs.python3.withPackages (ps: [ ps.pyside6 ps.psutil ]))
               pkgs.ruff

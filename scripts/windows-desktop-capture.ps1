@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Stop'
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 # A fresh demo config: no provider calls, no runner credentials/settings.
 @{ floatingPill = $true; windowsTaskbar = $true } | ConvertTo-Json |
-    Set-Content -Encoding utf8 $env:AI_USAGE_CONFIG
+    Set-Content -Encoding utf8 $env:TIDESI_CONFIG
 # --tour runs the real app (tray, popup, docked pill) and photographs the
 # screen once per view: a few popup tabs and settings sections.
 python hosts/desktop/app.py --demo --tour $OutputDirectory

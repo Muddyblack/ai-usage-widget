@@ -94,7 +94,7 @@ Item {
     // Text the backend words itself (row labels, details, errors, tooltips),
     // translated. The envelope carries a field's template beside it as
     // `<key>I18n` ({id, args}, or {lines: [...]} for multi-line text; see
-    // backend/aiusage/messages.py); without one the English text itself is
+    // backend/tidesi/messages.py); without one the English text itself is
     // looked up, which still catches fixed messages that crossed a cache.
     function tr(obj, key) {
         if (!obj)
@@ -253,7 +253,7 @@ Item {
     // A provider that can be read more than one way (a CLI, an IDE, a local
     // server, an API key…) reports its ways in its snapshot's `sources` block;
     // which one is used is the user's choice, "auto" meaning the first that works.
-    // The backend honours the choice from the settings file (aiusage/sources.py).
+    // The backend honours the choice from the settings file (tidesi/sources.py).
     function sourceChoice(id) {
         return (root.settings.sources || {})[id] || ProviderSources.AUTO;
     }
@@ -656,7 +656,7 @@ Item {
     // Hosts without one ignore the call.
     function publishTray() {
         var p = root.pillProvider();
-        var lines = ["AI Usage"];
+        var lines = ["Tidesi"];
         for (var i = 0; i < root.providers.length; i++) {
             var q = root.providers[i];
             if (q.label && q.summary && q.summary.text)
@@ -690,7 +690,7 @@ Item {
     // the language changes.
     function publishTrayLabels() {
         backend.setTrayLabels(JSON.stringify({
-            open: root.i18n("Open AI Usage"),
+            open: root.i18n("Open Tidesi"),
             refresh: root.i18n("Refresh"),
             settings: root.i18n("Settings"),
             trayStyle: root.i18n("Tray style"),
@@ -833,7 +833,7 @@ Item {
 
     // ── Terminal frontend ────────────────────────────────────────────────────
     // Settings → Advanced → "Open in terminal": the backend starts
-    // ai-usage-cli in the user's terminal (hosts that ship it; see cliPath).
+    // tidesi-cli in the user's terminal (hosts that ship it; see cliPath).
     property string cliMessage: ""
     readonly property bool canOpenCli: typeof backend.openCli === "function"
 
@@ -868,7 +868,7 @@ Item {
         if (!item || typeof backend.exportSnapshot !== "function")
             return;
         var stamp = Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss");
-        var base = "ai-usage-" + (root.showSettings ? "settings" : (root.activeId || "popup")) + "-" + stamp;
+        var base = "tidesi-" + (root.showSettings ? "settings" : (root.activeId || "popup")) + "-" + stamp;
         var tmp = root.localPath(StandardPaths.writableLocation(StandardPaths.TempLocation)) + "/" + base + ".png";
         var downloads = StandardPaths.writableLocation(StandardPaths.DownloadLocation);
         var dest = root.localPath(downloads !== "" ? downloads : StandardPaths.writableLocation(StandardPaths.HomeLocation)) + "/" + base + "." + format;

@@ -3,7 +3,7 @@
 import unittest
 
 from _support import raw_fixture
-from aiusage.normalize.cursor import normalize_cursor
+from tidesi.normalize.cursor import normalize_cursor
 
 
 class CursorLimitsTest(unittest.TestCase):

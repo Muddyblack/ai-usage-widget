@@ -5,7 +5,7 @@ import unittest
 from unittest import mock
 
 from _support import REPO, seed_session_index  # noqa: F401  (ensures TOOLS is on sys.path)
-from aiusage import billing_mode, config, envelope
+from tidesi import billing_mode, config, envelope
 
 
 class BillingModeTest(unittest.TestCase):
@@ -132,7 +132,7 @@ class GrokSummaryLayoutTest(unittest.TestCase):
     def test_reads_the_title_and_the_last_cumulative_usage_record(self):
         import tempfile
 
-        from aiusage import sessions
+        from tidesi import sessions
 
         with tempfile.TemporaryDirectory() as root:
             self._session(
@@ -159,7 +159,7 @@ class GrokSummaryLayoutTest(unittest.TestCase):
         import os
         import tempfile
 
-        from aiusage import sessions
+        from tidesi import sessions
 
         with tempfile.TemporaryDirectory() as root:
             directory = self._session(root, "%2Fw", "01a0a9c3-d242-7842-b339-601736230171", "No usage yet", [])

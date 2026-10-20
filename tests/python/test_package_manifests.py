@@ -25,33 +25,33 @@ class PackageManifestsTest(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.assets = Path(temporary.name)
         self.output = self.assets / "output"
-        self.portable = self.assets / "ai-usage-windows-3.2.1.zip"
+        self.portable = self.assets / "tidesi-windows-3.2.1.zip"
         with zipfile.ZipFile(self.portable, "w") as archive:
-            archive.writestr("AI Usage/AI Usage.exe", b"portable executable")
-        self.installer = self.assets / "AI-Usage-Setup-3.2.1.exe"
+            archive.writestr("Tidesi/Tidesi.exe", b"portable executable")
+        self.installer = self.assets / "Tidesi-Setup-3.2.1.exe"
         self.installer.write_bytes(b"installer executable")
 
     def test_scoop_archive_layout_and_hash(self):
         manifests.generate("v3.2.1", self.assets, self.output)
-        scoop = json.loads((self.output / "ai-usage.json").read_text(encoding="utf-8"))
+        scoop = json.loads((self.output / "tidesi.json").read_text(encoding="utf-8"))
         self.assertEqual(scoop["version"], "3.2.1")
         asset = scoop["architecture"]["64bit"]
         self.assertEqual(asset["hash"], hashlib.sha256(self.portable.read_bytes()).hexdigest())
-        self.assertTrue(asset["url"].endswith("/v3.2.1/ai-usage-windows-3.2.1.zip"))
+        self.assertTrue(asset["url"].endswith("/v3.2.1/tidesi-windows-3.2.1.zip"))
         with zipfile.ZipFile(self.portable) as archive:
             self.assertIn(f"{scoop['extract_dir']}/{scoop['shortcuts'][0][0]}", archive.namelist())
         self.assertEqual(scoop["autoupdate"]["architecture"]["64bit"]["url"].replace("$version", "3.2.1"), asset["url"])
 
     def test_winget_submission_layout_and_installer_identity(self):
         manifests.generate("3.2.1", self.assets, self.output)
-        with zipfile.ZipFile(self.output / "ai-usage-winget-3.2.1.zip") as archive:
+        with zipfile.ZipFile(self.output / "tidesi-winget-3.2.1.zip") as archive:
             self.assertEqual(len(archive.namelist()), 3)
             for name in archive.namelist():
-                self.assertTrue(name.startswith("manifests/m/Muddyblack/AIUsage/3.2.1/"))
+                self.assertTrue(name.startswith("manifests/m/Muddyblack/Tidesi/3.2.1/"))
                 self.assertEqual(archive.read(name), (self.output / "winget" / name).read_bytes())
-            installer = archive.read("manifests/m/Muddyblack/AIUsage/3.2.1/Muddyblack.AIUsage.installer.yaml").decode()
+            installer = archive.read("manifests/m/Muddyblack/Tidesi/3.2.1/Muddyblack.Tidesi.installer.yaml").decode()
         self.assertIn(hashlib.sha256(self.installer.read_bytes()).hexdigest().upper(), installer)
-        self.assertIn("/v3.2.1/AI-Usage-Setup-3.2.1.exe", installer)
+        self.assertIn("/v3.2.1/Tidesi-Setup-3.2.1.exe", installer)
         self.assertIn("Scope: user", installer)
         self.assertIn("InstallerType: inno", installer)
         inno = (Path(REPO) / "hosts/windows/installer.iss").read_text(encoding="utf-8")
@@ -71,7 +71,7 @@ class PackageManifestsTest(unittest.TestCase):
 
     def test_wrong_archive_layout_is_rejected(self):
         with zipfile.ZipFile(self.portable, "w") as archive:
-            archive.writestr("AI Usage.exe", b"wrong root")
+            archive.writestr("Tidesi.exe", b"wrong root")
         with self.assertRaisesRegex(ValueError, "must contain"):
             manifests.generate("3.2.1", self.assets, self.output)
         self.assertFalse(self.output.exists())
@@ -79,7 +79,7 @@ class PackageManifestsTest(unittest.TestCase):
 
 class WindowsBundleDataTest(unittest.TestCase):
     def test_bundle_contains_every_shared_ui_asset(self):
-        spec = Path(REPO) / "hosts/windows/ai-usage.spec"
+        spec = Path(REPO) / "hosts/windows/tidesi.spec"
         tree = ast.parse(spec.read_text(encoding="utf-8"))
         statements = []
         for statement in tree.body:

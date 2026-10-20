@@ -3,7 +3,7 @@ import unittest
 from unittest import mock
 
 from _support import env_without_xdg
-from aiusage import paths
+from tidesi import paths
 
 
 class PathsTest(unittest.TestCase):
@@ -18,7 +18,7 @@ class PathsTest(unittest.TestCase):
                 self.assertEqual(paths.data_home(), "/x/data")
                 self.assertEqual(paths.cache_home(), "/x/cache")
                 self.assertEqual(paths.electron_app_data(), "/x/config")
-                self.assertEqual(paths.history_dir(), os.path.join("/x/data", "ai-usage-widget"))
+                self.assertEqual(paths.history_dir(), os.path.join("/x/data", "tidesi"))
 
     def test_windows_known_folders(self):
         roaming, local = r"C:\Users\u\AppData\Roaming", r"C:\Users\u\AppData\Local"

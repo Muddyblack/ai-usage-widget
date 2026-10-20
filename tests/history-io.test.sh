@@ -8,7 +8,7 @@ tool="$repo/backend/sh/history-io"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 export XDG_DATA_HOME="$tmp/data"
-dir="$XDG_DATA_HOME/ai-usage-widget"
+dir="$XDG_DATA_HOME/tidesi"
 latest="$dir/usage-history-latest.json"
 
 fail() { printf 'history-io: %s\n' "$1" >&2; exit 1; }

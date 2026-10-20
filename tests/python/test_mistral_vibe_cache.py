@@ -13,9 +13,9 @@ import unittest
 from unittest import mock
 
 import _support  # noqa: F401  (sys.path)
-from aiusage.http import HttpResult
-from aiusage.providers import mistral
-from aiusage.providers.mistral import get_mistral_usage
+from tidesi.http import HttpResult
+from tidesi.providers import mistral
+from tidesi.providers.mistral import get_mistral_usage
 
 
 def _meta(session_id, title="refactor", cost=0.4, tokens=1000, start="2026-09-10T10:00:00Z"):
@@ -55,13 +55,13 @@ class VibeStatsCacheTest(_support.IsolatedHomeTest):
         self.env = {"XDG_CACHE_HOME": self.cache}
 
     def _cache_files(self):
-        directory = os.path.join(self.cache, "kde-ai-usage")
+        directory = os.path.join(self.cache, "tidesi")
         if not os.path.isdir(directory):
             return []
         return [name for name in os.listdir(directory) if name.startswith("vibe-stats-")]
 
     def _cache_payload(self):
-        directory = os.path.join(self.cache, "kde-ai-usage")
+        directory = os.path.join(self.cache, "tidesi")
         name = self._cache_files()[0]
         with open(os.path.join(directory, name), encoding="utf-8") as fh:
             return json.load(fh)
@@ -79,7 +79,7 @@ class VibeStatsCacheTest(_support.IsolatedHomeTest):
                 calls.append(text)
                 return mistral.as_json(text)
 
-            with mock.patch("aiusage.providers.mistral.as_json", side_effect=counting_parse):
+            with mock.patch("tidesi.providers.mistral.as_json", side_effect=counting_parse):
                 warm = mistral._vibe_stats()
         self.assertEqual(calls, [])
         self.assertEqual(warm, cold)
@@ -122,7 +122,7 @@ class VibeStatsCacheTest(_support.IsolatedHomeTest):
         os.makedirs(os.path.join(self.home, ".vibe", "logs", "session"))
         with mock.patch.dict(os.environ, self.env):
             self.assertEqual(mistral._vibe_stats(), {})
-            cache_path = os.path.join(self.cache, "kde-ai-usage", self._cache_files()[0])
+            cache_path = os.path.join(self.cache, "tidesi", self._cache_files()[0])
             before = os.stat(cache_path).st_mtime_ns
             self.assertEqual(mistral._vibe_stats(), {})
             after = os.stat(cache_path).st_mtime_ns
@@ -132,7 +132,7 @@ class VibeStatsCacheTest(_support.IsolatedHomeTest):
         _write_meta(self.home, "sess-a")
         with mock.patch.dict(os.environ, self.env):
             expected = mistral._vibe_stats()
-            cache_path = os.path.join(self.cache, "kde-ai-usage", self._cache_files()[0])
+            cache_path = os.path.join(self.cache, "tidesi", self._cache_files()[0])
             with open(cache_path, "w", encoding="utf-8") as fh:
                 fh.write("{not json")
             self.assertEqual(mistral._vibe_stats(), expected)
@@ -158,7 +158,7 @@ class VibeStatsCacheTest(_support.IsolatedHomeTest):
         with open(path, "w", encoding="utf-8") as fh:
             json.dump(data, fh)
         with mock.patch.dict(os.environ, {**self.env, "MISTRAL_API_KEY": "sk-secret-value"}):
-            with mock.patch("aiusage.providers.mistral.fetch_json", return_value=HttpResult(200, '{"data":[]}')):
+            with mock.patch("tidesi.providers.mistral.fetch_json", return_value=HttpResult(200, '{"data":[]}')):
                 get_mistral_usage()
         raw = json.dumps(self._cache_payload())
         self.assertNotIn("sess-a", raw)
@@ -169,7 +169,7 @@ class VibeStatsCacheTest(_support.IsolatedHomeTest):
     def test_invalid_key_is_not_cached_as_healthy(self):
         _write_meta(self.home, "sess-a")
         with mock.patch.dict(os.environ, {**self.env, "MISTRAL_API_KEY": "sk-secret-value"}):
-            with mock.patch("aiusage.providers.mistral.fetch_json", return_value=HttpResult(401, "")):
+            with mock.patch("tidesi.providers.mistral.fetch_json", return_value=HttpResult(401, "")):
                 result = get_mistral_usage()
         self.assertFalse(result["keyValid"])
         self.assertEqual(result["error"], "Invalid API key (401)")
@@ -183,7 +183,7 @@ class VibeStatsCacheTest(_support.IsolatedHomeTest):
         _write_meta(self.home, "sess-a")
         body = json.dumps({"data": [{"id": "codestral"}, {"id": "mistral-large"}]})
         with mock.patch.dict(os.environ, {**self.env, "MISTRAL_API_KEY": "sk-secret-value"}):
-            with mock.patch("aiusage.providers.mistral.fetch_json", return_value=HttpResult(200, body)):
+            with mock.patch("tidesi.providers.mistral.fetch_json", return_value=HttpResult(200, body)):
                 result = get_mistral_usage()
         self.assertTrue(result["keyValid"])
         self.assertEqual(result["availableModels"], ["codestral", "mistral-large"])

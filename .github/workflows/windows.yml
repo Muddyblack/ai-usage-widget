@@ -16,7 +16,6 @@ on:
       # release.yml, which builds and tests everything again.
       - 'hosts/kde/metadata.json'
       - 'ui/js/ProjectInfo.js'
-      - 'ui/js/ProjectVersion.js'
   # A build from any branch by hand: Actions → Windows → Run workflow.
   workflow_dispatch:
     inputs:
@@ -55,7 +54,7 @@ jobs:
             relevant:
               - 'hosts/desktop/**'
               - 'hosts/windows/**'
-              - 'backend/aiusage/**'
+              - 'backend/tidesi/**'
               - 'tests/python/**'
               - 'tests/behavior/**'
               - 'scripts/frontend-fixtures.py'
@@ -103,7 +102,7 @@ jobs:
         run: python -m unittest discover -s tests/python -v
 
       - name: backend smoke run
-        run: python -m aiusage --provider claude,antigravity,openai
+        run: python -m tidesi --provider claude,antigravity,openai
 
       - name: tray app loads
         run: python hosts/desktop/app.py --selftest
@@ -113,7 +112,7 @@ jobs:
         shell: pwsh
         env:
           QT_QPA_PLATFORM: windows
-          AI_USAGE_CONFIG: ${{ runner.temp }}\desktop-settings.json
+          TIDESI_CONFIG: ${{ runner.temp }}\desktop-settings.json
         run: scripts/windows-desktop-capture.ps1 -OutputDirectory "$env:RUNNER_TEMP\screens"
 
       - uses: actions/upload-artifact@v7
@@ -165,7 +164,7 @@ jobs:
       - name: build
         run: |
           python -m pip install -r hosts/windows/build-requirements.txt
-          pyinstaller --noconfirm hosts/windows/ai-usage.spec
+          pyinstaller --noconfirm hosts/windows/tidesi.spec
 
       - name: bundled app loads
         shell: pwsh
@@ -175,16 +174,16 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
-          $p = Start-Process -FilePath "dist/AI Usage/AI Usage.exe" -ArgumentList "--selftest" -Wait -PassThru
+          $p = Start-Process -FilePath "dist/Tidesi/Tidesi.exe" -ArgumentList "--selftest" -Wait -PassThru
           if ($p.ExitCode -ne 0) {
             # The .exe has no console; its warnings and errors go to tray.log.
-            Get-Content "$env:LOCALAPPDATA\ai-usage-widget\tray.log" -ErrorAction SilentlyContinue
+            Get-Content "$env:LOCALAPPDATA\tidesi\tray.log" -ErrorAction SilentlyContinue
             exit $p.ExitCode
           }
 
       - name: zip
         shell: pwsh
-        run: Compress-Archive -Path "dist/AI Usage" -DestinationPath "ai-usage-windows-$env:VERSION.zip"
+        run: Compress-Archive -Path "dist/Tidesi" -DestinationPath "tidesi-windows-$env:VERSION.zip"
 
       - name: installer
         shell: pwsh
@@ -197,12 +196,12 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: ai-usage-windows
+          name: tidesi-windows
           path: |
-            ai-usage-windows-*.zip
-            AI-Usage-Setup-*.exe
-            dist/package-manifests/ai-usage.json
-            dist/package-manifests/ai-usage-winget-*.zip
+            tidesi-windows-*.zip
+            Tidesi-Setup-*.exe
+            dist/package-manifests/tidesi.json
+            dist/package-manifests/tidesi-winget-*.zip
           if-no-files-found: error
           # A release has its own copy attached; this one is for trying a build.
           retention-days: 14

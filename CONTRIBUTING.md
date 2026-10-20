@@ -51,7 +51,7 @@ default one — which CI enters — stays small. For SQLite timings, use a tmpfs
 make test-install     # or ./scripts/test_install.sh
 ```
 
-Installs as `AI Usage (Test)` alongside the real widget so you can iterate
+Installs as `Tidesi (Test)` alongside the real widget so you can iterate
 without touching your live install.
 
 `make test-install`, `make view` and `make pack` compile the translations first,
@@ -64,7 +64,7 @@ files under `build/kde/contents/locale/` are git-ignored build output: edit
 One catalog per language, `translate/<lang>.po`, serves every platform: the
 shared UI parses it at runtime (`ui/js/I18n.js`) through `shell.i18n()` /
 `shell.i18nc()` / `shell.i18np()`, and text the backend words itself is
-written as `tr("…")` (`backend/aiusage/messages.py`) and translated by the UI
+written as `tr("…")` (`backend/tidesi/messages.py`) and translated by the UI
 from the same catalog. `translate/Messages.sh` extracts both. Write new text
 as one full phrase with `%1` placeholders rather than pieces joined with `+`,
 and see [`translate/README.md`](translate/README.md) for Weblate.
@@ -84,7 +84,7 @@ host pick up every `translate/*.po`. `hosts/kde/metadata.json` can carry a
 To remove the test copy:
 
 ```bash
-kpackagetool6 -t Plasma/Applet -r org.muddyblack.aiUsageWidgetTest
+kpackagetool6 -t Plasma/Applet -r org.muddyblack.tidesiTest
 ```
 
 Preview the widget without installing it at all:
@@ -156,7 +156,7 @@ and Qt consume the same scenarios and how to run the tests.
 
 ```bash
 make pack
-# compiles the translations, then writes ai-usage-widget-<version>.plasmoid
+# compiles the translations, then writes tidesi-<version>.plasmoid
 ```
 
 ## Releasing
@@ -166,7 +166,7 @@ make tag     # or ./scripts/tag.sh
 ```
 
 Prompts for a version bump (patch / minor / major), updates
-`hosts/kde/metadata.json` (the one place the version lives; `ui/js/ProjectVersion.js` is generated from it) on a `release/vX.Y.Z`
+`hosts/kde/metadata.json` (the one place the version lives) on a `release/vX.Y.Z`
 branch, and opens a PR. Nothing is tagged or pushed to `master` by hand:
 merging the PR makes CI create the tag, build the `.plasmoid` and the
 Windows / macOS assets, and publish the GitHub release.

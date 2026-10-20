@@ -11,7 +11,7 @@ from unittest import mock
 from _support import REPO
 
 sys.path.insert(0, str(Path(REPO) / "backend"))
-session_manifest = importlib.import_module("aiusage.session_manifest")
+session_manifest = importlib.import_module("tidesi.session_manifest")
 
 
 class SessionManifestTraversalTest(unittest.TestCase):

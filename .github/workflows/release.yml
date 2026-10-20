@@ -121,11 +121,11 @@ jobs:
             plasmapkg2 -i ${{ steps.info.outputs.artifact }}
             ```
 
-            **Windows:** run `AI-Usage-Setup-${{ steps.info.outputs.version }}.exe` (no admin rights needed; it updates an existing install in place). Or unzip `ai-usage-windows-${{ steps.info.outputs.version }}.zip` anywhere and run `AI Usage.exe`. Either way it lives in the tray.
+            **Windows:** run `Tidesi-Setup-${{ steps.info.outputs.version }}.exe` (no admin rights needed; it updates an existing install in place). Or unzip `tidesi-windows-${{ steps.info.outputs.version }}.zip` anywhere and run `Tidesi.exe`. Either way it lives in the tray.
 
-            Stable Windows builds also include Scoop and WinGet manifests. See the [package manager instructions](https://github.com/Muddyblack/ai-usage-widget/blob/main/docs/windows.md#package-managers).
+            Stable Windows builds also include Scoop and WinGet manifests. See the [package manager instructions](https://github.com/Muddyblack/tidesi/blob/main/docs/windows.md#package-managers).
 
-            **macOS:** open `ai-usage-macos-${{ steps.info.outputs.version }}-apple-silicon.dmg` (M1 and later) or `ai-usage-macos-${{ steps.info.outputs.version }}-intel.dmg` (Intel Macs; Apple menu → About This Mac → Chip/Processor says which) and drag `AI Usage.app` to Applications (ZIPs also available). It lives in the menu bar. If macOS blocks the first launch, use System Settings → Privacy & Security → Open Anyway. See the [macOS install guide](https://github.com/Muddyblack/ai-usage-widget/blob/main/docs/macos.md#signing-and-distribution).
+            **macOS:** open `tidesi-macos-${{ steps.info.outputs.version }}-apple-silicon.dmg` (M1 and later) or `tidesi-macos-${{ steps.info.outputs.version }}-intel.dmg` (Intel Macs; Apple menu → About This Mac → Chip/Processor says which) and drag `Tidesi.app` to Applications (ZIPs also available). It lives in the menu bar. If macOS blocks the first launch, use System Settings → Privacy & Security → Open Anyway. See the [macOS install guide](https://github.com/Muddyblack/tidesi/blob/main/docs/macos.md#signing-and-distribution).
 
             All platform assets are attached a few minutes after the release appears, once their build has passed.
           files: |
@@ -163,7 +163,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: ai-usage-windows
+          name: tidesi-windows
 
       - name: Attach the Windows build to the release
         uses: softprops/action-gh-release@v3
@@ -171,10 +171,10 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.tag }}
           target_commitish: ${{ github.sha }}
           files: |
-            ai-usage-windows-*.zip
-            AI-Usage-Setup-*.exe
-            dist/package-manifests/ai-usage.json
-            dist/package-manifests/ai-usage-winget-*.zip
+            tidesi-windows-*.zip
+            Tidesi-Setup-*.exe
+            dist/package-manifests/tidesi.json
+            dist/package-manifests/tidesi-winget-*.zip
 
   # The workflow every push runs, with the app job's version-stamped ZIP and DMG
   # this time (macos.yml derives its version from hosts/kde/metadata.json,
@@ -202,10 +202,10 @@ jobs:
       contents: write
 
     steps:
-      # Both CPU builds (ai-usage-macos-apple-silicon, ai-usage-macos-intel).
+      # Both CPU builds (tidesi-macos-apple-silicon, tidesi-macos-intel).
       - uses: actions/download-artifact@v4
         with:
-          pattern: ai-usage-macos-*
+          pattern: tidesi-macos-*
           merge-multiple: true
 
       - name: Attach the macOS build to the release
@@ -214,5 +214,5 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.tag }}
           target_commitish: ${{ github.sha }}
           files: |
-            ai-usage-macos-*.zip
-            ai-usage-macos-*.dmg
+            tidesi-macos-*.zip
+            tidesi-macos-*.dmg

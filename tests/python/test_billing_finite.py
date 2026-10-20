@@ -2,7 +2,7 @@ import math
 import unittest
 
 from _support import REPO  # noqa: F401
-from aiusage import billing
+from tidesi import billing
 
 
 class FiniteBillingTest(unittest.TestCase):

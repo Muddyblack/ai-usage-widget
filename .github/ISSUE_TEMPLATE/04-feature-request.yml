@@ -13,7 +13,7 @@ body:
         - Overview / Usage & Spend tab
         - Sessions tab / Search / Resume
         - Desktop integration (Plasma, Hyprland, macOS, Windows)
-        - CLI tool (ai-usage-cli / get-ai-usage)
+        - CLI tool (tidesi-cli / get-ai-usage)
         - Settings / credentials / configuration
         - Other
     validations:

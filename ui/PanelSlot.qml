@@ -60,7 +60,7 @@ RowLayout {
             function loadSource() {
                 if (loadedSource && loadedSource.toString() !== "")
                     unloadImage(loadedSource);
-                loadedSource = slot.iconSource;
+                loadedSource = Tone.panelLogo(slot.iconSource);
                 if (loadedSource.toString() !== "")
                     loadImage(loadedSource);
                 requestPaint();
@@ -83,6 +83,14 @@ RowLayout {
                 if (!loadedSource || !isImageLoaded(loadedSource))
                     return;
                 ctx.scale(rasterScale, rasterScale);
+                // A logo that is a solid tile (Kiro, ...) would turn into a
+                // featureless square once colorized, so it keeps its own
+                // colours; the % beside it still carries the severity.
+                ctx.drawImage(loadedSource, 2, 2, 12, 12);
+                const corner = ctx.getImageData(Math.round(3.5 * rasterScale), Math.round(3.5 * rasterScale), 1, 1).data;
+                if (corner[3] > 200)
+                    return;
+                ctx.clearRect(0, 0, 16, 16);
                 ctx.globalAlpha = 0.22;
                 ctx.drawImage(loadedSource, 0, 0, 16, 16);
                 ctx.globalAlpha = 1;

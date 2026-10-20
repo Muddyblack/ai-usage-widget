@@ -7,8 +7,8 @@ from pathlib import Path
 from unittest import mock
 
 from _support import REPO  # noqa: F401
-from aiusage import sessions
-from aiusage.providers import antigravity_sessions
+from tidesi import sessions
+from tidesi.providers import antigravity_sessions
 
 _CLI_ID = "11111111-1111-4111-8111-111111111111"
 _IDE_ID = "22222222-2222-4222-8222-222222222222"

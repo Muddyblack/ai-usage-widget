@@ -4,8 +4,8 @@ import tempfile
 from unittest import mock
 
 from _support import IsolatedHomeTest
-from aiusage import pricing, pricing_lock
-from aiusage.http import HttpResult
+from tidesi import pricing, pricing_lock
+from tidesi.http import HttpResult
 
 
 class PricingLockTest(IsolatedHomeTest):

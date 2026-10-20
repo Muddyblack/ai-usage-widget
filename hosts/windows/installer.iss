@@ -1,11 +1,11 @@
-; Windows installer for the AI Usage tray app (Inno Setup 6).
+; Windows installer for Tidesi tray app (Inno Setup 6).
 ;
-; Built by hosts/windows/build-installer.ps1 from PyInstaller's "dist\AI Usage" folder
-; (hosts/windows/ai-usage.spec), in .github/workflows/windows.yml — on every push, and
+; Built by hosts/windows/build-installer.ps1 from PyInstaller's "dist\Tidesi" folder
+; (hosts/windows/tidesi.spec), in .github/workflows/windows.yml — on every push, and
 ; for each release, which release.yml runs that workflow for.
 ;
-; Per user: no admin rights, installed to %LOCALAPPDATA%\Programs\AI Usage.
-; Settings and history live in %APPDATA% / %LOCALAPPDATA%\ai-usage-widget and
+; Per user: no admin rights, installed to %LOCALAPPDATA%\Programs\Tidesi.
+; Settings and history live in %APPDATA% / %LOCALAPPDATA%\/tidesi and
 ; survive updates and uninstalls alike.
 
 #ifndef AppVersion
@@ -16,22 +16,22 @@
 ; Never change the AppId: it is how Windows knows a new version is the same app
 ; and updates it in place.
 AppId={{DA55F997-6C64-4B6F-92EB-D3BEB6885B68}
-AppName=AI Usage
+AppName=Tidesi
 AppVersion={#AppVersion}
-AppVerName=AI Usage {#AppVersion}
+AppVerName=Tidesi {#AppVersion}
 AppPublisher=Muddyblack
-AppPublisherURL=https://github.com/Muddyblack/ai-usage-widget
-AppSupportURL=https://github.com/Muddyblack/ai-usage-widget/issues
-DefaultDirName={autopf}\AI Usage
+AppPublisherURL=https://github.com/Muddyblack/tidesi
+AppSupportURL=https://github.com/Muddyblack/tidesi/issues
+DefaultDirName={autopf}\Tidesi
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\..
-OutputBaseFilename=AI-Usage-Setup-{#AppVersion}
-SetupIconFile=..\..\dist\ai-usage.ico
-UninstallDisplayIcon={app}\AI Usage.exe
-UninstallDisplayName=AI Usage
+OutputBaseFilename=Tidesi-Setup-{#AppVersion}
+SetupIconFile=..\..\dist\tidesi.ico
+UninstallDisplayIcon={app}\Tidesi.exe
+UninstallDisplayName=Tidesi
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
@@ -43,33 +43,38 @@ CloseApplications=no
 ; Offered on a first install only. On an update it would apply the choice
 ; remembered from that install, turning autostart back on for someone who had
 ; switched it off in the app since; left out, the Run value stays as it is.
-Name: "autostart"; Description: "Start AI Usage when I sign in"; Check: not IsUpgrade
+Name: "autostart"; Description: "Start Tidesi when I sign in"; Check: not IsUpgrade
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\..\dist\AI Usage\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\dist\Tidesi\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [InstallDelete]
 ; An update replaces the whole bundle: files a new PyInstaller build no longer
 ; has must not linger next to the ones it does.
 Type: filesandordirs; Name: "{app}\_internal"
+; The app was called "AI Usage" before the rename; the same AppId updates it in
+; place, so its executable and shortcuts are swept away here.
+Type: files; Name: "{app}\AI Usage.exe"
+Type: files; Name: "{autoprograms}\AI Usage.lnk"
+Type: files; Name: "{autodesktop}\AI Usage.lnk"
 
 [Icons]
-Name: "{autoprograms}\AI Usage"; Filename: "{app}\AI Usage.exe"
-Name: "{autodesktop}\AI Usage"; Filename: "{app}\AI Usage.exe"; Tasks: desktopicon
+Name: "{autoprograms}\Tidesi"; Filename: "{app}\Tidesi.exe"
+Name: "{autodesktop}\Tidesi"; Filename: "{app}\Tidesi.exe"; Tasks: desktopicon
 
 [Registry]
 ; The same value the app's own "Start with Windows" switch writes (app.py,
 ; set_autostart), so the two stay one setting.
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "AI Usage"; ValueData: """{app}\AI Usage.exe"""; Tasks: autostart
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Tidesi"; ValueData: """{app}\Tidesi.exe"""; Tasks: autostart
 ; Removed on uninstall whichever of the two turned it on.
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "AI Usage"; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "Tidesi"; Flags: uninsdeletevalue
 
 [Run]
-Filename: "{app}\AI Usage.exe"; Description: "{cm:LaunchProgram,AI Usage}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Tidesi.exe"; Description: "{cm:LaunchProgram,Tidesi}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
-Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM ""AI Usage.exe"""; Flags: runhidden; RunOnceId: "StopAIUsage"
+Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM ""Tidesi.exe"""; Flags: runhidden; RunOnceId: "StopAIUsage"
 
 [Code]
 var
@@ -90,7 +95,7 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   ResultCode: Integer;
 begin
-  WasRunning := Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM "AI Usage.exe"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
+  WasRunning := Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM "Tidesi.exe"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
   Result := '';
 end;
 
@@ -102,5 +107,5 @@ var
   ResultCode: Integer;
 begin
   if (CurStep = ssPostInstall) and WizardSilent and WasRunning then
-    ExecAsOriginalUser(ExpandConstant('{app}\AI Usage.exe'), '', '', SW_SHOWNORMAL, ewNoWait, ResultCode);
+    ExecAsOriginalUser(ExpandConstant('{app}\Tidesi.exe'), '', '', SW_SHOWNORMAL, ewNoWait, ResultCode);
 end;

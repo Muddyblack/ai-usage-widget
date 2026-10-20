@@ -1,4 +1,4 @@
-"""aiusage.historyio on its own, portably — tests/history-io.test.sh drives the
+"""tidesi.historyio on its own, portably — tests/history-io.test.sh drives the
 same module through the shell tool on Linux, with the shell's own lock."""
 
 import contextlib
@@ -13,7 +13,7 @@ import unittest
 from unittest import mock
 
 import _support  # noqa: F401  (sys.path)
-from aiusage import history, historyio
+from tidesi import history, historyio
 
 
 class HistoryIoTest(unittest.TestCase):

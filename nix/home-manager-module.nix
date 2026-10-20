@@ -1,18 +1,22 @@
 self:
 { config, lib, pkgs, ... }:
 let
-  cfg = config.programs.ai-usage-widget;
+  cfg = config.programs.tidesi;
   system = pkgs.stdenv.hostPlatform.system;
-  pluginId = "org.muddyblack.aiUsageWidget";
+  pluginId = "org.muddyblack.tidesi";
 in
 {
-  options.programs.ai-usage-widget = {
-    enable = lib.mkEnableOption "the AI usage widget, provider limits for KDE Plasma 6, Hyprland/Quickshell and the terminal";
+  imports = [
+    (lib.mkRenamedOptionModule [ "programs" "ai-usage-widget" ] [ "programs" "tidesi" ])
+  ];
+
+  options.programs.tidesi = {
+    enable = lib.mkEnableOption "Tidesi, provider limits for KDE Plasma 6, Hyprland/Quickshell and the terminal";
 
     package = lib.mkOption {
       type = lib.types.package;
       default = self.packages.${system}.default;
-      defaultText = lib.literalExpression "inputs.ai-usage.packages.\${system}.default";
+      defaultText = lib.literalExpression "inputs.tidesi.packages.\${system}.default";
       description = "The Plasma widget package.";
     };
 
@@ -30,12 +34,12 @@ in
       enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
-        description = "Install `ai-usage-cli` and `get-ai-usage`: the terminal frontend, for SSH, prompts and status bars. No Qt involved.";
+        description = "Install `tidesi-cli` and `get-ai-usage`: the terminal frontend, for SSH, prompts and status bars. No Qt involved.";
       };
       package = lib.mkOption {
         type = lib.types.package;
         default = self.packages.${system}.cli;
-        defaultText = lib.literalExpression "inputs.ai-usage.packages.\${system}.cli";
+        defaultText = lib.literalExpression "inputs.tidesi.packages.\${system}.cli";
         description = "The command line package.";
       };
     };
@@ -54,7 +58,7 @@ in
       package = lib.mkOption {
         type = lib.types.package;
         default = self.packages.${system}.desktop;
-        defaultText = lib.literalExpression "inputs.ai-usage.packages.\${system}.desktop";
+        defaultText = lib.literalExpression "inputs.tidesi.packages.\${system}.desktop";
         description = "The tray app package.";
       };
     };
@@ -63,12 +67,12 @@ in
       enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
-        description = "Install the Quickshell panel and its tray helper for Hyprland. Start it with `ai-usage-hyprland`, e.g. from exec-once.";
+        description = "Install the Quickshell panel and its tray helper for Hyprland. Start it with `tidesi-hyprland`, e.g. from exec-once.";
       };
       package = lib.mkOption {
         type = lib.types.package;
         default = self.packages.${system}.hyprland;
-        defaultText = lib.literalExpression "inputs.ai-usage.packages.\${system}.hyprland";
+        defaultText = lib.literalExpression "inputs.tidesi.packages.\${system}.hyprland";
         description = "The Hyprland/Quickshell package.";
       };
     };
@@ -80,13 +84,13 @@ in
       ++ lib.optional cfg.desktop.enable cfg.desktop.package
       ++ lib.optional cfg.hyprland.enable cfg.hyprland.package;
 
-    xdg.configFile."autostart/ai-usage.desktop" = lib.mkIf (cfg.desktop.enable && cfg.desktop.autostart) {
+    xdg.configFile."autostart/tidesi.desktop" = lib.mkIf (cfg.desktop.enable && cfg.desktop.autostart) {
       text = ''
         [Desktop Entry]
         Type=Application
-        Name=AI Usage
-        Exec=${cfg.desktop.package}/bin/ai-usage
-        Icon=org.muddyblack.aiUsageWidget
+        Name=Tidesi
+        Exec=${cfg.desktop.package}/bin/tidesi
+        Icon=org.muddyblack.tidesi
         X-GNOME-Autostart-enabled=true
       '';
     };

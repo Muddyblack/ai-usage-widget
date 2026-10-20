@@ -58,9 +58,9 @@ MANIFEST
 # …except the macOS backend's, which is source: it is what PyInstaller is told
 # to build, not something PyInstaller generated.
 # The hand-written build specs of the Windows and macOS apps.
-!hosts/macos/ai-usage.spec
+!hosts/macos/tidesi.spec
 
-!hosts/windows/ai-usage.spec
+!hosts/windows/tidesi.spec
 
 # Installer logs
 pip-log.txt

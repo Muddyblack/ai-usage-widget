@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# History persistence helper for the AI Usage widget.
+# History persistence helper for Tidesi widget.
 #
 # Usage:
 #   history-io autosave   — union $WIDGET_HISTORY_JSON into the latest file, print the merged
@@ -23,12 +23,23 @@ set -euo pipefail
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/python-interp.sh"
 py_resolve || true
 
-DIR="${XDG_DATA_HOME:-$HOME/.local/share}/ai-usage-widget"
+DIR="${XDG_DATA_HOME:-$HOME/.local/share}/tidesi"
+# The folder was called ai-usage-widget (and kde-ai-usage) before the rename.
+for _old in ai-usage-widget kde-ai-usage; do
+  _old="$(dirname "$DIR")/$_old"
+  if [ -d "$_old" ]; then
+    if [ ! -e "$DIR" ]; then
+      mv "$_old" "$DIR" 2>/dev/null || true
+    else
+      cp -Rn "$_old/." "$DIR/" 2>/dev/null && rm -rf "$_old" || true
+    fi
+  fi
+done
 LATEST="$DIR/usage-history-latest.json"
 LOCK="$DIR/.usage-history.lock"
 mkdir -p "$DIR"
 
-# The logic lives in aiusage.historyio, shared with the Windows frontend, which
+# The logic lives in tidesi.historyio, shared with the Windows frontend, which
 # has no shell to run this script. What follows it here is the fallback for a
 # machine where Python does not run at all. Its answer is relayed only when it
 # exits cleanly: it prints every error as an envelope and exits 0, so a non-zero
@@ -36,7 +47,7 @@ mkdir -p "$DIR"
 # code below still answers that case readably.
 if [ -n "$PY" ]; then
   _pkg_tools="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-  if _out="$(PYTHONPATH="$_pkg_tools${PYTHONPATH:+:$PYTHONPATH}" "$PY" -B -m aiusage.historyio "${1:-}" 2>/dev/null)"; then
+  if _out="$(PYTHONPATH="$_pkg_tools${PYTHONPATH:+:$PYTHONPATH}" "$PY" -B -m tidesi.historyio "${1:-}" 2>/dev/null)"; then
     printf '%s\n' "$_out"
     exit 0
   fi
@@ -105,7 +116,7 @@ validate_or_delete() {
 }
 
 # Merge $1 (a JSON array of points) into $LATEST, $2 being the precedence flag
-# passed through to aiusage.history. Prints one envelope either way; returns
+# passed through to tidesi.history. Prints one envelope either way; returns
 # non-zero when the merge could not run, and the file is then untouched.
 #
 # That last part is the point: a payload that could not be unioned in must not be
@@ -117,11 +128,11 @@ sync_latest() {
   local json="$1" mode="${2:-}" out pkg_tools
   if [ -n "$PY" ]; then
     pkg_tools="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-    if out="$(printf '%s' "$json" | PYTHONPATH="$pkg_tools${PYTHONPATH:+:$PYTHONPATH}" "$PY" -B -m aiusage.history save "$LATEST" "" ${mode:+"$mode"})"; then
+    if out="$(printf '%s' "$json" | PYTHONPATH="$pkg_tools${PYTHONPATH:+:$PYTHONPATH}" "$PY" -B -m tidesi.history save "$LATEST" "" ${mode:+"$mode"})"; then
       printf '%s\n' "$out"
       return 0
     fi
-    # aiusage.history reports its own failures as an {"error":…} envelope; hand
+    # tidesi.history reports its own failures as an {"error":…} envelope; hand
     # that on rather than flattening it into a generic message.
     case "$out" in
       '{"error"'*) printf '%s\n' "$out" ;;

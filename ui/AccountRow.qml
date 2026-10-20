@@ -5,7 +5,7 @@ import "js/Tone.js" as Tone
 
 // The line under the provider tabs: who is signed in, a few chips (plan, model,
 // effort, …) and the service status. Everything comes from the provider's
-// `account` ({name, chips: [{text, tone, tooltip}]}, backend/aiusage/contract.py),
+// `account` ({name, chips: [{text, tone, tooltip}]}, backend/tidesi/contract.py),
 // so one component serves every provider.
 RowLayout {
     id: row

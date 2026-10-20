@@ -15,9 +15,9 @@ Column {
     property var contributorList: []
     property var client: null
     property bool canRefresh: false
-    // In Plasma the running package says its own version (metadata.json); the
-    // generated module only serves the hosts that have no Plasmoid object.
-    readonly property string currentVersion: (typeof Plasmoid !== "undefined" && Plasmoid.metaData && Plasmoid.metaData.version) ? Plasmoid.metaData.version : Project.currentVersion
+    // Both read hosts/kde/metadata.json: Plasma through its package metadata,
+    // the standalone app through backend.appVersion.
+    readonly property string currentVersion: (typeof Plasmoid !== "undefined" && Plasmoid.metaData && Plasmoid.metaData.version) ? Plasmoid.metaData.version : ((typeof backend !== "undefined" && backend && backend.appVersion) ? backend.appVersion : "")
     property string latestVersion: ""
     property string releaseCheckState: "Not checked"
     readonly property string versionStatus: latestVersion ? Project.releaseStatus(currentVersion, latestVersion) : releaseCheckState
@@ -76,7 +76,7 @@ Column {
             sourceSize.width: 112
             sourceSize.height: 112
             fillMode: Image.PreserveAspectFit
-            Accessible.name: "AI Usage Monitor project icon"
+            Accessible.name: "Tidesi project icon"
         }
 
         Column {

@@ -36,7 +36,7 @@ def seed_session_index(directory, rows):
     run would redact them, so the materialized contribution table is built
     from the same data the envelope reads.
     """
-    from aiusage.session_index import SessionIndex
+    from tidesi.session_index import SessionIndex
 
     cache = Path(directory) / "sessions.sqlite3"
     SessionIndex(cache).reconcile([_SeedSource("test", 1, 1)], lambda _source: rows)
@@ -53,8 +53,8 @@ def provider_fixtures():
 
 
 def fixture(name):
-    from aiusage.contract import finalize
-    from aiusage.normalize import normalize
+    from tidesi.contract import finalize
+    from tidesi.normalize import normalize
 
     raw = raw_fixture(name)
     if not raw.get("id"):
@@ -79,8 +79,8 @@ class IsolatedHomeTest(unittest.TestCase):
                 "XDG_CACHE_HOME": str(self.home / ".cache"),
                 "APPDATA": str(self.home / "AppData/Roaming"),
                 "LOCALAPPDATA": str(self.home / "AppData/Local"),
-                "AI_USAGE_CONFIG": str(self.home / "config.json"),
-                "AI_USAGE_CACHE_DIR": str(self.home / "cache"),
+                "TIDESI_CONFIG": str(self.home / "config.json"),
+                "TIDESI_CACHE_DIR": str(self.home / "cache"),
                 "LANGUAGE": "",
                 "LC_ALL": "C.UTF-8",
             }

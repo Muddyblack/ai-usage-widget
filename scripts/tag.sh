@@ -7,13 +7,9 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
 METADATA_PATH="hosts/kde/metadata.json"
-# Generated from metadata.json (the one source) and committed with the bump.
-EXTRA_VERSION_FILES=("ui/js/ProjectVersion.js")
-
-# Rewrite the version in every file that carries it: bump_files OLD NEW
+# Rewrite the version in metadata.json, the one file that carries it: bump_files OLD NEW
 bump_files() {
     sed -i "s/\"Version\": \"$1\"/\"Version\": \"$2\"/" "$METADATA_PATH"
-    scripts/sync-version.sh  # regenerates ui/js/ProjectVersion.js from metadata.json
 }
 
 BETA_FLAG=false
@@ -34,7 +30,7 @@ START_BRANCH="$(git branch --show-current)"
 echo "Fetching origin..."
 git fetch --quiet --tags origin "$DEFAULT_BRANCH"
 
-VERSION_FILES=("$METADATA_PATH" "${EXTRA_VERSION_FILES[@]}")
+VERSION_FILES=("$METADATA_PATH")
 
 # ── version bump (relative to what is on the default branch) ─────────────────
 CURRENT_VERSION="$(git show "origin/${DEFAULT_BRANCH}:${METADATA_PATH}" \

@@ -35,9 +35,9 @@ Parser = Callable[[Source], list[Row]]
 
 def _index_class() -> type:
     try:
-        module = importlib.import_module("aiusage.session_index")
+        module = importlib.import_module("tidesi.session_index")
     except ModuleNotFoundError as error:
-        if error.name != "aiusage.session_index":
+        if error.name != "tidesi.session_index":
             raise
         raise AssertionError("the approved SessionIndex implementation is not available yet") from error
     return module.SessionIndex
@@ -506,7 +506,7 @@ class ContributionTableTest(unittest.TestCase):
         self.assertEqual(groups["estimated"]["totalUSD"], 1.0)
 
     def test_spend_groups_returns_none_when_the_cache_is_stale(self):
-        storage = importlib.import_module("aiusage.session_index_storage")
+        storage = importlib.import_module("tidesi.session_index_storage")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             cache = root / "sessions.sqlite3"
@@ -539,7 +539,7 @@ class SchemaVersionInvalidationTest(unittest.TestCase):
     remember to bump."""
 
     def test_the_key_tracks_the_code_that_produces_rows(self):
-        storage = importlib.import_module("aiusage.session_index_storage")
+        storage = importlib.import_module("tidesi.session_index_storage")
         storage._schema_version.cache_clear()
         first = storage._schema_version()
         # Stable across calls, and an int SQLite's user_version can hold.
@@ -553,7 +553,7 @@ class SchemaVersionInvalidationTest(unittest.TestCase):
         storage._schema_version.cache_clear()
 
     def test_a_key_change_forces_every_source_to_recollect(self):
-        storage = importlib.import_module("aiusage.session_index_storage")
+        storage = importlib.import_module("tidesi.session_index_storage")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             cache = root / "sessions.sqlite3"

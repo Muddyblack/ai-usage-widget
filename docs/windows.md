@@ -11,18 +11,18 @@ on each platform with demo data.
 
 ## Installing it
 
-Download `AI-Usage-Setup-<version>.exe` from a release and run it: no admin
+Download `Tidesi-Setup-<version>.exe` from a release and run it: no admin
 rights, a Start menu entry, an optional *Start when I sign in*, and an
 uninstaller under *Installed apps*; running a newer one updates in place. (Or
-take `ai-usage-windows-<version>.zip`, unzip it anywhere and run
-`AI Usage.exe`.) The app isn't code-signed yet, so SmartScreen asks once:
+take `tidesi-windows-<version>.zip`, unzip it anywhere and run
+`Tidesi.exe`.) The app isn't code-signed yet, so SmartScreen asks once:
 *More info → Run anyway*. Nothing else to install — Python and Qt ship inside
 the folder.
 
 ## Package managers
 
-Stable releases built with package-manager support attach `ai-usage.json`
-(Scoop) and `ai-usage-winget-<version>.zip` (WinGet manifests) alongside the
+Stable releases built with package-manager support attach `tidesi.json`
+(Scoop) and `tidesi-winget-<version>.zip` (WinGet manifests) alongside the
 Windows binaries. Wait for the Windows assets to appear before installing.
 Both target x64 Windows and keep settings/history in the locations below.
 
@@ -32,29 +32,29 @@ With [Scoop](https://scoop.sh/) installed, add this repository as a bucket and
 install from it:
 
 ```powershell
-scoop bucket add ai-usage https://github.com/Muddyblack/ai-usage-widget
-scoop install ai-usage/ai-usage
+scoop bucket add tidesi https://github.com/Muddyblack/tidesi
+scoop install tidesi/tidesi
 ```
 
-Launch **AI Usage** from the Start menu. Quit the tray app before updating:
+Launch **Tidesi** from the Start menu. Quit the tray app before updating:
 
 ```powershell
 scoop update
-scoop update ai-usage
+scoop update tidesi
 ```
 
-`bucket/ai-usage.json` follows the latest stable release; the
+`bucket/tidesi.json` follows the latest stable release; the
 `scoop-bucket.yml` workflow copies the manifest the Windows build generated
 into it. Without the bucket, the release's own manifest installs directly:
 
 ```powershell
-scoop install https://github.com/Muddyblack/ai-usage-widget/releases/latest/download/ai-usage.json
+scoop install https://github.com/Muddyblack/tidesi/releases/latest/download/tidesi.json
 ```
 
 Scoop remembers that URL, so it follows subsequent releases too. A
 version-specific manifest pins the install to that release.
 
-Before `scoop uninstall ai-usage`, switch off **Start with Windows** in the
+Before `scoop uninstall tidesi`, switch off **Start with Windows** in the
 app and quit it. Settings and history survive uninstall. Use one installation
 method at a time: uninstall an existing Inno/WinGet copy before moving to Scoop
 to avoid duplicate shortcuts and competing autostart entries.
@@ -62,18 +62,18 @@ to avoid duplicate shortcuts and competing autostart entries.
 ### WinGet
 
 The release ZIP contains the three manifests under
-`manifests/m/Muddyblack/AIUsage/<version>/`, ready for validation and submission
+`manifests/m/Muddyblack/Tidesi/<version>/`, ready for validation and submission
 to [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs).
 Generating these files does **not** register the app in the public catalog.
 
 To test a release before catalog acceptance, download and extract its
-`ai-usage-winget-<version>.zip`. Enable local manifests once from an elevated
+`tidesi-winget-<version>.zip`. Enable local manifests once from an elevated
 terminal (`winget settings --enable LocalManifestFiles`), then run from a
 normal PowerShell terminal, replacing `<version>`:
 
 ```powershell
-winget validate --manifest .\manifests\m\Muddyblack\AIUsage\<version>
-winget install --manifest .\manifests\m\Muddyblack\AIUsage\<version>
+winget validate --manifest .\manifests\m\Muddyblack\Tidesi\<version>
+winget install --manifest .\manifests\m\Muddyblack\Tidesi\<version>
 ```
 
 The manifest uses the existing per-user Inno installer, including its stable
@@ -83,8 +83,8 @@ After a maintainer submits the manifests and the public catalog accepts them,
 users can install and update with:
 
 ```powershell
-winget install --id Muddyblack.AIUsage --exact --source winget
-winget upgrade --id Muddyblack.AIUsage --exact --source winget
+winget install --id Muddyblack.Tidesi --exact --source winget
+winget upgrade --id Muddyblack.Tidesi --exact --source winget
 ```
 
 ### Maintaining the manifests
@@ -146,7 +146,7 @@ visible (including the system transparency setting).
 Windows 11 puts new tray icons in the `^` overflow at first — which is why the
 very first start opens the popup by itself: drag the icon onto the taskbar
 once, or turn it on under *Settings → Personalization → Taskbar → Other system
-tray icons*. Starting AI Usage again from the Start menu while it runs opens
+tray icons*. Starting Tidesi again from the Start menu while it runs opens
 the popup too.
 
 *Settings → Display → Language* picks the language, and switches it on the spot.
@@ -164,16 +164,16 @@ VS Code-family IDEs (Cursor, Kiro) are read from `%APPDATA%`. Its own files:
 
 | What | Where |
 |---|---|
-| Settings (same format as Hyprland's) | `%APPDATA%\ai-usage-widget\hyprland-settings.json` |
-| Usage history | `%LOCALAPPDATA%\ai-usage-widget\` |
-| Log (Qt warnings and Python errors; the previous one is `tray.log.1`) | `%LOCALAPPDATA%\ai-usage-widget\tray.log` |
+| Settings (same format as Hyprland's) | `%APPDATA%\tidesi\hyprland-settings.json` |
+| Usage history | `%LOCALAPPDATA%\/tidesi\` |
+| Log (Qt warnings and Python errors; the previous one is `tray.log.1`) | `%LOCALAPPDATA%\/tidesi\tray.log` |
 
 Antigravity is found through `psutil`, which the build bundles.
 
 ### Provider defaults and detection
 
 Windows uses the shared backend and the shared JSON settings file at
-`%APPDATA%\ai-usage-widget\hyprland-settings.json`. New settings are zero
+`%APPDATA%\tidesi\hyprland-settings.json`. New settings are zero
 based. The explicit `--initialize-provider-defaults` operation may enable only
 providers with approved local evidence, then sets `providerDefaultsApplied` so
 the operation does not repeat. Refresh and `--all` never initialize settings.
@@ -196,9 +196,9 @@ host) around the one shared UI. It adds no provider logic of its own:
 
 | Part | Lives in | Shared with |
 |---|---|---|
-| Provider data, credentials, maths | `backend/aiusage` | every host |
-| Usage history file and its lock | `aiusage/historyio.py` | every host |
-| Platform directories | `aiusage/paths.py` | every host |
+| Provider data, credentials, maths | `backend/tidesi` | every host |
+| Usage history file and its lock | `tidesi/historyio.py` | every host |
+| Platform directories | `tidesi/paths.py` | every host |
 | Popup, settings page, rows, chart, stats | `ui/*.qml` | every host |
 | All application state | `ui/AppState.qml` | every host |
 | Provider display registry, countdown / history JS | `ui/js/*.js` | every host |
@@ -246,8 +246,8 @@ On Windows (PyInstaller does not cross-compile):
 
 ```powershell
 pip install -r hosts/windows/build-requirements.txt
-pyinstaller --noconfirm hosts/windows/ai-usage.spec
-"dist\AI Usage\AI Usage.exe" --selftest
+pyinstaller --noconfirm hosts/windows/tidesi.spec
+"dist\Tidesi\Tidesi.exe" --selftest
 ```
 
 `hosts/windows/build-requirements.txt` pins the exact PySide6, PyInstaller and Pillow
@@ -256,17 +256,17 @@ the releases are built with, so a tag rebuilt later gives the same `.exe`.
 installs those as they come, so a new PySide6 is tried there before a bump of
 the pins ships it.
 
-The result is a folder, `dist\AI Usage\`, rather than a single file: a one-file
+The result is a folder, `dist\Tidesi\`, rather than a single file: a one-file
 build unpacks itself to a temp directory on every start. Zip the folder to ship
 it.
 
 The installer wraps that folder (Inno Setup, `hosts/windows/installer.iss`):
 
 ```powershell
-windows\build-installer.ps1 -Version 2.4.0     # → AI-Usage-Setup-2.4.0.exe
+windows\build-installer.ps1 -Version 2.4.0     # → Tidesi-Setup-2.4.0.exe
 ```
 
-It installs per user (no admin rights) to `%LOCALAPPDATA%\Programs\AI Usage`,
+It installs per user (no admin rights) to `%LOCALAPPDATA%\Programs\Tidesi`,
 adds a Start menu entry, optionally a desktop shortcut and *Start when I sign
 in* (the same registry value as the tray menu's switch), stops a running copy
 before replacing it, and registers an uninstaller. Keep its `AppId` as it is:

@@ -6,7 +6,7 @@ import unittest
 from unittest import mock
 
 import _support  # noqa: F401 — puts the backend package on sys.path
-from aiusage import envelope
+from tidesi import envelope
 
 
 def _collect(id_, now):
@@ -33,7 +33,7 @@ class ProviderCrashTest(unittest.TestCase):
         self.assertEqual(other["id"], "elsewhere")
 
     def test_every_default_provider_has_a_crash_label(self):
-        from aiusage import config
+        from tidesi import config
 
         self.assertEqual(sorted(envelope._CRASH_LABELS), sorted(config.ALL_PROVIDERS))
 

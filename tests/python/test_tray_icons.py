@@ -54,9 +54,9 @@ class TrayEntriesTest(unittest.TestCase):
             self.assertEqual(app.neutral_text_colour(), "#f8fafc")
 
     def test_numbers_style_is_the_logo_then_digits(self):
-        entries = app.tray_entries({"style": "numbers", "icon": CLAUDE_LOGO, "tooltip": "AI Usage\nClaude: 5%", "slots": TWO})
+        entries = app.tray_entries({"style": "numbers", "icon": CLAUDE_LOGO, "tooltip": "Tidesi\nClaude: 5%", "slots": TWO})
         self.assertEqual(kinds(entries), ["logo", "number", "number"])
-        self.assertEqual(entries[0]["tooltip"], "AI Usage\nClaude: 5%")
+        self.assertEqual(entries[0]["tooltip"], "Tidesi\nClaude: 5%")
 
     def test_ring_style_and_the_old_numbers_off_switch(self):
         ring = [{"kind": "ring", "value": 5, "color": "#ff4d4d", "icon": CLAUDE_LOGO, "tooltip": app.APP_NAME}]
@@ -67,6 +67,23 @@ class TrayEntriesTest(unittest.TestCase):
         self.assertEqual(app.tray_entries({"style": "icons", "slots": [slot(99.7)]})[1]["value"], 100)
         self.assertEqual(kinds(app.tray_entries({"style": "icons", "slots": [slot(0, text="$49.59")]})), ["ring"])
         self.assertEqual(app.tray_entries({})[0]["value"], -1)
+
+    def test_multicolor_logos_tint_as_recognizable_silhouettes(self):
+        QGuiApplication.instance() or QGuiApplication([])
+        for filename, hole in (("antigravity-color.svg", (32, 48)), ("kiro.svg", (34, 27))):
+            for color in ("#4285f4", "#ffa64d", "#ff4d4d"):
+                with self.subTest(icon=filename, color=color):
+                    icon = "file://" + os.path.join(REPO, "assets", "icons", filename)
+                    image = app.render_entry({"kind": "tinted", "icon": icon, "color": color}).pixmap(64, 64).toImage()
+                    solid = [image.pixelColor(x, y) for y in range(64) for x in range(64) if image.pixelColor(x, y).alpha() > 240]
+                    self.assertGreater(len(solid), 200, "provider mark is missing")
+                    expected = QColor(color)
+                    for pixel in solid:
+                        self.assertLessEqual(abs(pixel.red() - expected.red()), 2)
+                        self.assertLessEqual(abs(pixel.green() - expected.green()), 2)
+                        self.assertLessEqual(abs(pixel.blue() - expected.blue()), 2)
+                    self.assertEqual(image.pixelColor(8, 8).alpha(), 0, "background tile survived tinting")
+                    self.assertLess(image.pixelColor(*hole).alpha(), 100, "logo's cutout was filled")
 
     def test_every_kind_draws(self):
         QGuiApplication.instance() or QGuiApplication([])

@@ -4,7 +4,7 @@ One backend, one UI, one thin host per platform.
 
 ```
 backend/                 Python (stdlib only) + sh launchers — every provider,
-  aiusage/               credential, HTTP call, normalisation, history, sessions
+  tidesi/               credential, HTTP call, normalisation, history, sessions
   sh/get-ai-usage        the CLI the process-based hosts run
 
 ui/                      THE user interface, shown unchanged on every platform
@@ -49,5 +49,5 @@ shell can host QtQuick.
 |---|---|---|
 | KDE Plasma | `make pack` → `scripts/build-kde-package.sh` | `.plasmoid` (KDE Store): `hosts/kde` + `ui/` + `backend/` + assets |
 | Quickshell | `nix run .#hyprland` | runs from the checkout (`shell.qml` at the root) |
-| Windows | `hosts/windows/ai-usage.spec` + Inno Setup | installer, portable zip, Scoop/WinGet |
-| macOS | `hosts/macos/build-app.sh` | `AI Usage.app`, `.dmg` |
+| Windows | `hosts/windows/tidesi.spec` + Inno Setup | installer, portable zip, Scoop/WinGet |
+| macOS | `hosts/macos/build-app.sh` | `Tidesi.app`, `.dmg` |

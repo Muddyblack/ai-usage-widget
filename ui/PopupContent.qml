@@ -8,7 +8,7 @@ import "js/Tone.js" as Tone
 
 // The popup's content — header, tabs, usage rows, stats, chart and footer —
 // shared by every frontend that draws the popup itself: the Quickshell panel
-// (AiUsageShell.qml) and the Windows tray app (hosts/desktop/qml/Main.qml). Only the
+// (TidesiShell.qml) and the Windows tray app (hosts/desktop/qml/Main.qml). Only the
 // window around it differs, so this file is the one place the popup is laid out.
 //
 // `shell` is the frontend's root object. Everything read here — providers,

@@ -7,7 +7,7 @@ Run the Quickshell widget together with its standard StatusNotifier tray icon:
 nix run .#hyprland
 
 # Or run the current GitHub version directly
-nix run github:Muddyblack/ai-usage-widget#hyprland
+nix run github:Muddyblack/tidesi#hyprland
 ```
 
 During development, use `nix run path:.#hyprland` if newly created files have
@@ -24,7 +24,7 @@ The Hyprland frontend supports the same provider set as the Plasma widget,
 including Z.AI, GitHub Copilot, and DeepSeek. Enable these newer providers and
 enter their credentials in the popup settings page; they default to off. The
 settings are stored locally in
-`~/.config/ai-usage-widget/hyprland-settings.json` (or under
+`~/.config/tidesi/hyprland-settings.json` (or under
 `$XDG_CONFIG_HOME`).
 
 ## Blur behind the popup
@@ -33,13 +33,13 @@ The popup is drawn as translucent glass; Hyprland can blur what is behind it.
 Source the supplied layer rules from `hyprland.conf` (Hyprland 0.53+ syntax):
 
 ```ini
-source = /path/to/ai-usage-widget/hosts/quickshell/glass.conf
+source = /path/to/tidesi/hosts/quickshell/glass.conf
 ```
 
 then turn on *Settings → Panel → Blur*. The popup then uses the layer
-namespace `ai-usage-widget-glass`, which is all the rules match, and thins its
+namespace `tidesi-glass`, which is all the rules match, and thins its
 fill so the blur shows through. The pill and the popup otherwise use
-`ai-usage-widget`, so rules of your own can target them without touching other
+`tidesi`, so rules of your own can target them without touching other
 Quickshell configurations such as Caelestia. The blur only costs anything while
 the popup is open.
 

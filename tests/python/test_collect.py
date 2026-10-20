@@ -9,11 +9,11 @@ import sqlite3
 from unittest import mock
 
 from _support import FIXTURES, IsolatedHomeTest
-from aiusage import __main__ as backend
-from aiusage import cli
-from aiusage.providers.cursor import get_cursor_usage
-from aiusage.providers.kimi_code import get_kimi_code_usage, parse_usage_response
-from aiusage.providers.kiro import _region_of
+from tidesi import __main__ as backend
+from tidesi import cli
+from tidesi.providers.cursor import get_cursor_usage
+from tidesi.providers.kimi_code import get_kimi_code_usage, parse_usage_response
+from tidesi.providers.kiro import _region_of
 
 
 class CollectorTest(IsolatedHomeTest):
@@ -66,7 +66,7 @@ class CollectorTest(IsolatedHomeTest):
             os.environ[variable] = str(self.home / path)
         # Status fetching is unrelated to credential/collector plumbing. Its
         # recorded formats are asserted in the normalizer suite.
-        patch = mock.patch("aiusage.collect.provider_status", return_value=None)
+        patch = mock.patch("tidesi.collect.provider_status", return_value=None)
         patch.start()
         self.addCleanup(patch.stop)
 
@@ -97,7 +97,7 @@ class CollectorTest(IsolatedHomeTest):
         self.assertEqual([p["id"] for p in self.run_backend("--provider", "kiro")["providers"]], ["kiro"])
         with contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(backend.main(["--provider", "nonsense"]), 2)
-        os.environ["AI_USAGE_CONFIG"] = str(self.home / "defaults.json")
+        os.environ["TIDESI_CONFIG"] = str(self.home / "defaults.json")
         result = self.run_backend("--all")
         self.assertEqual((result["providers"], result["active"]), ([], ""))
 

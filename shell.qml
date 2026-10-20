@@ -1,6 +1,6 @@
 // Quickshell entry point.
 //
-// The shell itself lives in hosts/quickshell/AiUsageShell.qml; this file exists
+// The shell itself lives in hosts/quickshell/TidesiShell.qml; this file exists
 // only to put the config root at the repository root. Quickshell sandboxes the
 // QML engine to the directory holding the file it was pointed at, and anything
 // outside resolves to qrc:/qs-blackhole. With the root here, the host can import
@@ -12,4 +12,4 @@
 // hosts/quickshell/, which would reinstate the broken root.
 import "hosts/quickshell"
 
-AiUsageShell {}
+TidesiShell {}

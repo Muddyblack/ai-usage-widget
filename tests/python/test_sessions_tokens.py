@@ -14,7 +14,7 @@ import unittest
 from unittest import mock
 
 from _support import REPO, raw_fixture  # noqa: F401  (ensures TOOLS is on sys.path)
-from aiusage import billing, pricing, sessions
+from tidesi import billing, pricing, sessions
 
 
 def _claude_session_tokens(path):

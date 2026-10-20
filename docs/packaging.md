@@ -6,24 +6,24 @@ The flake builds from the working tree and exports:
 
 | Output | What |
 | --- | --- |
-| `packages.default` | the Plasma widget (`share/plasma/plasmoids/org.muddyblack.aiUsageWidget`) |
-| `packages.cli` | `ai-usage-cli` and `get-ai-usage`, no Qt, no plasmoid |
-| `packages.desktop` | `ai-usage`: the tray app with the floating pill, for any desktop with a tray (GNOME, Sway, XFCE, ...) |
-| `packages.hyprland` | the Quickshell panel and tray helper, started with `ai-usage-hyprland` |
-| `overlays.default` | `ai-usage-widget`, `ai-usage-cli`, `ai-usage-hyprland` |
-| `nixosModules.default` | `programs.ai-usage-widget` for NixOS |
-| `homeManagerModules.default` | `programs.ai-usage-widget` for Home Manager |
+| `packages.default` | the Plasma widget (`share/plasma/plasmoids/org.muddyblack.tidesi`) |
+| `packages.cli` | `tidesi-cli` and `get-ai-usage`, no Qt, no plasmoid |
+| `packages.desktop` | `tidesi`: the tray app with the floating pill, for any desktop with a tray (GNOME, Sway, XFCE, ...) |
+| `packages.hyprland` | the Quickshell panel and tray helper, started with `tidesi-hyprland` |
+| `overlays.default` | `tidesi`, `tidesi-cli`, `tidesi-hyprland` |
+| `nixosModules.default` | `programs.tidesi` for NixOS |
+| `homeManagerModules.default` | `programs.tidesi` for Home Manager |
 
 All of them pin Python and `secret-tool` to store paths, so the widget works under plasmashell, whose `PATH` has no Python on NixOS.
 
 ```nix
 # Home Manager
-imports = [ ai-usage.homeManagerModules.default ];
-programs.ai-usage-widget = {
+imports = [ tidesi.homeManagerModules.default ];
+programs.tidesi = {
   enable = true;        # the Plasma widget, linked into ~/.local/share/plasma/plasmoids
-  cli.enable = true;    # ai-usage-cli, for the terminal and status bars
-  desktop.enable = true;  # `ai-usage`, the tray app with the pill, for non-Plasma desktops (autostarts)
-  hyprland.enable = true; # ai-usage-hyprland, the Quickshell panel
+  cli.enable = true;    # tidesi-cli, for the terminal and status bars
+  desktop.enable = true;  # `tidesi`, the tray app with the pill, for non-Plasma desktops (autostarts)
+  hyprland.enable = true; # tidesi-hyprland, the Quickshell panel
 };
 ```
 
@@ -35,11 +35,11 @@ The NixOS module takes the same options, minus `plasmoid.enable` (Plasma finds t
 
 | File | Attribute | What |
 | --- | --- | --- |
-| `ai-usage-widget/package.nix` | `ai-usage-widget` | the Plasma 6 widget |
-| `ai-usage-app/package.nix` | `ai-usage-app` | the tray app with the floating pill, for any desktop with a tray (binary `ai-usage`) |
-| `ai-usage-cli/package.nix` | `ai-usage-cli` | the command line frontend |
+| `tidesi/package.nix` | `tidesi` | the Plasma 6 widget |
+| `tidesi-app/package.nix` | `tidesi-app` | the tray app with the floating pill, for any desktop with a tray (binary `tidesi`) |
+| `tidesi-cli/package.nix` | `tidesi-cli` | the command line frontend |
 
-`nix-build nix/nixpkgs -A ai-usage-cli` builds one from the release its `version` names. CI bumps `version` and `hash` on every tag but does not commit them back (the hash only exists once the tag does), so the copies here can trail the latest release.
+`nix-build nix/nixpkgs -A tidesi-cli` builds one from the release its `version` names. CI bumps `version` and `hash` on every tag but does not commit them back (the hash only exists once the tag does), so the copies here can trail the latest release.
 
 ## What the release does for you
 
@@ -50,9 +50,9 @@ The NixOS module takes the same options, minus `plasmoid.enable` (Plasma finds t
 ## Once, by hand (the first submission)
 
 1. Fork `NixOS/nixpkgs`. Add yourself to `maintainers/maintainer-list.nix` (alphabetical, in its own commit `maintainers: add muddyblack`) unless it is already there, then set `maintainers = [ lib.maintainers.muddyblack ];` in all package files. Only in the fork: here the files keep `maintainers = [ ];`.
-2. Copy the three `package.nix` files (from the workflow's `nixpkgs-packages` artifact, which already has the new version and hash) to `pkgs/by-name/ai/ai-usage-widget/`, `pkgs/by-name/ai/ai-usage-app/` and `pkgs/by-name/ai/ai-usage-cli/`.
-3. Check in the fork: `nix-build -A ai-usage-widget -A ai-usage-app -A ai-usage-cli`, `nixfmt` the files, and run `nixpkgs-review wip`. Add the widget to a Plasma session once.
-4. Open one pull request per package, titled `ai-usage-widget: init at X.Y.Z`, `ai-usage-app: init at X.Y.Z` and `ai-usage-cli: init at X.Y.Z`, using the nixpkgs PR template.
+2. Copy the three `package.nix` files (from the workflow's `nixpkgs-packages` artifact, which already has the new version and hash) to `pkgs/by-name/ai/tidesi/`, `pkgs/by-name/ai/tidesi-app/` and `pkgs/by-name/ai/tidesi-cli/`.
+3. Check in the fork: `nix-build -A tidesi -A tidesi-app -A tidesi-cli`, `nixfmt` the files, and run `nixpkgs-review wip`. Add the widget to a Plasma session once.
+4. Open one pull request per package, titled `tidesi: init at X.Y.Z`, `tidesi-app: init at X.Y.Z` and `tidesi-cli: init at X.Y.Z`, using the nixpkgs PR template.
 
 Nixpkgs rules that matter here: sources come from a tag, builds must work in the sandbox without network, and the install check must be quick.
 

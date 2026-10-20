@@ -270,7 +270,7 @@ test("the QML and Python unions produce identical output", () => {
         [[{ t: "0x10", w: 1 }, { t: "1_0", w: 2 }, { t: "Infinity", w: 3 }, { t: "nan", w: 4 }, { t: "", w: 5 }], [{ t: " 12 ", w: 6 }, { t: "1e3", w: 7 }]]
     ];
     const limits = [500, 2];
-    const script = "import json,sys; sys.path.insert(0, sys.argv[1]); from aiusage import history;" +
+    const script = "import json,sys; sys.path.insert(0, sys.argv[1]); from tidesi import history;" +
         " c = json.load(sys.stdin);" +
         " print(json.dumps([history.union(b, o, l) for b, o, l in c], separators=(',', ':')))";
     const payload = [];
@@ -295,7 +295,7 @@ test("the QML and Python normalize produce identical output", () => {
         [{ t: "0x10", w: 1 }, { t: "1_0", w: 2 }, { t: "Infinity", w: 3 }, { t: " 12 ", w: 4 }, { t: "+1e3", w: 5 }],
         []
     ];
-    const script = "import json,sys; sys.path.insert(0, sys.argv[1]); from aiusage import history;" +
+    const script = "import json,sys; sys.path.insert(0, sys.argv[1]); from tidesi import history;" +
         " c = json.load(sys.stdin);" +
         " print(json.dumps([history.normalize(p, 500) for p in c], separators=(',', ':')))";
     // JSON has no NaN, and neither store can hold one; drop it the way a file
@@ -533,18 +533,18 @@ const os = require("node:os");
 const HISTORY_IO = path.join(__dirname, "..", "backend", "sh", "history-io");
 
 function newHome() {
-    const home = fs.mkdtempSync(path.join(os.tmpdir(), "ai-usage-history-"));
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), "tidesi-history-"));
     test.after(() => fs.rmSync(home, { recursive: true, force: true }));
     return home;
 }
 
 function fileOf(home) {
-    return JSON.parse(fs.readFileSync(path.join(home, "ai-usage-widget", "usage-history-latest.json"), "utf8"));
+    return JSON.parse(fs.readFileSync(path.join(home, "tidesi", "usage-history-latest.json"), "utf8"));
 }
 
 // What is left of a frontend once the protocol moved into the store: run the
 // tool, hand the answer back. This is the whole of main.qml's and
-// AiUsageShell.qml's part, so the decisions under test here are the shipped
+// TidesiShell.qml's part, so the decisions under test here are the shipped
 // ones. `send` runs the tool — the file changes there and then — while `settle`
 // delivers the answer, which is the gap an asynchronous response opens and where
 // samples land.
@@ -937,7 +937,7 @@ test("a debounced frontend persists once per window and flushes on exit", () => 
     f.record({ w: 10 }, 1000);
     f.record({ w: 11 }, 61000);
     f.record({ w: 12 }, 121000);
-    const latest = path.join(home, "ai-usage-widget", "usage-history-latest.json");
+    const latest = path.join(home, "tidesi", "usage-history-latest.json");
     assert.equal(fs.existsSync(latest), false, "nothing is written before the window ends");
 
     f.advance(301000);
@@ -1207,13 +1207,10 @@ test("the shared state rejects a superseded session page", () => {
     assert.match(state, /root\.sessionsActiveSourceSignature !== root\.sessionsSourceSignature/);
 });
 
-test("the installed version shown in the UI matches metadata.json", () => {
+test("the installed version comes from metadata.json, not a generated copy", () => {
     const root = path.join(__dirname, "..");
-    const metadata = JSON.parse(fs.readFileSync(path.join(root, "hosts/kde/metadata.json"), "utf8"));
-    const projectInfo = fs.readFileSync(path.join(root, "ui/js/ProjectInfo.js"), "utf8");
-    const generated = fs.readFileSync(path.join(root, "ui/js/ProjectVersion.js"), "utf8");
-    const match = /^var current = "([^"]+)";$/m.exec(generated);
-    assert.ok(match, "ui/js/ProjectVersion.js declares current");
-    assert.equal(match[1], metadata.KPlugin.Version);
-    assert.match(projectInfo, /^var currentVersion = Version\.current;$/m);
+    assert.ok(!fs.existsSync(path.join(root, "ui/js/ProjectVersion.js")));
+    const pane = fs.readFileSync(path.join(root, "ui/ProjectInfoPane.qml"), "utf8");
+    assert.match(pane, /Plasmoid\.metaData\.version/);
+    assert.match(pane, /backend\.appVersion/);
 });

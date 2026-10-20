@@ -3,9 +3,9 @@ import unittest
 from unittest import mock
 
 from _support import REPO  # noqa: F401
-from aiusage import session_cache, session_manifest, sessions
-from aiusage.session_index import SessionIndex
-from aiusage.session_manifest import SessionManifest
+from tidesi import session_cache, session_manifest, sessions
+from tidesi.session_index import SessionIndex
+from tidesi.session_manifest import SessionManifest
 
 
 def _row(title: str, activity: int, open_key: str = "") -> dict[str, str | int]:
@@ -36,7 +36,7 @@ class SessionCacheIntegrationTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             rows = [_row("first", 2), _row("needle", 2), _row("last", 1)]
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(session_cache, "build_manifests", return_value=[self._manifest(1)]),
                 mock.patch.object(sessions, "_collect_all_sessions", return_value=(rows, True)) as collect,
             ):
@@ -61,7 +61,7 @@ class SessionCacheIntegrationTest(unittest.TestCase):
             rows[1]["provider"] = "antigravity"
             rows[2]["provider"] = "opencode"
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(session_cache, "build_manifests", return_value=[self._manifest(1)]),
                 mock.patch.object(sessions, "_collect_all_sessions", return_value=(rows, True)),
             ):
@@ -85,7 +85,7 @@ class SessionCacheIntegrationTest(unittest.TestCase):
             rows = [_row("old", 1)]
             refreshed = [_row("new", 2)]
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(session_cache, "build_manifests", side_effect=[[m] for m in manifests]),
                 mock.patch.object(sessions, "_collect_all_sessions", side_effect=[(rows, True), (refreshed, True)]) as collect,
             ):
@@ -100,7 +100,7 @@ class SessionCacheIntegrationTest(unittest.TestCase):
         rows = [_row("cline", 7), _row("claude", 7, key)]
         with (
             tempfile.TemporaryDirectory() as directory,
-            mock.patch("aiusage.config.cache_dir", return_value=directory),
+            mock.patch("tidesi.config.cache_dir", return_value=directory),
             mock.patch.object(session_cache, "build_manifests", return_value=[self._manifest(1)]),
             mock.patch.object(sessions, "_collect_all_sessions", return_value=(rows, True)),
         ):
@@ -123,7 +123,7 @@ class SessionCacheIntegrationTest(unittest.TestCase):
             SessionManifest("antigravity", version, 1),
         ]
         with (
-            mock.patch("aiusage.config.cache_dir", return_value=directory),
+            mock.patch("tidesi.config.cache_dir", return_value=directory),
             mock.patch.object(session_cache, "build_manifests", return_value=manifests),
             mock.patch.object(sessions, "collect_source", collect_source),
             mock.patch.object(sessions, "_collect_all_sessions", return_value=([], True)),
@@ -173,7 +173,7 @@ class SessionCacheIntegrationTest(unittest.TestCase):
             cache = f"{directory}/sessions.sqlite3"
             rows = [_row("rebuilt", 1)]
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(session_cache, "build_manifests", return_value=[self._manifest(1)]),
                 mock.patch.object(sessions, "_collect_all_sessions", return_value=(rows, True)) as collect,
             ):
@@ -187,7 +187,7 @@ class SessionCacheIntegrationTest(unittest.TestCase):
     def test_query_only_does_not_build_manifest_or_collectors(self):
         with tempfile.TemporaryDirectory() as directory:
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(session_cache, "build_manifests", side_effect=AssertionError("query built manifest")),
                 mock.patch.object(sessions, "_collect_all_sessions", side_effect=AssertionError("query collected")),
             ):
@@ -203,7 +203,7 @@ class SessionCacheIntegrationTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             rows = [_row("first", 2)]
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(session_cache, "build_manifests", return_value=[self._manifest(1)]),
                 mock.patch.object(sessions, "_collect_all_sessions", return_value=(rows, True)) as collect,
             ):

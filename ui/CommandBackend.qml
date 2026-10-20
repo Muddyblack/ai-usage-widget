@@ -57,7 +57,7 @@ QtObject {
     // the locale), most preferred first.
     property var systemLanguages: []
 
-    readonly property string appIcon: "file://" + assetsDir + "/icons/org.muddyblack.aiUsageWidget.svg"
+    readonly property string appIcon: "file://" + assetsDir + "/icons/org.muddyblack.tidesi.svg"
     readonly property string iconDir: "file://" + assetsDir + "/icons/"
     readonly property bool firstRun: false
     readonly property string defaultTrayStyle: "icons"
@@ -93,7 +93,7 @@ QtObject {
     // Always braced: in sh, "$10" is "$1" followed by "0", not argument ten.
     function tool(name, args, env) {
         var script = "PYTHON3=\"$1\"";
-        var argv = ["sh", "-c", "", "ai-usage", root.pythonPath || ""];
+        var argv = ["sh", "-c", "", "tidesi", root.pythonPath || ""];
         var keys = Object.keys(env || {});
         for (var i = 0; i < keys.length; i++) {
             argv.push(String(env[keys[i]]));
@@ -119,7 +119,7 @@ QtObject {
 
     // ── Settings and translations ────────────────────────────────────────────
     function requestSettings() {
-        root.runner.run(["sh", "-c", "cat \"$1\" 2>/dev/null || printf '{}'", "ai-usage", root.configPath], function (out) {
+        root.runner.run(["sh", "-c", "cat \"$1\" 2>/dev/null || cat \"$(dirname \"$(dirname \"$1\")\")/ai-usage-widget/$(basename \"$1\")\" 2>/dev/null || printf '{}'", "tidesi", root.configPath], function (out) {
             var text = out || "{}";
             if (typeof root.migrateSettings === "function") {
                 var migrated = root.migrateSettings(text);
@@ -135,18 +135,18 @@ QtObject {
     function saveSettings(text) {
         // Written beside the target and renamed over it, so a reader never sees
         // a half-written file.
-        root.runner.run(["sh", "-c", "mkdir -p \"$(dirname \"$2\")\" && printf '%s' \"$1\" > \"$2.tmp.$$\" && mv -f \"$2.tmp.$$\" \"$2\"", "ai-usage", text, root.configPath], function () {});
+        root.runner.run(["sh", "-c", "mkdir -p \"$(dirname \"$2\")\" && printf '%s' \"$1\" > \"$2.tmp.$$\" && mv -f \"$2.tmp.$$\" \"$2\"", "tidesi", text, root.configPath], function () {});
     }
 
     function requestCatalog(language) {
         var langs = language !== "" ? [language] : root.systemLanguages;
-        root.runner.run(["sh", "-c", "d=\"$1\"; shift; for l in \"$@\"; do [ -f \"$d/$l.po\" ] && exec cat \"$d/$l.po\"; done; true", "ai-usage", root.translateDir].concat(langs), function (out) {
+        root.runner.run(["sh", "-c", "d=\"$1\"; shift; for l in \"$@\"; do [ -f \"$d/$l.po\" ] && exec cat \"$d/$l.po\"; done; true", "tidesi", root.translateDir].concat(langs), function (out) {
             root.catalogLoaded(out || "");
         });
     }
 
     function requestLanguages() {
-        root.runner.run(["sh", "-c", "for f in \"$1\"/*.po; do [ -f \"$f\" ] && basename \"$f\" .po; done; true", "ai-usage", root.translateDir], function (out) {
+        root.runner.run(["sh", "-c", "for f in \"$1\"/*.po; do [ -f \"$f\" ] && basename \"$f\" .po; done; true", "tidesi", root.translateDir], function (out) {
             var list = (out || "").split("\n").filter(function (l) {
                 return l !== "";
             });

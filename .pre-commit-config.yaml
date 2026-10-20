@@ -14,3 +14,13 @@ repos:
         args: ["-E", "--unresolved-type", "info"]
         language: system
         files: \.qml$
+
+      # CI fails when translate/template.pot or a .po is stale, so regenerate
+      # them whenever source that can hold an i18n() string changes. The hook
+      # fails once if it rewrote anything: stage the result and commit again.
+      - id: i18n-catalogs
+        name: i18n catalogs
+        entry: nix develop --command ./translate/Messages.sh
+        language: system
+        pass_filenames: false
+        files: \.(qml|js|py|sh)$

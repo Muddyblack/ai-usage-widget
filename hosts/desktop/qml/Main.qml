@@ -21,7 +21,7 @@ Window {
     color: "transparent"
     flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     // Matched by the KWin script in app.py (POPUP_TITLE) on Plasma Wayland.
-    title: "AI Usage"
+    title: "Tidesi"
 
     // Set by app.py when the macOS or Windows system backdrop succeeds.
     property bool nativeBlur: false
@@ -87,7 +87,7 @@ Window {
         color: "transparent"
         flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowDoesNotAcceptFocus
         // Matched by the KWin script in app.py (PILL_TITLE) on Plasma Wayland.
-        title: "AI Usage pill"
+        title: "Tidesi pill"
 
         onXChanged: pillSave.restart()
         onYChanged: pillSave.restart()
@@ -193,7 +193,7 @@ Window {
     }
 
     // Capped height, so the settings page scrolls rather than running off the
-    // screen — see the same Flickable in AiUsageShell.qml.
+    // screen — see the same Flickable in TidesiShell.qml.
     // Title bar and tabs stay put while the body below scrolls.
     PopupHeader {
         id: popupHeader

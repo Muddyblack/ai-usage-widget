@@ -94,7 +94,7 @@ test("reads the shipped French catalog completely", () => {
 });
 
 // The shared state's tr(): backend fields arrive with their template beside
-// them (backend/aiusage/messages.py) and are translated with the same catalog.
+// them (backend/tidesi/messages.py) and are translated with the same catalog.
 function sharedTr(catalog) {
     const source = fs.readFileSync(path.join(__dirname, "..", "ui", "AppState.qml"), "utf8");
     const block = name => {

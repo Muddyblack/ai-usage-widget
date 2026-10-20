@@ -5,8 +5,8 @@ import unittest
 from unittest import mock
 
 from _support import REPO, IsolatedHomeTest  # noqa: F401  (ensures TOOLS is on sys.path)
-from aiusage import __main__ as backend
-from aiusage import sessions
+from tidesi import __main__ as backend
+from tidesi import sessions
 
 
 def _entry(title: str, activity: int, *, provider: str = "test", open_key: str = ""):
@@ -225,7 +225,7 @@ class SessionQueryCliTest(unittest.TestCase):
             with (
                 self.subTest(argv=argv),
                 mock.patch(
-                    "aiusage.sessions.refresh_sessions",
+                    "tidesi.sessions.refresh_sessions",
                     return_value={"updatedAt": 1, "sessions": []},
                 ) as refresh,
                 mock.patch("sys.stdout", new=io.StringIO()),
@@ -238,7 +238,7 @@ class SessionQueryCliTest(unittest.TestCase):
         for source_value in ("unknown", "", "openai,,antigravity", "openai;antigravity"):
             with (
                 self.subTest(source_value=source_value),
-                mock.patch("aiusage.sessions.refresh_sessions") as refresh,
+                mock.patch("tidesi.sessions.refresh_sessions") as refresh,
                 mock.patch("sys.stdout", new=io.StringIO()),
                 mock.patch("sys.stderr", new=io.StringIO()) as error,
             ):
@@ -250,7 +250,7 @@ class SessionQueryCliTest(unittest.TestCase):
             refresh.assert_not_called()
 
         with (
-            mock.patch("aiusage.sessions.refresh_sessions") as refresh,
+            mock.patch("tidesi.sessions.refresh_sessions") as refresh,
             mock.patch("sys.stdout", new=io.StringIO()),
             mock.patch("sys.stderr", new=io.StringIO()) as error,
         ):
@@ -266,7 +266,7 @@ class SessionQueryCliTest(unittest.TestCase):
             with (
                 self.subTest(argv=argv),
                 mock.patch(
-                    "aiusage.sessions.refresh_sessions",
+                    "tidesi.sessions.refresh_sessions",
                     return_value={"updatedAt": 1, "sessions": []},
                 ) as refresh,
                 mock.patch("sys.stdout", new=io.StringIO()),
@@ -279,7 +279,7 @@ class SessionQueryCliTest(unittest.TestCase):
         argv = ("--sessions", "--query=old", "--limit", "5", "--offset=7")
         with (
             mock.patch(
-                "aiusage.sessions.refresh_sessions",
+                "tidesi.sessions.refresh_sessions",
                 return_value={"updatedAt": 1, "sessions": []},
             ) as refresh,
             mock.patch("sys.stdout", new=io.StringIO()),
@@ -292,10 +292,10 @@ class SessionQueryCliTest(unittest.TestCase):
         argv = ("--sessions", "--query-only", "--query=old", "--limit=5", "--offset=7")
         with (
             mock.patch(
-                "aiusage.sessions.collect_sessions",
+                "tidesi.sessions.collect_sessions",
                 return_value={"updatedAt": 1, "sessions": []},
             ) as collect,
-            mock.patch("aiusage.sessions.refresh_sessions") as refresh,
+            mock.patch("tidesi.sessions.refresh_sessions") as refresh,
             mock.patch("sys.stdout", new=io.StringIO()),
         ):
             self.assertEqual(backend.main(list(argv)), 0)
@@ -307,7 +307,7 @@ class SessionQueryCliTest(unittest.TestCase):
         argv = ("--sessions", "--refresh", "--query=old", "--limit=5", "--offset=7")
         with (
             mock.patch(
-                "aiusage.sessions.refresh_sessions",
+                "tidesi.sessions.refresh_sessions",
                 return_value={"updatedAt": 1, "sessions": []},
             ) as refresh,
             mock.patch("sys.stdout", new=io.StringIO()),
@@ -318,8 +318,8 @@ class SessionQueryCliTest(unittest.TestCase):
 
     def test_query_only_and_refresh_are_rejected_together(self):
         with (
-            mock.patch("aiusage.sessions.collect_sessions") as collect,
-            mock.patch("aiusage.sessions.refresh_sessions") as refresh,
+            mock.patch("tidesi.sessions.collect_sessions") as collect,
+            mock.patch("tidesi.sessions.refresh_sessions") as refresh,
             mock.patch("sys.stdout", new=io.StringIO()),
             mock.patch("sys.stderr", new=io.StringIO()) as error,
         ):
@@ -342,7 +342,7 @@ class SessionQueryCliTest(unittest.TestCase):
                 self.subTest(argv=argv),
                 mock.patch("sys.stdout", new=io.StringIO()),
                 mock.patch("sys.stderr", new=io.StringIO()) as error,
-                mock.patch("aiusage.sessions.collect_sessions") as collect,
+                mock.patch("tidesi.sessions.collect_sessions") as collect,
             ):
                 self.assertEqual(backend.main(list(argv)), 2)
 
@@ -353,7 +353,7 @@ class SessionQueryCliTest(unittest.TestCase):
         entry = _entry("matching", 2, open_key="opaque")
         with (
             mock.patch(
-                "aiusage.sessions.refresh_sessions",
+                "tidesi.sessions.refresh_sessions",
                 return_value={
                     "updatedAt": 1,
                     "sessions": [entry],

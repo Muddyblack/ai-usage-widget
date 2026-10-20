@@ -8,10 +8,10 @@ import time
 from urllib.error import HTTPError
 
 from _support import FIXTURES, IsolatedHomeTest, raw_fixture
-from aiusage import config, envelope
-from aiusage.normalize.muse import _compact as muse_compact
-from aiusage.normalize.zai import _compact as zai_compact
-from aiusage.providers import muse, muse_quota
+from tidesi import config, envelope
+from tidesi.normalize.muse import _compact as muse_compact
+from tidesi.normalize.zai import _compact as zai_compact
+from tidesi.providers import muse, muse_quota
 
 
 class MuseTest(IsolatedHomeTest):

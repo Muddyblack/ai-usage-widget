@@ -36,15 +36,15 @@ jobs:
           INPUT_VERSION: ${{ inputs.version }}
         run: |
           version="${INPUT_VERSION#v}"
-          nix run nixpkgs#nix-update -- --file nix/nixpkgs --version "$version" ai-usage-widget
-          nix run nixpkgs#nix-update -- --file nix/nixpkgs --version "$version" ai-usage-cli
-          nix run nixpkgs#nix-update -- --file nix/nixpkgs --version "$version" ai-usage-app
+          nix run nixpkgs#nix-update -- --file nix/nixpkgs --version "$version" tidesi
+          nix run nixpkgs#nix-update -- --file nix/nixpkgs --version "$version" tidesi-cli
+          nix run nixpkgs#nix-update -- --file nix/nixpkgs --version "$version" tidesi-app
 
       - name: Build all
         run: |
-          nix-build nix/nixpkgs -A ai-usage-app --no-out-link
-          nix-build nix/nixpkgs -A ai-usage-cli --no-out-link
-          nix-build nix/nixpkgs -A ai-usage-widget --no-out-link
+          nix-build nix/nixpkgs -A tidesi-app --no-out-link
+          nix-build nix/nixpkgs -A tidesi-cli --no-out-link
+          nix-build nix/nixpkgs -A tidesi --no-out-link
 
       - uses: actions/upload-artifact@v7
         with:

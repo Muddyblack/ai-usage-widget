@@ -142,7 +142,7 @@ class CommandBackendTest(unittest.TestCase):
         env = dict(
             os.environ,
             QT_QPA_PLATFORM="offscreen",
-            AI_USAGE_CONFIG=config,
+            TIDESI_CONFIG=config,
             HOME=self.tmp,
             XDG_CONFIG_HOME=os.path.join(self.tmp, "config"),
             XDG_DATA_HOME=os.path.join(self.tmp, "data"),

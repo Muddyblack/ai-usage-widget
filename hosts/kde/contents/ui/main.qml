@@ -18,7 +18,7 @@ PlasmoidItem {
 
     // contents/, wherever Plasma installed the package.
     readonly property string contentsDir: Qt.resolvedUrl("..").toString().replace("file://", "").replace(/\/$/, "")
-    readonly property string configPath: StandardPaths.writableLocation(StandardPaths.ConfigLocation).toString().replace("file://", "") + "/ai-usage-widget/hyprland-settings.json"
+    readonly property string configPath: StandardPaths.writableLocation(StandardPaths.ConfigLocation).toString().replace("file://", "") + "/tidesi/hyprland-settings.json"
 
     PlasmaRunner {
         id: runner
@@ -55,7 +55,7 @@ PlasmoidItem {
         // theme: the content follows that theme's light or dark.
         appearanceFollowsHost: true
         systemLight: Kirigami.Theme.backgroundColor.hslLightness > 0.5
-        cliPath: root.contentsDir + "/backend/sh/ai-usage-cli"
+        cliPath: root.contentsDir + "/backend/sh/tidesi-cli"
         // Each widget keeps its own pins and rotation (one per panel or
         // screen), in its own KConfig rather than the shared file.
         hostSettingsKeys: ["pinnedTabs", "panelRotationSec", "backgroundHints"]
@@ -77,8 +77,8 @@ PlasmoidItem {
     }
 
     Plasmoid.backgroundHints: Plasmoid.configuration.backgroundHints
-    Plasmoid.icon: "org.muddyblack.aiUsageWidget"
-    toolTipMainText: app.i18n("AI Usage")
+    Plasmoid.icon: "org.muddyblack.tidesi"
+    toolTipMainText: app.i18n("Tidesi")
     toolTipSubText: {
         var lines = [];
         for (var i = 0; i < app.providers.length; i++) {

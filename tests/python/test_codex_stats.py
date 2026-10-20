@@ -10,8 +10,8 @@ import unittest
 from unittest import mock
 
 import _support  # noqa: F401  (sys.path)
-from aiusage.providers import codex_stats
-from aiusage.providers.codex_stats import get_codex_stats
+from tidesi.providers import codex_stats
+from tidesi.providers.codex_stats import get_codex_stats
 
 
 def _line(**fields):
@@ -165,11 +165,11 @@ class CodexStatsCacheTest(unittest.TestCase):
         }
 
     def _cache_files(self):
-        directory = os.path.join(self.cache, "kde-ai-usage")
+        directory = os.path.join(self.cache, "tidesi")
         return [name for name in os.listdir(directory) if name.startswith("codex-stats-")]
 
     def _cache_payload(self):
-        directory = os.path.join(self.cache, "kde-ai-usage")
+        directory = os.path.join(self.cache, "tidesi")
         name = self._cache_files()[0]
         with open(os.path.join(directory, name), encoding="utf-8") as fh:
             return json.load(fh)
@@ -185,7 +185,7 @@ class CodexStatsCacheTest(unittest.TestCase):
                 calls.append(path)
                 return codex_stats._scan_rollout(path, date)
 
-            with mock.patch("aiusage.providers.codex_stats._scan_rollout", side_effect=counting_scan):
+            with mock.patch("tidesi.providers.codex_stats._scan_rollout", side_effect=counting_scan):
                 warm = get_codex_stats()
         self.assertEqual(calls, [])
         self.assertEqual(warm, cold)
@@ -215,7 +215,7 @@ class CodexStatsCacheTest(unittest.TestCase):
         _write_rollout(os.path.join(self.sessions, "2026", "09", "10"), "rollout-a.jsonl")
         with mock.patch.dict(os.environ, self.env):
             stats = get_codex_stats()
-            directory = os.path.join(self.cache, "kde-ai-usage")
+            directory = os.path.join(self.cache, "tidesi")
             name = self._cache_files()[0]
             with open(os.path.join(directory, name), "w", encoding="utf-8") as fh:
                 fh.write("{not json")
@@ -248,7 +248,7 @@ class CodexStatsCacheTest(unittest.TestCase):
         with mock.patch.dict(os.environ, self.env):
             first = get_codex_stats()
             self.assertEqual(first["totalSessions"], 0)
-            directory = os.path.join(self.cache, "kde-ai-usage")
+            directory = os.path.join(self.cache, "tidesi")
             name = self._cache_files()[0]
             cache_path = os.path.join(directory, name)
             mtime_before = os.stat(cache_path).st_mtime_ns
