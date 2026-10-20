@@ -14,6 +14,7 @@ HOMEPAGE = "https://github.com/Muddyblack/tidesi"
 PACKAGE_ID = "Muddyblack.Tidesi"
 PRODUCT_CODE = "{DA55F997-6C64-4B6F-92EB-D3BEB6885B68}_is1"
 DESCRIPTION = "AI usage and quota monitoring in the Windows system tray."
+MANIFEST_VERSION = "1.12.0"
 
 
 def sha256(path):
@@ -58,7 +59,7 @@ def generate(version, assets, output):
     # deliberately plain so WinGet's restricted parser can read it.
     common = f'PackageIdentifier: {PACKAGE_ID}\nPackageVersion: "{version}"\n'
     manifests = {
-        f"{PACKAGE_ID}.yaml": common + "DefaultLocale: en-US\nManifestType: version\nManifestVersion: 1.12.0\n",
+        f"{PACKAGE_ID}.yaml": common + f"DefaultLocale: en-US\nManifestType: version\nManifestVersion: {MANIFEST_VERSION}\n",
         f"{PACKAGE_ID}.locale.en-US.yaml": common
         + f"""PackageLocale: en-US
 Publisher: Muddyblack
@@ -71,7 +72,7 @@ LicenseUrl: {HOMEPAGE}/blob/v{version}/LICENSE
 ShortDescription: {DESCRIPTION}
 Moniker: tidesi
 ManifestType: defaultLocale
-ManifestVersion: 1.12.0
+ManifestVersion: {MANIFEST_VERSION}
 """,
         f"{PACKAGE_ID}.installer.yaml": common
         + f"""InstallerType: inno
@@ -90,13 +91,17 @@ Installers:
         DisplayVersion: "{version}"
         ProductCode: '{PRODUCT_CODE}'
 ManifestType: installer
-ManifestVersion: 1.12.0
+ManifestVersion: {MANIFEST_VERSION}
 """,
     }
     manifest_dir = output / "winget" / "manifests" / "m" / "Muddyblack" / "Tidesi" / version
     manifest_dir.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output / f"tidesi-winget-{version}.zip", "w", zipfile.ZIP_DEFLATED) as archive:
         for name, contents in manifests.items():
+            # winget-pkgs rejects a manifest whose first line is not its schema.
+            kind = re.search(r"^ManifestType: (\w+)$", contents, re.M).group(1)
+            schema = f"https://aka.ms/winget-manifest.{kind}.{MANIFEST_VERSION}.schema.json"
+            contents = f"# yaml-language-server: $schema={schema}\n" + contents
             path = manifest_dir / name
             data = contents.encode("utf-8")
             path.write_bytes(data)

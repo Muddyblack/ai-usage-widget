@@ -6,6 +6,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 import sys
 import tempfile
 import unittest
@@ -49,6 +50,13 @@ class PackageManifestsTest(unittest.TestCase):
             for name in archive.namelist():
                 self.assertTrue(name.startswith("manifests/m/Muddyblack/Tidesi/3.2.1/"))
                 self.assertEqual(archive.read(name), (self.output / "winget" / name).read_bytes())
+                # winget-pkgs' validation requires the schema URL on the first line.
+                text = archive.read(name).decode()
+                kind = re.search(r"^ManifestType: (\w+)$", text, re.M).group(1)
+                self.assertEqual(
+                    text.splitlines()[0],
+                    f"# yaml-language-server: $schema=https://aka.ms/winget-manifest.{kind}.1.12.0.schema.json",
+                )
             installer = archive.read("manifests/m/Muddyblack/Tidesi/3.2.1/Muddyblack.Tidesi.installer.yaml").decode()
         self.assertIn(hashlib.sha256(self.installer.read_bytes()).hexdigest().upper(), installer)
         self.assertIn("/v3.2.1/Tidesi-Setup-3.2.1.exe", installer)
