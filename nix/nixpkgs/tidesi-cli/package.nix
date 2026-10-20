@@ -61,7 +61,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   meta = {
     description = "Terminal frontend of Tidesi: provider limits as a table or a status-bar line";
     homepage = "https://github.com/Muddyblack/tidesi";
-    changelog = "https://github.com/Muddyblack/tidesi/releases/tag/v${finalAttrs.version}";
+    changelog = "https://github.com/Muddyblack/tidesi/releases/tag/${finalAttrs.src.tag}";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
     mainProgram = "tidesi-cli";
