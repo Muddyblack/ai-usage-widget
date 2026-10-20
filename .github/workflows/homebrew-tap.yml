@@ -1,0 +1,46 @@
+name: Homebrew tap
+
+# This repository doubles as a Homebrew tap: Casks/tidesi.rb is the cask of
+# the latest stable release, with the SHA-256 GitHub reports for its DMGs.
+# Releases created by release.yml do not trigger other workflows, so this one
+# looks daily and by hand, like the Scoop bucket.
+
+on:
+  schedule:
+    - cron: '27 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    # The tap only means something here; a fork would just burn minutes.
+    if: github.repository == 'Muddyblack/tidesi'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Write the latest release's cask
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          release="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest")"
+          tag="$(jq -r .tag_name <<<"$release")"
+          version="${tag#v}"
+          digest() {
+            jq -er --arg name "tidesi-macos-$version-$1.dmg" \
+              '.assets[] | select(.name == $name) | .digest | ltrimstr("sha256:")' <<<"$release"
+          }
+          python3 hosts/macos/homebrew-cask.py --version "$tag" \
+            --arm-sha256 "$(digest apple-silicon)" --intel-sha256 "$(digest intel)"
+          echo "version=$version" >> "$GITHUB_ENV"
+
+      - name: Commit if it changed
+        run: |
+          git add Casks/tidesi.rb
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "homebrew: tidesi $version"
+          git push
