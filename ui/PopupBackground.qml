@@ -222,7 +222,7 @@ Rectangle {
         smooth: true
         // A host that draws its own glass (not `translucent`) has no blurred
         // desktop behind the logo to lift it, so it gets a little more weight.
-        opacity: glass.providerLogo ? (glass.light ? (glass.translucent ? 0.22 : 0.27) : (glass.translucent ? 0.25 : 0.33)) : (glass.translucent ? 0.18 : 0.22)
+        opacity: glass.providerLogo ? (glass.light ? (glass.translucent ? 0.22 : 0.38) : (glass.translucent ? 0.25 : 0.5)) : (glass.translucent ? 0.18 : 0.26)
         visible: glass.decoration === 1 && loadedSource.toString() !== ""
         property url loadedSource
         readonly property url wanted: glass.decoration === 1 ? glass.watermark : ""
