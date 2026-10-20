@@ -292,7 +292,7 @@
               set -euo pipefail
               here="$PWD"
               ver="$(grep -oE '"Version":[[:space:]]*"[^"]+"' "$here/hosts/kde/metadata.json" | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
-              name="$(basename "$here")"
+              name=tidesi
               out="$here/$name-$ver.plasmoid"
               rm -f "$out"
               PATH=${pkgs.gettext}/bin:"$PATH" "$here/scripts/build-kde-package.sh" "$here/build/kde"

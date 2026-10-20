@@ -97,7 +97,7 @@ pack: ## build .plasmoid archive
 	  nix run .#pack; \
 	else \
 	  ver=$$(grep -oE '"Version":[[:space:]]*"[^"]+"' hosts/kde/metadata.json | head -1 | sed -E 's/.*"([^"]+)"$$/\1/'); \
-	  name=$$(basename "$$PWD"); \
+	  name=tidesi; \
 	  out="$$PWD/$$name-$$ver.plasmoid"; \
 	  rm -f "$$out"; \
 	  ./scripts/build-kde-package.sh && \
