@@ -1929,6 +1929,14 @@ def main(argv):
         if fonts_dir.is_dir():
             os.environ["QT_QPA_FONTDIR"] = str(fonts_dir)
 
+    if paths.IS_WINDOWS:
+        # Another process holding the clipboard (a clipboard manager, RDP or VM
+        # clipboard sync) makes Qt log "Retrying to obtain clipboard" over and
+        # over. It retries on its own and nothing here needs the clipboard.
+        rules = os.environ.get("QT_LOGGING_RULES", "")
+        if "qt.qpa.mime" not in rules:
+            os.environ["QT_LOGGING_RULES"] = (rules + ";" if rules else "") + "qt.qpa.mime.warning=false"
+
     app = QApplication(argv)
     app.setApplicationName(APP_NAME)
     if paths.IS_WINDOWS:

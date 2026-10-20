@@ -16,6 +16,7 @@ import tempfile
 from .. import paths
 from ..http import as_json, fetch_json, resolve_key
 from ..messages import tr
+from . import mistral_sessions
 
 _CACHE_VERSION = 1
 
@@ -153,9 +154,11 @@ def _vibe_stats():
             if name == "meta.json":
                 paths_list.append(os.path.join(root, name))
     paths_list.sort()
+    # Vibe 2.x keeps token totals in each unified session's projection state.
+    state_files = sorted(p for p, _m, _s in mistral_sessions.session_records() if p.endswith("projection-state.json"))
 
     try:
-        fingerprint = _shared_fingerprint(paths_list)
+        fingerprint = _shared_fingerprint(paths_list + state_files)
     except OSError:
         fingerprint = None
 
@@ -172,6 +175,7 @@ def _vibe_stats():
             continue
         if isinstance(d, dict) and d.get("stats") is not None:
             docs.append(d)
+    docs.extend(mistral_sessions.unified_documents())
 
     result = _aggregate(docs) if docs else {}
     if fingerprint is not None:
