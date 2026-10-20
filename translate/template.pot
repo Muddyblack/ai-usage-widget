@@ -6,7 +6,7 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Tidesi 3.3.1\n"
+"Project-Id-Version: Tidesi 4.0.0\n"
 "Report-Msgid-Bugs-To: https://github.com/Muddyblack/tidesi/issues\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
@@ -1740,8 +1740,7 @@ msgstr ""
 
 #: backend/tidesi/normalize/antigravity.py backend/tidesi/normalize/cursor.py
 #: backend/tidesi/normalize/muse.py backend/tidesi/normalize/ollama.py
-#: backend/tidesi/normalize/opencode.py
-#: backend/tidesi/normalize/selfhosted.py
+#: backend/tidesi/normalize/opencode.py backend/tidesi/normalize/selfhosted.py
 #: backend/tidesi/normalize/windsurf.py
 msgid "%1% used"
 msgstr ""
