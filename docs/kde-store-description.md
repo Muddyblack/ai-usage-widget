@@ -4,8 +4,6 @@
 
 Track Claude Code 5-hour and weekly limits, OpenAI Codex plan limits, Copilot premium requests, Cursor usage, and API balances for OpenRouter, DeepSeek, Kimi/Moonshot, Mistral, Grok/xAI, Z.AI, Kiro and Muse. One widget instead of an AI usage tab for each service.
 
-Now also tracks OpenCode usage and sessions with Zen/Go modes, MiMo Code local usage, Ollama Cloud limits, and local Ollama, vLLM and llama.cpp servers.
-
 I got tired of opening a different website or CLI tool every time I wanted to check how much quota I had left. So I built this: a little panel widget that puts every AI service I use right where I can see it — no tabs, no terminal, just a glance.
 
 [b]One glance at your panel tells you exactly how much you've got left.[/b]
@@ -20,7 +18,7 @@ Switch between tabs in the popup for each service:
 [*] [b]Antigravity / Google AI Studio[/b]
 [*] [b]OpenAI API[/b]
 [*] [b]Grok / xAI[/b]
-[*] [b]Mistral AI[/b]   
+[*] [b]Mistral AI[/b] — Key status, available models, and local vibe CLI cost and token stats
 [*] [b]Kiro[/b] — Monthly credits, from the kiro-cli login or the Kiro IDE
 [*] [b]OpenRouter[/b]
 [*] [b]Z.AI[/b] — 5-hour token quota + monthly tools quota
@@ -50,9 +48,11 @@ Switch between tabs in the popup for each service:
 [*] [b]Period comparison[/b] — [i]"+12% vs last week"[/i] at the same point in the cycle
 [*] [b]Overview[/b] — see every enabled provider at a glance
 [*] [b]Usage & Spend[/b] — Provider-reported spend and local token-based cost estimates, with daily cost and token charts, expandable histories and 1-day / 7-day / 30-day / all-history timeframes. Labels distinguish actual costs, estimates, subscription-covered usage and free models
-[*] [b]Sessions[/b] — Recent local Claude Code, Codex, Grok CLI, Cline, OpenCode, MiMo Code, Junie, Antigravity and Muse activity, with search, pagination and source filters. Cached results remain visible during background refresh. View local title previews and resume supported sessions in your terminal (Muse has no resume command). Previews may contain sensitive text
+[*] [b]Sessions[/b] — Recent local Claude Code, Codex, Grok CLI, Cline, OpenCode, MiMo Code, Junie, Antigravity, Mistral Vibe, Cursor and Muse activity, with search, pagination and source filters. Cached results remain visible during background refresh. View local title previews and resume supported sessions in your terminal (Muse has no resume command). Previews may contain sensitive text
 [*] [b]Model pricing[/b] — Search cached model rates and refresh the pricing catalog from settings
 [*] [b]Provider detection[/b] — Automatically detects installed providers on fresh installs, with a manual detection button in settings
+[*] [b]Pick how each provider is read[/b] — Add providers from a search in Settings → Providers; each provider's page lists its sources (CLI, IDE, local server, API key) with a working indicator
+[*] [b]Remote devices & sessions[/b] — Named Antigravity remote devices and Claude remote sessions, when accessible
 [*] [b]Theme-aware[/b] — follows your Plasma accent by default, or flip on per-service brand colors
 [*] [b]Glassmorphism popup[/b] — translucent, blurred, and honestly just nice to look at, with configurable popup decorations
 [*] [b]Pin services[/b] — Keep your chosen providers visible in the panel, with optional automatic rotation between them
@@ -77,7 +77,7 @@ Credential notes: Z.AI uses the widget setting, [icode]$ZAI_TOKEN[/icode], or [i
 
 OpenCode reads local session data and reuses its saved Zen/Go credentials; Zen activity reflects this device, while Go mode fetches account usage. Ollama Cloud uses a key from widget settings, [icode]$OLLAMA_API_KEY[/icode], or an existing OpenCode Ollama Cloud login. Local Models can auto-discover default Ollama, vLLM and llama.cpp endpoints, or use server URLs configured in settings.
 
-[b]Requires Plasma 6.0+.[/b]
+[b]Requires Plasma 6.0+.[/b] Tidesi also runs as a Hyprland/Quickshell shell, a tray app for Windows, macOS and other desktops, and a terminal CLI, all sharing the same backend.
 
 ---
 
@@ -85,4 +85,4 @@ OpenCode reads local session data and reuses its saved Zen/Go credentials; Zen a
 
 Built by [b]muddyblack[/b] • MIT licensed
 
-[i](Yeah, I know yet another Tidesi, but I wanted one for my own NixOS setup that just worked the way I needed it to. If you're in the same boat, here it is.)[/i] 💙
+[i](Yeah, I know, yet another AI usage tracker, but I wanted one for my own NixOS setup that just worked the way I needed it to. If you're in the same boat, here it is.)[/i] 💙
