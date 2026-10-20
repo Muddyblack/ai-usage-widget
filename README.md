@@ -5,7 +5,7 @@
 
 <h1 align="center">Tidesi</h1>
 
-<p align="center"><em>Watch the tide of your AI usage.</em></p>
+<p align="center"><em>Watch the tide of your Super Intelligence usage.</em></p>
 
 <p align="center">
   <a href="https://www.opendesktop.org/p/2361382/">
