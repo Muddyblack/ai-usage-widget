@@ -77,14 +77,10 @@ jobs:
       - name: i18n catalogs complete
         run: nix develop --command ./translate/check.sh
 
-      # Not a failure: translations.yml opens a pull request that fixes the drift
-      # after the merge, so a contributor never has to run this by hand.
       - name: i18n catalogs in sync with sources
         run: |
           nix develop --command ./translate/Messages.sh
-          if ! git diff --quiet -- translate; then
-            echo "::notice::translate/*.po are behind the sources; translations.yml will open a catalog update after the merge."
-          fi
+          git diff --exit-code -- 'translate/*.po'
 
       # The .mo files are not committed; this only proves every catalog compiles.
       - name: i18n catalogs compile
