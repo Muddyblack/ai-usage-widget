@@ -123,7 +123,7 @@ jobs:
             plasmapkg2 -i ${{ steps.info.outputs.artifact }}
             ```
 
-            **Windows:** run `Tidesi-Setup-${{ steps.info.outputs.version }}.exe` (no admin rights needed; it updates an existing install in place). Or unzip `tidesi-windows-${{ steps.info.outputs.version }}.zip` anywhere and run `Tidesi.exe`. Either way it lives in the tray.
+            **Windows:** run `tideSI-Setup-${{ steps.info.outputs.version }}.exe` (no admin rights needed; it updates an existing install in place). Or unzip `tideSI-windows-${{ steps.info.outputs.version }}.zip` anywhere and run `tideSI.exe`. Either way it lives in the tray.
 
             Stable Windows builds also include Scoop and WinGet manifests. See the [package manager instructions](https://github.com/Muddyblack/tidesi/blob/main/docs/windows.md#package-managers).
 
@@ -173,8 +173,8 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.tag }}
           target_commitish: ${{ github.sha }}
           files: |
-            tidesi-windows-*.zip
-            Tidesi-Setup-*.exe
+            tideSI-windows-*.zip
+            tideSI-Setup-*.exe
             dist/package-manifests/tidesi.json
             dist/package-manifests/tidesi-winget-*.zip
 

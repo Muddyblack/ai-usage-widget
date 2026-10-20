@@ -26,10 +26,10 @@ class PackageManifestsTest(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.assets = Path(temporary.name)
         self.output = self.assets / "output"
-        self.portable = self.assets / "tidesi-windows-3.2.1.zip"
+        self.portable = self.assets / "tideSI-windows-3.2.1.zip"
         with zipfile.ZipFile(self.portable, "w") as archive:
-            archive.writestr("Tidesi/Tidesi.exe", b"portable executable")
-        self.installer = self.assets / "Tidesi-Setup-3.2.1.exe"
+            archive.writestr("tideSI/tideSI.exe", b"portable executable")
+        self.installer = self.assets / "tideSI-Setup-3.2.1.exe"
         self.installer.write_bytes(b"installer executable")
 
     def test_scoop_archive_layout_and_hash(self):
@@ -38,7 +38,7 @@ class PackageManifestsTest(unittest.TestCase):
         self.assertEqual(scoop["version"], "3.2.1")
         asset = scoop["architecture"]["64bit"]
         self.assertEqual(asset["hash"], hashlib.sha256(self.portable.read_bytes()).hexdigest())
-        self.assertTrue(asset["url"].endswith("/v3.2.1/tidesi-windows-3.2.1.zip"))
+        self.assertTrue(asset["url"].endswith("/v3.2.1/tideSI-windows-3.2.1.zip"))
         with zipfile.ZipFile(self.portable) as archive:
             self.assertIn(f"{scoop['extract_dir']}/{scoop['shortcuts'][0][0]}", archive.namelist())
         self.assertEqual(scoop["autoupdate"]["architecture"]["64bit"]["url"].replace("$version", "3.2.1"), asset["url"])
@@ -59,7 +59,7 @@ class PackageManifestsTest(unittest.TestCase):
                 )
             installer = archive.read("manifests/m/Muddyblack/Tidesi/3.2.1/Muddyblack.Tidesi.installer.yaml").decode()
         self.assertIn(hashlib.sha256(self.installer.read_bytes()).hexdigest().upper(), installer)
-        self.assertIn("/v3.2.1/Tidesi-Setup-3.2.1.exe", installer)
+        self.assertIn("/v3.2.1/tideSI-Setup-3.2.1.exe", installer)
         self.assertIn("Scope: user", installer)
         self.assertIn("InstallerType: inno", installer)
         inno = (Path(REPO) / "hosts/windows/installer.iss").read_text(encoding="utf-8")
@@ -79,7 +79,7 @@ class PackageManifestsTest(unittest.TestCase):
 
     def test_wrong_archive_layout_is_rejected(self):
         with zipfile.ZipFile(self.portable, "w") as archive:
-            archive.writestr("Tidesi.exe", b"wrong root")
+            archive.writestr("tideSI.exe", b"wrong root")
         with self.assertRaisesRegex(ValueError, "must contain"):
             manifests.generate("3.2.1", self.assets, self.output)
         self.assertFalse(self.output.exists())

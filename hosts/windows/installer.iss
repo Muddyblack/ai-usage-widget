@@ -1,10 +1,10 @@
 ; Windows installer for tideSI tray app (Inno Setup 6).
 ;
-; Built by hosts/windows/build-installer.ps1 from PyInstaller's "dist\Tidesi" folder
+; Built by hosts/windows/build-installer.ps1 from PyInstaller's "dist\tideSI" folder
 ; (hosts/windows/tidesi.spec), in .github/workflows/windows.yml — on every push, and
 ; for each release, which release.yml runs that workflow for.
 ;
-; Per user: no admin rights, installed to %LOCALAPPDATA%\Programs\Tidesi.
+; Per user: no admin rights, installed to %LOCALAPPDATA%\Programs\tideSI.
 ; Settings and history live in %APPDATA% / %LOCALAPPDATA%\/tidesi and
 ; survive updates and uninstalls alike.
 
@@ -22,15 +22,15 @@ AppVerName=tideSI {#AppVersion}
 AppPublisher=Muddyblack
 AppPublisherURL=https://github.com/Muddyblack/tidesi
 AppSupportURL=https://github.com/Muddyblack/tidesi/issues
-DefaultDirName={autopf}\Tidesi
+DefaultDirName={autopf}\tideSI
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\..
-OutputBaseFilename=Tidesi-Setup-{#AppVersion}
+OutputBaseFilename=tideSI-Setup-{#AppVersion}
 SetupIconFile=..\..\dist\tidesi.ico
-UninstallDisplayIcon={app}\Tidesi.exe
+UninstallDisplayIcon={app}\tideSI.exe
 UninstallDisplayName=tideSI
 Compression=lzma2/max
 SolidCompression=yes
@@ -47,7 +47,7 @@ Name: "autostart"; Description: "Start tideSI when I sign in"; Check: not IsUpgr
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\..\dist\Tidesi\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\dist\tideSI\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [InstallDelete]
 ; An update replaces the whole bundle: files a new PyInstaller build no longer
@@ -58,23 +58,26 @@ Type: filesandordirs; Name: "{app}\_internal"
 Type: files; Name: "{app}\AI Usage.exe"
 Type: files; Name: "{autoprograms}\AI Usage.lnk"
 Type: files; Name: "{autodesktop}\AI Usage.lnk"
+; The executable was Tidesi.exe before it became tideSI.exe (Windows file names
+; ignore case, so only the .exe name differs).
+Type: files; Name: "{app}\Tidesi.exe"
 
 [Icons]
-Name: "{autoprograms}\tideSI"; Filename: "{app}\Tidesi.exe"
-Name: "{autodesktop}\tideSI"; Filename: "{app}\Tidesi.exe"; Tasks: desktopicon
+Name: "{autoprograms}\tideSI"; Filename: "{app}\tideSI.exe"
+Name: "{autodesktop}\tideSI"; Filename: "{app}\tideSI.exe"; Tasks: desktopicon
 
 [Registry]
 ; The same value the app's own "Start with Windows" switch writes (app.py,
 ; set_autostart), so the two stay one setting.
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Tidesi"; ValueData: """{app}\Tidesi.exe"""; Tasks: autostart
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Tidesi"; ValueData: """{app}\tideSI.exe"""; Tasks: autostart
 ; Removed on uninstall whichever of the two turned it on.
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "Tidesi"; Flags: uninsdeletevalue
 
 [Run]
-Filename: "{app}\Tidesi.exe"; Description: "{cm:LaunchProgram,tideSI}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\tideSI.exe"; Description: "{cm:LaunchProgram,tideSI}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
-Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM ""Tidesi.exe"""; Flags: runhidden; RunOnceId: "StopAIUsage"
+Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM ""tideSI.exe"""; Flags: runhidden; RunOnceId: "StopAIUsage"
 
 [Code]
 var
@@ -95,7 +98,9 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   ResultCode: Integer;
 begin
-  WasRunning := Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM "Tidesi.exe"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
+  WasRunning := Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM "tideSI.exe"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
+  if not WasRunning then
+    WasRunning := Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM "Tidesi.exe"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
   Result := '';
 end;
 
@@ -107,5 +112,5 @@ var
   ResultCode: Integer;
 begin
   if (CurStep = ssPostInstall) and WizardSilent and WasRunning then
-    ExecAsOriginalUser(ExpandConstant('{app}\Tidesi.exe'), '', '', SW_SHOWNORMAL, ewNoWait, ResultCode);
+    ExecAsOriginalUser(ExpandConstant('{app}\tideSI.exe'), '', '', SW_SHOWNORMAL, ewNoWait, ResultCode);
 end;

@@ -1,5 +1,5 @@
-# Builds Tidesi-Setup-<version>.exe (repository root) from PyInstaller's
-# "dist\Tidesi" folder with Inno Setup — see hosts/windows/installer.iss. Used by
+# Builds tideSI-Setup-<version>.exe (repository root) from PyInstaller's
+# "dist\tideSI" folder with Inno Setup — see hosts/windows/installer.iss. Used by
 # .github/workflows/windows.yml, which release.yml also runs for a tag; run it
 # from the repository root after
 #   pyinstaller --noconfirm hosts/windows/tidesi.spec
