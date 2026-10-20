@@ -58,6 +58,14 @@ function onSurface(value, surface) {
     return k;
 }
 
+// Panel marks need transparent backgrounds and cutout details so tinting
+// preserves their shape. Popup logos keep their original brand artwork.
+function panelLogo(source) {
+    return String(source).replace(/\/(antigravity-color|kiro)\.svg$/, function (_, name) {
+        return "/" + (name === "antigravity-color" ? "antigravity" : name) + "-symbolic.svg";
+    });
+}
+
 function paleLogo(source) {
     return /\/(cursor|cline|zed)\.svg$/.test(String(source));
 }

@@ -68,6 +68,23 @@ class TrayEntriesTest(unittest.TestCase):
         self.assertEqual(kinds(app.tray_entries({"style": "icons", "slots": [slot(0, text="$49.59")]})), ["ring"])
         self.assertEqual(app.tray_entries({})[0]["value"], -1)
 
+    def test_multicolor_logos_tint_as_recognizable_silhouettes(self):
+        QGuiApplication.instance() or QGuiApplication([])
+        for filename, hole in (("antigravity-color.svg", (32, 48)), ("kiro.svg", (34, 27))):
+            for color in ("#4285f4", "#ffa64d", "#ff4d4d"):
+                with self.subTest(icon=filename, color=color):
+                    icon = "file://" + os.path.join(REPO, "assets", "icons", filename)
+                    image = app.render_entry({"kind": "tinted", "icon": icon, "color": color}).pixmap(64, 64).toImage()
+                    solid = [image.pixelColor(x, y) for y in range(64) for x in range(64) if image.pixelColor(x, y).alpha() > 240]
+                    self.assertGreater(len(solid), 200, "provider mark is missing")
+                    expected = QColor(color)
+                    for pixel in solid:
+                        self.assertLessEqual(abs(pixel.red() - expected.red()), 2)
+                        self.assertLessEqual(abs(pixel.green() - expected.green()), 2)
+                        self.assertLessEqual(abs(pixel.blue() - expected.blue()), 2)
+                    self.assertEqual(image.pixelColor(8, 8).alpha(), 0, "background tile survived tinting")
+                    self.assertLess(image.pixelColor(*hole).alpha(), 100, "logo's cutout was filled")
+
     def test_every_kind_draws(self):
         QGuiApplication.instance() or QGuiApplication([])
         for entry in (

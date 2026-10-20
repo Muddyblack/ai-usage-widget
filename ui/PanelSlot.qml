@@ -60,7 +60,7 @@ RowLayout {
             function loadSource() {
                 if (loadedSource && loadedSource.toString() !== "")
                     unloadImage(loadedSource);
-                loadedSource = slot.iconSource;
+                loadedSource = Tone.panelLogo(slot.iconSource);
                 if (loadedSource.toString() !== "")
                     loadImage(loadedSource);
                 requestPaint();

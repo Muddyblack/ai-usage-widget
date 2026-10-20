@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <title>Kiro</title>
+  <!-- The ghost without its tile, scaled to fill the box, with eyes enlarged
+       so they stay open as cutouts at panel size (~12 px). -->
+  <path fill="#fff" fill-rule="evenodd" transform="translate(12 12) scale(1.38) translate(-11.95 -12)" d="M7.97 16.376c-1.644 3.642 1.86 4.556 4.443 2.424.76 2.39 3.608.607 4.631-1.247 2.251-4.084 1.342-8.249 1.108-9.108-1.6-5.859-9.6-5.869-10.976.03-.323 1.033-.328 2.206-.507 3.423-.09.617-.16 1.009-.393 1.655-.139.373-.323.7-.62 1.257-.458.865-.264 2.53 2.101 1.665l.224-.1h-.01l-.001.001z M10.75 10a1.25 1.85 0 1 0 2.5 0a1.25 1.85 0 1 0-2.5 0z M14.35 10a1.25 1.85 0 1 0 2.5 0a1.25 1.85 0 1 0-2.5 0z"/>
+</svg>

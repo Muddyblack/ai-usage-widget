@@ -967,6 +967,12 @@ def tinted_logo_icon(icon, color):
     tile, keeps the picture: its darkest part takes the colour and its lightest
     goes towards white. A flat fill would turn that tile into a solid block, and
     keeping the logo's own lightness would leave OpenAI's black logo black."""
+    # These brand logos need purpose-made silhouettes: Kiro has a background
+    # tile, and Antigravity uses SVG masks/filters unsupported by some Qt paths.
+    path = QUrl(icon).toLocalFile() if icon.startswith("file:") else icon
+    symbolic = {"antigravity-color.svg": "antigravity-symbolic.svg", "kiro.svg": "kiro-symbolic.svg"}.get(os.path.basename(path))
+    if symbolic:
+        icon = os.path.join(os.path.dirname(path), symbolic)
     size = _ICON_SIZE
     image = QImage(size, size, QImage.Format_ARGB32)
     image.fill(Qt.transparent)
