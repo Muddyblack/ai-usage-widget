@@ -140,7 +140,7 @@ class StatusItem:
         button.setImage_(None if style == "numbers" else self._image)
         shown = slots[:1] if style == "ring" else slots
         button.setAttributedTitle_(self._title(shown, leading_space=style != "numbers" and self._image is not None))
-        button.setToolTip_(state.get("tooltip") or "TideSI")
+        button.setToolTip_(state.get("tooltip") or "tideSI")
 
     def _title(self, slots, leading_space):
         font = NSFont.menuBarFontOfSize_(0)

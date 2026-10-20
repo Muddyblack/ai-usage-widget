@@ -21,7 +21,7 @@ class HomebrewCaskTest(unittest.TestCase):
         self.assertIn('version "4.0.0"', text)
         self.assertIn(f'arm:   "{ARM}"', text)
         self.assertIn(f'intel: "{INTEL}"', text)
-        self.assertIn('app "TideSI.app"', text)
+        self.assertIn('app "tideSI.app"', text)
 
     def test_url_matches_the_release_asset_names(self):
         # Resolve the cask's interpolation the way Homebrew does and compare

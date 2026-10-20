@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="./assets/icon.png" width="180" alt="TideSI Logo">
+  <img src="./assets/icon.png" width="180" alt="tideSI Logo">
 </p>
 
 
-<h1 align="center">TideSI</h1>
+<h1 align="center">tideSI</h1>
 
 <p align="center"><em>Watch the tide of your Super Intelligence usage.</em></p>
 
@@ -23,7 +23,7 @@
   <img src="https://img.shields.io/badge/Started-May_2026-9c27b0?style=for-the-badge" alt="Project started May 2026" />
 </p>
 
-TideSI is a KDE Plasma 6 panel widget, a Hyprland/Quickshell shell, a tray app for Windows, macOS and other desktops, and a terminal CLI for tracking AI API quota usage across 25 provider services. Monitor subscription windows, account balances, local activity, and per-model usage through the shared backend, with animated segmented bars, live countdown timers, and account status.
+tideSI is a KDE Plasma 6 panel widget, a Hyprland/Quickshell shell, a tray app for Windows, macOS and other desktops, and a terminal CLI for tracking AI API quota usage across 25 provider services. Monitor subscription windows, account balances, local activity, and per-model usage through the shared backend, with animated segmented bars, live countdown timers, and account status.
 
 
 ## Screenshots
@@ -227,7 +227,7 @@ kpackagetool6 -t Plasma/Applet -i package
 kpackagetool6 -t Plasma/Applet -u package
 ```
 
-Then right-click your panel → *Add Widgets* → search **"TideSI"**.
+Then right-click your panel → *Add Widgets* → search **"tideSI"**.
 
 A release `.plasmoid` or the KDE Store version already has the translations
 built in. Installing from a clone like this compiles them with `gettext`; the
@@ -289,9 +289,9 @@ All configuration is done in the widget's settings panel (right-click the widget
 
 ## Coming from AI Usage Widget
 
-The project was renamed to TideSI. Settings, history and caches are moved to the new `tidesi/` folders the first time it runs, so nothing is lost.
+The project was renamed to tideSI. Settings, history and caches are moved to the new `tidesi/` folders the first time it runs, so nothing is lost.
 
-- **KDE widget:** it has a new id, so Plasma sees it as a new widget. Add **TideSI** to your panel again (your settings come along) and remove the old one:
+- **KDE widget:** it has a new id, so Plasma sees it as a new widget. Add **tideSI** to your panel again (your settings come along) and remove the old one:
   `kpackagetool6 -t Plasma/Applet -r org.muddyblack.aiUsageWidget`
 - **Start at login** is carried over on macOS and Windows.
 - Nix: `programs.ai-usage-widget` still works as an alias of `programs.tidesi`, and the flake keeps `ai-usage` and `ai-usage-cli` as aliases of `tidesi` and `tidesi-cli`. The flake input is now `github:Muddyblack/tidesi`.

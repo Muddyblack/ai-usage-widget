@@ -740,7 +740,7 @@ ColumnLayout {
 
                     StudioRow {
                         label: page.shell.i18n("Start at login")
-                        desc: page.shell.i18n("Starts TideSI in the tray when you sign in. The same switch is in the tray icon's menu.")
+                        desc: page.shell.i18n("Starts tideSI in the tray when you sign in. The same switch is in the tray icon's menu.")
                         StudioSwitch {
                             checked: page.shell.autostart === true
                             onToggled: on => page.shell.setAutostart(on)

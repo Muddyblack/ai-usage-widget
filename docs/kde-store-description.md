@@ -1,4 +1,4 @@
-[h1]TideSI[/h1]
+[h1]tideSI[/h1]
 
 [b]Claude, Codex, ChatGPT, GitHub Copilot, Gemini/Antigravity, Cursor, OpenCode, Ollama & more — AI usage, quotas and costs live in your KDE Plasma 6 panel.[/b]
 
@@ -77,7 +77,7 @@ Credential notes: Z.AI uses the widget setting, [icode]$ZAI_TOKEN[/icode], or [i
 
 OpenCode reads local session data and reuses its saved Zen/Go credentials; Zen activity reflects this device, while Go mode fetches account usage. Ollama Cloud uses a key from widget settings, [icode]$OLLAMA_API_KEY[/icode], or an existing OpenCode Ollama Cloud login. Local Models can auto-discover default Ollama, vLLM and llama.cpp endpoints, or use server URLs configured in settings.
 
-[b]Requires Plasma 6.0+.[/b] TideSI also runs as a Hyprland/Quickshell shell, a tray app for Windows, macOS and other desktops, and a terminal CLI, all sharing the same backend.
+[b]Requires Plasma 6.0+.[/b] tideSI also runs as a Hyprland/Quickshell shell, a tray app for Windows, macOS and other desktops, and a terminal CLI, all sharing the same backend.
 
 ---
 

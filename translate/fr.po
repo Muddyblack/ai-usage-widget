@@ -17,7 +17,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: hosts/kde/contents/ui/main.qml
-msgid "TideSI"
+msgid "tideSI"
 msgstr ""
 
 #: hosts/kde/contents/ui/main.qml ui/AppState.qml ui/SettingsPage.qml
@@ -81,7 +81,7 @@ msgid "Loading"
 msgstr "Chargement"
 
 #: ui/AppState.qml
-msgid "Open TideSI"
+msgid "Open tideSI"
 msgstr ""
 
 #: ui/AppState.qml
@@ -353,7 +353,7 @@ msgid "Popup glass, tint and colours"
 msgstr "Verre, teinte et couleurs de la fenêtre"
 
 #: ui/PopupHeader.qml
-msgid "About TideSI and project links"
+msgid "About tideSI and project links"
 msgstr ""
 
 #: ui/PopupHeader.qml
@@ -1165,7 +1165,7 @@ msgstr "Tout supprimer…"
 
 #: ui/SettingsPage.qml
 msgid ""
-"Starts TideSI in the tray when you sign in. The same switch is in the tray "
+"Starts tideSI in the tray when you sign in. The same switch is in the tray "
 "icon's menu."
 msgstr ""
 

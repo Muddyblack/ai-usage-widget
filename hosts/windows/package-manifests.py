@@ -46,8 +46,8 @@ def generate(version, assets, output):
         "license": "MIT",
         "architecture": {"64bit": {"url": f"{base}/{portable}", "hash": portable_hash}},
         "extract_dir": "Tidesi",
-        "shortcuts": [["Tidesi.exe", "TideSI"]],
-        "notes": "Quit TideSI before updating. Disable Start with Windows in the app before uninstalling. Settings and history are kept.",
+        "shortcuts": [["Tidesi.exe", "tideSI"]],
+        "notes": "Quit tideSI before updating. Disable Start with Windows in the app before uninstalling. Settings and history are kept.",
         "checkver": "github",
         "autoupdate": {
             "architecture": {"64bit": {"url": f"{HOMEPAGE}/releases/download/v$version/tidesi-windows-$version.zip"}},
@@ -65,7 +65,7 @@ def generate(version, assets, output):
 Publisher: Muddyblack
 PublisherUrl: {HOMEPAGE}
 PublisherSupportUrl: {HOMEPAGE}/issues
-PackageName: TideSI
+PackageName: tideSI
 PackageUrl: {HOMEPAGE}
 License: MIT
 LicenseUrl: {HOMEPAGE}/blob/v{version}/LICENSE
@@ -86,7 +86,7 @@ Installers:
     InstallerSha256: {installer_hash.upper()}
     ProductCode: '{PRODUCT_CODE}'
     AppsAndFeaturesEntries:
-      - DisplayName: TideSI
+      - DisplayName: tideSI
         Publisher: Muddyblack
         DisplayVersion: "{version}"
         ProductCode: '{PRODUCT_CODE}'

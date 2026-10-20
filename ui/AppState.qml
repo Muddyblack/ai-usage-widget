@@ -656,7 +656,7 @@ Item {
     // Hosts without one ignore the call.
     function publishTray() {
         var p = root.pillProvider();
-        var lines = ["TideSI"];
+        var lines = ["tideSI"];
         for (var i = 0; i < root.providers.length; i++) {
             var q = root.providers[i];
             if (q.label && q.summary && q.summary.text)
@@ -690,7 +690,7 @@ Item {
     // the language changes.
     function publishTrayLabels() {
         backend.setTrayLabels(JSON.stringify({
-            open: root.i18n("Open TideSI"),
+            open: root.i18n("Open tideSI"),
             refresh: root.i18n("Refresh"),
             settings: root.i18n("Settings"),
             trayStyle: root.i18n("Tray style"),
