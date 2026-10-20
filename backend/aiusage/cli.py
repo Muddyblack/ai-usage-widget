@@ -1,4 +1,4 @@
-"""ai-usage-cli — terminal frontend for the shared provider backend.
+"""tidesi-cli — terminal frontend for the shared provider backend.
 
 A third consumer of the contract the Plasma widget and the Quickshell panel
 already render, for people who do not have a panel to put a widget on: Plasma 5
@@ -18,7 +18,7 @@ from . import config, envelope, render
 from .contract import finalize
 from .render import Style
 
-USAGE = """usage: ai-usage-cli [--all | --provider <id>[,<id>...]] [options]
+USAGE = """usage: tidesi-cli [--all | --provider <id>[,<id>...]] [options]
 
   --all                 every provider enabled in the shared settings file (default)
   --provider <ids>      the named providers, regardless of the settings toggles
@@ -32,7 +32,7 @@ USAGE = """usage: ai-usage-cli [--all | --provider <id>[,<id>...]] [options]
 A JSON envelope piped or redirected in is rendered instead of fetching, so a
 recorded response can be replayed with no network access:
 
-  get-ai-usage --all | ai-usage-cli
+  get-ai-usage --all | tidesi-cli
 
 providers: """ + " ".join(config.ALL_PROVIDERS)
 
@@ -86,13 +86,13 @@ def main(argv):
         elif arg == "--provider":
             i += 1
             if i >= len(argv) or not argv[i]:
-                sys.stderr.write("ai-usage-cli: --provider needs at least one id\n")
+                sys.stderr.write("tidesi-cli: --provider needs at least one id\n")
                 return 2
             requested = argv[i]
         elif arg.startswith("--provider="):
             requested = arg[len("--provider=") :]
             if not requested:
-                sys.stderr.write("ai-usage-cli: --provider needs at least one id\n")
+                sys.stderr.write("tidesi-cli: --provider needs at least one id\n")
                 return 2
         elif arg == "--compact":
             compact = True
@@ -113,19 +113,19 @@ def main(argv):
             print(USAGE)
             return 0
         else:
-            sys.stderr.write(f"ai-usage-cli: unknown argument: {arg}\n{USAGE}\n")
+            sys.stderr.write(f"tidesi-cli: unknown argument: {arg}\n{USAGE}\n")
             return 2
         i += 1
 
     if color not in ("auto", "always", "never"):
-        sys.stderr.write(f"ai-usage-cli: --color takes auto, always or never (got: {color or 'nothing'})\n")
+        sys.stderr.write(f"tidesi-cli: --color takes auto, always or never (got: {color or 'nothing'})\n")
         return 2
 
     selected = []
     if requested:
         for id_ in requested.split(","):
             if id_ not in config.ALL_PROVIDERS:
-                sys.stderr.write(f"ai-usage-cli: unknown provider: {id_}\n")
+                sys.stderr.write(f"tidesi-cli: unknown provider: {id_}\n")
                 return 2
             selected.append(id_)
 
@@ -133,7 +133,7 @@ def main(argv):
         try:
             env = json.load(sys.stdin)
         except ValueError as e:
-            sys.stderr.write(f"ai-usage-cli: invalid envelope on stdin: {e}\n")
+            sys.stderr.write(f"tidesi-cli: invalid envelope on stdin: {e}\n")
             return 2
         if selected:
             kept = [p for p in (env.get("providers") or []) if p.get("id") in selected]

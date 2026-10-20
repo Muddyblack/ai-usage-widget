@@ -1,9 +1,11 @@
 <p align="center">
-  <img src="./assets/icon.png" width="180" alt="AI Usage Widget Logo">
+  <img src="./assets/icon.png" width="180" alt="Tidesi Logo">
 </p>
 
 
-<h1 align="center">AI Usage Widget</h1>
+<h1 align="center">Tidesi</h1>
+
+<p align="center"><em>Watch the tide of your AI usage.</em></p>
 
 <p align="center">
   <a href="https://www.opendesktop.org/p/2361382/">
@@ -17,11 +19,11 @@
   <a href="https://www.opendesktop.org/p/2361382/">
     <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.pling.com%2Focs%2Fv1%2Fcontent%2Fdata%2F%3Fformat%3Djson%26user%3DMuddyblack%26pagesize%3D20%26sortmode%3Dalpha&query=%24.data%5B0%5D.downloads&label=KDE%20Downloads&style=for-the-badge&color=1d99f3&logo=kde&logoColor=white" alt="KDE Store Downloads" />
   </a>
-  <img src="https://img.shields.io/github/downloads/Muddyblack/ai-usage-widget/total?style=for-the-badge&logo=github&logoColor=white&label=GitHub%20Downloads&color=blue" alt="GitHub Downloads" />
+  <img src="https://img.shields.io/github/downloads/Muddyblack/tidesi/total?style=for-the-badge&logo=github&logoColor=white&label=GitHub%20Downloads&color=blue" alt="GitHub Downloads" />
   <img src="https://img.shields.io/badge/Started-May_2026-9c27b0?style=for-the-badge" alt="Project started May 2026" />
 </p>
 
-A KDE Plasma 6 panel widget for tracking AI API quota usage across 25 provider services. Monitor subscription windows, account balances, local activity, and per-model usage through the shared backend, with animated segmented bars, live countdown timers, and account status.
+Tidesi (formerly *AI Usage Widget*) is a KDE Plasma 6 panel widget, a Hyprland/Quickshell shell, a tray app for Windows, macOS and other desktops, and a terminal CLI for tracking AI API quota usage across 25 provider services. Monitor subscription windows, account balances, local activity, and per-model usage through the shared backend, with animated segmented bars, live countdown timers, and account status.
 
 
 ## Screenshots
@@ -217,15 +219,15 @@ for BYOK. See [setup and verification details](docs/providers.md#junie-cli-untes
 ## Install
 
 ```bash
-git clone https://github.com/Muddyblack/ai-usage-widget.git
-cd ai-usage-widget
+git clone https://github.com/Muddyblack/tidesi.git
+cd tidesi
 ./translate/build.sh   # compile the translations (needs gettext); skip for English only
 kpackagetool6 -t Plasma/Applet -i package
 # or to update an existing install:
 kpackagetool6 -t Plasma/Applet -u package
 ```
 
-Then right-click your panel → *Add Widgets* → search **"AI Usage"**.
+Then right-click your panel → *Add Widgets* → search **"Tidesi"**.
 
 A release `.plasmoid` or the KDE Store version already has the translations
 built in. Installing from a clone like this compiles them with `gettext`; the
@@ -246,16 +248,16 @@ Or install it from the [KDE Store](https://www.opendesktop.org/p/2361382/).
 ```nix
 # flake.nix
 {
-  inputs.ai-usage.url = "github:Muddyblack/ai-usage-widget";
+  inputs.tidesi.url = "github:Muddyblack/tidesi";
 
-  outputs = { self, nixpkgs, ai-usage, ... }: {
+  outputs = { self, nixpkgs, tidesi, ... }: {
     nixosConfigurations.mybox = nixpkgs.lib.nixosSystem {
       modules = [
-        ai-usage.nixosModules.default
+        tidesi.nixosModules.default
         {
-          programs.ai-usage-widget = {
+          programs.tidesi = {
             enable = true;          # the Plasma widget
-            cli.enable = true;      # optional: ai-usage-cli for the terminal
+            cli.enable = true;      # optional: tidesi-cli for the terminal
             desktop.enable = false; # optional: tray app + pill for non-Plasma desktops
             hyprland.enable = false; # optional: the Quickshell panel
           };
@@ -266,9 +268,9 @@ Or install it from the [KDE Store](https://www.opendesktop.org/p/2361382/).
 }
 ```
 
-Home Manager has the same module (`ai-usage.homeManagerModules.default`), which also links
+Home Manager has the same module (`tidesi.homeManagerModules.default`), which also links
 the widget into `~/.local/share/plasma/plasmoids`. Packages can be used directly too:
-`ai-usage.packages.${pkgs.system}.{default,cli,hyprland}`. See
+`tidesi.packages.${pkgs.system}.{default,cli,hyprland}`. See
 [docs/packaging.md](docs/packaging.md).
 
 </details>
@@ -278,12 +280,22 @@ All configuration is done in the widget's settings panel (right-click the widget
 
 ---
 
+## Coming from AI Usage Widget
+
+The project was renamed to Tidesi. Your settings and history carry over untouched.
+
+- The KDE widget keeps its plugin id, so it stays in your panel. Only the name changed.
+- Settings and history stay in `ai-usage-widget/` under your config and data folders.
+- Nix: `programs.ai-usage-widget` still works as an alias of `programs.tidesi`, and the flake keeps `ai-usage` and `ai-usage-cli` as aliases of `tidesi` and `tidesi-cli`. The flake input is now `github:Muddyblack/tidesi`.
+- Scoop: `scoop install tidesi` (was `ai-usage`). WinGet keeps `Muddyblack.AIUsage`.
+- The old repository URL redirects.
+
 ## Documentation
 
 | | |
 |---|---|
 | [docs/providers.md](docs/providers.md) | What each provider tab reads, credential resolution, API quirks, usage history |
-| [docs/cli.md](docs/cli.md) | `ai-usage-cli` — the terminal frontend, for SSH, status bars and non-Plasma desktops |
+| [docs/cli.md](docs/cli.md) | `tidesi-cli` — the terminal frontend, for SSH, status bars and non-Plasma desktops |
 | [docs/hyprland.md](docs/hyprland.md) | Running the Quickshell panel on Hyprland, Caelestia or Waybar |
 | [docs/windows.md](docs/windows.md) | The Windows tray app: installing, using and building it |
 | [docs/architecture.md](docs/architecture.md) | How the repository is laid out: one backend, one UI, one thin host per platform |

@@ -1,4 +1,4 @@
-# AI Usage on macOS
+# Tidesi on macOS
 
 A menu bar app: the active provider's mark and its percentages in the menu
 bar, and the same popup every other host shows under it — quota windows, reset
@@ -41,10 +41,10 @@ or Auto, which follows the system appearance.
 
 ## Python on macOS
 
-macOS ships no Python anyone can rely on, so `AI Usage.app` carries its own:
+macOS ships no Python anyone can rely on, so `Tidesi.app` carries its own:
 PyInstaller freezes the app, Qt, PyObjC and the standard-library-only backend
-into one bundle (`hosts/macos/ai-usage.spec`). The terminal frontend
-(`ai-usage-cli`) is a separate matter: it is a shell script that needs a
+into one bundle (`hosts/macos/tidesi.spec`). The terminal frontend
+(`tidesi-cli`) is a separate matter: it is a shell script that needs a
 Python of its own (`brew install python`).
 
 ## Where things are on macOS
@@ -102,7 +102,7 @@ Code itself.
 
 `~/.config/ai-usage-widget/` and `~/.local/share/ai-usage-widget/`, the same as
 on Linux — deliberately, not by omission. The settings file and the usage
-history are shared with `ai-usage-cli` and with any Linux machine the user syncs
+history are shared with `tidesi-cli` and with any Linux machine the user syncs
 dotfiles from; moving them to `~/Library/Application Support` on macOS alone
 would mean pasting every API key twice and keeping two histories.
 
@@ -112,8 +112,8 @@ On a Mac:
 
 ```bash
 pip install -r hosts/macos/build-requirements.txt
-hosts/macos/build-app.sh       # dist/AI Usage.app
-hosts/macos/package-dmg.sh     # ai-usage-macos-<version>-<apple-silicon|intel>.dmg
+hosts/macos/build-app.sh       # dist/Tidesi.app
+hosts/macos/package-dmg.sh     # tidesi-macos-<version>-<apple-silicon|intel>.dmg
 ```
 
 `rsvg-convert` (`brew install librsvg`) is needed for the Finder icon; without
@@ -139,11 +139,11 @@ host (`ui/js/I18n.js`); there is no separate macOS catalog.
 
 ## Signing and distribution
 
-Each release has two builds: `ai-usage-macos-<version>-apple-silicon.dmg`
-for M1 and later, and `ai-usage-macos-<version>-intel.dmg` for Intel Macs
+Each release has two builds: `tidesi-macos-<version>-apple-silicon.dmg`
+for M1 and later, and `tidesi-macos-<version>-intel.dmg` for Intel Macs
 (Apple menu → **About This Mac** says which). psutil ships no universal
 wheel, so CI builds each on its own runner (`macos-14`, `macos-15-intel`).
-Download the right DMG, open it, and drag **AI Usage.app** onto
+Download the right DMG, open it, and drag **Tidesi.app** onto
 **Applications**. Eject the disk image and open the app from Applications.
 
 Until the repository has an Apple Developer ID, the app is ad-hoc signed and
@@ -151,7 +151,7 @@ not notarized. If macOS blocks the first launch and you trust the download:
 
 1. Try opening the app from Applications.
 2. Open **System Settings → Privacy & Security** and scroll to **Security**.
-3. Choose **Open Anyway** for AI Usage and confirm the prompt.
+3. Choose **Open Anyway** for Tidesi and confirm the prompt.
 
 See [Apple's instructions for opening an app from an unknown developer](https://support.apple.com/guide/mac-help/mh40616/mac).
 Users do **not** need an Apple developer account to install or use the app.

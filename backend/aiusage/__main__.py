@@ -44,7 +44,7 @@ USAGE = """usage: get-ai-usage [--all | --provider <id>[,<id>...] | --normalize 
   --limit <n>           limit session results to a positive number of rows
   --offset <n>          skip a non-negative number of session rows
   --open-session <key>  resume one listed session (by its openKey) in a terminal
-  --open-cli            open the terminal frontend (ai-usage-cli) in a terminal
+  --open-cli            open the terminal frontend (tidesi-cli) in a terminal
   --list                print the known provider ids, one per line
   -h, --help            show this help
 

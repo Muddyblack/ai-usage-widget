@@ -1,9 +1,9 @@
 # PyInstaller spec for the Windows tray app. From the repository root:
 #
 #   pip install -r hosts/windows/build-requirements.txt
-#   pyinstaller --noconfirm hosts/windows/ai-usage.spec
+#   pyinstaller --noconfirm hosts/windows/tidesi.spec
 #
-# Produces dist/AI Usage/AI Usage.exe (one folder: starts faster than a
+# Produces dist/Tidesi/Tidesi.exe (one folder: starts faster than a
 # one-file build, which unpacks itself on every launch). The QML and the icons
 # keep the repository's layout inside the bundle, so hosts/desktop/qml/Main.qml finds
 # ../../../ui and ../../../package exactly as it does in a checkout.
@@ -48,8 +48,8 @@ exe = EXE(  # noqa: F821
     # its encodings itself; this covers anything that does not.
     [("X utf8", None, "OPTION")],
     exclude_binaries=True,
-    name="AI Usage",
+    name="Tidesi",
     console=False,
     icon=os.path.join(ROOT, "assets", "icon.png"),
 )
-coll = COLLECT(exe, a.binaries, a.datas, name="AI Usage")  # noqa: F821
+coll = COLLECT(exe, a.binaries, a.datas, name="Tidesi")  # noqa: F821

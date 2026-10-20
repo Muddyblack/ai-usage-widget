@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Snapshot export helper for the AI Usage widget.
+# Snapshot export helper for Tidesi widget.
 #
 # Usage:
 #   export-snapshot png  <src_png> <dest_path>   — mkdir + move the PNG to dest

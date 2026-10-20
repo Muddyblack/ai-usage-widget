@@ -302,7 +302,7 @@ class PricingTest(IsolatedHomeTest):
         def fetch(url, timeout, headers=None):
             self.assertEqual(timeout, 10)
             if url == pricing.MODELS_DEV_SOURCE_URL:
-                self.assertEqual(headers, {"Accept": "application/json", "User-Agent": "ai-usage-widget/1.0"})
+                self.assertEqual(headers, {"Accept": "application/json", "User-Agent": "tidesi/1.0"})
                 return HttpResult(200, json.dumps(models_dev_catalog()))
             if url == pricing.SOURCE_URL:
                 fallback = catalog()
@@ -371,7 +371,7 @@ class PricingTest(IsolatedHomeTest):
             [
                 mock.call(
                     pricing.MODELS_DEV_SOURCE_URL,
-                    headers={"Accept": "application/json", "User-Agent": "ai-usage-widget/1.0"},
+                    headers={"Accept": "application/json", "User-Agent": "tidesi/1.0"},
                     timeout=10,
                 ),
                 mock.call(pricing.SOURCE_URL, timeout=10),

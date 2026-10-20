@@ -52,13 +52,13 @@ class RestoreEnvironTest(unittest.TestCase):
 @unittest.skipUnless(HAS_PYSIDE, "PySide6 not installed")
 class ServerNameTest(unittest.TestCase):
     def test_one_per_user(self):
-        self.assertRegex(app.SERVER_NAME, r"^ai-usage-widget-tray(-[A-Za-z0-9_.-]+)?$")
+        self.assertRegex(app.SERVER_NAME, r"^tidesi-tray(-[A-Za-z0-9_.-]+)?$")
         with mock.patch("getpass.getuser", return_value="Jane Doe\\x"):
-            self.assertEqual(app._server_name(), "ai-usage-widget-tray-Jane_Doe_x")
+            self.assertEqual(app._server_name(), "tidesi-tray-Jane_Doe_x")
 
     def test_without_a_user_name(self):
         with mock.patch("getpass.getuser", side_effect=OSError):
-            self.assertEqual(app._server_name(), "ai-usage-widget-tray")
+            self.assertEqual(app._server_name(), "tidesi-tray")
 
 
 @unittest.skipUnless(HAS_PYSIDE, "PySide6 not installed")

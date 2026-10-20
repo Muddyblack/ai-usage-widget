@@ -20,7 +20,7 @@
 
 int main(int argc, char **argv) {
     QApplication app(argc, argv);
-    app.setApplicationName("AI Usage Widget");
+    app.setApplicationName("Tidesi");
     app.setQuitOnLastWindowClosed(false);
 
     if (argc != 4)
@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
     painter.end();
 
     QSystemTrayIcon tray{QIcon(iconPixmap)};
-    tray.setToolTip("AI Usage");
+    tray.setToolTip("Tidesi");
 
     // The popup's settings page writes an optional interpreter override into the
     // shared JSON config (same path shell.qml derives). This helper runs the
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
     QObject::connect(&backend, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), [&](int, QProcess::ExitStatus) {
         const auto document = QJsonDocument::fromJson(backend.readAllStandardOutput());
         const auto providers = document.object().value("providers").toArray();
-        QStringList lines{"AI Usage"};
+        QStringList lines{"Tidesi"};
         for (const auto &value : providers) {
             const auto provider = value.toObject();
             const QString label = provider.value("label").toString();
@@ -111,10 +111,10 @@ int main(int argc, char **argv) {
     QTimer::singleShot(0, updateTooltip);
 
     QMenu menu;
-    auto *openAction = menu.addAction("Open AI Usage");
+    auto *openAction = menu.addAction("Open Tidesi");
     auto *refreshAction = menu.addAction("Refresh");
     menu.addSeparator();
-    auto *quitAction = menu.addAction("Quit AI Usage");
+    auto *quitAction = menu.addAction("Quit Tidesi");
     // Caelestia presents a StatusNotifier context menu while its tray item is
     // hovered. Treat that menu lifetime as the portable helper's hover signal.
     QObject::connect(&menu, &QMenu::aboutToShow, [&] { call("trayEnter"); });

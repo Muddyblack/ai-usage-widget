@@ -1,8 +1,8 @@
-# Builds AI-Usage-Setup-<version>.exe (repository root) from PyInstaller's
-# "dist\AI Usage" folder with Inno Setup — see hosts/windows/installer.iss. Used by
+# Builds Tidesi-Setup-<version>.exe (repository root) from PyInstaller's
+# "dist\Tidesi" folder with Inno Setup — see hosts/windows/installer.iss. Used by
 # .github/workflows/windows.yml, which release.yml also runs for a tag; run it
 # from the repository root after
-#   pyinstaller --noconfirm hosts/windows/ai-usage.spec
+#   pyinstaller --noconfirm hosts/windows/tidesi.spec
 #
 #   hosts/windows/build-installer.ps1 -Version 2.4.0
 param([Parameter(Mandatory = $true)][string]$Version)
@@ -30,7 +30,7 @@ Write-Output "Using $iscc"
 
 # Inno Setup wants an .ico; the repository has the PNG (Pillow comes with the
 # PyInstaller build step).
-python -c "from PIL import Image; Image.open('assets/icon.png').convert('RGBA').save('dist/ai-usage.ico', sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])"
+python -c "from PIL import Image; Image.open('assets/icon.png').convert('RGBA').save('dist/tidesi.ico', sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 & $iscc "/DAppVersion=$Version" "hosts\windows\installer.iss"

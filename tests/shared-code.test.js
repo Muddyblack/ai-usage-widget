@@ -533,7 +533,7 @@ const os = require("node:os");
 const HISTORY_IO = path.join(__dirname, "..", "backend", "sh", "history-io");
 
 function newHome() {
-    const home = fs.mkdtempSync(path.join(os.tmpdir(), "ai-usage-history-"));
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), "tidesi-history-"));
     test.after(() => fs.rmSync(home, { recursive: true, force: true }));
     return home;
 }
@@ -544,7 +544,7 @@ function fileOf(home) {
 
 // What is left of a frontend once the protocol moved into the store: run the
 // tool, hand the answer back. This is the whole of main.qml's and
-// AiUsageShell.qml's part, so the decisions under test here are the shipped
+// TidesiShell.qml's part, so the decisions under test here are the shipped
 // ones. `send` runs the tool — the file changes there and then — while `settle`
 // delivers the answer, which is the gap an asynchronous response opens and where
 // samples land.

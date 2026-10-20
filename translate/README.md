@@ -43,10 +43,10 @@ Weblate is free for open-source projects at <https://hosted.weblate.org>
 ("Libre" plan). Repository side, nothing else is needed — the layout below is
 what Weblate expects.
 
-1. Sign in with GitHub, create a project (name: *AI Usage Monitor*, website:
+1. Sign in with GitHub, create a project (name: *Tidesi*, website:
    the GitHub repository) and apply for Libre hosting.
 2. Add one component:
-   - **Source code repository:** `https://github.com/Muddyblack/ai-usage-widget`,
+   - **Source code repository:** `https://github.com/Muddyblack/tidesi`,
      branch `master`; **Repository push URL:** the same, via the Weblate
      GitHub integration (it then opens pull requests instead of pushing).
    - **File format:** *gettext PO file*

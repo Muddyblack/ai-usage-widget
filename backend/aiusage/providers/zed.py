@@ -119,7 +119,7 @@ def get_zed_usage():
         return {} if paths.IS_MACOS else {"unsupported": True}
     result = fetch_json(
         url,
-        headers={"Authorization": f"{user_id} {clean_credential(token)}", "Accept": "application/json", "User-Agent": "ai-usage-widget/zed"},
+        headers={"Authorization": f"{user_id} {clean_credential(token)}", "Accept": "application/json", "User-Agent": "tidesi/zed"},
         timeout=12,
         fixture_path=fixture,
     )

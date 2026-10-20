@@ -16,12 +16,12 @@ let
   ]);
 in
 stdenv.mkDerivation (finalAttrs: {
-  pname = "ai-usage-app";
+  pname = "tidesi-app";
   version = "3.3.1";
 
   src = fetchFromGitHub {
     owner = "Muddyblack";
-    repo = "ai-usage-widget";
+    repo = "tidesi";
     tag = "v${finalAttrs.version}";
     hash = "sha256-RT/x9eEBrnbOpa6ghyDrdntsXrKl4fslxGJahn82CrM=";
   };
@@ -45,7 +45,7 @@ stdenv.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
 
-    root=$out/share/ai-usage-widget
+    root=$out/share/tidesi
     mkdir -p "$root/hosts" "$out/bin"
     cp -r hosts/desktop "$root/hosts/desktop"
     cp -r ui backend assets translate "$root/"
@@ -61,11 +61,11 @@ stdenv.mkDerivation (finalAttrs: {
 
     # PySide6 ships no QML modules (QtQuick.Controls ...): they come from
     # qtdeclarative, the same Qt it runs on.
-    makeWrapper ${python.interpreter} "$out/bin/ai-usage" \
+    makeWrapper ${python.interpreter} "$out/bin/tidesi" \
       --add-flags "-B $root/hosts/desktop/app.py" \
       --prefix QML_IMPORT_PATH : ${qt6.qtdeclarative}/${qt6.qtbase.qtQmlPrefix} \
       --prefix QT_PLUGIN_PATH : ${qt6.qtsvg}/${qt6.qtbase.qtPluginPrefix}
-    wrapQtApp "$out/bin/ai-usage"
+    wrapQtApp "$out/bin/tidesi"
 
     runHook postInstall
   '';
@@ -74,7 +74,7 @@ stdenv.mkDerivation (finalAttrs: {
   installCheckPhase = ''
     runHook preInstallCheck
     export HOME=$TMPDIR XDG_RUNTIME_DIR=$TMPDIR QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software
-    $out/bin/ai-usage --selftest
+    $out/bin/tidesi --selftest
     runHook postInstallCheck
   '';
 
@@ -82,11 +82,11 @@ stdenv.mkDerivation (finalAttrs: {
 
   meta = {
     description = "Tray app with a floating pill showing AI provider usage limits, for any desktop with a tray";
-    homepage = "https://github.com/Muddyblack/ai-usage-widget";
-    changelog = "https://github.com/Muddyblack/ai-usage-widget/releases/tag/v${finalAttrs.version}";
+    homepage = "https://github.com/Muddyblack/tidesi";
+    changelog = "https://github.com/Muddyblack/tidesi/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
-    mainProgram = "ai-usage";
+    mainProgram = "tidesi";
     maintainers = [ ];
   };
 })

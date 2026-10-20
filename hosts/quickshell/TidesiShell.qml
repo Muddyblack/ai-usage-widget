@@ -44,7 +44,7 @@ ShellRoot {
         if (root.glassRulesApplied)
             return;
         root.glassRulesApplied = true;
-        var rules = [["blur on, match:namespace ^ai-usage-widget-glass$", "ignore_alpha 0.01, match:namespace ^ai-usage-widget-glass$"], ["blur, ^(ai-usage-widget-glass)$", "ignorealpha 0.01, ^(ai-usage-widget-glass)$"]];
+        var rules = [["blur on, match:namespace ^tidesi-glass$", "ignore_alpha 0.01, match:namespace ^tidesi-glass$"], ["blur, ^(tidesi-glass)$", "ignorealpha 0.01, ^(tidesi-glass)$"]];
         function attempt(set) {
             if (set >= rules.length)
                 return;
@@ -93,7 +93,7 @@ ShellRoot {
         compositorGlassAvailable: true
         // Settings → Appearance → Theme "auto": the desktop's light or dark.
         systemLight: Qt.styleHints.colorScheme === Qt.ColorScheme.Light
-        cliPath: root.repoDir + "/backend/sh/ai-usage-cli"
+        cliPath: root.repoDir + "/backend/sh/tidesi-cli"
         // Connected outputs by name, for the settings page's monitor picker.
         screenNames: {
             var names = [];
@@ -249,7 +249,7 @@ ShellRoot {
             exclusiveZone: 0
             // Our own name rather than Quickshell's default "quickshell", which
             // other shells (Caelestia) share, so layer rules can target us alone.
-            WlrLayershell.namespace: "ai-usage-widget"
+            WlrLayershell.namespace: "tidesi"
 
             anchors {
                 top: root.positionTop
@@ -437,7 +437,7 @@ ShellRoot {
                 exclusiveZone: 0
                 // The blur itself is Hyprland's: hosts/quickshell/glass.conf
                 // matches only the -glass name, so it applies when switched on.
-                WlrLayershell.namespace: app.settings.compositorGlass === true ? "ai-usage-widget-glass" : "ai-usage-widget"
+                WlrLayershell.namespace: app.settings.compositorGlass === true ? "tidesi-glass" : "tidesi"
 
                 onVisibleChanged: {
                     // Only the popup that actually owns the open state may close it —

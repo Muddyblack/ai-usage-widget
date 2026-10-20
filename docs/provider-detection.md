@@ -93,7 +93,7 @@ program is the evidence, and it still says nothing about authentication.
 |---|---|---|
 | KDE Plasma | The same shared JSON as Hyprland. The old KConfig values (`hosts/kde/contents/config/main.xml`) are carried into it once, on the first start after updating (`hosts/kde/contents/ui/KdeMigration.js`). | Same as every host: the shared UI runs the latched first-run initialization. |
 | Hyprland | Shared JSON at `$XDG_CONFIG_HOME/ai-usage-widget/hyprland-settings.json`, or `AI_USAGE_CONFIG` | Backend `--all` reads this file. First-run initialization must be explicit and latched. |
-| Windows | The same shared JSON under `%APPDATA%\\ai-usage-widget\\hyprland-settings.json` | The Windows app uses the shared backend and settings format. It must not silently rerun detection during refresh. |
+| Windows | The same shared JSON under `%APPDATA%\\tidesi\\hyprland-settings.json` | The Windows app uses the shared backend and settings format. It must not silently rerun detection during refresh. |
 | macOS | The same shared JSON under `~/.config/ai-usage-widget/hyprland-settings.json`, unless overridden | Same as every host. |
 
 The backend path is named `hyprland-settings.json` for compatibility. Windows

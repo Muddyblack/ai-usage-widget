@@ -293,7 +293,7 @@ def _fetch_openrouter():
 def _fetch_models_dev():
     response = fetch_json(
         MODELS_DEV_SOURCE_URL,
-        headers={"Accept": "application/json", "User-Agent": "ai-usage-widget/1.0"},
+        headers={"Accept": "application/json", "User-Agent": "tidesi/1.0"},
         timeout=10,
     )
     if response.status != 200:

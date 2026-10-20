@@ -58,7 +58,7 @@ xgettext \
     --keyword=i18nd:2 --keyword=i18ndc:2c,3 --keyword=i18ndp:2,3 --keyword=i18ndcp:2c,3,4 \
     --keyword=ki18n --keyword=ki18nc:1c,2 --keyword=ki18np:1,2 --keyword=ki18ncp:1c,2,3 \
     --keyword=xi18n --keyword=xi18nc:1c,2 --keyword=xi18np:1,2 --keyword=xi18ncp:1c,2,3 \
-    --package-name="AI Usage Monitor" \
+    --package-name="Tidesi" \
     --package-version="$version" \
     --msgid-bugs-address="$bug_url/issues" \
     --output="$pot" \
@@ -75,7 +75,7 @@ xgettext \
     --add-comments=TRANSLATORS \
     --add-location=file \
     --keyword=tr \
-    --package-name="AI Usage Monitor" \
+    --package-name="Tidesi" \
     --package-version="$version" \
     --msgid-bugs-address="$bug_url/issues" \
     --output="$py_pot" \

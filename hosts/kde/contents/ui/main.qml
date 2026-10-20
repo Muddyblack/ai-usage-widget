@@ -55,7 +55,7 @@ PlasmoidItem {
         // theme: the content follows that theme's light or dark.
         appearanceFollowsHost: true
         systemLight: Kirigami.Theme.backgroundColor.hslLightness > 0.5
-        cliPath: root.contentsDir + "/backend/sh/ai-usage-cli"
+        cliPath: root.contentsDir + "/backend/sh/tidesi-cli"
         // Each widget keeps its own pins and rotation (one per panel or
         // screen), in its own KConfig rather than the shared file.
         hostSettingsKeys: ["pinnedTabs", "panelRotationSec", "backgroundHints"]
@@ -78,7 +78,7 @@ PlasmoidItem {
 
     Plasmoid.backgroundHints: Plasmoid.configuration.backgroundHints
     Plasmoid.icon: "org.muddyblack.aiUsageWidget"
-    toolTipMainText: app.i18n("AI Usage")
+    toolTipMainText: app.i18n("Tidesi")
     toolTipSubText: {
         var lines = [];
         for (var i = 0; i < app.providers.length; i++) {

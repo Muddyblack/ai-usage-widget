@@ -1,12 +1,12 @@
-# French translations for AI Usage Monitor package.
-# Copyright (C) 2026 THE AI Usage Monitor'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the AI Usage Monitor package.
+# French translations for Tidesi package.
+# Copyright (C) 2026 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Tidesi package.
 # Automatically generated, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Usage Monitor 2.3.1\n"
-"Report-Msgid-Bugs-To: https://github.com/Muddyblack/ai-usage-widget/issues\n"
+"Project-Id-Version: Tidesi 2.3.1\n"
+"Report-Msgid-Bugs-To: https://github.com/Muddyblack/tidesi/issues\n"
 "PO-Revision-Date: 2026-09-12 09:06+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: French\n"
@@ -17,8 +17,8 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: hosts/kde/contents/ui/main.qml
-msgid "AI Usage"
-msgstr "AI Usage"
+msgid "Tidesi"
+msgstr "Tidesi"
 
 #: hosts/kde/contents/ui/main.qml ui/AppState.qml ui/SettingsPage.qml
 msgid "Refresh"
@@ -81,8 +81,8 @@ msgid "Loading"
 msgstr "Chargement"
 
 #: ui/AppState.qml
-msgid "Open AI Usage"
-msgstr "Ouvrir AI Usage"
+msgid "Open Tidesi"
+msgstr "Ouvrir Tidesi"
 
 #: ui/AppState.qml
 msgid "Tray style"
@@ -353,8 +353,8 @@ msgid "Popup glass, tint and colours"
 msgstr "Verre, teinte et couleurs de la fenêtre"
 
 #: ui/PopupHeader.qml
-msgid "About AI Usage Monitor and project links"
-msgstr "À propos d'AI Usage Monitor et liens du projet"
+msgid "About Tidesi and project links"
+msgstr "À propos d'Tidesi et liens du projet"
 
 #: ui/PopupHeader.qml
 msgid "Local endpoints: Ollama, vLLM and llama.cpp"
@@ -1165,10 +1165,10 @@ msgstr "Tout supprimer…"
 
 #: ui/SettingsPage.qml
 msgid ""
-"Starts AI Usage in the tray when you sign in. The same switch is in the tray "
+"Starts Tidesi in the tray when you sign in. The same switch is in the tray "
 "icon's menu."
 msgstr ""
-"Lance AI Usage dans la zone de notification à l'ouverture de session. Le "
+"Lance Tidesi dans la zone de notification à l'ouverture de session. Le "
 "même interrupteur se trouve dans le menu de l'icône."
 
 #: ui/SettingsPage.qml
@@ -1200,10 +1200,10 @@ msgstr "Terminal"
 #: ui/SettingsPage.qml
 msgid ""
 "Same data as this popup, as a table in a shell. Link it into ~/.local/bin to "
-"run it as ai-usage-cli, or pass --compact for one status-bar line."
+"run it as tidesi-cli, or pass --compact for one status-bar line."
 msgstr ""
 "Mêmes données que ce menu contextuel, sous forme de tableau dans un shell. "
-"Liez-le dans ~/.local/bin pour l'exécuter sous le nom ai-usage-cli, ou "
+"Liez-le dans ~/.local/bin pour l'exécuter sous le nom tidesi-cli, ou "
 "passez --compact pour une ligne de barre d'état."
 
 #: ui/SettingsPage.qml
@@ -1835,10 +1835,6 @@ msgstr "Gemini : %1%"
 #, no-javascript-format
 msgid "Rest: %1%"
 msgstr "Reste : %1%"
-
-#: translate/metadata-i18n.js
-msgid "AI Usage Monitor"
-msgstr "Moniteur d'utilisation IA"
 
 #: translate/metadata-i18n.js
 msgid ""

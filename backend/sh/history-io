@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# History persistence helper for the AI Usage widget.
+# History persistence helper for Tidesi widget.
 #
 # Usage:
 #   history-io autosave   — union $WIDGET_HISTORY_JSON into the latest file, print the merged

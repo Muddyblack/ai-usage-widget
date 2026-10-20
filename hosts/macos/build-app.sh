@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# Build `AI Usage.app` (macOS only): the shared tray app and UI, frozen by
-# PyInstaller (hosts/macos/ai-usage.spec), with the native menu bar item.
+# Build `Tidesi.app` (macOS only): the shared tray app and UI, frozen by
+# PyInstaller (hosts/macos/tidesi.spec), with the native menu bar item.
 #
-#   hosts/macos/build-app.sh            -> dist/AI Usage.app
+#   hosts/macos/build-app.sh            -> dist/Tidesi.app
 #
 # Needs: pip install -r hosts/macos/build-requirements.txt
 # Optional: rsvg-convert (brew install librsvg) for the Finder icon.
@@ -32,6 +32,6 @@ else
 fi
 
 cd "$ROOT"
-pyinstaller --noconfirm --workpath "$BUILD/pyinstaller" --distpath "$ROOT/dist" hosts/macos/ai-usage.spec
-cp "$ROOT/assets/icons/LICENSE.lobehub" "$ROOT/dist/AI Usage.app/Contents/Resources/LICENSE.lobehub"
-echo "Built $ROOT/dist/AI Usage.app"
+pyinstaller --noconfirm --workpath "$BUILD/pyinstaller" --distpath "$ROOT/dist" hosts/macos/tidesi.spec
+cp "$ROOT/assets/icons/LICENSE.lobehub" "$ROOT/dist/Tidesi.app/Contents/Resources/LICENSE.lobehub"
+echo "Built $ROOT/dist/Tidesi.app"

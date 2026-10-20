@@ -47,9 +47,9 @@ The terminal frontend renders that same model, either fetching it itself or
 reading an envelope on stdin:
 
 ```bash
-ai-usage-cli                        # table of every enabled provider
-ai-usage-cli --compact              # one line, for status bars
-get-ai-usage --all | ai-usage-cli   # render a fetched envelope, no second fetch
+tidesi-cli                        # table of every enabled provider
+tidesi-cli --compact              # one line, for status bars
+get-ai-usage --all | tidesi-cli   # render a fetched envelope, no second fetch
 ```
 
 `--all` respects the provider toggles in the shared settings file

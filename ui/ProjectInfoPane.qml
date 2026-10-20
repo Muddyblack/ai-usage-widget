@@ -76,7 +76,7 @@ Column {
             sourceSize.width: 112
             sourceSize.height: 112
             fillMode: Image.PreserveAspectFit
-            Accessible.name: "AI Usage Monitor project icon"
+            Accessible.name: "Tidesi project icon"
         }
 
         Column {

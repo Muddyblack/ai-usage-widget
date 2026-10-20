@@ -8,12 +8,12 @@
 }:
 
 stdenvNoCC.mkDerivation (finalAttrs: {
-  pname = "ai-usage-cli";
+  pname = "tidesi-cli";
   version = "3.3.1";
 
   src = fetchFromGitHub {
     owner = "Muddyblack";
-    repo = "ai-usage-widget";
+    repo = "tidesi";
     tag = "v${finalAttrs.version}";
     hash = "sha256-RT/x9eEBrnbOpa6ghyDrdntsXrKl4fslxGJahn82CrM=";
   };
@@ -24,7 +24,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
 
-    dest=$out/share/ai-usage-widget
+    dest=$out/share/tidesi
     mkdir -p "$dest" "$out/bin"
     cp -r backend "$dest/backend"
     find "$dest" \( -name '__pycache__' -o -name '*.pyc' \) -prune -exec rm -rf {} +
@@ -37,7 +37,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
                      'SECRET_TOOL = "${lib.getExe' libsecret "secret-tool"}"'
 
     # The launchers resolve symlinks to find the aiusage package beside them.
-    ln -s "$dest/backend/sh/ai-usage-cli" "$out/bin/ai-usage-cli"
+    ln -s "$dest/backend/sh/tidesi-cli" "$out/bin/tidesi-cli"
     ln -s "$dest/backend/sh/get-ai-usage" "$out/bin/get-ai-usage"
 
     runHook postInstall
@@ -46,19 +46,19 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   doInstallCheck = true;
   installCheckPhase = ''
     runHook preInstallCheck
-    $out/bin/ai-usage-cli --help > /dev/null
+    $out/bin/tidesi-cli --help > /dev/null
     runHook postInstallCheck
   '';
 
   passthru.updateScript = nix-update-script { };
 
   meta = {
-    description = "Terminal frontend of the AI usage widget: provider limits as a table or a status-bar line";
-    homepage = "https://github.com/Muddyblack/ai-usage-widget";
-    changelog = "https://github.com/Muddyblack/ai-usage-widget/releases/tag/v${finalAttrs.version}";
+    description = "Terminal frontend of Tidesi: provider limits as a table or a status-bar line";
+    homepage = "https://github.com/Muddyblack/tidesi";
+    changelog = "https://github.com/Muddyblack/tidesi/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
-    mainProgram = "ai-usage-cli";
+    mainProgram = "tidesi-cli";
     maintainers = [ ];
   };
 })

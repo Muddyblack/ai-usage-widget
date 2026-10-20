@@ -6,5 +6,4 @@
 //
 // Keep the arguments byte-for-byte identical to metadata.json, otherwise the
 // catalog would translate strings that never reach the screen.
-i18n("AI Usage Monitor");
 i18n("Multi-service AI quota tracker with cost breakdown (Claude, Antigravity, OpenAI, Grok, Kiro, OpenRouter & Mistral)");

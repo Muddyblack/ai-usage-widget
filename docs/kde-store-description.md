@@ -1,4 +1,4 @@
-[h1]AI Usage Monitor[/h1]
+[h1]Tidesi[/h1]
 
 [b]Claude, Codex, ChatGPT, GitHub Copilot, Gemini/Antigravity, Cursor, OpenCode, Ollama & more — AI usage, quotas and costs live in your KDE Plasma 6 panel.[/b]
 
@@ -81,8 +81,8 @@ OpenCode reads local session data and reuses its saved Zen/Go credentials; Zen a
 
 ---
 
-🐙 Source, setup details & issues → [link=https://github.com/Muddyblack/ai-usage-widget]github.com/Muddyblack/ai-usage-widget[/link]
+🐙 Source, setup details & issues → [link=https://github.com/Muddyblack/tidesi]github.com/Muddyblack/tidesi[/link]
 
 Built by [b]muddyblack[/b] • MIT licensed
 
-[i](Yeah, I know yet another AI usage widget, but I wanted one for my own NixOS setup that just worked the way I needed it to. If you're in the same boat, here it is.)[/i] 💙
+[i](Yeah, I know yet another Tidesi, but I wanted one for my own NixOS setup that just worked the way I needed it to. If you're in the same boat, here it is.)[/i] 💙

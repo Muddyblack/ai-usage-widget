@@ -51,7 +51,7 @@ default one — which CI enters — stays small. For SQLite timings, use a tmpfs
 make test-install     # or ./scripts/test_install.sh
 ```
 
-Installs as `AI Usage (Test)` alongside the real widget so you can iterate
+Installs as `Tidesi (Test)` alongside the real widget so you can iterate
 without touching your live install.
 
 `make test-install`, `make view` and `make pack` compile the translations first,
@@ -156,7 +156,7 @@ and Qt consume the same scenarios and how to run the tests.
 
 ```bash
 make pack
-# compiles the translations, then writes ai-usage-widget-<version>.plasmoid
+# compiles the translations, then writes tidesi-<version>.plasmoid
 ```
 
 ## Releasing

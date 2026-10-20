@@ -740,7 +740,7 @@ ColumnLayout {
 
                     StudioRow {
                         label: page.shell.i18n("Start at login")
-                        desc: page.shell.i18n("Starts AI Usage in the tray when you sign in. The same switch is in the tray icon's menu.")
+                        desc: page.shell.i18n("Starts Tidesi in the tray when you sign in. The same switch is in the tray icon's menu.")
                         StudioSwitch {
                             checked: page.shell.autostart === true
                             onToggled: on => page.shell.setAutostart(on)
@@ -784,7 +784,7 @@ ColumnLayout {
 
                     StudioRow {
                         label: page.shell.i18n("Terminal")
-                        desc: page.shell.i18n("Same data as this popup, as a table in a shell. Link it into ~/.local/bin to run it as ai-usage-cli, or pass --compact for one status-bar line.")
+                        desc: page.shell.i18n("Same data as this popup, as a table in a shell. Link it into ~/.local/bin to run it as tidesi-cli, or pass --compact for one status-bar line.")
                         full: true
                         Column {
                             width: parent.width

@@ -49,5 +49,5 @@ shell can host QtQuick.
 |---|---|---|
 | KDE Plasma | `make pack` → `scripts/build-kde-package.sh` | `.plasmoid` (KDE Store): `hosts/kde` + `ui/` + `backend/` + assets |
 | Quickshell | `nix run .#hyprland` | runs from the checkout (`shell.qml` at the root) |
-| Windows | `hosts/windows/ai-usage.spec` + Inno Setup | installer, portable zip, Scoop/WinGet |
-| macOS | `hosts/macos/build-app.sh` | `AI Usage.app`, `.dmg` |
+| Windows | `hosts/windows/tidesi.spec` + Inno Setup | installer, portable zip, Scoop/WinGet |
+| macOS | `hosts/macos/build-app.sh` | `Tidesi.app`, `.dmg` |

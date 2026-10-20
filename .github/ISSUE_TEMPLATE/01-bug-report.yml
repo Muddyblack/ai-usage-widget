@@ -11,7 +11,7 @@ body:
         - Hyprland / Quickshell widget
         - macOS menu bar app
         - Windows tray app
-        - Terminal CLI (ai-usage-cli / get-ai-usage)
+        - Terminal CLI (tidesi-cli / get-ai-usage)
         - Multiple platforms / Shared backend
     validations:
       required: true

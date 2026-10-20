@@ -33,7 +33,7 @@ ALL_PROVIDERS="claude antigravity openai kiro mistral openrouter ollama selfhost
 # turn into a bare "no such file" from the frontends.
 # Resolve through symlinks first: BASH_SOURCE reports the link, not its target,
 # so a symlink into ~/.local/bin would look for the package next to the link.
-# `readlink -f` is GNU-only, so walk the chain by hand. ai-usage-cli carries the
+# `readlink -f` is GNU-only, so walk the chain by hand. tidesi-cli carries the
 # same loop: it is the step that finds python-interp.sh, so it cannot be shared
 # through it.
 _src="${BASH_SOURCE[0]}"

@@ -6,7 +6,7 @@ switch it off there, and macOS does not post the "background item added"
 notice a hand-written LaunchAgent plist gets.
 
 SMAppService only knows an app bundle, so this works only in the built
-AI Usage.app; app.py falls back to the LaunchAgent when run from a checkout.
+Tidesi.app; app.py falls back to the LaunchAgent when run from a checkout.
 """
 
 from ServiceManagement import (

@@ -54,7 +54,7 @@ run-desktop: ## run the desktop tray app (Windows/macOS host) on this machine (P
 
 run-windows: run-desktop
 
-macos: ## build AI Usage.app (macOS only; needs hosts/macos/build-requirements.txt)
+macos: ## build Tidesi.app (macOS only; needs hosts/macos/build-requirements.txt)
 	@hosts/macos/build-app.sh
 
 translations: ## regenerate template.pot from sources and compile the .mo catalogs

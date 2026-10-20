@@ -1,13 +1,13 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the AI Usage Monitor package.
+# This file is distributed under the same license as the Tidesi package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Usage Monitor 3.3.1\n"
-"Report-Msgid-Bugs-To: https://github.com/Muddyblack/ai-usage-widget/issues\n"
+"Project-Id-Version: Tidesi 3.3.1\n"
+"Report-Msgid-Bugs-To: https://github.com/Muddyblack/tidesi/issues\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #: hosts/kde/contents/ui/main.qml
-msgid "AI Usage"
+msgid "Tidesi"
 msgstr ""
 
 #: hosts/kde/contents/ui/main.qml ui/AppState.qml ui/SettingsPage.qml
@@ -82,7 +82,7 @@ msgid "Loading"
 msgstr ""
 
 #: ui/AppState.qml
-msgid "Open AI Usage"
+msgid "Open Tidesi"
 msgstr ""
 
 #: ui/AppState.qml
@@ -341,7 +341,7 @@ msgid "Popup glass, tint and colours"
 msgstr ""
 
 #: ui/PopupHeader.qml
-msgid "About AI Usage Monitor and project links"
+msgid "About Tidesi and project links"
 msgstr ""
 
 #: ui/PopupHeader.qml
@@ -1104,7 +1104,7 @@ msgstr ""
 
 #: ui/SettingsPage.qml
 msgid ""
-"Starts AI Usage in the tray when you sign in. The same switch is in the tray "
+"Starts Tidesi in the tray when you sign in. The same switch is in the tray "
 "icon's menu."
 msgstr ""
 
@@ -1134,7 +1134,7 @@ msgstr ""
 #: ui/SettingsPage.qml
 msgid ""
 "Same data as this popup, as a table in a shell. Link it into ~/.local/bin to "
-"run it as ai-usage-cli, or pass --compact for one status-bar line."
+"run it as tidesi-cli, or pass --compact for one status-bar line."
 msgstr ""
 
 #: ui/SettingsPage.qml
@@ -1714,10 +1714,6 @@ msgstr ""
 #: ui/UsageChart.qml
 #, no-javascript-format
 msgid "Rest: %1%"
-msgstr ""
-
-#: translate/metadata-i18n.js
-msgid "AI Usage Monitor"
 msgstr ""
 
 #: translate/metadata-i18n.js

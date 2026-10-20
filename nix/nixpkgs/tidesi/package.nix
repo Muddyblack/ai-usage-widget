@@ -9,12 +9,12 @@
 }:
 
 stdenvNoCC.mkDerivation (finalAttrs: {
-  pname = "ai-usage-widget";
+  pname = "tidesi";
   version = "3.3.1";
 
   src = fetchFromGitHub {
     owner = "Muddyblack";
-    repo = "ai-usage-widget";
+    repo = "tidesi";
     tag = "v${finalAttrs.version}";
     hash = "sha256-RT/x9eEBrnbOpa6ghyDrdntsXrKl4fslxGJahn82CrM=";
   };
@@ -71,9 +71,9 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   passthru.updateScript = nix-update-script { };
 
   meta = {
-    description = "Multi-provider AI usage widget for KDE Plasma 6";
-    homepage = "https://github.com/Muddyblack/ai-usage-widget";
-    changelog = "https://github.com/Muddyblack/ai-usage-widget/releases/tag/v${finalAttrs.version}";
+    description = "Tidesi: multi-provider AI usage limits for KDE Plasma 6";
+    homepage = "https://github.com/Muddyblack/tidesi";
+    changelog = "https://github.com/Muddyblack/tidesi/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
     maintainers = [ ];

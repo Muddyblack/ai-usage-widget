@@ -1,20 +1,20 @@
-// Shared project links and optional network statistics for AI Usage Widget.
+// Shared project links and optional network statistics for Tidesi.
 .import "ProjectFunding.js" as Funding
 .import "ProjectVersion.js" as Version
-var name = "AI Usage Monitor";
+var name = "Tidesi";
 var author = "Muddyblack";
-var repository = "https://github.com/Muddyblack/ai-usage-widget";
+var repository = "https://github.com/Muddyblack/tidesi";
 var profile = "https://github.com/Muddyblack";
 var avatar = "https://github.com/Muddyblack.png?size=128";
 var store = "https://www.opendesktop.org/p/2361382";
 var funding = Funding.links;
 var license = "MIT License";
 var licenseId = "MIT";
-var contributorsUrl = "https://api.github.com/repos/Muddyblack/ai-usage-widget/contributors?per_page=12";
+var contributorsUrl = "https://api.github.com/repos/Muddyblack/tidesi/contributors?per_page=12";
 var contributorsPage = repository + "/graphs/contributors";
 var statistics = [
-    {id: "stars", label: "GitHub stars", icon: "star.svg", href: repository + "/stargazers", url: "https://img.shields.io/github/stars/Muddyblack/ai-usage-widget.json"},
-    {id: "downloads", label: "GitHub downloads", icon: "download.svg", href: repository + "/releases", url: "https://img.shields.io/github/downloads/Muddyblack/ai-usage-widget/total.json"},
+    {id: "stars", label: "GitHub stars", icon: "star.svg", href: repository + "/stargazers", url: "https://img.shields.io/github/stars/Muddyblack/tidesi.json"},
+    {id: "downloads", label: "GitHub downloads", icon: "download.svg", href: repository + "/releases", url: "https://img.shields.io/github/downloads/Muddyblack/tidesi/total.json"},
     {id: "kde", label: "OpenDesktop downloads", icon: "download.svg", href: store, url: "https://img.shields.io/badge/dynamic/json.json?url=" + encodeURIComponent("https://api.pling.com/ocs/v1/content/data/?format=json&user=Muddyblack&pagesize=20&sortmode=alpha") + "&query=" + encodeURIComponent("$.data[0].downloads") + "&label=Downloads"}
 ];
 function count(text) {
@@ -44,7 +44,7 @@ function contributors(text) {
 }
 
 var currentVersion = Version.current;
-var latestReleaseUrl = "https://api.github.com/repos/Muddyblack/ai-usage-widget/releases/latest";
+var latestReleaseUrl = "https://api.github.com/repos/Muddyblack/tidesi/releases/latest";
 var releasesPage = repository + "/releases";
 
 function parseVersion(value) {

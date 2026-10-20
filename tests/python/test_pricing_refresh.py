@@ -61,7 +61,7 @@ class PricingRefreshCommandTest(IsolatedHomeTest):
             [
                 mock.call(
                     pricing.MODELS_DEV_SOURCE_URL,
-                    headers={"Accept": "application/json", "User-Agent": "ai-usage-widget/1.0"},
+                    headers={"Accept": "application/json", "User-Agent": "tidesi/1.0"},
                     timeout=10,
                 ),
                 mock.call(pricing.SOURCE_URL, timeout=10),

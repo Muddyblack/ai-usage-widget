@@ -1,4 +1,4 @@
-"""AI Usage for Windows — a tray icon with the same popup as the Hyprland panel.
+"""Tidesi for Windows — a tray icon with the same popup as the Hyprland panel.
 
 The popup is the shared QML under ui/ (PopupContent.qml, SettingsPage.qml
 and the components they use); qml/Main.qml wraps it in a frameless window and
@@ -48,7 +48,7 @@ from aiusage import config, detect, history, historyio, paths, snapshot_export, 
 from aiusage.__main__ import _refresh_pricing, snapshot  # noqa: E402
 from aiusage.sessions import collect_sessions, open_session, refresh_sessions  # noqa: E402
 
-APP_NAME = "AI Usage"
+APP_NAME = "Tidesi"
 
 # macOS draws its menu bar item natively (hosts/macos/statusitem.py, PyObjC)
 # instead of through Qt's tray icons; anywhere else this stays None.
@@ -58,7 +58,7 @@ if paths.IS_MACOS:
     try:
         import statusitem  # noqa: E402
     except ImportError as exc:  # PyObjC missing: fall back to Qt's tray icon
-        print(f"AI Usage: native menu bar item unavailable ({exc}); using Qt's", file=sys.stderr)
+        print(f"Tidesi: native menu bar item unavailable ({exc}); using Qt's", file=sys.stderr)
         statusitem = None
 
 # The popup's system blur (hosts/macos/vibrancy.py) and the login item
@@ -77,13 +77,13 @@ if paths.IS_MACOS:
     try:
         import vibrancy  # noqa: E402
     except ImportError as exc:
-        print(f"AI Usage: system blur unavailable ({exc})", file=sys.stderr)
+        print(f"Tidesi: system blur unavailable ({exc})", file=sys.stderr)
     # SMAppService registers an app bundle; run from a checkout, there is none.
     if getattr(sys, "frozen", False) and ".app/Contents/MacOS/" in sys.executable:
         try:
             import loginitem  # noqa: E402
         except ImportError as exc:
-            print(f"AI Usage: login item API unavailable ({exc}); using a LaunchAgent", file=sys.stderr)
+            print(f"Tidesi: login item API unavailable ({exc}); using a LaunchAgent", file=sys.stderr)
 
 
 def _server_name():
@@ -96,7 +96,7 @@ def _server_name():
     except (ImportError, KeyError, OSError):
         user = ""
     user = re.sub(r"[^A-Za-z0-9_.-]", "_", user)
-    return f"ai-usage-widget-tray-{user}" if user else "ai-usage-widget-tray"
+    return f"tidesi-tray-{user}" if user else "tidesi-tray"
 
 
 SERVER_NAME = _server_name()
@@ -225,7 +225,7 @@ def migrate_autostart():
     try:
         loginitem.set_enabled(True)
     except OSError as exc:
-        print(f"AI Usage: could not move start-at-login to a login item: {exc}", file=sys.stderr)
+        print(f"Tidesi: could not move start-at-login to a login item: {exc}", file=sys.stderr)
         return
     with contextlib.suppress(OSError):
         _LAUNCH_AGENT.unlink()
@@ -396,7 +396,7 @@ try:
     import PySide6  # noqa: E402, F401
 except ImportError:
     sys.exit(
-        "AI Usage needs PySide6, which is not installed for this Python.\n"
+        "Tidesi needs PySide6, which is not installed for this Python.\n"
         "  pip install -r hosts/desktop/requirements.txt\n"
         "or, from a Nix checkout: nix develop .#windows   (or: make run-windows)"
     )
@@ -1093,7 +1093,7 @@ class TrayApp:
             backend.settingRequested.emit(key, json.dumps(value))
 
         self.actions = [
-            action("open", "Open AI Usage", self.toggle),
+            action("open", "Open Tidesi", self.toggle),
             action("refresh", "Refresh", backend.refresh),
             action("settings", "Settings", self.open_settings),
         ]
@@ -1373,7 +1373,7 @@ class TrayApp:
                 self.window.setProperty("nativeBlur", applied)
             except (OSError, AttributeError) as exc:
                 self.window.setProperty("nativeBlur", False)
-                print(f"AI Usage: system backdrop failed: {exc}", file=sys.stderr)
+                print(f"Tidesi: system backdrop failed: {exc}", file=sys.stderr)
             return
         if vibrancy is None:
             return
@@ -1383,7 +1383,7 @@ class TrayApp:
             if self.window.property("nativeBlur"):
                 vibrancy.set_light(self.window, bool(self.window.property("light")))
         except Exception as exc:  # PyObjC raises its own error types
-            print(f"AI Usage: system blur failed: {exc}", file=sys.stderr)
+            print(f"Tidesi: system blur failed: {exc}", file=sys.stderr)
 
     def hide(self):
         self._hidden_at = time.monotonic()
@@ -1481,8 +1481,8 @@ class TrayApp:
 # it is handed over DBus, and this one does all three. Windows needs none of it:
 # there the pill is a topmost tool window and TrayApp._place positions the popup.
 
-KWIN_PLUGIN = "ai-usage-widget-pill"
-PILL_TITLE = "AI Usage pill"  # hosts/desktop/qml/Main.qml, pillWindow.title
+KWIN_PLUGIN = "tidesi-pill"
+PILL_TITLE = "Tidesi pill"  # hosts/desktop/qml/Main.qml, pillWindow.title
 POPUP_TITLE = APP_NAME  # hosts/desktop/qml/Main.qml, the root Window's title
 _KWIN_SCRIPT = """\
 // Loaded by hosts/desktop/app.py for as long as it runs; see _kwin_keep_pill_above().
@@ -1973,7 +1973,7 @@ def main(argv):
         try:
             config.initialize_provider_defaults()
         except OSError as e:
-            print(f"AI Usage: could not initialize provider defaults: {e}", file=sys.stderr)
+            print(f"Tidesi: could not initialize provider defaults: {e}", file=sys.stderr)
         migrate_autostart()
     backend = Backend(first_run)
     engine = QQmlApplicationEngine()

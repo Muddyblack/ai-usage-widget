@@ -99,7 +99,7 @@ def _fetch(token):
     fixture = os.environ.get("KILO_USAGE_RESPONSE_FILE")
     return fetch_json(
         _url(),
-        headers={"Authorization": f"Bearer {token}", "Accept": "application/json", "User-Agent": "ai-usage-widget/kilo"},
+        headers={"Authorization": f"Bearer {token}", "Accept": "application/json", "User-Agent": "tidesi/kilo"},
         timeout=15,
         fixture_path=fixture,
     )

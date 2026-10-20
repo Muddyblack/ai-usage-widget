@@ -4,7 +4,7 @@ set -euo pipefail
 
 MACOS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$MACOS_DIR/../.." && pwd)"
-APP="$ROOT/dist/AI Usage.app"
+APP="$ROOT/dist/Tidesi.app"
 VERSION="$(sed -nE 's/.*"Version":[[:space:]]*"([^"]+)".*/\1/p' "$ROOT/hosts/kde/metadata.json")"
 # The build runs on and for one CPU (psutil has no universal wheel), so the
 # name says which: Apple Silicon (arm64) or Intel (x86_64).
@@ -12,24 +12,24 @@ case "$(uname -m)" in
     arm64) ARCH=apple-silicon ;;
     *) ARCH=intel ;;
 esac
-OUT="$ROOT/ai-usage-macos-$VERSION-$ARCH.dmg"
+OUT="$ROOT/tidesi-macos-$VERSION-$ARCH.dmg"
 
 if [ ! -d "$APP" ]; then
-    echo "Build AI Usage.app with hosts/macos/build-app.sh first." >&2
+    echo "Build Tidesi.app with hosts/macos/build-app.sh first." >&2
     exit 1
 fi
 
-STAGING="$(mktemp -d "${TMPDIR:-/tmp}/ai-usage-dmg.XXXXXX")"
+STAGING="$(mktemp -d "${TMPDIR:-/tmp}/tidesi-dmg.XXXXXX")"
 trap 'rm -rf "$STAGING"' EXIT
-ditto "$APP" "$STAGING/AI Usage.app"
+ditto "$APP" "$STAGING/Tidesi.app"
 ln -s /Applications "$STAGING/Applications"
 cat > "$STAGING/Install.txt" <<'TXT'
-AI Usage — Installation
+Tidesi — Installation
 
-1. Drag AI Usage.app to Applications.
-2. Eject this disk image and open AI Usage from Applications.
+1. Drag Tidesi.app to Applications.
+2. Eject this disk image and open Tidesi from Applications.
 3. If macOS blocks this unnotarized app, open System Settings > Privacy &
-   Security, scroll to Security, and choose Open Anyway for AI Usage.
+   Security, scroll to Security, and choose Open Anyway for Tidesi.
    Confirm the prompt only if you trust this download.
 
 You do not need an Apple developer account to use this app.
@@ -38,7 +38,7 @@ TXT
 # hdiutil create fails with "Resource busy" on CI runners when Spotlight or
 # diskimages-helper still holds the staging folder; retry after a short pause.
 for attempt in 1 2 3 4 5; do
-    if hdiutil create -volname "AI Usage" -srcfolder "$STAGING" \
+    if hdiutil create -volname "Tidesi" -srcfolder "$STAGING" \
         -format UDZO -ov "$OUT"; then
         break
     fi

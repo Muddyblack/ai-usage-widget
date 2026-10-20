@@ -54,9 +54,9 @@ class TrayEntriesTest(unittest.TestCase):
             self.assertEqual(app.neutral_text_colour(), "#f8fafc")
 
     def test_numbers_style_is_the_logo_then_digits(self):
-        entries = app.tray_entries({"style": "numbers", "icon": CLAUDE_LOGO, "tooltip": "AI Usage\nClaude: 5%", "slots": TWO})
+        entries = app.tray_entries({"style": "numbers", "icon": CLAUDE_LOGO, "tooltip": "Tidesi\nClaude: 5%", "slots": TWO})
         self.assertEqual(kinds(entries), ["logo", "number", "number"])
-        self.assertEqual(entries[0]["tooltip"], "AI Usage\nClaude: 5%")
+        self.assertEqual(entries[0]["tooltip"], "Tidesi\nClaude: 5%")
 
     def test_ring_style_and_the_old_numbers_off_switch(self):
         ring = [{"kind": "ring", "value": 5, "color": "#ff4d4d", "icon": CLAUDE_LOGO, "tooltip": app.APP_NAME}]

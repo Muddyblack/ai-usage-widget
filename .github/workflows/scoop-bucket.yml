@@ -1,6 +1,6 @@
 name: Scoop bucket
 
-# This repository doubles as a Scoop bucket: bucket/ai-usage.json is the
+# This repository doubles as a Scoop bucket: bucket/tidesi.json is the
 # manifest of the latest stable release, as the Windows build generated it
 # (hashes of the exact release assets). Releases created by release.yml do not
 # trigger other workflows, so this one looks daily and by hand.
@@ -22,14 +22,14 @@ jobs:
       - name: Fetch the latest release's manifest
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release download --pattern ai-usage.json --output bucket/ai-usage.json --clobber
+        run: gh release download --pattern tidesi.json --output bucket/tidesi.json --clobber
 
       - name: Commit if it changed
         run: |
-          if git diff --quiet -- bucket/ai-usage.json; then exit 0; fi
-          version="$(python3 -c 'import json; print(json.load(open("bucket/ai-usage.json"))["version"])')"
+          if git diff --quiet -- bucket/tidesi.json; then exit 0; fi
+          version="$(python3 -c 'import json; print(json.load(open("bucket/tidesi.json"))["version"])')"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add bucket/ai-usage.json
-          git commit -m "scoop: ai-usage $version"
+          git add bucket/tidesi.json
+          git commit -m "scoop: tidesi $version"
           git push
