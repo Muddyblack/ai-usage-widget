@@ -23,6 +23,8 @@ jobs:
   # release. Pushes that touch the file without bumping the version (or that
   # re-run an already released one) stop here.
   prepare:
+    # Forks have no business publishing releases; every later job needs this one.
+    if: github.repository == 'Muddyblack/tidesi'
     runs-on: ubuntu-latest
     permissions:
       contents: read
