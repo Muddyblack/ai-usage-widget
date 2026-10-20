@@ -47,7 +47,7 @@ what Weblate expects.
    the GitHub repository) and apply for Libre hosting.
 2. Add one component:
    - **Source code repository:** `https://github.com/Muddyblack/tidesi`,
-     branch `master`; **Repository push URL:** the same, via the Weblate
+     branch `main`; **Repository push URL:** the same, via the Weblate
      GitHub integration (it then opens pull requests instead of pushing).
    - **File format:** *gettext PO file*
    - **File mask:** `translate/*.po`

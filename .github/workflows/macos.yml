@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - master
       # The macOS frontend cannot be run on the machine it is developed from,
       # so its branches build here rather than only on a pull request.
       - 'claude/**'
