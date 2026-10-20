@@ -36,7 +36,7 @@ scoop bucket add tidesi https://github.com/Muddyblack/tidesi
 scoop install tidesi/tidesi
 ```
 
-Launch **Tidesi** from the Start menu. Quit the tray app before updating:
+Launch **TideSI** from the Start menu. Quit the tray app before updating:
 
 ```powershell
 scoop update
@@ -146,7 +146,7 @@ visible (including the system transparency setting).
 Windows 11 puts new tray icons in the `^` overflow at first — which is why the
 very first start opens the popup by itself: drag the icon onto the taskbar
 once, or turn it on under *Settings → Personalization → Taskbar → Other system
-tray icons*. Starting Tidesi again from the Start menu while it runs opens
+tray icons*. Starting TideSI again from the Start menu while it runs opens
 the popup too.
 
 *Settings → Display → Language* picks the language, and switches it on the spot.

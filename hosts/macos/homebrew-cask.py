@@ -28,7 +28,7 @@ def cask(version, arm_sha, intel_sha):
          intel: "{intel_sha}"
 
   url "{HOMEPAGE}/releases/download/v#{{version}}/tidesi-macos-#{{version}}-#{{arch}}.dmg"
-  name "Tidesi"
+  name "TideSI"
   desc "Menu bar monitor for AI provider usage limits"
   homepage "{HOMEPAGE}"
 
@@ -39,7 +39,7 @@ def cask(version, arm_sha, intel_sha):
 
   depends_on macos: ">= :ventura"
 
-  app "Tidesi.app"
+  app "TideSI.app"
 
   zap trash: [
     "~/.cache/tidesi",
@@ -48,7 +48,7 @@ def cask(version, arm_sha, intel_sha):
   ]
 
   caveats <<~EOS
-    Tidesi is not notarized yet. If macOS blocks the first launch, choose
+    TideSI is not notarized yet. If macOS blocks the first launch, choose
     Open Anyway in System Settings > Privacy & Security.
   EOS
 end

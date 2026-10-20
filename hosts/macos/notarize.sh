@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
-# Sign Tidesi.app with a Developer ID, then have Apple notarize it, so it
+# Sign TideSI.app with a Developer ID, then have Apple notarize it, so it
 # opens on any Mac without the "Open Anyway" detour. Needs a paid Apple
 # Developer account; without one, skip this and the app stays ad-hoc signed.
 #
-#   hosts/macos/notarize.sh app    after build-app.sh: sign dist/Tidesi.app
+#   hosts/macos/notarize.sh app    after build-app.sh: sign dist/TideSI.app
 #   hosts/macos/notarize.sh dmg F  after package-dmg.sh: sign, notarize and
 #                                  staple the DMG F, then staple the app too
 #
@@ -18,7 +18,7 @@ set -euo pipefail
 
 MACOS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$MACOS_DIR/../.." && pwd)"
-APP="$ROOT/dist/Tidesi.app"
+APP="$ROOT/dist/TideSI.app"
 ENTITLEMENTS="$MACOS_DIR/entitlements.plist"
 
 : "${MACOS_SIGN_IDENTITY:?set MACOS_SIGN_IDENTITY}"

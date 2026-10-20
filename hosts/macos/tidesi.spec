@@ -3,7 +3,7 @@
 #   pip install -r hosts/macos/build-requirements.txt
 #   pyinstaller --noconfirm hosts/macos/tidesi.spec
 #
-# Produces dist/Tidesi.app: the shared tray app (hosts/desktop/app.py) with
+# Produces dist/TideSI.app: the shared tray app (hosts/desktop/app.py) with
 # the shared UI, the backend and the native NSStatusItem (statusitem.py). The
 # data keeps the repository's layout inside the bundle, so the QML's relative
 # imports resolve exactly as in a checkout. hosts/macos/build-app.sh wraps this
@@ -45,19 +45,19 @@ exe = EXE(  # noqa: F821
     pyz,
     a.scripts,
     exclude_binaries=True,
-    name="Tidesi",
+    name="TideSI",
     console=False,
     argv_emulation=False,
 )
-coll = COLLECT(exe, a.binaries, a.datas, name="Tidesi")  # noqa: F821
+coll = COLLECT(exe, a.binaries, a.datas, name="TideSI")  # noqa: F821
 app = BUNDLE(  # noqa: F821
     coll,
-    name="Tidesi.app",
+    name="TideSI.app",
     icon=os.environ.get("TIDESI_ICNS") or None,
     bundle_identifier="org.muddyblack.tidesi",
     version=VERSION,
     info_plist={
-        "CFBundleDisplayName": "Tidesi",
+        "CFBundleDisplayName": "TideSI",
         "CFBundleShortVersionString": VERSION,
         "CFBundleVersion": VERSION,
         "LSMinimumSystemVersion": "13.0",

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# Build `Tidesi.app` (macOS only): the shared tray app and UI, frozen by
+# Build `TideSI.app` (macOS only): the shared tray app and UI, frozen by
 # PyInstaller (hosts/macos/tidesi.spec), with the native menu bar item.
 #
-#   hosts/macos/build-app.sh            -> dist/Tidesi.app
+#   hosts/macos/build-app.sh            -> dist/TideSI.app
 #
 # Needs: pip install -r hosts/macos/build-requirements.txt
 # Optional: rsvg-convert (brew install librsvg) for the Finder icon.
@@ -33,5 +33,5 @@ fi
 
 cd "$ROOT"
 pyinstaller --noconfirm --workpath "$BUILD/pyinstaller" --distpath "$ROOT/dist" hosts/macos/tidesi.spec
-cp "$ROOT/assets/icons/LICENSE.lobehub" "$ROOT/dist/Tidesi.app/Contents/Resources/LICENSE.lobehub"
-echo "Built $ROOT/dist/Tidesi.app"
+cp "$ROOT/assets/icons/LICENSE.lobehub" "$ROOT/dist/TideSI.app/Contents/Resources/LICENSE.lobehub"
+echo "Built $ROOT/dist/TideSI.app"

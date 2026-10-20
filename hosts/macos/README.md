@@ -9,9 +9,9 @@ statusitem.py        NSStatusItem through PyObjC: the values as menu bar text,
                      the provider logo as a template image, click / right-click
 vibrancy.py          the system blur (NSVisualEffectView) behind the popup
 loginitem.py         start at login as an SMAppService login item (the bundled app)
-tidesi.spec        PyInstaller spec -> dist/Tidesi.app (LSUIElement, no Dock icon)
+tidesi.spec        PyInstaller spec -> dist/TideSI.app (LSUIElement, no Dock icon)
 build-app.sh         Finder icon + PyInstaller
-package-dmg.sh       dist/Tidesi.app -> tidesi-macos-<version>-<apple-silicon|intel>.dmg
+package-dmg.sh       dist/TideSI.app -> tidesi-macos-<version>-<apple-silicon|intel>.dmg
 notarize.sh          Developer ID signing + notarization (releases, with Apple secrets)
 entitlements.plist   the hardened-runtime exceptions notarize.sh signs with
 requirements.txt     runtime: the desktop app's needs + PyObjC (Cocoa, ServiceManagement)
@@ -34,6 +34,6 @@ Without PyObjC the app still runs, with Qt's plain tray icon in the menu bar.
 
 ```bash
 pip install -r hosts/macos/build-requirements.txt
-hosts/macos/build-app.sh            # dist/Tidesi.app
+hosts/macos/build-app.sh            # dist/TideSI.app
 hosts/macos/package-dmg.sh          # tidesi-macos-<version>-<apple-silicon|intel>.dmg
 ```

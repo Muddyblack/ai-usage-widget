@@ -4,7 +4,7 @@ set -euo pipefail
 
 MACOS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$MACOS_DIR/../.." && pwd)"
-APP="$ROOT/dist/Tidesi.app"
+APP="$ROOT/dist/TideSI.app"
 VERSION="$(sed -nE 's/.*"Version":[[:space:]]*"([^"]+)".*/\1/p' "$ROOT/hosts/kde/metadata.json")"
 # The build runs on and for one CPU (psutil has no universal wheel), so the
 # name says which: Apple Silicon (arm64) or Intel (x86_64).
@@ -15,21 +15,21 @@ esac
 OUT="$ROOT/tidesi-macos-$VERSION-$ARCH.dmg"
 
 if [ ! -d "$APP" ]; then
-    echo "Build Tidesi.app with hosts/macos/build-app.sh first." >&2
+    echo "Build TideSI.app with hosts/macos/build-app.sh first." >&2
     exit 1
 fi
 
 STAGING="$(mktemp -d "${TMPDIR:-/tmp}/tidesi-dmg.XXXXXX")"
 trap 'rm -rf "$STAGING"' EXIT
-ditto "$APP" "$STAGING/Tidesi.app"
+ditto "$APP" "$STAGING/TideSI.app"
 ln -s /Applications "$STAGING/Applications"
 cat > "$STAGING/Install.txt" <<'TXT'
-Tidesi — Installation
+TideSI — Installation
 
-1. Drag Tidesi.app to Applications.
-2. Eject this disk image and open Tidesi from Applications.
+1. Drag TideSI.app to Applications.
+2. Eject this disk image and open TideSI from Applications.
 3. If macOS blocks this unnotarized app, open System Settings > Privacy &
-   Security, scroll to Security, and choose Open Anyway for Tidesi.
+   Security, scroll to Security, and choose Open Anyway for TideSI.
    Confirm the prompt only if you trust this download.
 
 You do not need an Apple developer account to use this app.
@@ -38,7 +38,7 @@ TXT
 # hdiutil create fails with "Resource busy" on CI runners when Spotlight or
 # diskimages-helper still holds the staging folder; retry after a short pause.
 for attempt in 1 2 3 4 5; do
-    if hdiutil create -volname "Tidesi" -srcfolder "$STAGING" \
+    if hdiutil create -volname "TideSI" -srcfolder "$STAGING" \
         -format UDZO -ov "$OUT"; then
         break
     fi

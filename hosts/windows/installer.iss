@@ -1,4 +1,4 @@
-; Windows installer for Tidesi tray app (Inno Setup 6).
+; Windows installer for TideSI tray app (Inno Setup 6).
 ;
 ; Built by hosts/windows/build-installer.ps1 from PyInstaller's "dist\Tidesi" folder
 ; (hosts/windows/tidesi.spec), in .github/workflows/windows.yml — on every push, and
@@ -16,9 +16,9 @@
 ; Never change the AppId: it is how Windows knows a new version is the same app
 ; and updates it in place.
 AppId={{DA55F997-6C64-4B6F-92EB-D3BEB6885B68}
-AppName=Tidesi
+AppName=TideSI
 AppVersion={#AppVersion}
-AppVerName=Tidesi {#AppVersion}
+AppVerName=TideSI {#AppVersion}
 AppPublisher=Muddyblack
 AppPublisherURL=https://github.com/Muddyblack/tidesi
 AppSupportURL=https://github.com/Muddyblack/tidesi/issues
@@ -31,7 +31,7 @@ OutputDir=..\..
 OutputBaseFilename=Tidesi-Setup-{#AppVersion}
 SetupIconFile=..\..\dist\tidesi.ico
 UninstallDisplayIcon={app}\Tidesi.exe
-UninstallDisplayName=Tidesi
+UninstallDisplayName=TideSI
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
@@ -43,7 +43,7 @@ CloseApplications=no
 ; Offered on a first install only. On an update it would apply the choice
 ; remembered from that install, turning autostart back on for someone who had
 ; switched it off in the app since; left out, the Run value stays as it is.
-Name: "autostart"; Description: "Start Tidesi when I sign in"; Check: not IsUpgrade
+Name: "autostart"; Description: "Start TideSI when I sign in"; Check: not IsUpgrade
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
@@ -60,8 +60,8 @@ Type: files; Name: "{autoprograms}\AI Usage.lnk"
 Type: files; Name: "{autodesktop}\AI Usage.lnk"
 
 [Icons]
-Name: "{autoprograms}\Tidesi"; Filename: "{app}\Tidesi.exe"
-Name: "{autodesktop}\Tidesi"; Filename: "{app}\Tidesi.exe"; Tasks: desktopicon
+Name: "{autoprograms}\TideSI"; Filename: "{app}\Tidesi.exe"
+Name: "{autodesktop}\TideSI"; Filename: "{app}\Tidesi.exe"; Tasks: desktopicon
 
 [Registry]
 ; The same value the app's own "Start with Windows" switch writes (app.py,
@@ -71,7 +71,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "Tidesi"; Flags: uninsdeletevalue
 
 [Run]
-Filename: "{app}\Tidesi.exe"; Description: "{cm:LaunchProgram,Tidesi}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Tidesi.exe"; Description: "{cm:LaunchProgram,TideSI}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM ""Tidesi.exe"""; Flags: runhidden; RunOnceId: "StopAIUsage"
