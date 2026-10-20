@@ -1,27 +1,27 @@
 {
-    "version": "3.3.1",
+    "version": "4.0.0",
     "description": "AI usage and quota monitoring in the Windows system tray.",
-    "homepage": "https://github.com/Muddyblack/ai-usage-widget",
+    "homepage": "https://github.com/Muddyblack/tidesi",
     "license": "MIT",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/Muddyblack/ai-usage-widget/releases/download/v3.3.1/ai-usage-windows-3.3.1.zip",
-            "hash": "3f1458c60af05f3774d00a33e4c22528dd3f004e84847e037558fa9e36af53db"
+            "url": "https://github.com/Muddyblack/tidesi/releases/download/v4.0.0/tidesi-windows-4.0.0.zip",
+            "hash": "67dea11c2a9a88f14cb2d0b0e4c0bcc1c078788fbdd22b2fd23542d94f127ed1"
         }
     },
-    "extract_dir": "AI Usage",
+    "extract_dir": "Tidesi",
     "shortcuts": [
         [
-            "AI Usage.exe",
-            "AI Usage"
+            "Tidesi.exe",
+            "Tidesi"
         ]
     ],
-    "notes": "Quit AI Usage before updating. Disable Start with Windows in the app before uninstalling. Settings and history are kept.",
+    "notes": "Quit Tidesi before updating. Disable Start with Windows in the app before uninstalling. Settings and history are kept.",
     "checkver": "github",
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/Muddyblack/ai-usage-widget/releases/download/v$version/ai-usage-windows-$version.zip"
+                "url": "https://github.com/Muddyblack/tidesi/releases/download/v$version/tidesi-windows-$version.zip"
             }
         }
     }
