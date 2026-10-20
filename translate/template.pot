@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #: hosts/kde/contents/ui/main.qml
-msgid "Tidesi"
+msgid "TideSI"
 msgstr ""
 
 #: hosts/kde/contents/ui/main.qml ui/AppState.qml ui/SettingsPage.qml
@@ -82,7 +82,7 @@ msgid "Loading"
 msgstr ""
 
 #: ui/AppState.qml
-msgid "Open Tidesi"
+msgid "Open TideSI"
 msgstr ""
 
 #: ui/AppState.qml
@@ -341,7 +341,7 @@ msgid "Popup glass, tint and colours"
 msgstr ""
 
 #: ui/PopupHeader.qml
-msgid "About Tidesi and project links"
+msgid "About TideSI and project links"
 msgstr ""
 
 #: ui/PopupHeader.qml
@@ -1104,7 +1104,7 @@ msgstr ""
 
 #: ui/SettingsPage.qml
 msgid ""
-"Starts Tidesi in the tray when you sign in. The same switch is in the tray "
+"Starts TideSI in the tray when you sign in. The same switch is in the tray "
 "icon's menu."
 msgstr ""
 

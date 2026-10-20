@@ -1,6 +1,6 @@
 // Shared project links and optional network statistics for Tidesi.
 .import "ProjectFunding.js" as Funding
-var name = "Tidesi";
+var name = "TideSI";
 var author = "Muddyblack";
 var repository = "https://github.com/Muddyblack/tidesi";
 var profile = "https://github.com/Muddyblack";

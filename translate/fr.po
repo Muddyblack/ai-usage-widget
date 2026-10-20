@@ -17,8 +17,8 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: hosts/kde/contents/ui/main.qml
-msgid "Tidesi"
-msgstr "Tidesi"
+msgid "TideSI"
+msgstr ""
 
 #: hosts/kde/contents/ui/main.qml ui/AppState.qml ui/SettingsPage.qml
 msgid "Refresh"
@@ -81,8 +81,8 @@ msgid "Loading"
 msgstr "Chargement"
 
 #: ui/AppState.qml
-msgid "Open Tidesi"
-msgstr "Ouvrir Tidesi"
+msgid "Open TideSI"
+msgstr ""
 
 #: ui/AppState.qml
 msgid "Tray style"
@@ -353,8 +353,8 @@ msgid "Popup glass, tint and colours"
 msgstr "Verre, teinte et couleurs de la fenêtre"
 
 #: ui/PopupHeader.qml
-msgid "About Tidesi and project links"
-msgstr "À propos d'Tidesi et liens du projet"
+msgid "About TideSI and project links"
+msgstr ""
 
 #: ui/PopupHeader.qml
 msgid "Local endpoints: Ollama, vLLM and llama.cpp"
@@ -1165,11 +1165,9 @@ msgstr "Tout supprimer…"
 
 #: ui/SettingsPage.qml
 msgid ""
-"Starts Tidesi in the tray when you sign in. The same switch is in the tray "
+"Starts TideSI in the tray when you sign in. The same switch is in the tray "
 "icon's menu."
 msgstr ""
-"Lance Tidesi dans la zone de notification à l'ouverture de session. Le même "
-"interrupteur se trouve dans le menu de l'icône."
 
 #: ui/SettingsPage.qml
 msgid "Backend"

@@ -78,7 +78,7 @@ PlasmoidItem {
 
     Plasmoid.backgroundHints: Plasmoid.configuration.backgroundHints
     Plasmoid.icon: "org.muddyblack.tidesi"
-    toolTipMainText: app.i18n("Tidesi")
+    toolTipMainText: app.i18n("TideSI")
     toolTipSubText: {
         var lines = [];
         for (var i = 0; i < app.providers.length; i++) {

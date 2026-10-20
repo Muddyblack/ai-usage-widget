@@ -1130,7 +1130,7 @@ class TrayApp:
             backend.settingRequested.emit(key, json.dumps(value))
 
         self.actions = [
-            action("open", "Open Tidesi", self.toggle),
+            action("open", "Open TideSI", self.toggle),
             action("refresh", "Refresh", backend.refresh),
             action("settings", "Settings", self.open_settings),
         ]

@@ -126,7 +126,7 @@ ColumnLayout {
                             return shell.i18n("Popup glass, tint and colours");
 
                         if (shell.settingsSection === "info")
-                            return shell.i18n("About Tidesi and project links");
+                            return shell.i18n("About TideSI and project links");
 
                         if (shell.settingsSection === "local")
                             return shell.i18n("Local endpoints: Ollama, vLLM and llama.cpp");
