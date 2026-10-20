@@ -156,6 +156,26 @@ not notarized. If macOS blocks the first launch and you trust the download:
 See [Apple's instructions for opening an app from an unknown developer](https://support.apple.com/guide/mac-help/mh40616/mac).
 Users do **not** need an Apple developer account to install or use the app.
 
+### Homebrew
+
+The repository doubles as a [Homebrew](https://brew.sh/) tap, which picks the
+right DMG for the Mac by itself:
+
+```sh
+brew tap muddyblack/tidesi https://github.com/Muddyblack/tidesi
+brew install --cask muddyblack/tidesi/tidesi
+```
+
+Update with `brew upgrade --cask tidesi`. The first launch needs the same
+**Open Anyway** step as above until releases are notarized. `brew uninstall
+--zap --cask tidesi` also removes settings, history and caches.
+
+`Casks/tidesi.rb` is written by the `homebrew-tap.yml` workflow (daily, or run
+it by hand after a release) from the latest release, using the SHA-256 GitHub
+reports for each DMG (`hosts/macos/homebrew-cask.py`). Being in the official
+`homebrew/cask` needs a notarized app and more GitHub stars than the project
+has yet; this tap needs neither.
+
 ### Notarizing releases
 
 With a paid Apple Developer account, releases are signed with a Developer

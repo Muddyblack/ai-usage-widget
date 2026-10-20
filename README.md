@@ -242,6 +242,13 @@ kpackagetool6 -t Plasma/Applet -r org.muddyblack.tidesi
 
 Or install it from the [KDE Store](https://www.opendesktop.org/p/2361382/).
 
+On a Mac, the menu bar app installs with Homebrew ([details](docs/macos.md#homebrew)):
+
+```bash
+brew tap muddyblack/tidesi https://github.com/Muddyblack/tidesi
+brew install --cask muddyblack/tidesi/tidesi
+```
+
 <details>
 <summary><b>NixOS (flake)</b></summary>
 
