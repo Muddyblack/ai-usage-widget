@@ -1,7 +1,7 @@
 """Raw input collection — one envelope-builder per provider.
 
 Every provider's raw inputs are gathered here and handed to
-aiusage.normalize.normalize(). This is the IO half: credentials, provider API
+tidesi.normalize.normalize(). This is the IO half: credentials, provider API
 requests and on-disk stats/caches all live in this module and providers/.
 """
 

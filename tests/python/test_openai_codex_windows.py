@@ -5,7 +5,7 @@ import time
 import unittest
 
 import _support  # noqa: F401  (sys.path)
-from aiusage.normalize import normalize
+from tidesi.normalize import normalize
 
 
 def envelope(*limits):

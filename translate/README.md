@@ -5,7 +5,7 @@ everything a user reads, on every platform:
 
 - the UI (`ui/`, `hosts/`): `shell.i18n("…")` / `i18nc` / `i18np` calls;
 - the text the backend words itself — row labels, details, tooltips, errors —
-  written as `tr("…")` in `backend/aiusage` (see `backend/aiusage/messages.py`).
+  written as `tr("…")` in `backend/tidesi` (see `backend/tidesi/messages.py`).
   The envelope carries each such field's template beside it (`labelI18n`,
   `detailI18n`, …) and the UI translates it with the same catalog.
 

@@ -7,7 +7,7 @@
 
 var PROVIDERS = ["claude", "antigravity", "openai", "kiro", "mistral", "openrouter", "ollama", "selfhosted", "grok", "zai", "copilot", "deepseek", "kimi", "cursor", "cline", "muse", "junie", "mimo", "opencode"];
 
-// KConfig entry → keys{} name the backend reads (aiusage/config.py).
+// KConfig entry → keys{} name the backend reads (tidesi/config.py).
 var KEYS = {
     claudeAdminApiKey: "claudeAdmin",
     openaiApiKey: "openai",

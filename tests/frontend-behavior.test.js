@@ -266,7 +266,7 @@ test("every host queries cached pages first and preserves page state in flight",
 });
 
 test("session response metadata exposes safe freshness and source-removal status", () => {
-    const cache = fs.readFileSync(path.join(rootDir, "backend/aiusage/session_cache.py"), "utf8");
+    const cache = fs.readFileSync(path.join(rootDir, "backend/tidesi/session_cache.py"), "utf8");
     const state = qmlSource("ui/AppState.qml");
 
     assert.match(cache, /"cacheStatus"/);

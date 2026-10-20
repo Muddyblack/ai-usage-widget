@@ -52,7 +52,7 @@ stdenv.mkDerivation (finalAttrs: {
     find "$root" \( -name '__pycache__' -o -name '*.pyc' \) -prune -exec rm -rf {} +
 
     # Remote devices reuse Antigravity's Secret Service credential.
-    substituteInPlace "$root/backend/aiusage/providers/antigravity_remote.py" \
+    substituteInPlace "$root/backend/tidesi/providers/antigravity_remote.py" \
       --replace-fail 'SECRET_TOOL = "secret-tool"' \
                      'SECRET_TOOL = "${lib.getExe' libsecret "secret-tool"}"'
 

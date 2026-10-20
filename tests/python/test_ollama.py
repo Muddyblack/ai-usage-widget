@@ -5,9 +5,9 @@ import os
 from unittest import mock
 
 from _support import IsolatedHomeTest
-from aiusage.http import HttpResult
-from aiusage.normalize.ollama import normalize_ollama
-from aiusage.providers.ollama import get_ollama_usage
+from tidesi.http import HttpResult
+from tidesi.normalize.ollama import normalize_ollama
+from tidesi.providers.ollama import get_ollama_usage
 
 
 class OllamaTest(IsolatedHomeTest):
@@ -30,7 +30,7 @@ class OllamaTest(IsolatedHomeTest):
                 }
             ),
         )
-        with mock.patch("aiusage.providers.ollama.fetch_json", return_value=HttpResult(200, '{"limits":{}}')) as fetch:
+        with mock.patch("tidesi.providers.ollama.fetch_json", return_value=HttpResult(200, '{"limits":{}}')) as fetch:
             get_ollama_usage()
             self.assertEqual(fetch.call_args.kwargs["headers"]["Authorization"], "Bearer opencode-key")
             os.environ["OLLAMA_API_KEY"] = "env-key"
@@ -42,12 +42,12 @@ class OllamaTest(IsolatedHomeTest):
 
     def test_no_inference_call_and_status_error(self):
         os.environ["OLLAMA_API_KEY"] = "test-key"
-        with mock.patch("aiusage.providers.ollama.fetch_json", return_value=HttpResult(404, "")) as fetch:
+        with mock.patch("tidesi.providers.ollama.fetch_json", return_value=HttpResult(404, "")) as fetch:
             self.assertIn("undocumented", get_ollama_usage()["error"])
             self.assertEqual(fetch.call_args.args[0], "https://ollama.com/api/usage")
             self.assertIsNone(fetch.call_args.kwargs.get("data"))
         for status, expected in ((0, "offline"), (429, "rate limited")):
-            with self.subTest(status=status), mock.patch("aiusage.providers.ollama.fetch_json", return_value=HttpResult(status, "")):
+            with self.subTest(status=status), mock.patch("tidesi.providers.ollama.fetch_json", return_value=HttpResult(status, "")):
                 self.assertEqual(get_ollama_usage()["error"], expected)
 
     def test_opencode_uses_xdg_location_even_on_windows(self):
@@ -56,8 +56,8 @@ class OllamaTest(IsolatedHomeTest):
         os.environ.pop("XDG_DATA_HOME", None)
         self.write(".local/share/opencode/auth.json", {"ollama-cloud": {"type": "api", "key": "xdg-key"}})
         with (
-            mock.patch("aiusage.paths.IS_WINDOWS", True),
-            mock.patch("aiusage.providers.ollama.fetch_json", return_value=HttpResult(200, '{"limits":{}}')) as fetch,
+            mock.patch("tidesi.paths.IS_WINDOWS", True),
+            mock.patch("tidesi.providers.ollama.fetch_json", return_value=HttpResult(200, '{"limits":{}}')) as fetch,
         ):
             get_ollama_usage()
             self.assertEqual(fetch.call_args.kwargs["headers"]["Authorization"], "Bearer xdg-key")
@@ -65,7 +65,7 @@ class OllamaTest(IsolatedHomeTest):
     def test_empty_or_error_response_is_not_a_missing_key(self):
         os.environ["OLLAMA_API_KEY"] = "test-key"
         for body in ("{}", "[]", '{"error":"unexpected server content"}'):
-            with self.subTest(body=body), mock.patch("aiusage.providers.ollama.fetch_json", return_value=HttpResult(200, body)):
+            with self.subTest(body=body), mock.patch("tidesi.providers.ollama.fetch_json", return_value=HttpResult(200, body)):
                 self.assertEqual(get_ollama_usage(), {"error": "Ollama Cloud: invalid usage response"})
 
     def test_legacy_and_monthly_buckets(self):

@@ -12,9 +12,9 @@ import unittest
 from unittest import mock
 
 from _support import IsolatedHomeTest  # noqa: F401  (ensures TOOLS is on sys.path)
-from aiusage import sessions
-from aiusage.http import HttpResult
-from aiusage.providers import grok
+from tidesi import sessions
+from tidesi.http import HttpResult
+from tidesi.providers import grok
 
 
 def _write_summary(root, workspace, session_id, title=None, usage=None, cwd="/mnt/projects/demo"):
@@ -150,11 +150,11 @@ class GrokBillingTest(IsolatedHomeTest):
         self.addCleanup(grok.reset_discovery_cache)
 
     def test_remote_billing_error_semantics_are_unchanged(self):
-        with mock.patch("aiusage.providers.grok.fetch_json", return_value=HttpResult(401, "")):
+        with mock.patch("tidesi.providers.grok.fetch_json", return_value=HttpResult(401, "")):
             credits, billing, error = grok._grok_billing_calls("tok", grok.CLIENT_VER)
         self.assertEqual((credits, billing), ({}, {}))
         self.assertEqual(error, "Grok auth expired — run grok --oauth")
-        with mock.patch("aiusage.providers.grok.fetch_json", return_value=HttpResult(503, "")):
+        with mock.patch("tidesi.providers.grok.fetch_json", return_value=HttpResult(503, "")):
             credits, billing, error = grok._grok_billing_calls("tok", grok.CLIENT_VER)
         self.assertEqual(error, "Billing HTTP 503")
 

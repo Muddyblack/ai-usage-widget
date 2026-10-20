@@ -44,7 +44,7 @@ jobs:
               - 'scripts/build-kde-package.sh'
               - 'Makefile'
               - 'translate/**'
-              - 'backend/aiusage/**/*.py'
+              - 'backend/tidesi/**/*.py'
               - 'flake.nix'
               - 'flake.lock'
               - '.github/workflows/lint.yml'
@@ -98,12 +98,12 @@ jobs:
       - name: ruff check
         uses: astral-sh/ruff-action@v4.1.0
         with:
-          args: "check backend/aiusage hosts scripts tests/python"
+          args: "check backend/tidesi hosts scripts tests/python"
 
       - name: ruff format check
         uses: astral-sh/ruff-action@v4.1.0
         with:
-          args: "format --check backend/aiusage hosts scripts tests/python"
+          args: "format --check backend/tidesi hosts scripts tests/python"
 
       - name: portable backend tests
         run: python3 -m unittest discover -s tests/python

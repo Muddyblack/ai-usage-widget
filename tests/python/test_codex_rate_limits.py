@@ -13,10 +13,10 @@ from unittest import mock
 
 import _support  # noqa: F401  (sys.path)
 from _support import IsolatedHomeTest
-from aiusage import collect
-from aiusage.http import HttpResult
-from aiusage.providers import codex_rate_limits
-from aiusage.providers.codex_rate_limits import TTL_SECONDS, get_codex_rate_limits, identity_key
+from tidesi import collect
+from tidesi.http import HttpResult
+from tidesi.providers import codex_rate_limits
+from tidesi.providers.codex_rate_limits import TTL_SECONDS, get_codex_rate_limits, identity_key
 
 FAKE_SERVER = r"""
 import json, os, sys, queue, threading
@@ -150,7 +150,7 @@ class CodexRateLimitsCacheTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
-        self.cache_patch = mock.patch("aiusage.providers.codex_rate_limits.config.cache_dir", return_value=self.directory.name)
+        self.cache_patch = mock.patch("tidesi.providers.codex_rate_limits.config.cache_dir", return_value=self.directory.name)
         self.cache_patch.start()
         self.addCleanup(self.cache_patch.stop)
         self.bin = tempfile.mkdtemp()

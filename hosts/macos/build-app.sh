@@ -26,7 +26,7 @@ if command -v rsvg-convert >/dev/null 2>&1; then
             -o "$ICONSET/icon_${size}x${size}@2x.png"
     done
     iconutil -c icns "$ICONSET" -o "$BUILD/AppIcon.icns"
-    export AI_USAGE_ICNS="$BUILD/AppIcon.icns"
+    export TIDESI_ICNS="$BUILD/AppIcon.icns"
 else
     echo "  note: rsvg-convert not found (brew install librsvg) — no .icns, Finder shows the generic icon"
 fi

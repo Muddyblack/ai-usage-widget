@@ -6,9 +6,9 @@ import unittest
 from unittest import mock
 
 from _support import IsolatedHomeTest, raw_fixture
-from aiusage import __main__ as backend
-from aiusage import billing, config, pricing, sessions
-from aiusage.http import HttpResult
+from tidesi import __main__ as backend
+from tidesi import billing, config, pricing, sessions
+from tidesi.http import HttpResult
 
 
 def _catalog():
@@ -161,7 +161,7 @@ class PricingRefreshCommandTest(IsolatedHomeTest):
                     "fetch_json",
                     return_value=HttpResult(200, json.dumps(_catalog())),
                 ) as fetch,
-                mock.patch("aiusage.collect.provider_status", return_value=None),
+                mock.patch("tidesi.collect.provider_status", return_value=None),
             ):
                 self.assertEqual(self._run_backend("--refresh-pricing")[0], 0)
                 fetch.reset_mock()

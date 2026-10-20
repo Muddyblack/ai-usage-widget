@@ -8,9 +8,9 @@ from pathlib import Path
 from unittest import mock
 
 from _support import IsolatedHomeTest, fixture
-from aiusage import detect, session_manifest, sessions
-from aiusage.normalize.junie import normalize_junie
-from aiusage.providers import junie
+from tidesi import detect, session_manifest, sessions
+from tidesi.normalize.junie import normalize_junie
+from tidesi.providers import junie
 
 NOW = 1790841600
 SID = "session-261001-080000-test"

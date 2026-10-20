@@ -92,7 +92,7 @@ holding `apple-tool:` — a list no third-party signature can join, and one that
 "Always Allow" does not edit. Read through the framework, a widget polling
 every five minutes would raise the "wants to access your keychain" dialog on
 every poll, forever. Asking the same Apple-signed tool raises none, whatever
-this app is signed with. See `aiusage/keychain.py`.
+this app is signed with. See `tidesi/keychain.py`.
 
 Nothing here ever refreshes a token. Anthropic allows one live refresh token
 per client, so a refresh from this widget would sign the user out of Claude

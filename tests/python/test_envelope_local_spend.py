@@ -5,7 +5,7 @@ from unittest import mock
 
 import _support  # noqa: F401 — puts the backend package on sys.path
 from _support import seed_session_index
-from aiusage import config, envelope
+from tidesi import config, envelope
 
 
 def _metered(local_spend):
@@ -420,7 +420,7 @@ class LocalSpendEnvelopeTest(unittest.TestCase):
                 mock.patch.object(envelope, "collect", return_value={}),
                 mock.patch.object(envelope, "normalize", return_value=provider),
                 mock.patch.object(config, "cache_dir", return_value=directory),
-                mock.patch("aiusage.sessions.all_session_rows", side_effect=RuntimeError("broken store")),
+                mock.patch("tidesi.sessions.all_session_rows", side_effect=RuntimeError("broken store")),
             ):
                 result = envelope.build(["claude"], now=1_700_000_000)
 
@@ -473,7 +473,7 @@ class LocalSpendPagingTest(unittest.TestCase):
             seed_session_index(directory, [])
             with (
                 mock.patch.object(config, "cache_dir", return_value=directory),
-                mock.patch("aiusage.sessions.all_session_rows", side_effect=AssertionError("local spend read a page")) as unpaged,
+                mock.patch("tidesi.sessions.all_session_rows", side_effect=AssertionError("local spend read a page")) as unpaged,
             ):
                 envelope._local_spend()
 
@@ -492,7 +492,7 @@ class LocalSpendPagingTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             with (
                 mock.patch.object(config, "cache_dir", return_value=directory),
-                mock.patch("aiusage.sessions.all_session_rows", return_value=rows) as unpaged,
+                mock.patch("tidesi.sessions.all_session_rows", return_value=rows) as unpaged,
             ):
                 spend = envelope._local_spend()
 

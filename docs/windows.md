@@ -62,7 +62,7 @@ to avoid duplicate shortcuts and competing autostart entries.
 ### WinGet
 
 The release ZIP contains the three manifests under
-`manifests/m/Muddyblack/AIUsage/<version>/`, ready for validation and submission
+`manifests/m/Muddyblack/Tidesi/<version>/`, ready for validation and submission
 to [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs).
 Generating these files does **not** register the app in the public catalog.
 
@@ -72,8 +72,8 @@ terminal (`winget settings --enable LocalManifestFiles`), then run from a
 normal PowerShell terminal, replacing `<version>`:
 
 ```powershell
-winget validate --manifest .\manifests\m\Muddyblack\AIUsage\<version>
-winget install --manifest .\manifests\m\Muddyblack\AIUsage\<version>
+winget validate --manifest .\manifests\m\Muddyblack\Tidesi\<version>
+winget install --manifest .\manifests\m\Muddyblack\Tidesi\<version>
 ```
 
 The manifest uses the existing per-user Inno installer, including its stable
@@ -83,8 +83,8 @@ After a maintainer submits the manifests and the public catalog accepts them,
 users can install and update with:
 
 ```powershell
-winget install --id Muddyblack.AIUsage --exact --source winget
-winget upgrade --id Muddyblack.AIUsage --exact --source winget
+winget install --id Muddyblack.Tidesi --exact --source winget
+winget upgrade --id Muddyblack.Tidesi --exact --source winget
 ```
 
 ### Maintaining the manifests
@@ -196,9 +196,9 @@ host) around the one shared UI. It adds no provider logic of its own:
 
 | Part | Lives in | Shared with |
 |---|---|---|
-| Provider data, credentials, maths | `backend/aiusage` | every host |
-| Usage history file and its lock | `aiusage/historyio.py` | every host |
-| Platform directories | `aiusage/paths.py` | every host |
+| Provider data, credentials, maths | `backend/tidesi` | every host |
+| Usage history file and its lock | `tidesi/historyio.py` | every host |
+| Platform directories | `tidesi/paths.py` | every host |
 | Popup, settings page, rows, chart, stats | `ui/*.qml` | every host |
 | All application state | `ui/AppState.qml` | every host |
 | Provider display registry, countdown / history JS | `ui/js/*.js` | every host |

@@ -21,8 +21,8 @@ from datetime import date, timedelta
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "backend"))
 
-from aiusage.contract import finalize, remote_info  # noqa: E402
-from aiusage.normalize import normalize  # noqa: E402
+from tidesi.contract import finalize, remote_info  # noqa: E402
+from tidesi.normalize import normalize  # noqa: E402
 
 # One healthy provider of each interesting shape: percentage quotas with
 # resets, a spend balance, and a provider that is signed out.

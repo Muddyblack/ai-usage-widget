@@ -7,9 +7,9 @@ from pathlib import Path
 from unittest import mock
 
 from _support import REPO  # noqa: F401
-from aiusage.normalize.kiro import normalize_kiro
-from aiusage.providers import kiro_stats as reader
-from aiusage.stats import kiro_stats
+from tidesi.normalize.kiro import normalize_kiro
+from tidesi.providers import kiro_stats as reader
+from tidesi.stats import kiro_stats
 
 
 def _turn(end, secs, requests, tools, credits, model="auto"):
@@ -34,7 +34,7 @@ class KiroStatsTest(unittest.TestCase):
             self.addCleanup(d.cleanup)
         patches = [
             mock.patch.dict(os.environ, {"KIRO_HOME": self.home.name, "KIRO_AGENT_DIR": self.agent.name}),
-            mock.patch("aiusage.paths.cache_home", return_value=self.cache.name),
+            mock.patch("tidesi.paths.cache_home", return_value=self.cache.name),
         ]
         for p in patches:
             p.start()

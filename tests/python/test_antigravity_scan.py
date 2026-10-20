@@ -16,7 +16,7 @@ try:
     import _support  # noqa: F401  (sys.path)
 except ModuleNotFoundError:
     from tests.python import _support  # noqa: F401  (sys.path)
-from aiusage.providers import antigravity
+from tidesi.providers import antigravity
 
 try:
     import psutil
@@ -30,14 +30,14 @@ STAND_IN = (
 
 class AntigravityScanTest(unittest.TestCase):
     def setUp(self):
-        remote = mock.patch("aiusage.providers.antigravity_remote.fetch_instances", return_value=("", None))
+        remote = mock.patch("tidesi.providers.antigravity_remote.fetch_instances", return_value=("", None))
         remote.start()
         self.addCleanup(remote.stop)
         self.cache_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.cache_dir.cleanup)
         self.environment = mock.patch.dict(
             os.environ,
-            {"AI_USAGE_CACHE_DIR": self.cache_dir.name, "ANTIGRAVITY_TTL_SECONDS": "120"},
+            {"TIDESI_CACHE_DIR": self.cache_dir.name, "ANTIGRAVITY_TTL_SECONDS": "120"},
         )
         self.environment.start()
         self.addCleanup(self.environment.stop)
@@ -98,14 +98,14 @@ class AntigravityScanTest(unittest.TestCase):
 
 class AntigravityCacheTest(unittest.TestCase):
     def setUp(self):
-        devices = mock.patch("aiusage.providers.antigravity_remote.fetch_instances", return_value=("", None))
+        devices = mock.patch("tidesi.providers.antigravity_remote.fetch_instances", return_value=("", None))
         devices.start()
         self.addCleanup(devices.stop)
         self.cache_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.cache_dir.cleanup)
         self.environment = mock.patch.dict(
             os.environ,
-            {"AI_USAGE_CACHE_DIR": self.cache_dir.name, "ANTIGRAVITY_TTL_SECONDS": "120"},
+            {"TIDESI_CACHE_DIR": self.cache_dir.name, "ANTIGRAVITY_TTL_SECONDS": "120"},
         )
         self.environment.start()
         self.addCleanup(self.environment.stop)

@@ -11,8 +11,8 @@ from unittest import mock
 
 import _support  # noqa: F401 — puts the backend package on sys.path
 from _support import seed_session_index
-from aiusage import config, envelope
-from aiusage.session_index import _accumulate_group, _row_cost_groups
+from tidesi import config, envelope
+from tidesi.session_index import _accumulate_group, _row_cost_groups
 
 
 def _fallback_spend(sessions):
@@ -89,7 +89,7 @@ class LocalSpendAggregatesTest(unittest.TestCase):
     def test_stale_cache_falls_back_to_full_rows(self):
         import importlib
 
-        storage = importlib.import_module("aiusage.session_index_storage")
+        storage = importlib.import_module("tidesi.session_index_storage")
         sessions = [
             {"provider": "cline", "source": "cline", "costUSD": 1.0, "costStatus": "exact", "costProvenance": "estimated"},
         ]
@@ -98,7 +98,7 @@ class LocalSpendAggregatesTest(unittest.TestCase):
             with (
                 mock.patch.object(config, "cache_dir", return_value=directory),
                 mock.patch.object(storage, "_schema_version", lambda: 123456),
-                mock.patch("aiusage.sessions.all_session_rows", return_value=sessions) as unpaged,
+                mock.patch("tidesi.sessions.all_session_rows", return_value=sessions) as unpaged,
             ):
                 spend = envelope._local_spend()
 
@@ -115,7 +115,7 @@ class LocalSpendAggregatesTest(unittest.TestCase):
             cache.write_bytes(b"not a sqlite database")
             with (
                 mock.patch.object(config, "cache_dir", return_value=directory),
-                mock.patch("aiusage.sessions.all_session_rows", return_value=sessions) as unpaged,
+                mock.patch("tidesi.sessions.all_session_rows", return_value=sessions) as unpaged,
             ):
                 spend = envelope._local_spend()
 

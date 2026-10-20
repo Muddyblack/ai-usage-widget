@@ -6,8 +6,8 @@ import unittest
 from unittest import mock
 
 from _support import REPO  # noqa: F401  (ensures TOOLS is on sys.path)
-from aiusage import billing
-from aiusage.providers import opencode
+from tidesi import billing
+from tidesi.providers import opencode
 
 _SESSION_SCHEMA = """
 CREATE TABLE session (

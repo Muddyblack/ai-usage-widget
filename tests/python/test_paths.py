@@ -3,7 +3,7 @@ import unittest
 from unittest import mock
 
 from _support import env_without_xdg
-from aiusage import paths
+from tidesi import paths
 
 
 class PathsTest(unittest.TestCase):

@@ -5,13 +5,13 @@ and the Windows frontend runs this module directly, so the shared file has one
 owner in code whichever frontend is running. The shell script keeps only the
 degraded paths for a machine with no Python at all.
 
-  python -m aiusage.historyio autosave [--stdin]  union the payload into the file; it wins
-  python -m aiusage.historyio seed [--stdin]      the same, but the file keeps its own values
-  python -m aiusage.historyio autoload            the file for startup restore; drop it if corrupt
-  python -m aiusage.historyio export              copy the file to a timestamped snapshot
-  python -m aiusage.historyio import              the newest readable copy
-  python -m aiusage.historyio clear               delete the history (snapshots stay)
-  python -m aiusage.historyio prune               keep the last $WIDGET_HISTORY_JSON days
+  python -m tidesi.historyio autosave [--stdin]  union the payload into the file; it wins
+  python -m tidesi.historyio seed [--stdin]      the same, but the file keeps its own values
+  python -m tidesi.historyio autoload            the file for startup restore; drop it if corrupt
+  python -m tidesi.historyio export              copy the file to a timestamped snapshot
+  python -m tidesi.historyio import              the newest readable copy
+  python -m tidesi.historyio clear               delete the history (snapshots stay)
+  python -m tidesi.historyio prune               keep the last $WIDGET_HISTORY_JSON days
 
 The payload is $WIDGET_HISTORY_JSON, or stdin with --stdin — Windows caps one
 environment variable at 32767 characters, which a large batch passes.

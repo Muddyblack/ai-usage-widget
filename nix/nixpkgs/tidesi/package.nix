@@ -46,7 +46,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
       --replace-fail 'PY_DEFAULT="python3"' \
                      'PY_DEFAULT="${lib.getExe python3}"'
     # Remote devices reuse Antigravity's Secret Service credential.
-    substituteInPlace "$root/contents/backend/aiusage/providers/antigravity_remote.py" \
+    substituteInPlace "$root/contents/backend/tidesi/providers/antigravity_remote.py" \
       --replace-fail 'SECRET_TOOL = "secret-tool"' \
                      'SECRET_TOOL = "${lib.getExe' libsecret "secret-tool"}"'
 

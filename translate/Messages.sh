@@ -64,10 +64,10 @@ xgettext \
     --output="$pot" \
     "${sources[@]}"
 
-# The backend words its own rows and errors (backend/aiusage/messages.py):
+# The backend words its own rows and errors (backend/tidesi/messages.py):
 # every tr("…") there is extracted in a second pass with the Python parser and
 # merged in, so backend and UI strings share the one catalog the UI reads.
-mapfile -t py_sources < <(find backend/aiusage -type f -name '*.py' | LC_ALL=C sort)
+mapfile -t py_sources < <(find backend/tidesi -type f -name '*.py' | LC_ALL=C sort)
 py_pot="$(mktemp)"
 xgettext \
     --from-code=UTF-8 \

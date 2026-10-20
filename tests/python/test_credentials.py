@@ -9,15 +9,15 @@ import unittest
 from unittest import mock
 
 from _support import IsolatedHomeTest
-from aiusage import keychain, paths
-from aiusage.providers import claude_credentials
-from aiusage.providers.claude_credentials import get_claude_credentials
-from aiusage.providers.copilot import _github_token
-from aiusage.providers.grok import _resolve_api_key
-from aiusage.providers.moonshot import _moonshot_key
-from aiusage.providers.muse import auth_presence, configured_model
-from aiusage.providers.openai_credentials import get_openai_credentials
-from aiusage.providers.zai import _zai_key
+from tidesi import keychain, paths
+from tidesi.providers import claude_credentials
+from tidesi.providers.claude_credentials import get_claude_credentials
+from tidesi.providers.copilot import _github_token
+from tidesi.providers.grok import _resolve_api_key
+from tidesi.providers.moonshot import _moonshot_key
+from tidesi.providers.muse import auth_presence, configured_model
+from tidesi.providers.openai_credentials import get_openai_credentials
+from tidesi.providers.zai import _zai_key
 
 
 class CredentialDiscoveryTest(IsolatedHomeTest):
@@ -56,8 +56,8 @@ class CredentialDiscoveryTest(IsolatedHomeTest):
         os.environ["MOONSHOT_API_KEY"] = "moonshot-env"
         self.assertEqual(_moonshot_key(), "moonshot-env")
 
-    @mock.patch("aiusage.providers.copilot.shutil.which", return_value="gh")
-    @mock.patch("aiusage.providers.copilot.subprocess.run")
+    @mock.patch("tidesi.providers.copilot.shutil.which", return_value="gh")
+    @mock.patch("tidesi.providers.copilot.subprocess.run")
     def test_copilot_sources_and_precedence(self, run, _which):
         run.return_value.returncode = 1
         run.return_value.stdout = ""
@@ -76,8 +76,8 @@ class CredentialDiscoveryTest(IsolatedHomeTest):
         os.environ["GITHUB_TOKEN"] = "env-token"
         self.assertEqual(_github_token(), ("env-token", ""))
 
-    @mock.patch("aiusage.providers.copilot.shutil.which", return_value="gh")
-    @mock.patch("aiusage.providers.copilot.subprocess.run")
+    @mock.patch("tidesi.providers.copilot.shutil.which", return_value="gh")
+    @mock.patch("tidesi.providers.copilot.subprocess.run")
     def test_copilot_selects_exact_github_host_and_tolerates_corruption(self, run, _which):
         run.return_value.returncode = 1
         run.return_value.stdout = ""
@@ -145,7 +145,7 @@ class CredentialDiscoveryTest(IsolatedHomeTest):
         self.assertEqual(_resolve_api_key(), "widget-grok")
 
     def test_shared_resolver_strips_newline(self):
-        from aiusage.http import resolve_key
+        from tidesi.http import resolve_key
 
         os.environ["WIDGET_TEST_KEY"] = "secret-value\n"
         self.assertEqual(resolve_key("WIDGET_TEST_KEY", ""), "secret-value")

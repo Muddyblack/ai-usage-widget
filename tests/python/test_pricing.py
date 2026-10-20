@@ -9,10 +9,10 @@ import unittest
 from unittest import mock
 
 from _support import IsolatedHomeTest, raw_fixture
-from aiusage import billing, collect, pricing, sessions
-from aiusage.http import HttpResult
-from aiusage.normalize.claude import normalize_claude
-from aiusage.normalize.openai import normalize_openai
+from tidesi import billing, collect, pricing, sessions
+from tidesi.http import HttpResult
+from tidesi.normalize.claude import normalize_claude
+from tidesi.normalize.openai import normalize_openai
 
 
 def catalog():
@@ -82,9 +82,9 @@ def models_dev_catalog():
 class PricingTest(IsolatedHomeTest):
     def setUp(self):
         super().setUp()
-        self.clock = mock.patch("aiusage.pricing.time.time", return_value=1_800_000_000).start()
+        self.clock = mock.patch("tidesi.pricing.time.time", return_value=1_800_000_000).start()
         self.addCleanup(mock.patch.stopall)
-        self.fetch = mock.patch("aiusage.pricing.fetch_json", return_value=HttpResult(200, json.dumps(catalog()))).start()
+        self.fetch = mock.patch("tidesi.pricing.fetch_json", return_value=HttpResult(200, json.dumps(catalog()))).start()
 
     def test_models_dev_parser_preserves_units_and_dynamic_provider_ids(self):
         tables = pricing.parse_models_dev_catalog(models_dev_catalog())
@@ -520,7 +520,7 @@ class PricingTest(IsolatedHomeTest):
         self.assertAlmostEqual(entry["costUSD"], 0.0009)
 
     def test_cache_write_failure_keeps_current_process_rates(self):
-        with mock.patch("aiusage.pricing.os.replace", side_effect=PermissionError):
+        with mock.patch("tidesi.pricing.os.replace", side_effect=PermissionError):
             pricing.load_catalog(force=True)
         self.assertEqual(pricing.cached_catalog()["openai"]["gpt-test"]["input"], 4)
 
@@ -548,7 +548,7 @@ class PricingTest(IsolatedHomeTest):
         self.assertEqual(self.fetch.call_count, 2)
 
     def test_unwritable_cache_still_uses_download(self):
-        with mock.patch("aiusage.pricing.os.replace", side_effect=PermissionError):
+        with mock.patch("tidesi.pricing.os.replace", side_effect=PermissionError):
             self.assertEqual(pricing.get_pricing("openai")["gpt-test"]["input"], 4)
         self.assertEqual(list((self.home / "cache").iterdir()), [])
 
@@ -609,7 +609,7 @@ class CatalogRowsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             self._cache(directory, {"anthropic": {"claude-x": {"input": 3, "output": 15, "cached": 0.3}}})
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(pricing, "fetch_json", side_effect=AssertionError("rate table fetched")),
             ):
                 pricing._CATALOG_CACHE.clear()
@@ -624,7 +624,7 @@ class CatalogRowsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             self._cache(directory, {"anthropic": {"claude-x": {"input": 3, "output": 15}}})
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(pricing, "_read_cache", wraps=pricing._read_cache) as read_cache,
                 mock.patch.object(pricing, "fetch_json", side_effect=AssertionError("table query fetched rates")),
             ):
@@ -643,7 +643,7 @@ class CatalogRowsTest(unittest.TestCase):
         }
         with tempfile.TemporaryDirectory() as directory:
             self._cache(directory, providers)
-            with mock.patch("aiusage.config.cache_dir", return_value=directory):
+            with mock.patch("tidesi.config.cache_dir", return_value=directory):
                 pricing._CATALOG_CACHE.clear()
                 pricing._CURRENT_SNAPSHOTS.clear()
                 by_model = pricing.catalog_rows("claude")
@@ -663,7 +663,7 @@ class CatalogRowsTest(unittest.TestCase):
         builder has to drop a non-finite rate rather than render it."""
         with tempfile.TemporaryDirectory() as directory:
             path = os.path.join(directory, pricing.CACHE_FILENAME)
-            with mock.patch("aiusage.config.cache_dir", return_value=directory):
+            with mock.patch("tidesi.config.cache_dir", return_value=directory):
                 pricing._CATALOG_CACHE.clear()
                 pricing._CURRENT_SNAPSHOTS.clear()
                 pricing._CURRENT_SNAPSHOTS[path] = {

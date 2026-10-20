@@ -55,7 +55,7 @@ jobs:
             relevant:
               - 'hosts/desktop/**'
               - 'hosts/windows/**'
-              - 'backend/aiusage/**'
+              - 'backend/tidesi/**'
               - 'tests/python/**'
               - 'tests/behavior/**'
               - 'scripts/frontend-fixtures.py'
@@ -103,7 +103,7 @@ jobs:
         run: python -m unittest discover -s tests/python -v
 
       - name: backend smoke run
-        run: python -m aiusage --provider claude,antigravity,openai
+        run: python -m tidesi --provider claude,antigravity,openai
 
       - name: tray app loads
         run: python hosts/desktop/app.py --selftest
@@ -113,7 +113,7 @@ jobs:
         shell: pwsh
         env:
           QT_QPA_PLATFORM: windows
-          AI_USAGE_CONFIG: ${{ runner.temp }}\desktop-settings.json
+          TIDESI_CONFIG: ${{ runner.temp }}\desktop-settings.json
         run: scripts/windows-desktop-capture.ps1 -OutputDirectory "$env:RUNNER_TEMP\screens"
 
       - uses: actions/upload-artifact@v7

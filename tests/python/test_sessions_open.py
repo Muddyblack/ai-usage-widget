@@ -10,7 +10,7 @@ import unittest
 from unittest import mock
 
 from _support import REPO  # noqa: F401  (ensures TOOLS is on sys.path)
-from aiusage import sessions
+from tidesi import sessions
 
 
 class OpenKeyStabilityTest(unittest.TestCase):

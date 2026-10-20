@@ -41,7 +41,7 @@ class AdapterTimeoutOwnershipTest(unittest.TestCase):
         self.assertIn("request.abort()", requests)
 
     def test_http_defaults_are_bounded_and_below_the_watchdog(self):
-        source = _read(Path(REPO) / "backend" / "aiusage" / "http.py")
+        source = _read(Path(REPO) / "backend" / "tidesi" / "http.py")
         match = re.search(r"def fetch_json\([^)]*timeout=(\d+)", source)
         self.assertIsNotNone(match)
         self.assertLessEqual(int(match.group(1)), 30, "a provider fetch must not outlive the frontend grace")
@@ -52,15 +52,15 @@ class AdapterTimeoutOwnershipTest(unittest.TestCase):
 class LastGoodBackendTest(unittest.TestCase):
     def test_pricing_failure_keeps_last_good_tables_and_marks_stale(self):
         # The status vocabulary is produced where the refresh result is built.
-        source = _read(Path(REPO) / "backend" / "aiusage" / "__main__.py")
+        source = _read(Path(REPO) / "backend" / "tidesi" / "__main__.py")
         self.assertIn("stale-good", source)
         # And last-good tables are retained by the catalog loader.
-        loader = _read(Path(REPO) / "backend" / "aiusage" / "pricing.py")
+        loader = _read(Path(REPO) / "backend" / "tidesi" / "pricing.py")
         self.assertIn("_merge_tables(snapshot[", loader)
         self.assertIn('cached.get("providers", {})', loader)
 
     def test_codex_rate_limit_cache_is_time_bounded(self):
-        from aiusage.providers import codex_rate_limits
+        from tidesi.providers import codex_rate_limits
 
         self.assertIsInstance(codex_rate_limits.TTL_SECONDS, int)
         self.assertGreater(codex_rate_limits.TTL_SECONDS, 0)

@@ -270,7 +270,7 @@ test("the QML and Python unions produce identical output", () => {
         [[{ t: "0x10", w: 1 }, { t: "1_0", w: 2 }, { t: "Infinity", w: 3 }, { t: "nan", w: 4 }, { t: "", w: 5 }], [{ t: " 12 ", w: 6 }, { t: "1e3", w: 7 }]]
     ];
     const limits = [500, 2];
-    const script = "import json,sys; sys.path.insert(0, sys.argv[1]); from aiusage import history;" +
+    const script = "import json,sys; sys.path.insert(0, sys.argv[1]); from tidesi import history;" +
         " c = json.load(sys.stdin);" +
         " print(json.dumps([history.union(b, o, l) for b, o, l in c], separators=(',', ':')))";
     const payload = [];
@@ -295,7 +295,7 @@ test("the QML and Python normalize produce identical output", () => {
         [{ t: "0x10", w: 1 }, { t: "1_0", w: 2 }, { t: "Infinity", w: 3 }, { t: " 12 ", w: 4 }, { t: "+1e3", w: 5 }],
         []
     ];
-    const script = "import json,sys; sys.path.insert(0, sys.argv[1]); from aiusage import history;" +
+    const script = "import json,sys; sys.path.insert(0, sys.argv[1]); from tidesi import history;" +
         " c = json.load(sys.stdin);" +
         " print(json.dumps([history.normalize(p, 500) for p in c], separators=(',', ':')))";
     // JSON has no NaN, and neither store can hold one; drop it the way a file

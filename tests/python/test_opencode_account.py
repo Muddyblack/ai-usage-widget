@@ -14,9 +14,9 @@ import unittest
 from unittest import mock
 
 from _support import IsolatedHomeTest
-from aiusage.collect import collect_opencode
-from aiusage.http import HttpResult
-from aiusage.providers import opencode_account
+from tidesi.collect import collect_opencode
+from tidesi.http import HttpResult
+from tidesi.providers import opencode_account
 
 _SESSION_SCHEMA = """
 CREATE TABLE session (
@@ -117,7 +117,7 @@ class OpenCodeAccountModeTest(IsolatedHomeTest):
 
     def test_zen_only_auth_never_calls_the_go_endpoint(self):
         self._write_auth({"opencode": {"type": "api", "key": "zen-key"}})
-        with mock.patch("aiusage.providers.opencode_account.fetch_json") as fetch:
+        with mock.patch("tidesi.providers.opencode_account.fetch_json") as fetch:
             raw = self._collect()
         self.assertEqual(raw["inputs"]["account"]["mode"], "zen")
         self.assertIsNone(raw["inputs"]["account"]["goUsage"])
@@ -127,7 +127,7 @@ class OpenCodeAccountModeTest(IsolatedHomeTest):
     def test_go_only_auth_fetches_the_go_endpoint_with_bearer_key(self):
         self._write_auth({"opencode-go": {"type": "api", "key": "go-secret-key"}})
         with mock.patch(
-            "aiusage.providers.opencode_account.fetch_json",
+            "tidesi.providers.opencode_account.fetch_json",
             return_value=HttpResult(200, _GO_BODY),
         ) as fetch:
             raw = self._collect()
@@ -149,7 +149,7 @@ class OpenCodeAccountModeTest(IsolatedHomeTest):
             with self.subTest(order=order):
                 self._write_auth(order)
                 with mock.patch(
-                    "aiusage.providers.opencode_account.fetch_json",
+                    "tidesi.providers.opencode_account.fetch_json",
                     return_value=HttpResult(200, _GO_BODY),
                 ) as fetch:
                     raw = self._collect()
@@ -158,20 +158,20 @@ class OpenCodeAccountModeTest(IsolatedHomeTest):
 
     def test_neither_auth_entry_defaults_to_zen(self):
         self._write_auth({"ollama-cloud": {"type": "api", "key": "other-key"}})
-        with mock.patch("aiusage.providers.opencode_account.fetch_json") as fetch:
+        with mock.patch("tidesi.providers.opencode_account.fetch_json") as fetch:
             raw = self._collect()
         self.assertEqual(raw["inputs"]["account"]["mode"], "zen")
         fetch.assert_not_called()
 
     def test_missing_auth_file_defaults_to_zen(self):
-        with mock.patch("aiusage.providers.opencode_account.fetch_json") as fetch:
+        with mock.patch("tidesi.providers.opencode_account.fetch_json") as fetch:
             raw = self._collect()
         self.assertEqual(raw["inputs"]["account"]["mode"], "zen")
         fetch.assert_not_called()
 
     def test_invalid_auth_json_defaults_to_zen(self):
         self.write(".local/share/opencode/auth.json", "{not valid json")
-        with mock.patch("aiusage.providers.opencode_account.fetch_json") as fetch:
+        with mock.patch("tidesi.providers.opencode_account.fetch_json") as fetch:
             raw = self._collect()
         self.assertEqual(raw["inputs"]["account"]["mode"], "zen")
         fetch.assert_not_called()
@@ -188,7 +188,7 @@ class OpenCodeAccountModeTest(IsolatedHomeTest):
         for entries in malformed:
             with self.subTest(entries=entries):
                 self._write_auth(entries)
-                with mock.patch("aiusage.providers.opencode_account.fetch_json") as fetch:
+                with mock.patch("tidesi.providers.opencode_account.fetch_json") as fetch:
                     raw = self._collect()
                 self.assertEqual(raw["inputs"]["account"]["mode"], "zen")
                 fetch.assert_not_called()
@@ -196,7 +196,7 @@ class OpenCodeAccountModeTest(IsolatedHomeTest):
     def test_non_latin1_go_key_is_rejected_without_request_or_disclosure(self):
         secret = "go-secret-☃"
         self._write_auth({"opencode-go": {"type": "api", "key": secret}})
-        with mock.patch("aiusage.providers.opencode_account.fetch_json") as fetch:
+        with mock.patch("tidesi.providers.opencode_account.fetch_json") as fetch:
             raw = self._collect()
 
         account = raw["inputs"]["account"]
@@ -214,7 +214,7 @@ class OpenCodeAccountModeTest(IsolatedHomeTest):
             with self.subTest(status=status):
                 self._write_auth({"opencode-go": {"type": "api", "key": "go-key"}})
                 with mock.patch(
-                    "aiusage.providers.opencode_account.fetch_json",
+                    "tidesi.providers.opencode_account.fetch_json",
                     return_value=HttpResult(status, ""),
                 ):
                     raw = self._collect()
@@ -226,7 +226,7 @@ class OpenCodeAccountModeTest(IsolatedHomeTest):
     def test_go_403_never_falls_back_to_zen_or_reports_zero(self):
         self._write_auth({"opencode-go": {"type": "api", "key": "go-key"}})
         with mock.patch(
-            "aiusage.providers.opencode_account.fetch_json",
+            "tidesi.providers.opencode_account.fetch_json",
             return_value=HttpResult(403, ""),
         ):
             raw = self._collect()
@@ -240,7 +240,7 @@ class OpenCodeAccountModeTest(IsolatedHomeTest):
         for body in ("not json", "[]", "42", ""):
             with self.subTest(body=body):
                 with mock.patch(
-                    "aiusage.providers.opencode_account.fetch_json",
+                    "tidesi.providers.opencode_account.fetch_json",
                     return_value=HttpResult(200, body),
                 ):
                     raw = self._collect()
@@ -255,7 +255,7 @@ class OpenCodeAccountModeTest(IsolatedHomeTest):
         secret = "sk-opencode-go-super-secret-9f8e7d"
         self._write_auth({"opencode-go": {"type": "api", "key": secret}})
         with mock.patch(
-            "aiusage.providers.opencode_account.fetch_json",
+            "tidesi.providers.opencode_account.fetch_json",
             return_value=HttpResult(200, _GO_BODY),
         ):
             raw = self._collect()
@@ -264,7 +264,7 @@ class OpenCodeAccountModeTest(IsolatedHomeTest):
         self.assertNotIn("Bearer", serialized)
 
         with mock.patch(
-            "aiusage.providers.opencode_account.fetch_json",
+            "tidesi.providers.opencode_account.fetch_json",
             return_value=HttpResult(403, ""),
         ):
             raw = self._collect()

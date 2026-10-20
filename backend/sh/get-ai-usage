@@ -4,9 +4,9 @@
 #
 # This is a thin launcher. All logic — credential discovery, provider API
 # requests, response parsing, quota/percentage maths, reset timestamps and
-# error/stale state — lives in ../aiusage, a Python package using only the
+# error/stale state — lives in ../tidesi, a Python package using only the
 # standard library. See docs/provider-contract.md for the schema and
-# ../aiusage/__main__.py for the CLI.
+# ../tidesi/__main__.py for the CLI.
 #
 #   get-ai-usage --provider claude          one provider (KDE's active tab)
 #   get-ai-usage --provider claude,openai   several providers (active + pinned)
@@ -21,7 +21,7 @@
 
 set -u
 
-# Keep in sync with aiusage/config.py:ALL_PROVIDERS — duplicated here so
+# Keep in sync with tidesi/config.py:ALL_PROVIDERS — duplicated here so
 # --list and the missing-python3 fallback work without importing Python.
 # tests/translation-provider-parity.test.sh asserts this list equals the
 # canonical one, so drift fails a test instead of shipping silently.
@@ -107,8 +107,8 @@ if ! py_resolve; then
     exit 0
 fi
 
-# The aiusage package lives one directory up from this script (tools/aiusage,
-# this script is tools/sh/get-ai-usage). `python3 -m aiusage` resolves the
+# The tidesi package lives one directory up from this script (tools/tidesi,
+# this script is tools/sh/get-ai-usage). `python3 -m tidesi` resolves the
 # module from cwd or PYTHONPATH, and Plasma's executable DataEngine sets
 # neither, so it must be exported explicitly here.
 PKG_TOOLS="$(cd "$_SH_DIR/.." && pwd)"
@@ -116,4 +116,4 @@ export PYTHONPATH="$PKG_TOOLS${PYTHONPATH:+:$PYTHONPATH}"
 
 # -B: never write __pycache__ into the installed plasmoid — `make pack` only
 # excludes *.swp and *~, so stray bytecode would otherwise ship in the zip.
-exec "$PY" -B -m aiusage "$@"
+exec "$PY" -B -m tidesi "$@"

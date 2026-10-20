@@ -74,15 +74,15 @@ check-translations: ## check every catalog compiles; listed ones (translate/comp
 
 lint-py: ## lint + format-check the Python backend, frontends and helpers (dev only, needs ruff)
 	@if command -v ruff >/dev/null 2>&1; then \
-	  ruff check backend/aiusage hosts scripts tests/python && \
-	  ruff format --check backend/aiusage hosts scripts tests/python; \
+	  ruff check backend/tidesi hosts scripts tests/python && \
+	  ruff format --check backend/tidesi hosts scripts tests/python; \
 	else \
 	  echo "ruff not found — install it or run 'nix develop'"; exit 1; \
 	fi
 
 format: ## format and auto-fix the Python (backend, hosts, scripts, tests) with ruff
 	@if command -v ruff >/dev/null 2>&1; then ruff=ruff; else ruff="nix run .#ruff --"; fi; \
-	  $$ruff format backend/aiusage hosts scripts tests/python && $$ruff check --fix backend/aiusage hosts scripts tests/python
+	  $$ruff format backend/tidesi hosts scripts tests/python && $$ruff check --fix backend/tidesi hosts scripts tests/python
 
 readme-screenshots: ## capture the real QML UI with demo data into docs/readme/screenshots
 	@if command -v nix >/dev/null 2>&1 && [ -f flake.nix ]; then \

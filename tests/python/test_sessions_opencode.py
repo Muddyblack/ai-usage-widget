@@ -6,8 +6,8 @@ import unittest
 from unittest import mock
 
 from _support import REPO, IsolatedHomeTest  # noqa: F401  (ensures TOOLS is on sys.path)
-from aiusage import session_manifest, sessions
-from aiusage.providers import opencode
+from tidesi import session_manifest, sessions
+from tidesi.providers import opencode
 
 _SESSION_SCHEMA = (
     "CREATE TABLE session ("

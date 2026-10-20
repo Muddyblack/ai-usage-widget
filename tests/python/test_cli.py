@@ -7,7 +7,7 @@ import unittest
 from unittest import mock
 
 from _support import fixture, provider_fixtures
-from aiusage import cli
+from tidesi import cli
 
 
 class Terminal(io.StringIO):

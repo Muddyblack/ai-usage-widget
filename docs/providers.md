@@ -361,7 +361,7 @@ History lives in `~/.local/share/ai-usage-widget/usage-history-latest.json`, sha
 
 Everything below is local, never holds a credential or a transcript, and can be
 deleted at any time — it is rebuilt on the next refresh. `~/.cache/ai-usage-widget/`
-(`AI_USAGE_CACHE_DIR` overrides) holds the pricing catalog (7 days), the Codex
+(`TIDESI_CACHE_DIR` overrides) holds the pricing catalog (7 days), the Codex
 rate-limit reply (120 s, keyed by a hash of the token and `CODEX_HOME`, so
 several widgets do not each launch `codex app-server`), the Antigravity usage
 (90 s), the session index `sessions.sqlite3`, and `last-snapshot.json`, the last

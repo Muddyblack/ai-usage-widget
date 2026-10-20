@@ -12,12 +12,12 @@ from pathlib import Path
 from unittest import mock
 
 from _support import IsolatedHomeTest, env_without_xdg
-from aiusage import keychain, paths
-from aiusage.providers.cursor import _agent_token
-from aiusage.providers.grok import grok_home
-from aiusage.providers.kiro import _cli_db, _ide_db
-from aiusage.providers.muse_quota import _api_key as _muse_api_key
-from aiusage.providers.openai_credentials import codex_home, get_openai_credentials
+from tidesi import keychain, paths
+from tidesi.providers.cursor import _agent_token
+from tidesi.providers.grok import grok_home
+from tidesi.providers.kiro import _cli_db, _ide_db
+from tidesi.providers.muse_quota import _api_key as _muse_api_key
+from tidesi.providers.openai_credentials import codex_home, get_openai_credentials
 
 
 class MacOSPathHelpersTest(unittest.TestCase):

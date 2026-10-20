@@ -94,7 +94,7 @@ Item {
     // Text the backend words itself (row labels, details, errors, tooltips),
     // translated. The envelope carries a field's template beside it as
     // `<key>I18n` ({id, args}, or {lines: [...]} for multi-line text; see
-    // backend/aiusage/messages.py); without one the English text itself is
+    // backend/tidesi/messages.py); without one the English text itself is
     // looked up, which still catches fixed messages that crossed a cache.
     function tr(obj, key) {
         if (!obj)
@@ -253,7 +253,7 @@ Item {
     // A provider that can be read more than one way (a CLI, an IDE, a local
     // server, an API key…) reports its ways in its snapshot's `sources` block;
     // which one is used is the user's choice, "auto" meaning the first that works.
-    // The backend honours the choice from the settings file (aiusage/sources.py).
+    // The backend honours the choice from the settings file (tidesi/sources.py).
     function sourceChoice(id) {
         return (root.settings.sources || {})[id] || ProviderSources.AUTO;
     }

@@ -34,10 +34,10 @@ def snapshot_path():
 def shared_settings_path():
     """One file per installed widget id, so the renamed test copy that
     `make install` adds never rewrites the real widget's settings."""
-    override = os.environ.get("AI_USAGE_PLASMA_SHARED_SETTINGS")
+    override = config.env("PLASMA_SHARED_SETTINGS")
     if override:
         return override
-    widget_id = re.sub(r"[^A-Za-z0-9._-]", "", os.environ.get("AI_USAGE_WIDGET_ID", ""))
+    widget_id = re.sub(r"[^A-Za-z0-9._-]", "", config.env("WIDGET_ID", ""))
     name = f"plasma-shared-settings-{widget_id}.json" if widget_id else SHARED_SETTINGS_FILENAME
     return os.path.join(paths.config_home(), paths.APP_DIR, name)
 

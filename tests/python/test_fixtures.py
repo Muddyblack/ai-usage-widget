@@ -5,7 +5,7 @@ import re
 import unittest
 
 from _support import fixture, provider_fixtures, raw_fixture
-from aiusage.config import ALL_PROVIDERS
+from tidesi.config import ALL_PROVIDERS
 
 SECRET = re.compile(
     r"secret|sk-ant-|sk-oauth|gh-secret|zai-secret|xai-secret|ds-secret|or-secret|codex-secret",

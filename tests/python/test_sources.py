@@ -6,9 +6,9 @@ import unittest
 from unittest import mock
 
 from _support import IsolatedHomeTest
-from aiusage import config, sources
-from aiusage.normalize import normalize
-from aiusage.providers import antigravity, copilot, cursor, kilo, kiro, ollama
+from tidesi import config, sources
+from tidesi.normalize import normalize
+from tidesi.providers import antigravity, copilot, cursor, kilo, kiro, ollama
 
 NOW = 1790841600
 

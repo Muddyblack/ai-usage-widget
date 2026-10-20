@@ -7,9 +7,9 @@ from pathlib import Path
 from unittest import mock
 
 from _support import REPO  # noqa: F401
-from aiusage.normalize.antigravity import normalize_antigravity
-from aiusage.providers import antigravity_stats as reader
-from aiusage.stats import antigravity_stats
+from tidesi.normalize.antigravity import normalize_antigravity
+from tidesi.providers import antigravity_stats as reader
+from tidesi.stats import antigravity_stats
 
 _CLI_ID = "11111111-1111-4111-8111-111111111111"
 _IDE_ID = "22222222-2222-4222-8222-222222222222"
@@ -27,7 +27,7 @@ class AntigravityStatsTest(unittest.TestCase):
         self.addCleanup(self.cache.cleanup)
         patches = [
             mock.patch.dict(os.environ, {"ANTIGRAVITY_HOME": self.home.name}),
-            mock.patch("aiusage.paths.cache_home", return_value=self.cache.name),
+            mock.patch("tidesi.paths.cache_home", return_value=self.cache.name),
         ]
         for p in patches:
             p.start()

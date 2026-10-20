@@ -10,8 +10,8 @@ import unittest
 from unittest import mock
 
 from _support import IsolatedHomeTest
-from aiusage import __main__ as backend
-from aiusage import config, detect
+from tidesi import __main__ as backend
+from tidesi import config, detect
 
 
 class ProviderDetectionTest(IsolatedHomeTest):

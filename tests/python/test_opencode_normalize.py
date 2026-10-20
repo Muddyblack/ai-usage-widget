@@ -15,8 +15,8 @@ import tempfile
 import unittest
 
 from _support import TOOLS, IsolatedHomeTest, fixture
-from aiusage import history
-from aiusage.normalize.opencode import _GO_WINDOWS, normalize_opencode
+from tidesi import history
+from tidesi.normalize.opencode import _GO_WINDOWS, normalize_opencode
 
 NOW = 1_700_000_000
 
@@ -298,7 +298,7 @@ class OpenCodeCliGoTest(IsolatedHomeTest):
             env["OPENCODE_DB"] = db
             env["OPENCODE_GO_USAGE_RESPONSE_FILE"] = fixture_path
             result = subprocess.run(
-                [sys.executable, "-m", "aiusage", "--provider", "opencode"],
+                [sys.executable, "-m", "tidesi", "--provider", "opencode"],
                 env=env,
                 capture_output=True,
                 text=True,

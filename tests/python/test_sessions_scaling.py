@@ -25,11 +25,11 @@ class Source:
 
 
 def _index_class():
-    return importlib.import_module("aiusage.session_index").SessionIndex
+    return importlib.import_module("tidesi.session_index").SessionIndex
 
 
 def _storage():
-    return importlib.import_module("aiusage.session_index_storage")
+    return importlib.import_module("tidesi.session_index_storage")
 
 
 def _source(root, name, source_id, version=1):

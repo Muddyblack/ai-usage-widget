@@ -6,9 +6,9 @@ import unittest
 from unittest import mock
 
 from _support import REPO, seed_session_index  # noqa: F401
-from aiusage import config, envelope, sessions
-from aiusage.normalize.cline import normalize_cline
-from aiusage.providers import cline
+from tidesi import config, envelope, sessions
+from tidesi.normalize.cline import normalize_cline
+from tidesi.providers import cline
 
 _MISSING = object()
 

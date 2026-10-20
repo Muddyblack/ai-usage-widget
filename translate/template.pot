@@ -1722,1359 +1722,1359 @@ msgid ""
 "OpenAI, Grok, Kiro, OpenRouter & Mistral)"
 msgstr ""
 
-#: backend/aiusage/contract.py
+#: backend/tidesi/contract.py
 msgid "unavailable"
 msgstr ""
 
-#: backend/aiusage/http.py
+#: backend/tidesi/http.py
 msgid "Invalid %1 credential"
 msgstr ""
 
-#: backend/aiusage/http.py
+#: backend/tidesi/http.py
 msgid "%1 network error"
 msgstr ""
 
-#: backend/aiusage/http.py
+#: backend/tidesi/http.py
 msgid "%1 HTTP %2"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py backend/aiusage/normalize/cursor.py
-#: backend/aiusage/normalize/muse.py backend/aiusage/normalize/ollama.py
-#: backend/aiusage/normalize/opencode.py
-#: backend/aiusage/normalize/selfhosted.py
-#: backend/aiusage/normalize/windsurf.py
+#: backend/tidesi/normalize/antigravity.py backend/tidesi/normalize/cursor.py
+#: backend/tidesi/normalize/muse.py backend/tidesi/normalize/ollama.py
+#: backend/tidesi/normalize/opencode.py
+#: backend/tidesi/normalize/selfhosted.py
+#: backend/tidesi/normalize/windsurf.py
 msgid "%1% used"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "⚠ Quota exhausted"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Online"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Offline"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Updated %1"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Remote devices"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "%1 online · %2 devices"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "No remote devices registered for this account."
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Open antigravity.google.com ↗"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Select a device to open it in Antigravity."
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Remote Control is online"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "This device can be reached from your other devices."
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Remote Control is offline"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Remote Control is on, but this device is not connected right now."
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Remote Control is off"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid ""
 "Turn it on in Antigravity's settings to work with local agents from another "
 "device."
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid ""
 "Device list unavailable. Showing this desktop app's local status; open the "
 "website to see all devices."
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Antigravity not configured"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Gemini Models"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Claude & GPT Models"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Gemini Code Assist"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Prompt Credits"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "%1 / %2 left"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Overall Quota"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Model Quotas"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Average quota usage across Gemini models"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "Gemini (Google) quota: %1%"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py backend/aiusage/normalize/cursor.py
-#: backend/aiusage/normalize/kiro.py backend/aiusage/normalize/windsurf.py
-#: backend/aiusage/normalize/zed.py
+#: backend/tidesi/normalize/antigravity.py backend/tidesi/normalize/cursor.py
+#: backend/tidesi/normalize/kiro.py backend/tidesi/normalize/windsurf.py
+#: backend/tidesi/normalize/zed.py
 msgid "Plan: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/antigravity.py
+#: backend/tidesi/normalize/antigravity.py
 msgid "External models quota: %1%"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "7-day %1"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "7-day scoped"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "default"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "pro"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "max"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "business"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "free"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "high"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "low"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "medium"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "%1…"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "Claude Code User"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/claude.py backend/tidesi/normalize/openai.py
 msgid "effort: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "Thinking budget: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "dream: on"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "dream: off"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid ""
 "Extended thinking (dream mode): ON\n"
 "Claude will reason longer on complex tasks"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "Extended thinking (dream mode): OFF"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "%1 session open to other devices"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "%1 sessions open to other devices"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid ""
 "Started with /remote-control in Claude Code. Continue them from your phone "
 "or the browser."
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "Open claude.ai/code ↗"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "Claude Code session"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "OAuth missing — API stats only"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "Claude not logged in"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "Claude usage request failed"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py backend/aiusage/normalize/zai.py
+#: backend/tidesi/normalize/claude.py backend/tidesi/normalize/zai.py
 msgid "%1 / %2 tokens"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "5-hour session"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "7-day window"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "Claude 5-hour: %1%"
 msgstr ""
 
-#: backend/aiusage/normalize/claude.py
+#: backend/tidesi/normalize/claude.py
 msgid "Claude 7-day: %1%"
 msgstr ""
 
-#: backend/aiusage/normalize/cline.py
+#: backend/tidesi/normalize/cline.py
 msgid "Cline: no sessions yet — run cline once"
 msgstr ""
 
-#: backend/aiusage/normalize/cline.py
+#: backend/tidesi/normalize/cline.py
 msgid "last 30 days"
 msgstr ""
 
-#: backend/aiusage/normalize/cline.py backend/aiusage/normalize/kilo.py
-#: backend/aiusage/normalize/local_activity.py
-#: backend/aiusage/normalize/windsurf.py backend/aiusage/normalize/zed.py
+#: backend/tidesi/normalize/cline.py backend/tidesi/normalize/kilo.py
+#: backend/tidesi/normalize/local_activity.py
+#: backend/tidesi/normalize/windsurf.py backend/tidesi/normalize/zed.py
 msgid "%1: %2"
 msgstr ""
 
-#: backend/aiusage/normalize/coderabbit.py
+#: backend/tidesi/normalize/coderabbit.py
 msgid "CodeRabbit: CLI not found"
 msgstr ""
 
-#: backend/aiusage/normalize/coderabbit.py
+#: backend/tidesi/normalize/coderabbit.py
 msgid "CodeRabbit: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/coderabbit.py
+#: backend/tidesi/normalize/coderabbit.py
 msgid "reviews this period"
 msgstr ""
 
-#: backend/aiusage/normalize/coderabbit.py
+#: backend/tidesi/normalize/coderabbit.py
 msgid "Your reviews"
 msgstr ""
 
-#: backend/aiusage/normalize/coderabbit.py
+#: backend/tidesi/normalize/coderabbit.py
 msgid "Your reviews: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/coderabbit.py
+#: backend/tidesi/normalize/coderabbit.py
 msgid "User"
 msgstr ""
 
-#: backend/aiusage/normalize/coderabbit.py
+#: backend/tidesi/normalize/coderabbit.py
 msgid "Usage billing"
 msgstr ""
 
-#: backend/aiusage/normalize/coderabbit.py
+#: backend/tidesi/normalize/coderabbit.py
 msgid ""
 "Read by running the CodeRabbit CLI's own usage report. CodeRabbit publishes "
 "a count, not a quota."
 msgstr ""
 
-#: backend/aiusage/normalize/copilot.py
+#: backend/tidesi/normalize/copilot.py
 msgid "Copilot: no token configured"
 msgstr ""
 
-#: backend/aiusage/normalize/copilot.py
+#: backend/tidesi/normalize/copilot.py
 msgid "Copilot: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/copilot.py
+#: backend/tidesi/normalize/copilot.py
 msgid "%1 requests · unlimited"
 msgstr ""
 
-#: backend/aiusage/normalize/copilot.py
+#: backend/tidesi/normalize/copilot.py
 msgid "%1 / %2 requests"
 msgstr ""
 
-#: backend/aiusage/normalize/copilot.py
+#: backend/tidesi/normalize/copilot.py
 msgid "Personal billing"
 msgstr ""
 
-#: backend/aiusage/normalize/copilot.py
+#: backend/tidesi/normalize/copilot.py
 msgid "Premium requests"
 msgstr ""
 
-#: backend/aiusage/normalize/copilot.py
+#: backend/tidesi/normalize/copilot.py
 msgid "Copilot premium requests: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/cursor.py
+#: backend/tidesi/normalize/cursor.py
 msgid "Cursor: not signed in — run cursor-agent login"
 msgstr ""
 
-#: backend/aiusage/normalize/cursor.py
+#: backend/tidesi/normalize/cursor.py
 msgid "Cursor: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/cursor.py
+#: backend/tidesi/normalize/cursor.py
 msgid "Cursor: usage details are not available for this plan"
 msgstr ""
 
-#: backend/aiusage/normalize/cursor.py
+#: backend/tidesi/normalize/cursor.py
 msgid "%1% of included usage"
 msgstr ""
 
-#: backend/aiusage/normalize/cursor.py
+#: backend/tidesi/normalize/cursor.py
 msgid "Included usage"
 msgstr ""
 
-#: backend/aiusage/normalize/cursor.py
+#: backend/tidesi/normalize/cursor.py
 msgid "Auto + Composer"
 msgstr ""
 
-#: backend/aiusage/normalize/cursor.py
+#: backend/tidesi/normalize/cursor.py
 msgid "API models"
 msgstr ""
 
-#: backend/aiusage/normalize/cursor.py
+#: backend/tidesi/normalize/cursor.py
 msgid "On-demand"
 msgstr ""
 
-#: backend/aiusage/normalize/cursor.py
+#: backend/tidesi/normalize/cursor.py
 msgid "Included usage: %1%"
 msgstr ""
 
-#: backend/aiusage/normalize/deepseek.py
+#: backend/tidesi/normalize/deepseek.py
 msgid "DeepSeek: no API key configured"
 msgstr ""
 
-#: backend/aiusage/normalize/deepseek.py
+#: backend/tidesi/normalize/deepseek.py
 msgid "DeepSeek: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/deepseek.py
+#: backend/tidesi/normalize/deepseek.py
 msgid "Available for API calls"
 msgstr ""
 
-#: backend/aiusage/normalize/deepseek.py
+#: backend/tidesi/normalize/deepseek.py
 msgid "Low balance"
 msgstr ""
 
-#: backend/aiusage/normalize/deepseek.py
+#: backend/tidesi/normalize/deepseek.py
 msgid "Total balance"
 msgstr ""
 
-#: backend/aiusage/normalize/deepseek.py
+#: backend/tidesi/normalize/deepseek.py
 msgid "Granted / topped up"
 msgstr ""
 
-#: backend/aiusage/normalize/deepseek.py
+#: backend/tidesi/normalize/deepseek.py
 msgid "DeepSeek balance: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/grok.py
+#: backend/tidesi/normalize/grok.py
 msgid "Grok: run grok --oauth or configure an xAI key"
 msgstr ""
 
-#: backend/aiusage/normalize/grok.py
+#: backend/tidesi/normalize/grok.py
 msgid "rolling 24h"
 msgstr ""
 
-#: backend/aiusage/normalize/grok.py
+#: backend/tidesi/normalize/grok.py
 msgid "Grok CLI"
 msgstr ""
 
-#: backend/aiusage/normalize/grok.py backend/aiusage/normalize/openrouter.py
+#: backend/tidesi/normalize/grok.py backend/tidesi/normalize/openrouter.py
 msgid "Credit usage"
 msgstr ""
 
-#: backend/aiusage/normalize/grok.py
+#: backend/tidesi/normalize/grok.py
 msgid "Billing quota"
 msgstr ""
 
-#: backend/aiusage/normalize/grok.py
+#: backend/tidesi/normalize/grok.py
 msgid "Not exposed for this Grok account"
 msgstr ""
 
-#: backend/aiusage/normalize/grok.py
+#: backend/tidesi/normalize/grok.py
 msgid "Local CLI activity"
 msgstr ""
 
-#: backend/aiusage/normalize/grok.py
+#: backend/tidesi/normalize/grok.py
 msgid "%1%2%3 tokens · %4 tool calls"
 msgstr ""
 
-#: backend/aiusage/normalize/grok.py
+#: backend/tidesi/normalize/grok.py
 msgid "Grok credits: %1% used"
 msgstr ""
 
-#: backend/aiusage/normalize/grok.py
+#: backend/tidesi/normalize/grok.py
 msgid "Grok CLI connected; billing quota is not exposed"
 msgstr ""
 
-#: backend/aiusage/normalize/jetbrains.py
+#: backend/tidesi/normalize/jetbrains.py
 msgid ""
 "Open a JetBrains IDE signed in to JetBrains AI once so it records your quota."
 msgstr ""
 
-#: backend/aiusage/normalize/jetbrains.py
+#: backend/tidesi/normalize/jetbrains.py
 msgid "JetBrains AI: no IDE quota file found"
 msgstr ""
 
-#: backend/aiusage/normalize/jetbrains.py
+#: backend/tidesi/normalize/jetbrains.py
 msgid "JetBrains AI: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/jetbrains.py backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/jetbrains.py backend/tidesi/normalize/kiro.py
 msgid "%1 / %2 credits"
 msgstr ""
 
-#: backend/aiusage/normalize/jetbrains.py backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/jetbrains.py backend/tidesi/normalize/kiro.py
 msgid "Monthly credits"
 msgstr ""
 
-#: backend/aiusage/normalize/jetbrains.py backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/jetbrains.py backend/tidesi/normalize/kiro.py
 msgid "Credits: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/jetbrains.py
+#: backend/tidesi/normalize/jetbrains.py
 msgid "Top-up credits: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/jetbrains.py backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/jetbrains.py backend/tidesi/normalize/kiro.py
 msgid "Remaining"
 msgstr ""
 
-#: backend/aiusage/normalize/jetbrains.py
+#: backend/tidesi/normalize/jetbrains.py
 msgid "Top-up credits"
 msgstr ""
 
-#: backend/aiusage/normalize/jetbrains.py
+#: backend/tidesi/normalize/jetbrains.py
 msgid ""
 "Read from the IDE's own quota file. No key or network request needed; it "
 "updates while an IDE is running."
 msgstr ""
 
-#: backend/aiusage/normalize/junie.py
+#: backend/tidesi/normalize/junie.py
 msgid ""
 "Junie (untested): no recorded token usage yet. Run a session using /account "
 "or junie --provider google."
 msgstr ""
 
-#: backend/aiusage/normalize/kilo.py
+#: backend/tidesi/normalize/kilo.py
 msgid "Kilo: no API key or CLI login found"
 msgstr ""
 
-#: backend/aiusage/normalize/kilo.py
+#: backend/tidesi/normalize/kilo.py
 msgid "Kilo: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/kilo.py
+#: backend/tidesi/normalize/kilo.py
 msgid "Credits"
 msgstr ""
 
-#: backend/aiusage/normalize/kilo.py backend/aiusage/normalize/windsurf.py
-#: backend/aiusage/normalize/zed.py
+#: backend/tidesi/normalize/kilo.py backend/tidesi/normalize/windsurf.py
+#: backend/tidesi/normalize/zed.py
 msgid "%1 / %2"
 msgstr ""
 
-#: backend/aiusage/normalize/kilo.py
+#: backend/tidesi/normalize/kilo.py
 msgid "%1 (incl. %2 bonus)"
 msgstr ""
 
-#: backend/aiusage/normalize/kilo.py
+#: backend/tidesi/normalize/kilo.py
 msgid "Kilo Pass"
 msgstr ""
 
-#: backend/aiusage/normalize/kilo.py
+#: backend/tidesi/normalize/kilo.py
 msgid "Credit balance"
 msgstr ""
 
-#: backend/aiusage/normalize/kilo.py
+#: backend/tidesi/normalize/kilo.py
 msgid "Read with your Kilo CLI login."
 msgstr ""
 
-#: backend/aiusage/normalize/kilo.py
+#: backend/tidesi/normalize/kilo.py
 msgid "Read with your Kilo API key."
 msgstr ""
 
-#: backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/kiro.py
 msgid ""
 "Sign in to kiro-cli (kiro-cli login), or open the Kiro IDE and sign in once "
 "so the widget can read its usage snapshot. A kiro-cli login expires about an "
 "hour after the CLI last ran — start kiro-cli to renew it."
 msgstr ""
 
-#: backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/kiro.py
 msgid "Kiro: no local usage data found"
 msgstr ""
 
-#: backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/kiro.py
 msgid "Kiro: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/kiro.py
 msgid "Kiro: usage snapshot is empty"
 msgstr ""
 
-#: backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/kiro.py
 msgid "Current Usage"
 msgstr ""
 
-#: backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/kiro.py
 msgid "%1 %2"
 msgstr ""
 
-#: backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/kiro.py
 msgid "Overage"
 msgstr ""
 
-#: backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/kiro.py
 msgid "Overage Rate"
 msgstr ""
 
-#: backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/kiro.py
 msgid "Read live with the kiro-cli login. No API key required."
 msgstr ""
 
-#: backend/aiusage/normalize/kiro.py
+#: backend/tidesi/normalize/kiro.py
 msgid ""
 "Read locally from Kiro app state. No API key or network request required."
 msgstr ""
 
-#: backend/aiusage/normalize/local_activity.py
+#: backend/tidesi/normalize/local_activity.py
 msgid "%1 tokens · %2 session · %3"
 msgstr ""
 
-#: backend/aiusage/normalize/local_activity.py
+#: backend/tidesi/normalize/local_activity.py
 msgid "%1 tokens · %2 sessions · %3"
 msgstr ""
 
-#: backend/aiusage/normalize/local_activity.py
+#: backend/tidesi/normalize/local_activity.py
 msgid "%1 tokens · %2 session"
 msgstr ""
 
-#: backend/aiusage/normalize/local_activity.py
+#: backend/tidesi/normalize/local_activity.py
 msgid "%1 tokens · %2 sessions"
 msgstr ""
 
-#: backend/aiusage/normalize/local_activity.py
+#: backend/tidesi/normalize/local_activity.py
 msgid "%1: no local sessions yet"
 msgstr ""
 
-#: backend/aiusage/normalize/local_activity.py
+#: backend/tidesi/normalize/local_activity.py
 msgid "%1 local usage"
 msgstr ""
 
-#: backend/aiusage/normalize/mistral.py
+#: backend/tidesi/normalize/mistral.py
 msgid "Mistral: no API key configured"
 msgstr ""
 
-#: backend/aiusage/normalize/mistral.py
+#: backend/tidesi/normalize/mistral.py
 msgid "CONNECTED"
 msgstr ""
 
-#: backend/aiusage/normalize/mistral.py
+#: backend/tidesi/normalize/mistral.py
 msgid "%1 models available"
 msgstr ""
 
-#: backend/aiusage/normalize/mistral.py
+#: backend/tidesi/normalize/mistral.py
 msgid "vibe CLI spend"
 msgstr ""
 
-#: backend/aiusage/normalize/mistral.py backend/aiusage/normalize/openrouter.py
+#: backend/tidesi/normalize/mistral.py backend/tidesi/normalize/openrouter.py
 msgid "✓ key"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "Weekly limit"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "Daily limit"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "%1-day limit"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "%1-hour limit"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "%1-minute limit"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "Plan usage"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "Kimi: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "Kimi: no Moonshot API key or Kimi Code login"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "Plan quota used up"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "Extra usage"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "%1 left"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "of %1"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "Available balance"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "Voucher / cash"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "Kimi Code"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "Moonshot API"
 msgstr ""
 
-#: backend/aiusage/normalize/moonshot.py
+#: backend/tidesi/normalize/moonshot.py
 msgid "Kimi balance: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/muse.py
+#: backend/tidesi/normalize/muse.py
 msgid "Tokens"
 msgstr ""
 
-#: backend/aiusage/normalize/muse.py
+#: backend/tidesi/normalize/muse.py
 msgid "%1 out · %2 calls"
 msgstr ""
 
-#: backend/aiusage/normalize/muse.py
+#: backend/tidesi/normalize/muse.py
 msgid "Spend (est.)"
 msgstr ""
 
-#: backend/aiusage/normalize/muse.py
+#: backend/tidesi/normalize/muse.py
 msgid "Muse tokens: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/muse.py
+#: backend/tidesi/normalize/muse.py
 msgid "%1 sessions"
 msgstr ""
 
-#: backend/aiusage/normalize/ollama.py
+#: backend/tidesi/normalize/ollama.py
 msgid "Ollama Cloud: no API key found in settings, environment, or OpenCode"
 msgstr ""
 
-#: backend/aiusage/normalize/ollama.py backend/aiusage/providers/ollama.py
+#: backend/tidesi/normalize/ollama.py backend/tidesi/providers/ollama.py
 msgid "Ollama Cloud: invalid usage response"
 msgstr ""
 
-#: backend/aiusage/normalize/ollama.py
+#: backend/tidesi/normalize/ollama.py
 msgid "Ollama Cloud: usage response has no limit data"
 msgstr ""
 
-#: backend/aiusage/normalize/ollama.py
+#: backend/tidesi/normalize/ollama.py
 msgid "Ollama Cloud: no recognized usage limits in response"
 msgstr ""
 
-#: backend/aiusage/normalize/ollama.py
+#: backend/tidesi/normalize/ollama.py
 msgid "%1: %2%"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "Codex / ChatGPT User"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "Reasoning effort: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "OpenAI: no API key or Codex login"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "Codex 5-hour"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "ChatGPT/Codex plan window"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "Codex weekly"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "Secondary plan window"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "%1 · 5-hour"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "Limit reached"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "%1 · weekly"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "Codex 5h: %1% left"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "Codex weekly: %1% left"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "API"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "API key configured"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "API credentials"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "Organization usage available"
 msgstr ""
 
-#: backend/aiusage/normalize/openai.py
+#: backend/tidesi/normalize/openai.py
 msgid "Codex signed in; no organization API key"
 msgstr ""
 
-#: backend/aiusage/normalize/opencode.py
+#: backend/tidesi/normalize/opencode.py
 msgid "OpenCode Go: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/opencode.py
+#: backend/tidesi/normalize/opencode.py
 msgid "OpenCode Go: no usage data"
 msgstr ""
 
-#: backend/aiusage/normalize/opencode.py
+#: backend/tidesi/normalize/opencode.py
 msgid "OpenCode Go: malformed usage response"
 msgstr ""
 
-#: backend/aiusage/normalize/opencode.py
+#: backend/tidesi/normalize/opencode.py
 msgid "OpenCode Go: no usable quota windows"
 msgstr ""
 
-#: backend/aiusage/normalize/opencode.py
+#: backend/tidesi/normalize/opencode.py
 msgid ""
 "OpenCode Go %1\n"
 "%2% used"
 msgstr ""
 
-#: backend/aiusage/normalize/openrouter.py
+#: backend/tidesi/normalize/openrouter.py
 msgid "OpenRouter: no API key configured"
 msgstr ""
 
-#: backend/aiusage/normalize/openrouter.py
+#: backend/tidesi/normalize/openrouter.py
 msgid "Balance"
 msgstr ""
 
-#: backend/aiusage/normalize/openrouter.py backend/aiusage/normalize/zai.py
+#: backend/tidesi/normalize/openrouter.py backend/tidesi/normalize/zai.py
 msgid "Today"
 msgstr ""
 
-#: backend/aiusage/normalize/openrouter.py
+#: backend/tidesi/normalize/openrouter.py
 msgid "This week"
 msgstr ""
 
-#: backend/aiusage/normalize/openrouter.py
+#: backend/tidesi/normalize/openrouter.py
 msgid "This month"
 msgstr ""
 
-#: backend/aiusage/normalize/openrouter.py
+#: backend/tidesi/normalize/openrouter.py
 msgid "Key spend"
 msgstr ""
 
-#: backend/aiusage/normalize/pi.py
+#: backend/tidesi/normalize/pi.py
 msgid "Pi: no recorded token usage yet. Run a Pi or OMP session."
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "All local model servers offline"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "%1 of %2 servers online"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "No local model server"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "GPU VRAM"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "%1 / %2 GB"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "Model VRAM"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "%1 GB loaded"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "KV cache"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "Requests"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "%1 running · %2 waiting"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "Active slots"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "%1 of %2 generating"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "Server tokens"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "%1 tokens since server start"
 msgstr ""
 
-#: backend/aiusage/normalize/selfhosted.py
+#: backend/tidesi/normalize/selfhosted.py
 msgid "Loaded models"
 msgstr ""
 
-#: backend/aiusage/normalize/windsurf.py
+#: backend/tidesi/normalize/windsurf.py
 msgid "Open Windsurf and sign in once so it caches your plan."
 msgstr ""
 
-#: backend/aiusage/normalize/windsurf.py
+#: backend/tidesi/normalize/windsurf.py
 msgid "Windsurf: no local data found"
 msgstr ""
 
-#: backend/aiusage/normalize/windsurf.py
+#: backend/tidesi/normalize/windsurf.py
 msgid "Windsurf: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/windsurf.py
+#: backend/tidesi/normalize/windsurf.py
 msgid "Daily quota"
 msgstr ""
 
-#: backend/aiusage/normalize/windsurf.py
+#: backend/tidesi/normalize/windsurf.py
 msgid "Weekly quota"
 msgstr ""
 
-#: backend/aiusage/normalize/windsurf.py
+#: backend/tidesi/normalize/windsurf.py
 msgid "Messages"
 msgstr ""
 
-#: backend/aiusage/normalize/windsurf.py
+#: backend/tidesi/normalize/windsurf.py
 msgid "Flow actions"
 msgstr ""
 
-#: backend/aiusage/normalize/windsurf.py
+#: backend/tidesi/normalize/windsurf.py
 msgid "Windsurf: the cached plan has no quota figures"
 msgstr ""
 
-#: backend/aiusage/normalize/windsurf.py
+#: backend/tidesi/normalize/windsurf.py
 msgid ""
 "Read from Windsurf's local cache, last written %1. It only updates while "
 "Windsurf is running."
 msgstr ""
 
-#: backend/aiusage/normalize/windsurf.py
+#: backend/tidesi/normalize/windsurf.py
 msgid ""
 "Read from Windsurf's local cache. It only updates while Windsurf is running."
 msgstr ""
 
-#: backend/aiusage/normalize/zai.py
+#: backend/tidesi/normalize/zai.py
 msgid "Today (%1 %2)"
 msgstr ""
 
-#: backend/aiusage/normalize/zai.py
+#: backend/tidesi/normalize/zai.py
 msgid "%1 calls"
 msgstr ""
 
-#: backend/aiusage/normalize/zai.py
+#: backend/tidesi/normalize/zai.py
 msgid "Z.AI: no token configured"
 msgstr ""
 
-#: backend/aiusage/normalize/zai.py
+#: backend/tidesi/normalize/zai.py
 msgid "Z.AI: %1"
 msgstr ""
 
-#: backend/aiusage/normalize/zai.py
+#: backend/tidesi/normalize/zai.py
 msgid "%1 remaining"
 msgstr ""
 
-#: backend/aiusage/normalize/zai.py
+#: backend/tidesi/normalize/zai.py
 msgid "5-hour tokens"
 msgstr ""
 
-#: backend/aiusage/normalize/zai.py
+#: backend/tidesi/normalize/zai.py
 msgid "7-day tokens"
 msgstr ""
 
-#: backend/aiusage/normalize/zai.py
+#: backend/tidesi/normalize/zai.py
 msgid "Monthly tools"
 msgstr ""
 
-#: backend/aiusage/normalize/zai.py
+#: backend/tidesi/normalize/zai.py
 msgid "Z.AI tokens (5h): %1%"
 msgstr ""
 
-#: backend/aiusage/normalize/zai.py
+#: backend/tidesi/normalize/zai.py
 msgid "Z.AI tokens (7d): %1%"
 msgstr ""
 
-#: backend/aiusage/normalize/zai.py
+#: backend/tidesi/normalize/zai.py
 msgid "Z.AI tools: %1%"
 msgstr ""
 
-#: backend/aiusage/normalize/zed.py
+#: backend/tidesi/normalize/zed.py
 msgid "Zed (untested): the editor login can only be read on macOS"
 msgstr ""
 
-#: backend/aiusage/normalize/zed.py
+#: backend/tidesi/normalize/zed.py
 msgid "Zed (untested): sign in to the Zed editor first"
 msgstr ""
 
-#: backend/aiusage/normalize/zed.py
+#: backend/tidesi/normalize/zed.py
 msgid "Zed (untested): %1"
 msgstr ""
 
-#: backend/aiusage/normalize/zed.py
+#: backend/tidesi/normalize/zed.py
 msgid "Edit predictions"
 msgstr ""
 
-#: backend/aiusage/normalize/zed.py
+#: backend/tidesi/normalize/zed.py
 msgid "Unlimited"
 msgstr ""
 
-#: backend/aiusage/normalize/zed.py
+#: backend/tidesi/normalize/zed.py
 msgid "Zed (untested): no usage figures in the account response"
 msgstr ""
 
-#: backend/aiusage/normalize/zed.py
+#: backend/tidesi/normalize/zed.py
 msgid "Overdue invoices on this account — check your Zed billing page."
 msgstr ""
 
-#: backend/aiusage/normalize/zed.py
+#: backend/tidesi/normalize/zed.py
 msgid ""
 "Read with the Zed editor's own login from the macOS Keychain. Untested "
 "against a live account."
 msgstr ""
 
-#: backend/aiusage/providers/antigravity.py
+#: backend/tidesi/providers/antigravity.py
 msgid "antigravity-usage"
 msgstr ""
 
-#: backend/aiusage/providers/antigravity.py
+#: backend/tidesi/providers/antigravity.py
 msgid "The antigravity-usage CLI"
 msgstr ""
 
-#: backend/aiusage/providers/antigravity.py
+#: backend/tidesi/providers/antigravity.py
 msgid "IDE language server"
 msgstr ""
 
-#: backend/aiusage/providers/antigravity.py
+#: backend/tidesi/providers/antigravity.py
 msgid "The local server a running Antigravity IDE or extension exposes"
 msgstr ""
 
-#: backend/aiusage/providers/antigravity.py
+#: backend/tidesi/providers/antigravity.py
 msgid "agy session"
 msgstr ""
 
-#: backend/aiusage/providers/antigravity.py
+#: backend/tidesi/providers/antigravity.py
 msgid "The agy CLI's own /usage report"
 msgstr ""
 
-#: backend/aiusage/providers/antigravity.py
+#: backend/tidesi/providers/antigravity.py
 msgid "The antigravity-usage CLI did not answer"
 msgstr ""
 
-#: backend/aiusage/providers/antigravity.py
+#: backend/tidesi/providers/antigravity.py
 msgid "Antigravity language server not reachable - open the IDE"
 msgstr ""
 
-#: backend/aiusage/providers/antigravity.py
+#: backend/tidesi/providers/antigravity.py
 msgid "agy did not answer - run agy once"
 msgstr ""
 
-#: backend/aiusage/providers/antigravity.py
+#: backend/tidesi/providers/antigravity.py
 msgid "Antigravity language server found but could not connect to API"
 msgstr ""
 
-#: backend/aiusage/providers/antigravity.py
+#: backend/tidesi/providers/antigravity.py
 msgid ""
 "Finding Antigravity on this platform needs the psutil package (pip install "
 "psutil)"
 msgstr ""
 
-#: backend/aiusage/providers/antigravity.py
+#: backend/tidesi/providers/antigravity.py
 msgid "Antigravity is not running. Please open your IDE."
 msgstr ""
 
-#: backend/aiusage/providers/copilot.py
+#: backend/tidesi/providers/copilot.py
 msgid "Access token"
 msgstr ""
 
-#: backend/aiusage/providers/copilot.py
+#: backend/tidesi/providers/copilot.py
 msgid "A token from settings, $GITHUB_TOKEN or $GH_TOKEN"
 msgstr ""
 
-#: backend/aiusage/providers/copilot.py
+#: backend/tidesi/providers/copilot.py
 msgid "Copilot editor login"
 msgstr ""
 
-#: backend/aiusage/providers/copilot.py
+#: backend/tidesi/providers/copilot.py
 msgid "The login your editor's Copilot plugin stored"
 msgstr ""
 
-#: backend/aiusage/providers/copilot.py
+#: backend/tidesi/providers/copilot.py
 msgid "GitHub CLI"
 msgstr ""
 
-#: backend/aiusage/providers/copilot.py
+#: backend/tidesi/providers/copilot.py
 msgid "The token `gh auth token` prints"
 msgstr ""
 
-#: backend/aiusage/providers/copilot.py
+#: backend/tidesi/providers/copilot.py
 msgid "Invalid GitHub token"
 msgstr ""
 
-#: backend/aiusage/providers/copilot.py
+#: backend/tidesi/providers/copilot.py
 msgid "GitHub username missing"
 msgstr ""
 
-#: backend/aiusage/providers/copilot.py
+#: backend/tidesi/providers/copilot.py
 msgid "GitHub token cannot read Copilot premium request usage"
 msgstr ""
 
-#: backend/aiusage/providers/copilot.py
+#: backend/tidesi/providers/copilot.py
 msgid "GitHub Copilot invalid JSON"
 msgstr ""
 
-#: backend/aiusage/providers/cursor.py
+#: backend/tidesi/providers/cursor.py
 msgid "cursor-agent"
 msgstr ""
 
-#: backend/aiusage/providers/cursor.py
+#: backend/tidesi/providers/cursor.py
 msgid "The login cursor-agent keeps"
 msgstr ""
 
-#: backend/aiusage/providers/cursor.py
+#: backend/tidesi/providers/cursor.py
 msgid "Cursor app"
 msgstr ""
 
-#: backend/aiusage/providers/cursor.py
+#: backend/tidesi/providers/cursor.py
 msgid "The Cursor editor's local session database"
 msgstr ""
 
-#: backend/aiusage/providers/cursor.py
+#: backend/tidesi/providers/cursor.py
 msgid "login expired — run cursor-agent login"
 msgstr ""
 
-#: backend/aiusage/providers/cursor.py
+#: backend/tidesi/providers/cursor.py
 msgid "login rejected — run cursor-agent login"
 msgstr ""
 
-#: backend/aiusage/providers/cursor.py
+#: backend/tidesi/providers/cursor.py
 msgid "usage response could not be parsed"
 msgstr ""
 
-#: backend/aiusage/providers/cursor_sessions.py
+#: backend/tidesi/providers/cursor_sessions.py
 msgid "Cursor"
 msgstr ""
 
-#: backend/aiusage/providers/deepseek.py
+#: backend/tidesi/providers/deepseek.py
 msgid "Invalid DeepSeek API key"
 msgstr ""
 
-#: backend/aiusage/providers/deepseek.py
+#: backend/tidesi/providers/deepseek.py
 msgid "DeepSeek invalid JSON"
 msgstr ""
 
-#: backend/aiusage/providers/deepseek.py
+#: backend/tidesi/providers/deepseek.py
 msgid "DeepSeek unexpected response"
 msgstr ""
 
-#: backend/aiusage/providers/grok.py
+#: backend/tidesi/providers/grok.py
 msgid "Grok auth expired — run grok --oauth"
 msgstr ""
 
-#: backend/aiusage/providers/grok.py
+#: backend/tidesi/providers/grok.py
 msgid "Billing HTTP %1"
 msgstr ""
 
-#: backend/aiusage/providers/kilo.py
+#: backend/tidesi/providers/kilo.py
 msgid "A key from settings or $KILO_API_KEY"
 msgstr ""
 
-#: backend/aiusage/providers/kilo.py
+#: backend/tidesi/providers/kilo.py
 msgid "Kilo CLI"
 msgstr ""
 
-#: backend/aiusage/providers/kilo.py
+#: backend/tidesi/providers/kilo.py
 msgid "The login `kilo auth login` stored"
 msgstr ""
 
-#: backend/aiusage/providers/kimi_code.py
+#: backend/tidesi/providers/kimi_code.py
 msgid "Kimi Code usage response could not be parsed"
 msgstr ""
 
-#: backend/aiusage/providers/kimi_code.py
+#: backend/tidesi/providers/kimi_code.py
 msgid "Kimi Code login rejected — run kimi once to refresh it"
 msgstr ""
 
-#: backend/aiusage/providers/kimi_code.py
+#: backend/tidesi/providers/kimi_code.py
 msgid "Kimi Code %1"
 msgstr ""
 
-#: backend/aiusage/providers/kimi_code.py
+#: backend/tidesi/providers/kimi_code.py
 msgid "Kimi Code is not signed in — run kimi and /login"
 msgstr ""
 
-#: backend/aiusage/providers/kimi_code.py
+#: backend/tidesi/providers/kimi_code.py
 msgid "Kimi Code login expired — run kimi once to refresh it"
 msgstr ""
 
-#: backend/aiusage/providers/kiro.py
+#: backend/tidesi/providers/kiro.py
 msgid "No Kiro usage snapshot — open Kiro and let it refresh"
 msgstr ""
 
-#: backend/aiusage/providers/kiro.py
+#: backend/tidesi/providers/kiro.py
 msgid "Kiro usage payload could not be parsed"
 msgstr ""
 
-#: backend/aiusage/providers/kiro.py
+#: backend/tidesi/providers/kiro.py
 msgid "Kiro usage response could not be parsed"
 msgstr ""
 
-#: backend/aiusage/providers/kiro.py
+#: backend/tidesi/providers/kiro.py
 msgid "Kiro usage response has no credit breakdown"
 msgstr ""
 
-#: backend/aiusage/providers/kiro.py
+#: backend/tidesi/providers/kiro.py
 msgid "kiro-cli is not signed in — run kiro-cli login"
 msgstr ""
 
-#: backend/aiusage/providers/kiro.py
+#: backend/tidesi/providers/kiro.py
 msgid "kiro-cli login expired — run kiro-cli once to refresh it"
 msgstr ""
 
-#: backend/aiusage/providers/kiro.py
+#: backend/tidesi/providers/kiro.py
 msgid "kiro-cli login rejected — run kiro-cli once to refresh it"
 msgstr ""
 
-#: backend/aiusage/providers/kiro.py
+#: backend/tidesi/providers/kiro.py
 msgid "kiro-cli"
 msgstr ""
 
-#: backend/aiusage/providers/kiro.py
+#: backend/tidesi/providers/kiro.py
 msgid "The kiro-cli login, read live"
 msgstr ""
 
-#: backend/aiusage/providers/kiro.py
+#: backend/tidesi/providers/kiro.py
 msgid "Kiro IDE"
 msgstr ""
 
-#: backend/aiusage/providers/kiro.py
+#: backend/tidesi/providers/kiro.py
 msgid "The usage snapshot the IDE caches"
 msgstr ""
 
-#: backend/aiusage/providers/kiro.py
+#: backend/tidesi/providers/kiro.py
 msgid "No Kiro state found — sign in to Kiro IDE or kiro-cli once"
 msgstr ""
 
-#: backend/aiusage/providers/mistral.py
+#: backend/tidesi/providers/mistral.py
 msgid "untitled"
 msgstr ""
 
-#: backend/aiusage/providers/mistral.py
+#: backend/tidesi/providers/mistral.py
 msgid "Mistral invalid JSON"
 msgstr ""
 
-#: backend/aiusage/providers/mistral.py backend/aiusage/providers/openrouter.py
+#: backend/tidesi/providers/mistral.py backend/tidesi/providers/openrouter.py
 msgid "Invalid API key (401)"
 msgstr ""
 
-#: backend/aiusage/providers/mistral.py
+#: backend/tidesi/providers/mistral.py
 msgid "Rate limited (429)"
 msgstr ""
 
-#: backend/aiusage/providers/mistral.py
+#: backend/tidesi/providers/mistral.py
 msgid "Mistral network error"
 msgstr ""
 
-#: backend/aiusage/providers/mistral.py
+#: backend/tidesi/providers/mistral.py
 msgid "HTTP %1"
 msgstr ""
 
-#: backend/aiusage/providers/mistral_sessions.py
+#: backend/tidesi/providers/mistral_sessions.py
 msgid "Mistral Vibe"
 msgstr ""
 
-#: backend/aiusage/providers/moonshot.py
+#: backend/tidesi/providers/moonshot.py
 msgid "Invalid Moonshot API key"
 msgstr ""
 
-#: backend/aiusage/providers/moonshot.py
+#: backend/tidesi/providers/moonshot.py
 msgid "Kimi invalid JSON"
 msgstr ""
 
-#: backend/aiusage/providers/moonshot.py
+#: backend/tidesi/providers/moonshot.py
 msgid "Kimi unexpected response"
 msgstr ""
 
-#: backend/aiusage/providers/ollama.py
+#: backend/tidesi/providers/ollama.py
 msgid "A key from settings or $OLLAMA_API_KEY"
 msgstr ""
 
-#: backend/aiusage/providers/ollama.py
+#: backend/tidesi/providers/ollama.py
 msgid "OpenCode login"
 msgstr ""
 
-#: backend/aiusage/providers/ollama.py
+#: backend/tidesi/providers/ollama.py
 msgid "The ollama-cloud key OpenCode stored"
 msgstr ""
 
-#: backend/aiusage/providers/ollama.py
+#: backend/tidesi/providers/ollama.py
 msgid "Ollama Cloud: invalid API key characters"
 msgstr ""
 
-#: backend/aiusage/providers/openrouter.py
+#: backend/tidesi/providers/openrouter.py
 msgid "OpenRouter invalid JSON"
 msgstr ""
 
-#: backend/aiusage/providers/selfhosted.py
+#: backend/tidesi/providers/selfhosted.py
 msgid "Invalid local server URL"
 msgstr ""
 
-#: backend/aiusage/providers/selfhosted.py
+#: backend/tidesi/providers/selfhosted.py
 msgid "Offline or unsupported"
 msgstr ""
 
-#: backend/aiusage/providers/selfhosted.py
+#: backend/tidesi/providers/selfhosted.py
 msgid "Unknown local engine"
 msgstr ""
 
-#: backend/aiusage/providers/selfhosted.py
+#: backend/tidesi/providers/selfhosted.py
 msgid "Invalid local server key"
 msgstr ""
 
-#: backend/aiusage/providers/selfhosted.py
+#: backend/tidesi/providers/selfhosted.py
 msgid "At most eight local server URLs are supported"
 msgstr ""
 
-#: backend/aiusage/providers/selfhosted.py
+#: backend/tidesi/providers/selfhosted.py
 msgid "No local server URL configured"
 msgstr ""
 
-#: backend/aiusage/providers/selfhosted.py
+#: backend/tidesi/providers/selfhosted.py
 msgid "Local model servers offline or unsupported"
 msgstr ""
 
-#: backend/aiusage/providers/zai.py
+#: backend/tidesi/providers/zai.py
 msgid "Invalid Z.AI token"
 msgstr ""
 
-#: backend/aiusage/providers/zai.py
+#: backend/tidesi/providers/zai.py
 msgid "Z.AI invalid JSON"
 msgstr ""
 
-#: backend/aiusage/providers/zai.py
+#: backend/tidesi/providers/zai.py
 msgid "Z.AI API error"
 msgstr ""
 
-#: backend/aiusage/providers/zai.py
+#: backend/tidesi/providers/zai.py
 msgid "Z.AI unexpected response"
 msgstr ""

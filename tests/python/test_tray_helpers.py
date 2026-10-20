@@ -17,7 +17,7 @@ if HAS_PYSIDE:
     sys.path.insert(0, os.path.join(REPO, "hosts", "desktop"))
     import app
 
-KEYS = ("AIUSAGE_TEST_ADDED", "AIUSAGE_TEST_CHANGED", "AIUSAGE_TEST_REMOVED")
+KEYS = ("TIDESI_TEST_ADDED", "TIDESI_TEST_CHANGED", "TIDESI_TEST_REMOVED")
 
 
 @unittest.skipUnless(HAS_PYSIDE, "PySide6 not installed")
@@ -26,13 +26,13 @@ class RestoreEnvironTest(unittest.TestCase):
         self.addCleanup(lambda: [os.environ.pop(key, None) for key in KEYS])
 
     def test_puts_back_only_what_changed(self):
-        os.environ["AIUSAGE_TEST_CHANGED"] = "old"
-        os.environ["AIUSAGE_TEST_REMOVED"] = "kept"
+        os.environ["TIDESI_TEST_CHANGED"] = "old"
+        os.environ["TIDESI_TEST_REMOVED"] = "kept"
         saved = dict(os.environ)
         # What a refresh does: the settings' keys exported, one cleared.
-        os.environ["AIUSAGE_TEST_ADDED"] = "1"
-        os.environ["AIUSAGE_TEST_CHANGED"] = "new"
-        del os.environ["AIUSAGE_TEST_REMOVED"]
+        os.environ["TIDESI_TEST_ADDED"] = "1"
+        os.environ["TIDESI_TEST_CHANGED"] = "new"
+        del os.environ["TIDESI_TEST_REMOVED"]
 
         deleted = []
         real_delitem = type(os.environ).__delitem__
@@ -46,7 +46,7 @@ class RestoreEnvironTest(unittest.TestCase):
 
         self.assertEqual(dict(os.environ), saved)
         # PATH and the rest were never taken away, not even for a moment.
-        self.assertEqual(deleted, ["AIUSAGE_TEST_ADDED"])
+        self.assertEqual(deleted, ["TIDESI_TEST_ADDED"])
 
 
 @unittest.skipUnless(HAS_PYSIDE, "PySide6 not installed")

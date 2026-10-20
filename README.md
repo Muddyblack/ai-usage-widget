@@ -23,7 +23,7 @@
   <img src="https://img.shields.io/badge/Started-May_2026-9c27b0?style=for-the-badge" alt="Project started May 2026" />
 </p>
 
-Tidesi (formerly *AI Usage Widget*) is a KDE Plasma 6 panel widget, a Hyprland/Quickshell shell, a tray app for Windows, macOS and other desktops, and a terminal CLI for tracking AI API quota usage across 25 provider services. Monitor subscription windows, account balances, local activity, and per-model usage through the shared backend, with animated segmented bars, live countdown timers, and account status.
+Tidesi is a KDE Plasma 6 panel widget, a Hyprland/Quickshell shell, a tray app for Windows, macOS and other desktops, and a terminal CLI for tracking AI API quota usage across 25 provider services. Monitor subscription windows, account balances, local activity, and per-model usage through the shared backend, with animated segmented bars, live countdown timers, and account status.
 
 
 ## Screenshots
@@ -287,7 +287,7 @@ The project was renamed to Tidesi. Your settings and history carry over untouche
 - The KDE widget keeps its plugin id, so it stays in your panel. Only the name changed.
 - Settings and history stay in `ai-usage-widget/` under your config and data folders.
 - Nix: `programs.ai-usage-widget` still works as an alias of `programs.tidesi`, and the flake keeps `ai-usage` and `ai-usage-cli` as aliases of `tidesi` and `tidesi-cli`. The flake input is now `github:Muddyblack/tidesi`.
-- Scoop: `scoop install tidesi` (was `ai-usage`). WinGet keeps `Muddyblack.AIUsage`.
+- Scoop: `scoop install tidesi` (was `ai-usage`).
 - The old repository URL redirects.
 
 ## Documentation

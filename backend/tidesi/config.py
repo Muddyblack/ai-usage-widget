@@ -81,18 +81,27 @@ _KEY_EXPORTS = [
 ]
 
 
+def env(name, default=None):
+    """TIDESI_<name>, falling back to the AI_USAGE_<name> it was called before
+    the rename, so existing setups and wrappers keep working."""
+    value = os.environ.get("TIDESI_" + name)
+    if value is None:
+        value = os.environ.get("AI_USAGE_" + name)
+    return default if value is None else value
+
+
 def config_path():
     # The name predates the Windows frontend, which shares the same file and
     # format — renaming it would orphan every existing Hyprland config.
-    return os.environ.get(
-        "AI_USAGE_CONFIG",
+    return env(
+        "CONFIG",
         os.path.join(paths.config_home(), paths.APP_DIR, "hyprland-settings.json"),
     )
 
 
 def cache_dir():
-    return os.environ.get(
-        "AI_USAGE_CACHE_DIR",
+    return env(
+        "CACHE_DIR",
         os.path.join(paths.cache_home(), paths.APP_DIR),
     )
 
@@ -107,7 +116,7 @@ def reset_settings_cache():
 
 def status_ttl():
     try:
-        return int(os.environ.get("AI_USAGE_STATUS_TTL", "300"))
+        return int(env("STATUS_TTL", "300"))
     except ValueError:
         return 300
 

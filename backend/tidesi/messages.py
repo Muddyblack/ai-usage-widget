@@ -10,7 +10,7 @@ reads is built with :func:`tr`:
 which returns a :class:`Msg` — an ordinary ``str`` holding the English text
 ("120000 / 500000 tokens"), so the terminal frontend, comparisons, f-strings
 and tests see no difference — that also remembers its template and arguments.
-:func:`aiusage.contract.finalize` then writes, beside every field holding one,
+:func:`tidesi.contract.finalize` then writes, beside every field holding one,
 
     "detail": "120000 / 500000 tokens",
     "detailI18n": {"id": "%1 / %2 tokens", "args": ["120000", "500000"]}

@@ -35,7 +35,7 @@ datas += [(path, "translate") for path in glob.glob(os.path.join(ROOT, "translat
 a = Analysis(  # noqa: F821
     [os.path.join(ROOT, "hosts", "desktop", "app.py")],
     pathex=[TOOLS, os.path.join(ROOT, "hosts", "windows")],
-    hiddenimports=collect_submodules("aiusage") + ["psutil", "backdrop", "taskbar"],
+    hiddenimports=collect_submodules("tidesi") + ["psutil", "backdrop", "taskbar"],
     datas=datas,
     excludes=["tkinter"],
 )

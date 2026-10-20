@@ -47,9 +47,9 @@ class PackageManifestsTest(unittest.TestCase):
         with zipfile.ZipFile(self.output / "tidesi-winget-3.2.1.zip") as archive:
             self.assertEqual(len(archive.namelist()), 3)
             for name in archive.namelist():
-                self.assertTrue(name.startswith("manifests/m/Muddyblack/AIUsage/3.2.1/"))
+                self.assertTrue(name.startswith("manifests/m/Muddyblack/Tidesi/3.2.1/"))
                 self.assertEqual(archive.read(name), (self.output / "winget" / name).read_bytes())
-            installer = archive.read("manifests/m/Muddyblack/AIUsage/3.2.1/Muddyblack.AIUsage.installer.yaml").decode()
+            installer = archive.read("manifests/m/Muddyblack/Tidesi/3.2.1/Muddyblack.Tidesi.installer.yaml").decode()
         self.assertIn(hashlib.sha256(self.installer.read_bytes()).hexdigest().upper(), installer)
         self.assertIn("/v3.2.1/Tidesi-Setup-3.2.1.exe", installer)
         self.assertIn("Scope: user", installer)

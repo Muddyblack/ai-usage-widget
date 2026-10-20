@@ -8,8 +8,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "backend"))
 
-from aiusage.contract import finalize  # noqa: E402
-from aiusage.normalize import normalize  # noqa: E402
+from tidesi.contract import finalize  # noqa: E402
+from tidesi.normalize import normalize  # noqa: E402
 
 
 def scenarios():

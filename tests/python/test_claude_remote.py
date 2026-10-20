@@ -7,8 +7,8 @@ from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
 
-from aiusage.normalize.claude import _remote
-from aiusage.providers import claude_remote
+from tidesi.normalize.claude import _remote
+from tidesi.providers import claude_remote
 
 
 class ClaudeRemoteTest(unittest.TestCase):

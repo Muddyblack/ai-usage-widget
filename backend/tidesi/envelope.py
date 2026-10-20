@@ -2,7 +2,7 @@
 
 Split out of __main__ so that every in-process consumer builds the identical
 envelope: the JSON backend the QML frontends call, and the terminal frontend in
-aiusage.cli. See docs/provider-contract.md for the shape produced here.
+tidesi.cli. See docs/provider-contract.md for the shape produced here.
 """
 
 import time

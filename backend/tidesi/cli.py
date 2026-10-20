@@ -6,7 +6,7 @@ desktops, status bars (waybar, tmux, i3blocks) via --compact, and headless
 boxes over SSH.
 
 Like the QML frontends this does presentation only. Fetching, parsing and quota
-maths stay in the package; the rendering itself is in aiusage.render.
+maths stay in the package; the rendering itself is in tidesi.render.
 """
 
 import json

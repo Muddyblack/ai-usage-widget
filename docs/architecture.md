@@ -4,7 +4,7 @@ One backend, one UI, one thin host per platform.
 
 ```
 backend/                 Python (stdlib only) + sh launchers — every provider,
-  aiusage/               credential, HTTP call, normalisation, history, sessions
+  tidesi/               credential, HTTP call, normalisation, history, sessions
   sh/get-ai-usage        the CLI the process-based hosts run
 
 ui/                      THE user interface, shown unchanged on every platform

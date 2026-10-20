@@ -1,9 +1,9 @@
 import os
 from unittest.mock import patch
 
-from aiusage.http import HttpResult
-from aiusage.normalize.selfhosted import normalize_selfhosted
-from aiusage.providers.selfhosted import get_selfhosted_usage
+from tidesi.http import HttpResult
+from tidesi.normalize.selfhosted import normalize_selfhosted
+from tidesi.providers.selfhosted import get_selfhosted_usage
 
 
 def test_ollama_custom_endpoint_and_gpu():
@@ -14,8 +14,8 @@ def test_ollama_custom_endpoint_and_gpu():
     env = {"WIDGET_SELFHOSTED_ENDPOINT": "http://127.0.0.1:1234", "WIDGET_SELFHOSTED_ENGINE": "ollama"}
     with (
         patch.dict(os.environ, env),
-        patch("aiusage.providers.selfhosted._request", side_effect=lambda base, path, _: responses[base + path]),
-        patch("aiusage.providers.selfhosted._local_gpu", return_value={"name": "GPU", "usedMiB": 4, "totalMiB": 8}),
+        patch("tidesi.providers.selfhosted._request", side_effect=lambda base, path, _: responses[base + path]),
+        patch("tidesi.providers.selfhosted._local_gpu", return_value={"name": "GPU", "usedMiB": 4, "totalMiB": 8}),
     ):
         body = get_selfhosted_usage()
     row = normalize_selfhosted({"now": 1, "inputs": {"usage": body}})
@@ -54,8 +54,8 @@ def test_multiple_servers_keep_metrics_separate_and_offline_visible():
     env = {"WIDGET_SELFHOSTED_ENDPOINT": "http://127.0.0.1:1234, http://127.0.0.1:9999", "WIDGET_SELFHOSTED_ENGINE": "ollama"}
     with (
         patch.dict(os.environ, env),
-        patch("aiusage.providers.selfhosted._request", side_effect=lambda base, path, _: responses.get(base + path, HttpResult(0, ""))),
-        patch("aiusage.providers.selfhosted._local_gpu", return_value={}),
+        patch("tidesi.providers.selfhosted._request", side_effect=lambda base, path, _: responses.get(base + path, HttpResult(0, ""))),
+        patch("tidesi.providers.selfhosted._local_gpu", return_value={}),
     ):
         body = get_selfhosted_usage()
     row = normalize_selfhosted({"now": 1, "inputs": {"usage": body}})

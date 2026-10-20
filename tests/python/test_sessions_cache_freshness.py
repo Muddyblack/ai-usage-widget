@@ -6,9 +6,9 @@ import unittest
 from unittest import mock
 
 from _support import REPO  # noqa: F401
-from aiusage import session_cache, sessions
-from aiusage.session_index import SessionIndex
-from aiusage.session_manifest import SessionManifest
+from tidesi import session_cache, sessions
+from tidesi.session_index import SessionIndex
+from tidesi.session_manifest import SessionManifest
 
 
 def _row(title: str, provider: str, activity: int) -> dict[str, str | int]:
@@ -29,7 +29,7 @@ class SessionCacheFreshnessTest(unittest.TestCase):
             index = SessionIndex(f"{directory}/sessions.sqlite3")
             index.query()
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(session_cache, "build_manifests", side_effect=AssertionError("query scanned manifests")),
                 mock.patch.object(sessions, "collect_source", side_effect=AssertionError("query collected")),
             ):
@@ -42,7 +42,7 @@ class SessionCacheFreshnessTest(unittest.TestCase):
     def test_query_reports_no_cache_without_building_or_collecting(self):
         with tempfile.TemporaryDirectory() as directory:
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(session_cache, "build_manifests", side_effect=AssertionError("query scanned manifests")),
                 mock.patch.object(sessions, "_collect_all_sessions", side_effect=AssertionError("query collected")),
             ):
@@ -55,7 +55,7 @@ class SessionCacheFreshnessTest(unittest.TestCase):
     def test_manual_refresh_reports_successful_empty_separately(self):
         with tempfile.TemporaryDirectory() as directory:
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(session_cache, "build_manifests", return_value=[SessionManifest("claude", 1, 1)]),
                 mock.patch.object(sessions, "collect_source", return_value=[]),
                 mock.patch.object(sessions, "_collect_all_sessions", return_value=([], True)),
@@ -69,7 +69,7 @@ class SessionCacheFreshnessTest(unittest.TestCase):
     def test_expired_cache_reports_age_without_scanning_on_query(self):
         with tempfile.TemporaryDirectory() as directory:
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(session_cache, "build_manifests", return_value=[SessionManifest("claude", 1, 1)]),
                 mock.patch.object(sessions, "collect_source", return_value=[_row("cached", "claude", 1)]),
                 mock.patch.object(sessions, "_collect_all_sessions", return_value=([_row("cached", "claude", 1)], True)),
@@ -89,7 +89,7 @@ class SessionCacheFreshnessTest(unittest.TestCase):
     def test_unchanged_successful_refresh_restarts_the_cache_age(self):
         with tempfile.TemporaryDirectory() as directory:
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(session_cache, "build_manifests", return_value=[SessionManifest("claude", 1, 1)]),
                 mock.patch.object(sessions, "collect_source", return_value=[_row("cached", "claude", 1)]),
                 mock.patch.object(sessions, "_collect_all_sessions", return_value=([_row("cached", "claude", 1)], True)),
@@ -110,7 +110,7 @@ class SessionCacheFreshnessTest(unittest.TestCase):
     def test_failed_first_refresh_is_not_a_successful_empty_result(self):
         with tempfile.TemporaryDirectory() as directory:
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(session_cache, "build_manifests", return_value=[SessionManifest("claude", 1, 1)]),
                 mock.patch.object(sessions, "collect_source", side_effect=OSError("unavailable")),
                 mock.patch.object(sessions, "_collect_all_sessions", return_value=([], False)),
@@ -124,7 +124,7 @@ class SessionCacheFreshnessTest(unittest.TestCase):
     def test_source_removal_updates_rows_descriptors_and_count(self):
         with tempfile.TemporaryDirectory() as directory:
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(session_cache, "build_manifests", return_value=[SessionManifest("claude", 1, 1)]),
                 mock.patch.object(sessions, "collect_source", return_value=[_row("old", "claude", 1)]),
                 mock.patch.object(sessions, "_collect_all_sessions", return_value=([], True)),
@@ -145,7 +145,7 @@ class SessionCacheFreshnessTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             SessionIndex(f"{directory}/sessions.sqlite3").reconcile([SessionManifest("claude", 1, 1)], lambda _source: [_row("cached", "claude", 1)])
             with (
-                mock.patch("aiusage.config.cache_dir", return_value=directory),
+                mock.patch("tidesi.config.cache_dir", return_value=directory),
                 mock.patch.object(SessionIndex, "query", side_effect=sqlite3.DatabaseError("broken cache")),
             ):
                 result = sessions.collect_sessions(limit=2, offset=3)

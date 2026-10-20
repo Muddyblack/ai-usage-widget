@@ -4,8 +4,8 @@
 #
 # Renders the same contract the Plasma widget and the Quickshell panel render,
 # as a table or — with --compact — as a single status-bar line. This is a thin
-# launcher; the rendering lives in ../aiusage/render.py and the argument
-# handling in ../aiusage/cli.py. See docs/provider-contract.md.
+# launcher; the rendering lives in ../tidesi/render.py and the argument
+# handling in ../tidesi/cli.py. See docs/provider-contract.md.
 #
 #   tidesi-cli                        table of every enabled provider
 #   tidesi-cli --provider claude      one provider
@@ -44,9 +44,9 @@ if ! py_resolve; then
     exit 1
 fi
 
-# The aiusage package lives one directory up (tools/aiusage; this is tools/sh).
+# The tidesi package lives one directory up (tools/tidesi; this is tools/sh).
 PKG_TOOLS="$(cd "$_SH_DIR/.." && pwd)"
 export PYTHONPATH="$PKG_TOOLS${PYTHONPATH:+:$PYTHONPATH}"
 
 # -B: never write __pycache__ into an installed plasmoid.
-exec "$PY" -B -m aiusage.cli "$@"
+exec "$PY" -B -m tidesi.cli "$@"

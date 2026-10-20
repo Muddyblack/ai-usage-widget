@@ -62,7 +62,7 @@
                 --replace-fail 'PY_DEFAULT="python3"' \
                                'PY_DEFAULT="${pkgs.python3}/bin/python3"'
               # Remote devices reuse Antigravity's Secret Service credential.
-              substituteInPlace "$root/contents/backend/aiusage/providers/antigravity_remote.py" \
+              substituteInPlace "$root/contents/backend/tidesi/providers/antigravity_remote.py" \
                 --replace-fail 'SECRET_TOOL = "secret-tool"' \
                                'SECRET_TOOL = "${pkgs.libsecret}/bin/secret-tool"'
 
@@ -110,10 +110,10 @@
               substituteInPlace "$dest/backend/sh/python-interp.sh" \
                 --replace-fail 'PY_DEFAULT="python3"' \
                                'PY_DEFAULT="${pkgs.python3}/bin/python3"'
-              substituteInPlace "$dest/backend/aiusage/providers/antigravity_remote.py" \
+              substituteInPlace "$dest/backend/tidesi/providers/antigravity_remote.py" \
                 --replace-fail 'SECRET_TOOL = "secret-tool"' \
                                'SECRET_TOOL = "${pkgs.libsecret}/bin/secret-tool"'
-              # The launchers resolve symlinks to find the aiusage package beside them.
+              # The launchers resolve symlinks to find the tidesi package beside them.
               ln -s "$dest/backend/sh/tidesi-cli" "$out/bin/tidesi-cli"
               ln -s "$dest/backend/sh/get-ai-usage" "$out/bin/get-ai-usage"
               ln -s tidesi-cli "$out/bin/ai-usage-cli"  # pre-rename name
@@ -155,7 +155,7 @@
               substituteInPlace "$root/backend/sh/python-interp.sh" \
                 --replace-fail 'PY_DEFAULT="python3"' \
                                'PY_DEFAULT="${pkgs.python3}/bin/python3"'
-              substituteInPlace "$root/backend/aiusage/providers/antigravity_remote.py" \
+              substituteInPlace "$root/backend/tidesi/providers/antigravity_remote.py" \
                 --replace-fail 'SECRET_TOOL = "secret-tool"' \
                                'SECRET_TOOL = "${pkgs.libsecret}/bin/secret-tool"'
               # xdg-desktop-portal resolves this entry in the portal daemon's
@@ -212,7 +212,7 @@
                 cp -r hosts/desktop "$root/hosts/desktop"
                 cp -r ui backend assets translate "$root/"
                 find "$root" \( -name '__pycache__' -o -name '*.pyc' \) -prune -exec rm -rf {} +
-                substituteInPlace "$root/backend/aiusage/providers/antigravity_remote.py" \
+                substituteInPlace "$root/backend/tidesi/providers/antigravity_remote.py" \
                   --replace-fail 'SECRET_TOOL = "secret-tool"' \
                                  'SECRET_TOOL = "${pkgs.libsecret}/bin/secret-tool"'
                 install -Dm644 assets/icons/org.muddyblack.aiUsageWidget.svg \

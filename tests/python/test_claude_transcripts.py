@@ -8,7 +8,7 @@ import unittest
 from unittest import mock
 
 import _support  # noqa: F401  (sys.path)
-from aiusage.providers import claude_transcripts
+from tidesi.providers import claude_transcripts
 
 
 def _line(**fields):

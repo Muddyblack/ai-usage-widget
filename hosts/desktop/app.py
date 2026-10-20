@@ -3,7 +3,7 @@
 The popup is the shared QML under ui/ (PopupContent.qml, SettingsPage.qml
 and the components they use); qml/Main.qml wraps it in a frameless window and
 implements the `shell` interface they read. The data comes from the same
-aiusage package every other frontend runs, called in-process: there is no
+tidesi package every other frontend runs, called in-process: there is no
 shell on Windows to run tools/sh/* through, and nothing here needs one.
 
 It runs on Linux too, which is how it is developed: `nix develop .#windows`
@@ -44,9 +44,9 @@ FROZEN = getattr(sys, "frozen", False)
 ROOT = Path(getattr(sys, "_MEIPASS", "")) if FROZEN else Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT / "backend"))
 
-from aiusage import config, detect, history, historyio, paths, snapshot_export, widget_state  # noqa: E402
-from aiusage.__main__ import _refresh_pricing, snapshot  # noqa: E402
-from aiusage.sessions import collect_sessions, open_session, refresh_sessions  # noqa: E402
+from tidesi import config, detect, history, historyio, paths, snapshot_export, widget_state  # noqa: E402
+from tidesi.__main__ import _refresh_pricing, snapshot  # noqa: E402
+from tidesi.sessions import collect_sessions, open_session, refresh_sessions  # noqa: E402
 
 APP_NAME = "Tidesi"
 
@@ -489,7 +489,7 @@ class Backend(QObject):
 
     def __init__(self, first_run=False):
         super().__init__()
-        self._pool = ThreadPoolExecutor(max_workers=3, thread_name_prefix="aiusage")
+        self._pool = ThreadPoolExecutor(max_workers=3, thread_name_prefix="tidesi")
         self._busy = False
         self._pricing_busy = False
         self._sessions_request_id = 0
@@ -576,7 +576,7 @@ class Backend(QObject):
         # Synchronous fallback used by tests and non-GUI callers; QML uses the
         # queued path below so the catalog parse never runs on the GUI thread.
         try:
-            from aiusage import pricing
+            from tidesi import pricing
 
             rows = pricing.catalog_rows(query, limit=limit, offset=offset)
             return json.dumps(rows, separators=(",", ":"), ensure_ascii=False)
@@ -592,7 +592,7 @@ class Backend(QObject):
 
     def _query_rates(self, query, limit, offset, request_id):
         try:
-            from aiusage import pricing
+            from tidesi import pricing
 
             rows = pricing.catalog_rows(query, limit=limit, offset=offset)
             payload = json.dumps(rows, separators=(",", ":"), ensure_ascii=False)

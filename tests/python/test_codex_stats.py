@@ -10,8 +10,8 @@ import unittest
 from unittest import mock
 
 import _support  # noqa: F401  (sys.path)
-from aiusage.providers import codex_stats
-from aiusage.providers.codex_stats import get_codex_stats
+from tidesi.providers import codex_stats
+from tidesi.providers.codex_stats import get_codex_stats
 
 
 def _line(**fields):
@@ -185,7 +185,7 @@ class CodexStatsCacheTest(unittest.TestCase):
                 calls.append(path)
                 return codex_stats._scan_rollout(path, date)
 
-            with mock.patch("aiusage.providers.codex_stats._scan_rollout", side_effect=counting_scan):
+            with mock.patch("tidesi.providers.codex_stats._scan_rollout", side_effect=counting_scan):
                 warm = get_codex_stats()
         self.assertEqual(calls, [])
         self.assertEqual(warm, cold)

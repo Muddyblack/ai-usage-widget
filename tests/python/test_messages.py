@@ -6,8 +6,8 @@ import pickle
 import unittest
 
 import _support  # noqa: F401  (puts the backend on sys.path)
-from aiusage.contract import finalize, provider_error
-from aiusage.messages import Msg, lines, tr
+from tidesi.contract import finalize, provider_error
+from tidesi.messages import Msg, lines, tr
 
 
 class MessageTest(unittest.TestCase):

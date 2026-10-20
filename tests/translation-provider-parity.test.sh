@@ -19,7 +19,7 @@ sh_dir="$repo/backend/sh"
 # because --list and the missing-python3 fallback enumerate providers without
 # importing Python.
 canonical="$(PYTHONPATH="$repo/backend" python3 -c \
-    'from aiusage import config; print(" ".join(config.ALL_PROVIDERS))')"
+    'from tidesi import config; print(" ".join(config.ALL_PROVIDERS))')"
 shell_list="$("$sh_dir/get-ai-usage" --list | tr '\n' ' ' | sed 's/ $//')"
 if [ "$canonical" != "$shell_list" ]; then
     printf 'translation-provider-parity: shell list drifted\n  canonical: %s\n  shell:     %s\n' \

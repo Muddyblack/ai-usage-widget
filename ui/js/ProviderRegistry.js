@@ -160,7 +160,7 @@ var providers = [
     }
 ];
 
-// Mirrors PROVIDER_ICONS in aiusage/contract.py, so the settings page can show
+// Mirrors PROVIDER_ICONS in tidesi/contract.py, so the settings page can show
 // every provider's logo — including ones switched off, which the backend has
 // sent no snapshot (and so no icon) for.
 var ICONS = {
@@ -193,7 +193,7 @@ var ICONS = {
 for (var _i = 0; _i < providers.length; _i++)
     providers[_i].icon = providers[_i].icon || ICONS[providers[_i].id] || "";
 
-// Mirrors OPT_IN_PROVIDERS in aiusage/config.py: what a missing toggle means
+// Mirrors OPT_IN_PROVIDERS in tidesi/config.py: what a missing toggle means
 // until providerDefaultsApplied is set (or when applying the defaults failed).
 var OPT_IN = ["zai", "copilot", "deepseek", "kimi", "muse", "cursor", "cline", "opencode", "mimo", "junie", "jetbrains", "windsurf", "pi", "kilo", "coderabbit", "zed", "ollama", "selfhosted"];
 
@@ -207,7 +207,7 @@ function enabled(settings, id) {
     return toggles[id] === true;
 }
 
-// Mirrors AUTO_DETECT_PROVIDERS in aiusage/detect.py: the providers detection
+// Mirrors AUTO_DETECT_PROVIDERS in tidesi/detect.py: the providers detection
 // can speak for. Every other provider is only ever switched by hand.
 var AUTO_DETECT = ["claude", "antigravity", "openai", "kiro", "mistral", "grok", "muse", "cursor", "cline", "opencode", "mimo", "junie", "windsurf", "pi", "kilo", "coderabbit"];
 

@@ -35,7 +35,7 @@ datas += [(path, "translate") for path in glob.glob(os.path.join(ROOT, "translat
 a = Analysis(  # noqa: F821
     [os.path.join(ROOT, "hosts", "desktop", "app.py")],
     pathex=[TOOLS, MACOS],
-    hiddenimports=collect_submodules("aiusage") + ["psutil", "statusitem", "vibrancy", "loginitem", "objc", "AppKit", "Foundation", "ServiceManagement"],
+    hiddenimports=collect_submodules("tidesi") + ["psutil", "statusitem", "vibrancy", "loginitem", "objc", "AppKit", "Foundation", "ServiceManagement"],
     datas=datas,
     excludes=["tkinter"],
 )
@@ -52,7 +52,7 @@ coll = COLLECT(exe, a.binaries, a.datas, name="Tidesi")  # noqa: F821
 app = BUNDLE(  # noqa: F821
     coll,
     name="Tidesi.app",
-    icon=os.environ.get("AI_USAGE_ICNS") or None,
+    icon=os.environ.get("TIDESI_ICNS") or None,
     bundle_identifier="org.muddyblack.aiUsageWidget",
     version=VERSION,
     info_plist={

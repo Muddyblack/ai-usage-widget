@@ -32,11 +32,11 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     substituteInPlace "$dest/backend/sh/python-interp.sh" \
       --replace-fail 'PY_DEFAULT="python3"' \
                      'PY_DEFAULT="${lib.getExe python3}"'
-    substituteInPlace "$dest/backend/aiusage/providers/antigravity_remote.py" \
+    substituteInPlace "$dest/backend/tidesi/providers/antigravity_remote.py" \
       --replace-fail 'SECRET_TOOL = "secret-tool"' \
                      'SECRET_TOOL = "${lib.getExe' libsecret "secret-tool"}"'
 
-    # The launchers resolve symlinks to find the aiusage package beside them.
+    # The launchers resolve symlinks to find the tidesi package beside them.
     ln -s "$dest/backend/sh/tidesi-cli" "$out/bin/tidesi-cli"
     ln -s "$dest/backend/sh/get-ai-usage" "$out/bin/get-ai-usage"
 

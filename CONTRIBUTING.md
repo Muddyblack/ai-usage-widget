@@ -64,7 +64,7 @@ files under `build/kde/contents/locale/` are git-ignored build output: edit
 One catalog per language, `translate/<lang>.po`, serves every platform: the
 shared UI parses it at runtime (`ui/js/I18n.js`) through `shell.i18n()` /
 `shell.i18nc()` / `shell.i18np()`, and text the backend words itself is
-written as `tr("…")` (`backend/aiusage/messages.py`) and translated by the UI
+written as `tr("…")` (`backend/tidesi/messages.py`) and translated by the UI
 from the same catalog. `translate/Messages.sh` extracts both. Write new text
 as one full phrase with `%1` placeholders rather than pieces joined with `+`,
 and see [`translate/README.md`](translate/README.md) for Weblate.

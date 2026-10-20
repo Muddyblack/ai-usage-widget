@@ -105,7 +105,7 @@ jobs:
           QT_QPA_PLATFORM: offscreen
           # A throwaway settings file, so the run cannot read or write
           # anything of the runner's.
-          AI_USAGE_CONFIG: ${{ runner.temp }}/settings.json
+          TIDESI_CONFIG: ${{ runner.temp }}/settings.json
         run: python3 hosts/desktop/app.py --selftest
 
       - name: The native macOS modules import
@@ -130,7 +130,7 @@ jobs:
       - name: Self-test the bundled app
         env:
           QT_QPA_PLATFORM: offscreen
-          AI_USAGE_CONFIG: ${{ runner.temp }}/bundle-settings.json
+          TIDESI_CONFIG: ${{ runner.temp }}/bundle-settings.json
         run: '"dist/Tidesi.app/Contents/MacOS/Tidesi" --selftest'
 
       # The only screenshots: the real app on the runner's real desktop, full
@@ -139,7 +139,7 @@ jobs:
       - name: Screenshot of the running app on the real desktop
         if: matrix.arch == 'apple-silicon'
         env:
-          AI_USAGE_CONFIG: ${{ runner.temp }}/desktop-settings.json
+          TIDESI_CONFIG: ${{ runner.temp }}/desktop-settings.json
         run: |
           mkdir -p "$RUNNER_TEMP/screens"
           python3 hosts/desktop/app.py --demo --tour "$RUNNER_TEMP/screens"

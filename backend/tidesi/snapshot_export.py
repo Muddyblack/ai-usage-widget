@@ -7,8 +7,8 @@ a wrapper that embeds the PNG, so the picture scales on a page without a second
 renderer. backend/sh/export-snapshot runs this for the process-based hosts; the
 desktop tray app calls :func:`export` in-process.
 
-  python -m aiusage.snapshot_export png <src.png> <dest> [width height]
-  python -m aiusage.snapshot_export svg <src.png> <dest> [width height]
+  python -m tidesi.snapshot_export png <src.png> <dest> [width height]
+  python -m tidesi.snapshot_export svg <src.png> <dest> [width height]
 
 Prints one JSON object — {"ok":true,"path":…} or {"error":…} — and exits 0 once
 it has, so the shell tool falls back only when Python itself could not run.

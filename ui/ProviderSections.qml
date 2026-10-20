@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import "js/Tone.js" as Tone
 
 // What a provider shows beyond its quota rows, drawn from its `sections`
-// (backend/aiusage/contract.py): groups of thin bars (per-model quotas), cards
+// (backend/tidesi/contract.py): groups of thin bars (per-model quotas), cards
 // of label/value lines (balances, rates, limits) and grey footnotes. The
 // component knows no provider; the backend says what to put in it.
 ColumnLayout {

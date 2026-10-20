@@ -7,9 +7,9 @@ from contextlib import closing
 from unittest import mock
 
 from _support import IsolatedHomeTest
-from aiusage import detect, session_manifest, sessions
-from aiusage.normalize.mimo import normalize_mimo
-from aiusage.providers import mimo, opencode
+from tidesi import detect, session_manifest, sessions
+from tidesi.normalize.mimo import normalize_mimo
+from tidesi.providers import mimo, opencode
 
 
 class MimoTest(IsolatedHomeTest):
@@ -46,7 +46,7 @@ class MimoTest(IsolatedHomeTest):
 
     def test_usage_deduplicates_parts_and_has_no_quota(self):
         self.database()
-        with mock.patch("aiusage.pricing.load_catalog"), mock.patch("aiusage.pricing.cached_catalog", return_value={}):
+        with mock.patch("tidesi.pricing.load_catalog"), mock.patch("tidesi.pricing.cached_catalog", return_value={}):
             snapshot = mimo.usage_snapshot()
         row = snapshot["sessions"][0]
         self.assertEqual(row["costUSD"], 0.25)
@@ -61,14 +61,14 @@ class MimoTest(IsolatedHomeTest):
     def test_empty_or_invalid_database_is_unavailable(self):
         path = self.home / "broken.db"
         path.write_bytes(b"not sqlite")
-        with mock.patch.dict(os.environ, {"MIMO_DB": str(path)}), mock.patch("aiusage.pricing.load_catalog"):
+        with mock.patch.dict(os.environ, {"MIMO_DB": str(path)}), mock.patch("tidesi.pricing.load_catalog"):
             normalized = normalize_mimo({"now": 1700000000, "inputs": {"usage": mimo.usage_snapshot()}})
         self.assertFalse(normalized["ok"])
         self.assertFalse(normalized["details"]["stats"]["available"])
 
     def test_resume_target_and_wal_invalidation(self):
         path = self.database()
-        with mock.patch("aiusage.pricing.cached_catalog", return_value={}):
+        with mock.patch("tidesi.pricing.cached_catalog", return_value={}):
             entries = sessions._mimo_entries()
         self.assertEqual(entries[0]["source"], "mimo")
         self.assertEqual(entries[0]["sessionName"], "via MiMo Code")

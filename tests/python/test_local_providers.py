@@ -11,10 +11,10 @@ import unittest
 from unittest import mock
 
 from _support import IsolatedHomeTest
-from aiusage import detect
-from aiusage.http import HttpResult
-from aiusage.normalize import normalize
-from aiusage.providers import coderabbit, jetbrains, kilo, openrouter, pi, windsurf, zed
+from tidesi import detect
+from tidesi.http import HttpResult
+from tidesi.normalize import normalize
+from tidesi.providers import coderabbit, jetbrains, kilo, openrouter, pi, windsurf, zed
 
 NOW = 1790841600
 OPTIONS = ".config/JetBrains/IntelliJIdea2025.3/options/AIAssistantQuotaManager2.xml"

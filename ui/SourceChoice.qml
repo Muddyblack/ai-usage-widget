@@ -8,7 +8,7 @@ import "js/ProviderSources.js" as ProviderSources
 // Authentication: every way the provider can be read, with whether each one
 // works on this machine, and — where they are alternatives — which to use.
 // It knows no provider and no kind of source: the backend lists what exists
-// (aiusage/sources.py), so a new source appears here without a change.
+// (tidesi/sources.py), so a new source appears here without a change.
 Item {
     id: choice
 

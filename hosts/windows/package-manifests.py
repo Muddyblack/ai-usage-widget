@@ -11,7 +11,7 @@ import zipfile
 from pathlib import Path
 
 HOMEPAGE = "https://github.com/Muddyblack/tidesi"
-PACKAGE_ID = "Muddyblack.AIUsage"
+PACKAGE_ID = "Muddyblack.Tidesi"
 PRODUCT_CODE = "{DA55F997-6C64-4B6F-92EB-D3BEB6885B68}_is1"
 DESCRIPTION = "AI usage and quota monitoring in the Windows system tray."
 
@@ -93,7 +93,7 @@ ManifestType: installer
 ManifestVersion: 1.6.0
 """,
     }
-    manifest_dir = output / "winget" / "manifests" / "m" / "Muddyblack" / "AIUsage" / version
+    manifest_dir = output / "winget" / "manifests" / "m" / "Muddyblack" / "Tidesi" / version
     manifest_dir.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output / f"tidesi-winget-{version}.zip", "w", zipfile.ZIP_DEFLATED) as archive:
         for name, contents in manifests.items():

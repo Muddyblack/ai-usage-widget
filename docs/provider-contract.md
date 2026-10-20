@@ -3,14 +3,14 @@
 Every frontend gets all of its provider data from a single backend: the one
 shared UI (`ui/`) in every host — KDE Plasma (`hosts/kde`), Quickshell
 (`hosts/quickshell`), and the Windows and macOS tray app (`hosts/desktop`) —
-and the terminal frontend (`aiusage/render.py`). The process-based hosts run it
+and the terminal frontend (`tidesi/render.py`). The process-based hosts run it
 through `backend/sh/get-ai-usage` (`ui/CommandBackend.qml`); the tray app calls
 it in-process. See `docs/architecture.md`.
 
 ```
-shared provider backend (Python, stdlib only)   backend/aiusage
-  - credential discovery, HTTP, local-data reads   aiusage/providers/, aiusage/http.py
-  - normalization                                  aiusage/normalize/
+shared provider backend (Python, stdlib only)   backend/tidesi
+  - credential discovery, HTTP, local-data reads   tidesi/providers/, tidesi/http.py
+  - normalization                                  tidesi/normalize/
                  │
                  ▼  thin bash launcher, execs into the package above
   backend/sh/get-ai-usage
@@ -19,7 +19,7 @@ shared provider backend (Python, stdlib only)   backend/aiusage
            ┌─────────┼─────────┐
            ▼         ▼         ▼
       ui/ (every host)       terminal
-                         aiusage/render.py
+                         tidesi/render.py
 ```
 
 No frontend performs a provider network request, parses a provider response, or
@@ -54,7 +54,7 @@ get-ai-usage --all | tidesi-cli   # render a fetched envelope, no second fetch
 
 `--all` respects the provider toggles in the shared settings file
 (`$XDG_CONFIG_HOME/ai-usage-widget/hyprland-settings.json`, overridable with
-`AI_USAGE_CONFIG`). `--provider` fetches exactly what was asked for, because the
+`TIDESI_CONFIG`). `--provider` fetches exactly what was asked for, because the
 Plasma widget keeps its own toggles in the plasmoid configuration.
 
 ### Provider defaults and one-shot detection
@@ -605,7 +605,7 @@ to GitHub's `Copilot*` components) or Gatus (`/api/v1/endpoints/statuses` —
 Cline). Pages with no feed (Antigravity, Grok, DeepSeek, Mistral,
 OpenRouter) come through as `indicator: ""` plus a `url`, which the
 frontends render as a plain link. Feeds are cached on disk for
-`AI_USAGE_STATUS_TTL` seconds (default 300) so a fast poll interval does not
+`TIDESI_STATUS_TTL` seconds (default 300) so a fast poll interval does not
 hammer them.
 
 ## Shared frontend code
@@ -693,7 +693,7 @@ because Plasma rewrites `plasma-org.kde.plasma.desktop-appletsrc` (every
 widget's config) whole on each change and the series runs to 30-100 KiB.
 
 The union therefore exists twice: in QML (`UsageHistory.union`) for the startup
-restore, and in Python (`aiusage/history.py`) for the on-disk merge.
+restore, and in Python (`tidesi/history.py`) for the on-disk merge.
 `tests/shared-code.test.js` replays the same cases through both and compares the
 JSON byte for byte, so they cannot drift.
 
@@ -725,7 +725,7 @@ with `make test`.
 ## Changing the contract
 
 Adding a field is backwards compatible. Removing or repurposing one is not:
-bump `SCHEMA_VERSION` in `backend/aiusage/contract.py`, update
+bump `SCHEMA_VERSION` in `backend/tidesi/contract.py`, update
 this document, and update every frontend in the same change — except that
 the macOS app needs no change for a new provider, only for a new *field*.
 
@@ -777,7 +777,7 @@ of them is `null` when OpenRouter did not report it.
 ### Sources
 
 A provider that can be read more than one way carries a `sources` block on its
-envelope — error envelopes included — built by `aiusage/sources.py`:
+envelope — error envelopes included — built by `tidesi/sources.py`:
 
 ```json
 "sources": {

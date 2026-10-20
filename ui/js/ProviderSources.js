@@ -3,7 +3,7 @@
 // What the settings page needs to know about a provider's sources — the places
 // its numbers can be read from — kept free of QML so it can be tested on its own.
 //
-// The backend (aiusage/sources.py) sends every provider that can be read more
+// The backend (tidesi/sources.py) sends every provider that can be read more
 // than one way a `sources` block:
 //
 //     { choice, selected, active, options: [{ id, kind, label, detail, state }] }
