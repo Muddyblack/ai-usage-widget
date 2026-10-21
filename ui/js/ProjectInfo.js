@@ -14,7 +14,7 @@ var contributorsPage = repository + "/graphs/contributors";
 var statistics = [
     {id: "stars", label: "GitHub stars", icon: "star.svg", href: repository + "/stargazers", url: "https://img.shields.io/github/stars/Muddyblack/tidesi.json"},
     {id: "downloads", label: "GitHub downloads", icon: "download.svg", href: repository + "/releases", url: "https://img.shields.io/github/downloads/Muddyblack/tidesi/total.json"},
-    {id: "kde", label: "OpenDesktop downloads", icon: "download.svg", href: store, url: "https://img.shields.io/badge/dynamic/json.json?url=" + encodeURIComponent("https://api.pling.com/ocs/v1/content/data/?format=json&user=Muddyblack&pagesize=20&sortmode=alpha") + "&query=" + encodeURIComponent("$.data[0].downloads") + "&label=Downloads"}
+    {id: "kde", label: "OpenDesktop downloads", icon: "download.svg", href: store, url: "https://img.shields.io/badge/dynamic/json.json?url=" + encodeURIComponent("https://api.pling.com/ocs/v1/content/data/?format=json&user=Muddyblack&search=tideSI&pagesize=20") + "&query=" + encodeURIComponent("$.data[0].downloads") + "&label=Downloads"}
 ];
 function count(text) {
     try {
