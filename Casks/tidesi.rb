@@ -6,7 +6,7 @@ cask "tidesi" do
          intel: "11b934c84b7b9d1059cbe3581dba71511d0e3c067efe2592763a06e231473385"
 
   url "https://github.com/Muddyblack/tidesi/releases/download/v#{version}/tidesi-macos-#{version}-#{arch}.dmg"
-  name "Tidesi"
+  name "tideSI"
   desc "Menu bar monitor for AI provider usage limits"
   homepage "https://github.com/Muddyblack/tidesi"
 
@@ -17,7 +17,7 @@ cask "tidesi" do
 
   depends_on macos: ">= :ventura"
 
-  app "Tidesi.app"
+  app "tideSI.app"
 
   zap trash: [
     "~/.cache/tidesi",
@@ -26,7 +26,7 @@ cask "tidesi" do
   ]
 
   caveats <<~EOS
-    Tidesi is not notarized yet. If macOS blocks the first launch, choose
+    tideSI is not notarized yet. If macOS blocks the first launch, choose
     Open Anyway in System Settings > Privacy & Security.
   EOS
 end
