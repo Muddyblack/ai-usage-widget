@@ -1,27 +1,27 @@
 {
-    "version": "4.0.0",
+    "version": "4.0.1",
     "description": "AI usage and quota monitoring in the Windows system tray.",
     "homepage": "https://github.com/Muddyblack/tidesi",
     "license": "MIT",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/Muddyblack/tidesi/releases/download/v4.0.0/tidesi-windows-4.0.0.zip",
-            "hash": "67dea11c2a9a88f14cb2d0b0e4c0bcc1c078788fbdd22b2fd23542d94f127ed1"
+            "url": "https://github.com/Muddyblack/tidesi/releases/download/v4.0.1/tideSI-windows-4.0.1.zip",
+            "hash": "697cad78023d7a606677b23396ac22def574f5331b2b0f4aba0678e7d7d67528"
         }
     },
-    "extract_dir": "Tidesi",
+    "extract_dir": "tideSI",
     "shortcuts": [
         [
-            "Tidesi.exe",
-            "Tidesi"
+            "tideSI.exe",
+            "tideSI"
         ]
     ],
-    "notes": "Quit Tidesi before updating. Disable Start with Windows in the app before uninstalling. Settings and history are kept.",
+    "notes": "Quit tideSI before updating. Disable Start with Windows in the app before uninstalling. Settings and history are kept.",
     "checkver": "github",
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/Muddyblack/tidesi/releases/download/v$version/tidesi-windows-$version.zip"
+                "url": "https://github.com/Muddyblack/tidesi/releases/download/v$version/tideSI-windows-$version.zip"
             }
         }
     }
