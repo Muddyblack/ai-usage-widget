@@ -18,7 +18,7 @@ msgstr ""
 
 #: hosts/kde/contents/ui/main.qml
 msgid "tideSI"
-msgstr ""
+msgstr "tideSI"
 
 #: hosts/kde/contents/ui/main.qml ui/AppState.qml ui/SettingsPage.qml
 msgid "Refresh"
@@ -82,7 +82,7 @@ msgstr "Chargement"
 
 #: ui/AppState.qml
 msgid "Open tideSI"
-msgstr ""
+msgstr "Ouvrir tideSI"
 
 #: ui/AppState.qml
 msgid "Tray style"
@@ -354,7 +354,7 @@ msgstr "Verre, teinte et couleurs de la fenêtre"
 
 #: ui/PopupHeader.qml
 msgid "About tideSI and project links"
-msgstr ""
+msgstr "À propos de tideSI et liens du projet"
 
 #: ui/PopupHeader.qml
 msgid "Local endpoints: Ollama, vLLM and llama.cpp"
@@ -1168,6 +1168,8 @@ msgid ""
 "Starts tideSI in the tray when you sign in. The same switch is in the tray "
 "icon's menu."
 msgstr ""
+"Lance tideSI dans la zone de notification à l'ouverture de session. Le même "
+"interrupteur se trouve dans le menu de l'icône de la zone de notification."
 
 #: ui/SettingsPage.qml
 msgid "Backend"
